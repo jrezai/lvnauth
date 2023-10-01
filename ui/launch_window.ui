@@ -1,0 +1,337 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="launch_window" named="True">
+    <property name="geometry">960x480</property>
+    <property name="height">200</property>
+    <property name="title" translatable="yes">Launch Visual Novel</property>
+    <property name="width">200</property>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Frame" id="frame1">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="0" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Panedwindow" id="panedwindow1">
+            <property name="height">200</property>
+            <property name="orient">horizontal</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="pady">10</property>
+              <property name="row">0</property>
+              <property name="sticky">nsew</property>
+            </layout>
+            <child>
+              <object class="ttk.Panedwindow.Pane" id="pane1">
+                <property name="weight">0</property>
+                <child>
+                  <object class="ttk.Frame" id="frame2">
+                    <property name="height">200</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">nsew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                      <property type="row" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Treeview" id="treeview_chapter_scenes" named="True">
+                        <property name="selectmode">extended</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                          <property name="sticky">nsew</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Treeview.Column" id="column1">
+                            <property name="column_anchor">w</property>
+                            <property name="heading_anchor">w</property>
+                            <property name="minwidth">20</property>
+                            <property name="stretch">true</property>
+                            <property name="text" translatable="yes">Chapter</property>
+                            <property name="tree_column">true</property>
+                            <property name="visible">true</property>
+                            <property name="width">200</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Treeview.Column" id="column2">
+                            <property name="column_anchor">w</property>
+                            <property name="heading_anchor">w</property>
+                            <property name="minwidth">20</property>
+                            <property name="stretch">true</property>
+                            <property name="text" translatable="yes">Scene</property>
+                            <property name="tree_column">false</property>
+                            <property name="visible">true</property>
+                            <property name="width">200</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="btn_play_selection" named="True">
+                        <property name="command" type="command" cbtype="simple">on_play_selection_button_clicked</property>
+                        <property name="text" translatable="yes">Play</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">5</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Panedwindow.Pane" id="pane2">
+                <property name="weight">1</property>
+                <child>
+                  <object class="ttk.Frame" id="frame3">
+                    <property name="height">200</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">nsew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                      <property type="row" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Notebook" id="notebook1">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                          <property name="sticky">nsew</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Notebook.Tab" id="tab1">
+                            <property name="text" translatable="yes">Poster</property>
+                            <child>
+                              <object class="ttk.Frame" id="frame6">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                </layout>
+                                <containerlayout manager="grid">
+                                  <property type="col" id="0" name="weight">1</property>
+                                  <property type="row" id="0" name="weight">1</property>
+                                </containerlayout>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_poster" named="True">
+                                    <property name="text" translatable="yes">&lt; No Poster Image &gt;</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Notebook.Tab" id="tab2">
+                            <property name="text" translatable="yes">Details</property>
+                            <child>
+                              <object class="ttk.Frame" id="frame5">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsew</property>
+                                </layout>
+                                <containerlayout manager="grid">
+                                  <property type="col" id="1" name="weight">1</property>
+                                </containerlayout>
+                                <child>
+                                  <object class="ttk.Label" id="label8">
+                                    <property name="font">TkHeadingFont</property>
+                                    <property name="text" translatable="yes">Story Title:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="padx">5 0</property>
+                                      <property name="pady">5 0</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label1">
+                                    <property name="text" translatable="yes">Author:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label2">
+                                    <property name="text" translatable="yes">Copyright:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">2</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label3">
+                                    <property name="text" translatable="yes">License:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">3</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label4">
+                                    <property name="text" translatable="yes">Genre:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">4</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label5">
+                                    <property name="text" translatable="yes">Version:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">5</property>
+                                      <property name="sticky">e</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="label6">
+                                    <property name="text" translatable="yes">Description:</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">6</property>
+                                      <property name="sticky">ne</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_story_title" named="True">
+                                    <property name="font">TkHeadingFont</property>
+                                    <property name="text" translatable="yes">lbl_story_title</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="pady">5 0</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_author" named="True">
+                                    <property name="text" translatable="yes">lbl_author</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_copyright" named="True">
+                                    <property name="text" translatable="yes">lbl_copyright</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="row">2</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_license" named="True">
+                                    <property name="text" translatable="yes">lbl_license</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="row">3</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_genre" named="True">
+                                    <property name="text" translatable="yes">lbl_genre</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="row">4</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Label" id="lbl_version" named="True">
+                                    <property name="text" translatable="yes">lbl_version</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="padx">5</property>
+                                      <property name="row">5</property>
+                                      <property name="sticky">nw</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="tk.Text" id="txt_description" named="True">
+                                    <property name="height">10</property>
+                                    <property name="width">50</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="row">6</property>
+                                      <property name="sticky">w</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

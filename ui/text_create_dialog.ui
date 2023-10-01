@@ -1,0 +1,1094 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="ttk.Frame" id="frame_text_create_dialog" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+      <property name="sticky">nsew</property>
+    </layout>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="minsize">490</property>
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="minsize">450</property>
+      <property type="row" id="0" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Notebook" id="notebook2">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab1">
+            <property name="text" translatable="yes">Size and Position</property>
+            <child>
+              <object class="ttk.Frame" id="frame10">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe1">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Dialog Rectangle Size</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">0</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Frame" id="frame2">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label2">
+                            <property name="text" translatable="yes">Width (pixels):</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Spinbox" id="spinbox_width" named="True">
+                            <property name="from_">5</property>
+                            <property name="textvariable">int:v_width</property>
+                            <property name="to">9000</property>
+                            <property name="width">4</property>
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">5 0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label3">
+                            <property name="text" translatable="yes">Height (pixels):</property>
+                            <layout manager="grid">
+                              <property name="column">2</property>
+                              <property name="padx">20 0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Spinbox" id="spinbox_height" named="True">
+                            <property name="from_">5</property>
+                            <property name="textvariable">int:v_height</property>
+                            <property name="to">9000</property>
+                            <property name="width">4</property>
+                            <layout manager="grid">
+                              <property name="column">3</property>
+                              <property name="padx">5 0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Checkbutton" id="cb_rounded_corners" named="True">
+                        <property name="text" translatable="yes">Rounded corners</property>
+                        <property name="variable">boolean:v_rounded_corners</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">5</property>
+                          <property name="pady">0 5</property>
+                          <property name="row">1</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe5">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Position</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">1</property>
+                      <property name="sticky">ew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame9">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_dialog_position" named="True">
+                            <property name="state">readonly</property>
+                            <property name="values">"mid left" "mid right" "mid top" "mid bottom" "bottom left" "bottom right" "top left" "top right" "center"</property>
+                            <property name="width">25</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">0 5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label11">
+                            <property name="text" translatable="yes">Dialog Rectangle Position:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab3">
+            <property name="text" translatable="yes">Animation</property>
+            <child>
+              <object class="ttk.Frame" id="frame11">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe2">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Dialog Rectangle Animation:</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">2</property>
+                      <property name="sticky">ew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame3">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_intro_animation" named="True">
+                            <property name="state">readonly</property>
+                            <property name="values">"no animation" "left to right" "right to left" "fade in" "scale up height then width" "scale up width then height" "scale up width and height"</property>
+                            <property name="width">25</property>
+                            <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_intro_animation_changed" add="" />
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">0 5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label6">
+                            <property name="text" translatable="yes">Intro animation:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame6">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">0 10</property>
+                          <property name="row">1</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_outro_animation" named="True">
+                            <property name="state">readonly</property>
+                            <property name="values">"no animation" "go right" "go left" "go up" "go down" "fade out" "scale down height then width" "scale down width then height" "scale down width and height"</property>
+                            <property name="width">25</property>
+                            <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_outro_animation_changed" add="" />
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">3</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label7">
+                            <property name="text" translatable="yes">Outro animation:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">2</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe4">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Dialog Intro &amp; Outro Animation Speed</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="columnspan">2</property>
+                      <property name="padx">10</property>
+                      <property name="row">3</property>
+                      <property name="sticky">new</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame7">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">15</property>
+                          <property name="row">2</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label9">
+                            <property name="text" translatable="yes">Animation speed (1-100):</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.LabeledScale" id="scale_animation_speed" named="True">
+                            <property name="from_">1</property>
+                            <property name="to">100</property>
+                            <property name="variable">int:v_animation_speed</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab4">
+            <property name="text" translatable="yes">Colours</property>
+            <child>
+              <object class="ttk.Frame" id="frame12">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">nsew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe6">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Background</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">0</property>
+                      <property name="sticky">nw</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                      <property type="row" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame14">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="lbl_backcolor" named="True">
+                            <property name="background">#000000</property>
+                            <property name="text" translatable="yes">
+</property>
+                            <property name="width">5</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="btn_change_color" named="True">
+                            <property name="command" type="command" cbtype="with_wid">on_change_color_clicked</property>
+                            <property name="text" translatable="yes">Change Colour...</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="labelframe7">
+                        <property name="height">200</property>
+                        <property name="text" translatable="yes">Opacity level</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="padx">10</property>
+                          <property name="pady">0 5</property>
+                          <property name="row">0</property>
+                          <property name="rowspan">2</property>
+                          <property name="sticky">nw</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="0" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Frame" id="frame15">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="row">0</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.LabeledScale" id="scale_opacity" named="True">
+                                <property name="from_">0</property>
+                                <property name="to">255</property>
+                                <property name="variable">int:v_opacity</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">ew</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="label1">
+                                <property name="text" translatable="yes">0=fully transparent
+255=fully opaque</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe10">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Border</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">1</property>
+                      <property name="sticky">nw</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                      <property type="row" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame18">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="lbl_backcolor_border" named="True">
+                            <property name="background">#000000</property>
+                            <property name="text" translatable="yes">
+</property>
+                            <property name="width">5</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="btn_change_border_color" named="True">
+                            <property name="command" type="command" cbtype="with_wid">on_change_color_clicked</property>
+                            <property name="text" translatable="yes">Change Colour...</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="labelframe11">
+                        <property name="height">200</property>
+                        <property name="text" translatable="yes">Opacity level</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="padx">10</property>
+                          <property name="pady">0 5</property>
+                          <property name="row">0</property>
+                          <property name="rowspan">2</property>
+                          <property name="sticky">nw</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="0" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Frame" id="frame19">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="row">0</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.LabeledScale" id="labeledscale1" named="True">
+                                <property name="from_">0</property>
+                                <property name="to">255</property>
+                                <property name="variable">int:v_opacity_border</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">ew</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Label" id="label19">
+                                <property name="text" translatable="yes">0=fully transparent
+255=fully opaque</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="labelframe12">
+                        <property name="height">200</property>
+                        <property name="text" translatable="yes">Border thickness</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">2</property>
+                          <property name="padx">10</property>
+                          <property name="pady">0 5</property>
+                          <property name="row">0</property>
+                          <property name="rowspan">2</property>
+                          <property name="sticky">nw</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Frame" id="frame21">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="pady">5</property>
+                              <property name="row">0</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.LabeledScale" id="labeledscale2" named="True">
+                                <property name="from_">0</property>
+                                <property name="to">50</property>
+                                <property name="variable">int:v_border_width</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">ew</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label23">
+                            <property name="text" translatable="yes">0=no border</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab2">
+            <property name="text" translatable="yes">Padding</property>
+            <child>
+              <object class="ttk.Frame" id="frame16">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe3">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Padding (pixels)</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">2</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Separator" id="separator1">
+                        <property name="orient">horizontal</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">10</property>
+                          <property name="row">2</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame5">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">5</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label4">
+                            <property name="text" translatable="yes">X padding:
+(adds extra spaces on the left and right)</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">5</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.LabeledScale" id="scale_x_padding" named="True">
+                            <property name="from_">0</property>
+                            <property name="to">200</property>
+                            <property name="variable">int:v_padding_x</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame13">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">5</property>
+                          <property name="pady">0 10</property>
+                          <property name="row">3</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label5">
+                            <property name="text" translatable="yes">Y padding:
+(adds extra spaces at the top and bottom)</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">5</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.LabeledScale" id="scale_y_padding" named="True">
+                            <property name="from_">0</property>
+                            <property name="to">200</property>
+                            <property name="variable">int:v_padding_y</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab5">
+            <property name="text" translatable="yes">Run</property>
+            <child>
+              <object class="ttk.Frame" id="frame17">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+                <containerlayout manager="grid">
+                  <property type="col" id="0" name="weight">1</property>
+                  <property type="row" id="0" name="weight">1</property>
+                </containerlayout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe8">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Run reusable scripts when events occurs
+in the dialog rectangle</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">0</property>
+                      <property name="sticky">nsew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame_run_intro_animation_script" named="True">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">0</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label8">
+                            <property name="text" translatable="yes">When intro animation is starting</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label13">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_reusable_on_intro_starting" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame20">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">1</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label17">
+                            <property name="text" translatable="yes">When intro animation has finished</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label18">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_reusable_on_intro_finished" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame_run_outro_animation_script" named="True">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">2</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label21">
+                            <property name="text" translatable="yes">When outro animation is starting</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label22">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_reusable_on_outro_starting" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame24">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">3</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label25">
+                            <property name="text" translatable="yes">When outro animation has finished</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label26">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_reusable_on_outro_finished" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab6">
+            <property name="text" translatable="yes">Halt</property>
+            <child>
+              <object class="ttk.Frame" id="frame1">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+                <containerlayout manager="grid">
+                  <property type="col" id="0" name="weight">1</property>
+                  <property type="row" id="0" name="weight">1</property>
+                </containerlayout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe9">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Run reusable scripts when
+the &lt;halt&gt; or &lt;unhalt&gt; commands are used.</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">5</property>
+                      <property name="row">0</property>
+                      <property name="sticky">nsew</property>
+                    </layout>
+                    <containerlayout manager="grid">
+                      <property type="col" id="0" name="weight">1</property>
+                    </containerlayout>
+                    <child>
+                      <object class="ttk.Frame" id="frame4" named="True">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">0</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label10">
+                            <property name="text" translatable="yes">When &lt;halt&gt; is used</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label12">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_resuable_on_halt" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame8">
+                        <property name="height">200</property>
+                        <property name="relief">groove</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipadx">5</property>
+                          <property name="ipady">5</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10 5</property>
+                          <property name="row">1</property>
+                          <property name="sticky">ew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="1" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Label" id="label14">
+                            <property name="text" translatable="yes">When &lt;unhalt&gt; is used</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">2</property>
+                              <property name="padx">5 0</property>
+                              <property name="pady">5 0</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label15">
+                            <property name="text" translatable="yes">Run reusable script:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="padx">5</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="cb_resuable_on_unhalt" named="True">
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">0 5</property>
+                              <property name="row">1</property>
+                              <property name="sticky">ew</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

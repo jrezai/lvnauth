@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="startup_window" named="True">
+    <property name="geometry">470x160</property>
+    <property name="height">200</property>
+    <property name="resizable">none</property>
+    <property name="title" translatable="yes">LVNAuth</property>
+    <property name="width">200</property>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Frame" id="frame6">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="0" name="weight">1</property>
+          <property type="row" id="1" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Frame" id="frame5">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">2</property>
+              <property name="row">0</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="lbl_welcome" named="True">
+                <property name="font">TkHeadingFont</property>
+                <property name="justify">center</property>
+                <property name="text" translatable="yes">Welcome to LVNAuth</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="pady">15 0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame1">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">nsew</property>
+            </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="0" name="weight">1</property>
+              <property type="col" id="1" name="weight">1</property>
+            </containerlayout>
+            <child>
+              <object class="ttk.Frame" id="frame2">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">25</property>
+                  <property name="pady">15</property>
+                  <property name="row">0</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <containerlayout manager="grid">
+                  <property type="col" id="0" name="weight">1</property>
+                  <property type="row" id="0" name="weight">1</property>
+                </containerlayout>
+                <child>
+                  <object class="ttk.Label" id="label1">
+                    <property name="text" translatable="yes">Create a visual novel</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Menubutton" id="btn_editor" named="True">
+                    <property name="compound">top</property>
+                    <property name="text" translatable="yes">Project</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame4">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">1</property>
+                  <property name="padx">25</property>
+                  <property name="row">0</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <containerlayout manager="grid">
+                  <property type="col" id="0" name="weight">1</property>
+                </containerlayout>
+                <child>
+                  <object class="ttk.Label" id="label2">
+                    <property name="text" translatable="yes">Play an existing visual novel</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Button" id="btn_play_file" named="True">
+                    <property name="compound">top</property>
+                    <property name="text" translatable="yes">Play a file...</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="tk.Menu" id="menu_editor" named="True">
+    <property name="tearoff">false</property>
+    <child>
+      <object class="tk.Menuitem.Command" id="command_new_project" named="True">
+        <property name="command" type="command" cbtype="simple">on_new_project_menu_clicked</property>
+        <property name="label" translatable="yes">New Project</property>
+      </object>
+    </child>
+    <child>
+      <object class="tk.Menuitem.Command" id="command_open_project" named="True">
+        <property name="command" type="command" cbtype="simple">on_open_project_menu_clicked</property>
+        <property name="label" translatable="yes">Open Project...</property>
+      </object>
+    </child>
+  </object>
+</interface>

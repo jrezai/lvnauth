@@ -1,0 +1,208 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="rect_options_window" named="True">
+    <property name="geometry">338x210</property>
+    <property name="height">200</property>
+    <property name="title" translatable="yes">Trace Settings</property>
+    <property name="width">200</property>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Frame" id="frame1">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="0" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Frame" id="frame2">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">nsew</property>
+            </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="0" name="weight">1</property>
+              <property type="col" id="1" name="weight">1</property>
+              <property type="row" id="0" name="weight">1</property>
+              <property type="row" id="2" name="weight">1</property>
+            </containerlayout>
+            <child>
+              <object class="ttk.Labelframe" id="labelframe1">
+                <property name="height">200</property>
+                <property name="text" translatable="yes">Vertical Position</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="columnspan">2</property>
+                  <property name="padx">10</property>
+                  <property name="row">0</property>
+                  <property name="sticky">nsew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Checkbutton" id="checkbutton1">
+                    <property name="command" type="command" cbtype="simple">on_manual_checkbox_changed</property>
+                    <property name="text" translatable="yes">Use manual top</property>
+                    <property name="variable">boolean:v_use_manual_top</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">5</property>
+                      <property name="pady">5</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Spinbox" id="spinbox_manual_top" named="True">
+                    <property name="textvariable">int:v_manual_top_value</property>
+                    <property name="to">200</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">1</property>
+                      <property name="padx">3</property>
+                      <property name="row">0</property>
+                      <property name="sticky">ew</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="lbl_top_most_info" named="True">
+                    <property name="text" translatable="yes">0 = top most</property>
+                    <layout manager="grid">
+                      <property name="column">2</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Frame" id="frame3">
+                    <property name="height">200</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">1</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Radiobutton" id="rb_top" named="True">
+                        <property name="text" translatable="yes">Top</property>
+                        <property name="value">top</property>
+                        <property name="variable">string:v_fixed_position</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Radiobutton" id="rb_middle" named="True">
+                        <property name="text" translatable="yes">Middle</property>
+                        <property name="value">middle</property>
+                        <property name="variable">string:v_fixed_position</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">1</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Radiobutton" id="rb_bottom" named="True">
+                        <property name="text" translatable="yes">Bottom</property>
+                        <property name="value">bottom</property>
+                        <property name="variable">string:v_fixed_position</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">0 5</property>
+                          <property name="row">4</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame_buttons" named="True">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="columnspan">2</property>
+                  <property name="padx">10</property>
+                  <property name="pady">10</property>
+                  <property name="row">1</property>
+                  <property name="sticky">e</property>
+                </layout>
+                <child>
+                  <object class="ttk.Button" id="btn_close" named="True">
+                    <property name="command" type="command" cbtype="simple">on_ok_button_clicked</property>
+                    <property name="text" translatable="yes">OK</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">0 5</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Button" id="btn_cancel" named="True">
+                    <property name="command" type="command" cbtype="simple">on_cancel_button_clicked</property>
+                    <property name="text" translatable="yes">Cancel</property>
+                    <layout manager="grid">
+                      <property name="column">1</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame4">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="label2">
+                <property name="text" translatable="yes">Line number:</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">0 5</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Spinbox" id="spinbox2">
+                <property name="from_">0</property>
+                <property name="textvariable">int:v_line_number</property>
+                <property name="to">100</property>
+                <property name="width">3</property>
+                <layout manager="grid">
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
