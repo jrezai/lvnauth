@@ -963,6 +963,10 @@ class EditorMainApp:
 
         # For playing/testing the story
         compile_path = Path(r"draft/draft.lvna")
+        
+        # Make sure the draft folder exists.
+        draft_folder = compile_path.parents[0]
+        draft_folder.mkdir(parents=True, exist_ok=True)        
 
         compile_result = self.compile(lvna_full_path=compile_path,
                                       draft_mode=True)
