@@ -7,8 +7,6 @@ LVNAuth is a desktop application that lets you create and view visual novels. Cu
 
 *A Windows version is planned.*
 
-![image](https://github.com/jrezai/lvnauth/assets/45316730/47a85ca5-5d9e-4df5-8321-c540a08cf81c)
-
 ### Main features:
 
 - **Built-in Editor**: Manage your visual novel, from beginning to end, using LVNAuth's GUI editor.
