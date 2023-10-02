@@ -1,0 +1,14 @@
+### Setting up a development environment for LVNAuth in Linux
+
+1. Create a new folder
+2. Open a terminal and go to the new folder you created in step 1.
+3. Clone the repository using: git clone https://github.com/jrezai/lvnauth.git
+4. Create a Python virtual environment using: virtualenv venv
+5. Activate the virtual environment by going to /venv/bin and run the command: source activate
+6. Download the required modules from requirements.txt using: pip3 install -r <the path to requirements.txt will be in the lvnauth/src folder>
+7. Open a Python IDE of your choice and set the main startup file to be: start.py
+8. Run the project. LVNAuth should now open.
+
+### Comments
+
+- Please use comments to explain what your code does
