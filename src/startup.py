@@ -22,6 +22,7 @@ import editor_window
 import tkinter as tk
 from project_snapshot import ProjectSnapshot
 from new_project_window import ProjectFolderWindow
+from snap_handler import SnapHandler
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "startup_window.ui"
 
@@ -36,8 +37,13 @@ class StartupWindow:
         self.mainwindow = builder.get_object("startup_window", master)
         
         
+        if SnapHandler.is_in_snap_package():
+            app_icon_path = SnapHandler.get_lvnauth_editor_icon_path()
+        else:
+            app_icon_path = "app_icon.png"
+        
         # App icon
-        app_icon = tk.PhotoImage(file="app_icon.png")
+        app_icon = tk.PhotoImage(file=app_icon_path)
         self.mainwindow.app_icon = app_icon
         self.mainwindow.iconphoto(True, self.mainwindow.app_icon)
         
