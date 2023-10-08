@@ -12,6 +12,7 @@ confinement: devmode
 apps:
   lvnauth:
     command: bin/python3 lvnauth/src/startup.py
+    extensions: [gnome]
     plugs:
       - x11
       - audio-playback
@@ -41,6 +42,10 @@ parts:
     source: .
     stage-packages:
        - python3-tk
+       - fontconfig-config
+       - fonts-dejavu-core
+       - fonts-dejavu-extra
+       - locales-all
     organize:
       startup.py: bin/lvnauth
 
