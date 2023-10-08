@@ -43,6 +43,7 @@ from wizard_window import WizardWindow
 from play_error_window import PlayErrorWindow
 from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
+from snap_handler import SnapHandler
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -848,7 +849,8 @@ class EditorMainApp:
             #active_script = {active_chapter_name: ProjectSnapshot.chapters_and_scenes[active_chapter_name]}
 
             # For playing/testing the story
-            compile_path = Path(r"draft/draft.lvna")
+            draft_path = SnapHandler.get_draft_path()
+            compile_path = Path(draft_path)
 
             compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
                                      startup_scene_name=active_scene_name,
@@ -896,7 +898,8 @@ class EditorMainApp:
         """
 
         player_script_file: Path
-        player_script_file = Path("player") / "main.py"
+        # Get the path to main.py (the player Python script file.)
+        player_script_file = SnapHandler.get_lvnauth_player_python_file()
         
         # Get the path to the Python interpreter that's being used now.
         # This is the recommended way when using subprocess.run()
@@ -962,7 +965,8 @@ class EditorMainApp:
         """
 
         # For playing/testing the story
-        compile_path = Path(r"draft/draft.lvna")
+        draft_path = SnapHandler.get_draft_path()
+        compile_path = Path(draft_path)
         
         # Make sure the draft folder exists.
         draft_folder = compile_path.parents[0]
@@ -1000,7 +1004,7 @@ class EditorMainApp:
                                  title="Error",
                                  message="An error occurred when attempting to compile your visual novel.")            
 
-    def compile(self, lvna_full_path: str, draft_mode: bool):
+    def compile(self, lvna_full_path: [str, Path], draft_mode: bool):
         """
         Compile a 'play from beginning' .lvna file.
         

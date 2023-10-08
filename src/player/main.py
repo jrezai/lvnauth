@@ -28,10 +28,18 @@ from io import BytesIO
 from typing import Dict
 from pathlib import Path
 
+# We need to add the parent directory so
+# the snap_handler module will be seen.
+this_module_path = Path(__file__)
+one_level_up_directory = str(Path(*this_module_path.parts[0:-2]))
+sys.path.append(one_level_up_directory)
+from snap_handler import SnapHandler
+
 
 class Main:
     
     def __init__(self):
+        
         self.launch_window: LaunchWindow
         self.launch_window = None
 
@@ -116,9 +124,14 @@ class Main:
         # The app's icon file will be either in the current directory
         # or in the 'player' directory. It depends whether the visual novel
         # is being played from the editor, or directly.
-        app_icon_path = Path(r"app_icon_small.png")
-        if not app_icon_path.exists():
-            app_icon_path = Path(r"./player/app_icon_small.png")
+        if SnapHandler.is_in_snap_package():
+            app_icon_path = SnapHandler.get_lvnauth_editor_icon_path_small()
+        else:
+            # Not in a Snap package.
+            app_icon_path = Path(r"app_icon_small.png")
+            if not app_icon_path.exists():
+                app_icon_path = Path(r"./player/app_icon_small.png")
+
         pygame.display.set_icon(pygame.image.load(app_icon_path))
         
         # Create the main surface
@@ -258,7 +271,12 @@ if __name__ == "__main__":
 
     # Debug for playing in the player
     if not args.file:
-        args.file = "../draft/draft.lvna"
+        
+        if SnapHandler.is_in_snap_package():
+            draft_path = SnapHandler.get_draft_path()
+            args.file = str(draft_path)
+        else:
+            args.file = r"../draft/draft.lvna"
         args.show_launch = "True"
         
     if not args.file:

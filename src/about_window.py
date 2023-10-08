@@ -22,10 +22,11 @@ import pygubu
 from PIL import Image, ImageTk
 from project_snapshot import ProjectSnapshot
 from linklabel_widget import LinkLabel
+from snap_handler import SnapHandler
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "about_window.ui"
 PROJECT_LVN_LICENSE_UI =  PROJECT_PATH / "ui" / "lvnauth_license_window.ui"
-PROJECT_LIBRARIES_ICONS_LICENSE_UI =  PROJECT_PATH / "ui" / "about_libraries_window.ui"
+PROJECT_LIBRARIES_ICONS_LICENSE_UI = PROJECT_PATH / "ui" / "about_libraries_window.ui"
 
 
 class LVNAuthLicenseWindow:
@@ -110,6 +111,7 @@ class AboutLibrariesWindow:
         sb_vertical_ionic.configure(command=text_ionic.yview)
         text_ionic.configure(yscrollcommand=sb_vertical_ionic.set)   
 
+
 class AboutWindow:
     def __init__(self, master=None):
         self.builder = builder = pygubu.Builder()
@@ -120,7 +122,14 @@ class AboutWindow:
         builder.connect_callbacks(self)
         
         # LVNAuth logo image
-        self.lvnauth_image = Image.open("lvnauth_logo.png")
+        if SnapHandler.is_in_snap_package():
+            lvnauth_snap_directory = SnapHandler.get_lvnauth_src_folder()
+            lvnauth_logo_path = lvnauth_snap_directory / "lvnauth_logo.png"
+        else:
+            # Not a Snap package; get the regular path (same folder as this script.)
+            lvnauth_logo_path = "lvnauth_logo.png"
+
+        self.lvnauth_image = Image.open(lvnauth_logo_path)
         self.lvnauth_image = ImageTk.PhotoImage(image=self.lvnauth_image)
         self.lbl_lvnauth = builder.get_object("lbl_lvnauth")
         self.lbl_lvnauth.configure(image=self.lvnauth_image)
