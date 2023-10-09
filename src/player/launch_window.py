@@ -232,7 +232,7 @@ class LaunchWindow:
         self.lbl_genre.configure(text=self.story_info.get("Genre"))
         self.lbl_version.configure(text=self.story_info.get("Version"))
         
-        self.txt_description.insert("end", self.story_info.get("Description"))
+        self.txt_description.insert("end", self.story_info.get("Description", ""))
         self.txt_description.configure(state="disabled")
 
         # Showt the story's poster image.
