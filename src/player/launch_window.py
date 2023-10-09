@@ -235,7 +235,7 @@ class LaunchWindow:
         self.txt_description.insert("end", self.story_info.get("Description", ""))
         self.txt_description.configure(state="disabled")
 
-        # Showt the story's poster image.
+        # Show the story's poster image.
         self.show_poster_image()
         
         # Show the chapter names and scene names
