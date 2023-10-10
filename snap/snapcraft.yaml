@@ -7,11 +7,14 @@ description: |
 version: initial
 base: core22
 grade: devel
-confinement: devmode
+confinement: strict
+issues: https://github.com/jrezai/lvnauth/issues
+icon: lvnauth/snap/gui/lvnauth.png
 
 apps:
   lvnauth:
-    command: bin/python3 lvnauth/src/startup.py
+    command: bin/python3 $SNAP/lvnauth/src/startup.py
+    desktop: lvnauth/snap/gui/lvnauth.desktop
     extensions: [gnome]
     plugs:
       - x11
