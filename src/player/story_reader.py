@@ -4207,6 +4207,9 @@ class StoryReader:
         """
         Show a sprite (any sprite, such as character, name)
         by setting its visibility to True.
+
+        Changes:
+        Oct 12, 2023 - Match flip values when swapping sprites (Jobin Rezai)
         """
         name: SpriteShowHide
         name = self._get_arguments(class_namedtuple=SpriteShowHide,
@@ -4241,7 +4244,8 @@ class StoryReader:
         # the new sprite that we have now.
 
         if sprite_type in (file_reader.ContentType.CHARACTER,
-                           file_reader.ContentType.OBJECT):
+                           file_reader.ContentType.OBJECT,
+                           file_reader.ContentType.DIALOG_SPRITE):
 
             if sprite_type == file_reader.ContentType.CHARACTER:
                 sprite_group = active_story.Groups.character_group
@@ -4252,6 +4256,7 @@ class StoryReader:
             elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
                 sprite_group = active_story.Groups.dialog_group
 
+            # Find the sprite that we're swapping 'out'
             visible_sprite: active_story.SpriteObject
             for visible_sprite in sprite_group.sprites.values():
                 if visible_sprite.visible and \
@@ -4274,6 +4279,12 @@ class StoryReader:
                     copied_sprite.rect = new_sprite.rect
                     copied_sprite.name = new_sprite.name
 
+                    # Record whether the new sprite has been flipped in any way
+                    # at any time in the past, because we'll need to compare the flip
+                    # values with the sprite that is being swapped out later in this method.
+                    copied_sprite.flipped_horizontally = new_sprite.flipped_horizontally
+                    copied_sprite.flipped_vertically = new_sprite.flipped_vertically
+
                     # Make the new sprite the same as the current sprite
                     # but with the new images, rects, and new name.
                     new_sprite = copied_sprite
@@ -4285,9 +4296,9 @@ class StoryReader:
                     # Hide the old sprite (that we're swapping out)
                     visible_sprite.start_hide()
 
-                    # If the old sprite was flipped, then flip the new sprite too.
-                    new_sprite.flip(visible_sprite.flipped_horizontally,
-                                    visible_sprite.flipped_vertically)
+                    # If the sprite that is being swapped out was flipped horizontally and/or vertically,
+                    # then make sure the new sprite is flipped horizontally and/or vertically too.
+                    new_sprite.flip_match_with(visible_sprite)
 
                     # Show the new sprite (that we're swapping in)
                     new_sprite.start_show()

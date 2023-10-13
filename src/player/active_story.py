@@ -441,23 +441,54 @@ class SpriteObject:
         # we need to queue it for updating here.
         ManualUpdate.queue_for_update(combined_rect)
 
+    def flip_match_with(self, other_sprite):
+        """
+        Match the flip settings of this sprite with another sprite object.
+
+        Purpose: when a sprite is swapped out with another sprite, the
+        sprite that is being swapped-in will get the same flip settings
+        as the sprite that is being swapped-out.
+
+        Arguments:
+
+        - other_sprite: the SpriteObject to match the flip settings with.
+        """
+
+        # What kind of flips have occurred so far
+        flip_horizontal = False
+        flip_vertical = False
+
+        # Do the horizontal flips match?
+        if self.flipped_horizontally != other_sprite.flipped_horizontally:
+            # The horizontal flips don't match, so horizontally-flip this sprite later in this method.
+            flip_horizontal = True
+
+        # Do the vertical flips match?
+        if self.flipped_vertically != other_sprite.flipped_vertically:
+            # The vertical flips don't match, so vertically-flip this sprite later in this method.
+            flip_vertical = True
+
+        # Flip this sprite if needed.
+        self.flip(horizontal=flip_horizontal,
+                  vertical=flip_vertical)
+
     def flip(self, horizontal: bool, vertical: bool):
         """
         Flip both the image surface and the original image surface.
+
+        :param horizontal: if True, set the horizontal property to the opposite value.
+        :param vertical: if True set the vertical property to the opposite value.
+        :return: None
         """
 
         if horizontal:
-            if self.flipped_horizontally:
-                self.flipped_horizontally = False
-            else:
-                self.flipped_horizontally = True
+            # Toggle horizontal value
+            self.flipped_horizontally = not self.flipped_horizontally
 
         if vertical:
-            if self.flipped_vertically:
-                self.flipped_vertically = False
-            else:
-                self.flipped_vertically = True
-                
+            # Toggle vertical value
+            self.flipped_vertically = not self.flipped_vertically
+
         if all([horizontal, vertical]):
             self.image = pygame.transform.flip(self.image, True, True)
             self.original_image = pygame.transform.flip(self.original_image, True, True)
@@ -467,6 +498,9 @@ class SpriteObject:
         elif vertical:
             self.image = pygame.transform.flip(self.image, False, True)
             self.original_image = pygame.transform.flip(self.original_image, False, True)
+        else:
+            # No flips have occurred, so there is no need to request a screen-update.
+            return
 
         # Queue the combined rect for a manual screen update.
         # Regular animations (such as <character_start_moving: rave>)
