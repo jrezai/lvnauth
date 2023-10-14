@@ -37,9 +37,9 @@ from snap_handler import SnapHandler
 
 
 class Main:
-    
+
     def __init__(self):
-        
+
         self.launch_window: LaunchWindow
         self.launch_window = None
 
@@ -58,7 +58,7 @@ class Main:
         # Get the 'StoryInfo' dictionary, which contains details like
         # author, copyright, description, etc.
         story_info = story_details.get("StoryInfo")
-        
+
         chapters_and_scenes = story_details.get("StoryChapterAndSceneNames")
 
         # Get the BytesIO of the poster image.
@@ -70,15 +70,15 @@ class Main:
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
-        
+
         # Run tkinter's main loop
         self.launch_window.run()
-        
+
     def _get_poster_image(self, data_requester: FileReader) -> BytesIO:
         """
         Return the poster image (if any), as a BytesIO object.
         """
-        
+
         # Example:
         # ['8-157434', '.png']
         range_and_file_extension = data_requester.general_header.get("PosterTitleImageLocation")
@@ -118,9 +118,9 @@ class Main:
 
         pygame.init()
         clock = pygame.time.Clock()
-        
+
         pygame.display.set_caption("LVNAuth Player")
-        
+
         # The app's icon file will be either in the current directory
         # or in the 'player' directory. It depends whether the visual novel
         # is being played from the editor, or directly.
@@ -133,7 +133,7 @@ class Main:
                 app_icon_path = Path(r"./player/app_icon_small.png")
 
         pygame.display.set_icon(pygame.image.load(app_icon_path))
-        
+
         # Create the main surface
         main_surface = pygame.display.set_mode(screen_size)
 
@@ -155,19 +155,18 @@ class Main:
         # We need this flag because when we minimize pygame and restore it again,
         # the window won't update until we refresh the whole screen.
         self.pygame_window_last_visible = pygame.display.get_active()
-        
-        # Hodls the number of milliseconds elapsed in each frame
+
+        # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
-        
+
         while story.story_running:
-            
+
             # The number of milliseconds elapsed in this frame
-            milliseconds_elapsed = clock.tick(60)               
-                        
+            milliseconds_elapsed = clock.tick(60)
+
             # Used for a constant move speed of all objects
             # regardless of the FPS
             Passer.seconds_elapsed = milliseconds_elapsed / 1000
-            
 
             main_surface.fill((0, 0, 0))
 
@@ -178,41 +177,29 @@ class Main:
                     story.on_event(event)
 
                     # print("Mouse:", pygame.mouse.get_pos())
-                    
-                    left_clicked = False
-                    list_test = []
-                    
-                    if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                        left_clicked = True
-                        manual_update = pygame.Rect(15, 352, 45, 47)
 
-                        list_test.append(manual_update)
-
+                    # left_clicked = False
+                    # list_test = []
+                    #
+                    # if pygame.mouse.get_pressed(num_buttons=3)[0]:
+                    #     left_clicked = True
+                    #     manual_update = pygame.Rect(15, 352, 45, 47)
+                    #
+                    #     list_test.append(manual_update)
 
             # Handle movements
             story.on_loop()
 
             # Handle drawing
             update_rects = story.on_render()
-            
-            # TODO: For debugging, remove later
-            if left_clicked:
-                pass
-
-
 
             # Update portions of the screen or the entire screen, depending on some factors.
             self.refresh_screen(update_rects)
-       
 
-            #print(update_rects)
+            # print(update_rects)
 
             # For debugging
             # pygame.display.flip()
-            
-
-                        
-
 
     def refresh_screen(self, update_rects):
         """
@@ -257,7 +244,7 @@ class Main:
 
 
 if __name__ == "__main__":
-    
+
     read_arguments = argparse.ArgumentParser()
     read_arguments.add_argument("--file",
                                 dest="file",
@@ -271,14 +258,14 @@ if __name__ == "__main__":
 
     # Debug for playing in the player
     if not args.file:
-        
+
         if SnapHandler.is_in_snap_package():
             draft_path = SnapHandler.get_draft_path()
             args.file = str(draft_path)
         else:
             args.file = r"../draft/draft.lvna"
         args.show_launch = "True"
-        
+
     if not args.file:
         print("No file specified. Use --file to specify a path to a .lvna file.")
         quit()
@@ -287,6 +274,6 @@ if __name__ == "__main__":
     show_launch = args.show_launch in ("true", "True")
 
     # print(f"{args.file=},{args.show_menu=}")
-    
+
     main = Main()
     main.begin()
