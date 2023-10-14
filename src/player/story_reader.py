@@ -968,6 +968,9 @@ class StoryReader:
                (if there are multiple arguments, they will be delimited by commas
                like this: "first argument, second argument, third argument..."
         :return:
+
+        Changes
+        Oct 13, 2023 - Process text_dialog_show only if the dialog isn't already visible (Jobin Rezai)
         """
         if command_name in StoryReader.COMMANDS_REQUIRE_ARGUMENTS and not arguments:
             print(f"{command_name} was used without an argument.")
@@ -1084,10 +1087,16 @@ class StoryReader:
             self.story: StoryReader
             if self.story.dialog_rectangle:
 
-                # Used to indicate that the main script should pause
-                self.animating_dialog_rectangle = True
-                
-                self.story.dialog_rectangle.start_show()
+                # Start showing the intro animation for
+                # the dialog rectangle, only if it's not already visible.
+
+                # Reason: otherwise, the story will wait for a dialog
+                # intro animation that has already finished.
+                if not self.story.dialog_rectangle.visible:
+                    # Used to indicate that the main script should pause
+                    self.animating_dialog_rectangle = True
+
+                    self.story.dialog_rectangle.start_show()
 
         elif command_name == "text_dialog_close":
 
@@ -4217,7 +4226,7 @@ class StoryReader:
 
         if not name:
             return
-        
+
         # Get the sprite
         new_sprite: active_story.SpriteObject
 
