@@ -20,10 +20,10 @@ import copy
 import pygame
 import active_story
 import file_reader
-import extract_functions
 import dialog_rectangle
 import font_handler
 import logging
+import sprite_definition as sd
 from re import search
 from typing import Tuple, NamedTuple
 from font_handler import ActiveFontHandler
@@ -31,7 +31,6 @@ from typing import Dict
 from shared_components import Passer
 from audio_player import AudioPlayer, AudioChannel
 from rest_handler import RestHandler
-
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -66,6 +65,12 @@ class HaltAuto(NamedTuple):
 
 class Rest(NamedTuple):
     number_of_frames: int
+
+
+class WaitForAnimation(NamedTuple):
+    sprite_type: str
+    general_alias: str
+    animation_type: str
 
 
 class PlayAudio(NamedTuple):
@@ -122,145 +127,6 @@ class SceneLoad(NamedTuple):
     chapter_name: str
     scene_name: str
 
-
-class MovementSpeed(NamedTuple):
-    sprite_name: str
-    x: int
-    x_direction: str
-    y: int
-    y_direction: str
-
-
-class MovementDelay(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
-
-class MovementStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class SpriteShowHide(NamedTuple):
-    sprite_name: str
-
-
-class SpriteCenter(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
-
-class SpriteCenterWith(NamedTuple):
-    alias_to_move: str
-    sprite_type_to_center_with: str
-    center_with_alias: str
-
-class SpriteLoad(NamedTuple):
-    sprite_name: str
-    sprite_general_alias: str
-    
-
-class FadeUntilValue(NamedTuple):
-    sprite_name: str
-    fade_value: float
-
-
-class FadeCurrentValue(NamedTuple):
-    sprite_name: str
-    current_fade_value: int
-
-
-class FadeSpeed(NamedTuple):
-    sprite_name: str
-    fade_speed: float
-    fade_direction: str  # "fade in" or "fade out"
-
-
-class FadeStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class FadeDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    fade_delay: int
-    
-
-class FadeDelayMain:
-    def __init__(self, fade_delay: FadeDelay):
-        self.fade_delay = fade_delay
-        self.frames_skipped_so_far = 0
-
-
-class ScaleDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    scale_delay: int
-
-
-class ScaleDelayMain:
-    def __init__(self, scale_delay: ScaleDelay):
-        self.scale_delay = scale_delay
-        self.frames_skipped_so_far = 0
-
-
-class ScaleBy(NamedTuple):
-    sprite_name: str
-    scale_by: float
-    scale_rotation: str
-
-
-class ScaleUntil(NamedTuple):
-    sprite_name: str
-    scale_until: float
-
-
-class ScaleCurrentValue(NamedTuple):
-    sprite_name: str
-    scale_current_value: float
-
-
-class ScaleStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class RotateCurrentValue(NamedTuple):
-    sprite_name: str
-    rotate_current_value: float
-
-
-class RotateSpeed(NamedTuple):
-    sprite_name: str
-    rotate_speed: float
-    rotate_direction: str
-
-class RotateStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class RotateUntil(NamedTuple):
-    sprite_name: str
-    rotate_until: str  # str because the word 'forever' can be used.
-
-
-class RotateDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip when rotating a sprite.
-    rotate_delay: int
-
-
-class RotateDelayMain:
-    def __init__(self, rotate_delay: RotateDelay):
-        self.rotate_delay = rotate_delay
-        self.frames_skipped_so_far = 0
 
 
 
@@ -463,13 +329,10 @@ class StoryReader:
         # This is used so we don't attempt to reload the story again.
         self.story_finished = False
 
-
-
         # Only the main story reader should contain the fields below.
         if not self.background_reader_name:
             # It's the main story reader.
-            
-            
+
             # Gets set to True when <halt> is reached.
             # This pauses the reading of the main script until the mouse is clicked.
             self.halt_main_script = False
@@ -479,6 +342,13 @@ class StoryReader:
             # mouse is clicked. It forces the main story reader to pause for
             # a specific number of frames.
             self.rest_handler = RestHandler()
+
+            # Gets used with <wait_for_animation>
+            # This object gets used for checking wait-rules (waiting
+            # for specific sprites to finish specific animations).
+            # It forces the main story reader to pause until there are
+            # no more sprites animating that were in the wait list.
+            self.wait_for_animation_handler = WaitForAnimationHandler()
     
             # When halted in auto-mode, a mouse click or keyboard press won't
             # advance the story. Instead, the story will be advanced automatically
@@ -541,7 +411,7 @@ class StoryReader:
 
     def main_script_should_pause(self):
         """
-        Check if there are any animations occuring
+        Check if there are any animations occurring
         or pauses (halt, rest) that should cause
         the main story script to not continue reading.
         
@@ -551,7 +421,8 @@ class StoryReader:
         
         return any((main_reader.animating_dialog_rectangle,
                     main_reader.halt_main_script,
-                    main_reader.rest_handler.pause_required()))
+                    main_reader.rest_handler.pause_required(),
+                    main_reader.wait_for_animation_handler.check_wait()))
 
     def clear_all_sprite_groups(self):
         """
@@ -563,10 +434,10 @@ class StoryReader:
         the loaded sprites so we can start fresh, because it might
         be a new chapter too.
         """
-        active_story.Groups.background_group.clear()
-        active_story.Groups.character_group.clear()
-        active_story.Groups.object_group.clear()
-        active_story.Groups.dialog_group.clear()
+        sd.Groups.background_group.clear()
+        sd.Groups.character_group.clear()
+        sd.Groups.object_group.clear()
+        sd.Groups.dialog_group.clear()
 
     def _get_startup_chapter_script(self) -> str | None:
         """
@@ -1144,6 +1015,9 @@ class StoryReader:
             """
             self._rest(arguments=arguments)
 
+        elif command_name == "wait_for_animation":
+            pass
+
         elif command_name == "character_show":
             """
             Show a character sprite by setting its visibility flag to True.
@@ -1315,32 +1189,32 @@ class StoryReader:
         elif command_name == "character_start_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.CHARACTER,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
             
         elif command_name == "object_start_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.OBJECT,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "dialog_sprite_start_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "character_stop_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.CHARACTER,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "object_stop_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.OBJECT,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "dialog_sprite_stop_moving":
             self._sprite_start_or_stop_moving(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
 
         elif command_name == "character_move_delay":
             self._set_movement_delay(sprite_type=file_reader.ContentType.CHARACTER,
@@ -1435,32 +1309,32 @@ class StoryReader:
         elif command_name == "character_start_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.CHARACTER,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
             
         elif command_name == "dialog_sprite_start_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
             
         elif command_name == "object_start_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.OBJECT,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.START)
+                                              start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "character_stop_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.CHARACTER,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "object_stop_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.OBJECT,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "dialog_sprite_stop_fading":
             self._sprite_start_or_stop_fading(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                               arguments=arguments,
-                                              start_or_stop=extract_functions.StartOrStop.STOP)
+                                              start_or_stop=sd.StartOrStop.STOP)
 
         elif command_name == "character_scale_by":
             self._sprite_scale_by(sprite_type=file_reader.ContentType.CHARACTER,
@@ -1525,32 +1399,32 @@ class StoryReader:
         elif command_name == "character_start_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.CHARACTER,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.START)
+                                               start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "object_start_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.OBJECT,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.START)
+                                               start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "dialog_start_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.START)
+                                               start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "character_stop_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.CHARACTER,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.STOP)
+                                               start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "object_stop_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.OBJECT,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.STOP)
+                                               start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "dialog_sprite_stop_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                arguments=arguments,
-                                               start_or_stop=extract_functions.StartOrStop.STOP)
+                                               start_or_stop=sd.StartOrStop.STOP)
             
         elif command_name == "character_rotate_current_value":
             self._sprite_rotate_current_value(sprite_type=file_reader.ContentType.CHARACTER,
@@ -1615,32 +1489,32 @@ class StoryReader:
         elif command_name == "character_start_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.CHARACTER,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.START)
+                                                start_or_stop=sd.StartOrStop.START)
             
         elif command_name == "object_start_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.OBJECT,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.START)
+                                                start_or_stop=sd.StartOrStop.START)
             
         elif command_name == "dialog_sprite_start_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.START)
+                                                start_or_stop=sd.StartOrStop.START)
 
         elif command_name == "character_stop_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.CHARACTER,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.STOP)
+                                                start_or_stop=sd.StartOrStop.STOP)
 
         elif command_name == "object_stop_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.OBJECT,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.STOP)
+                                                start_or_stop=sd.StartOrStop.STOP)
 
         elif command_name == "dialog_sprite_stop_rotating":
             self._sprite_start_or_stop_rotating(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                 arguments=arguments,
-                                                start_or_stop=extract_functions.StartOrStop.STOP)
+                                                start_or_stop=sd.StartOrStop.STOP)
 
     def _volume(self, command_name: str, arguments: str):
         """
@@ -1661,7 +1535,7 @@ class StoryReader:
         
         def get_volume_from_convenient_value(self, convenient_value: int):
             """
-            Take a value from 0 to 10 and return its float equivalant.
+            Take a value from 0 to 10 and return its float equivalent.
         
             pygame uses 0 to 1.0
             LVNAuth accepts: 0 to 100
@@ -1935,9 +1809,8 @@ class StoryReader:
         except ValueError as e:
             logging.warning(f"{command_name} error: {e}")
             return
-        
-    
-        position_type = extract_functions.str_to_position_type(position)
+
+        position_type = sd.str_to_position_type(position)
 
         if not position_type:
             try:
@@ -1981,9 +1854,9 @@ class StoryReader:
         <dialog_sprite_center_x_with: some dialog sprite name, character, theo>
         <object_center_x_with: my object name, character, theo>
         """
-        
-        name: SpriteCenterWith
-        name = self._get_arguments(class_namedtuple=SpriteCenterWith,
+
+        name: sd.SpriteCenterWith
+        name = self._get_arguments(class_namedtuple=sd.SpriteCenterWith,
                                    given_arguments=arguments)
 
         if not name:
@@ -2091,8 +1964,8 @@ class StoryReader:
         :return: None
         """
 
-        scale_center: SpriteCenter
-        scale_center = self._get_arguments(class_namedtuple=SpriteCenter,
+        scale_center: sd.SpriteCenter
+        scale_center = self._get_arguments(class_namedtuple=sd.SpriteCenter,
                                            given_arguments=arguments)
 
         if not scale_center:
@@ -2533,7 +2406,7 @@ class StoryReader:
     def _sprite_start_or_stop_rotating(self,
                                        sprite_type: file_reader.ContentType,
                                        arguments,
-                                       start_or_stop: extract_functions.StartOrStop):
+                                       start_or_stop: sd.StartOrStop):
         """
         Set the flag for the sprite object
         to indicate that rotating animations should start or stop.
@@ -2557,20 +2430,20 @@ class StoryReader:
                                               general_alias=sprite_name)
 
             if not sprite:
-                return            
+                return
 
-            if start_or_stop == extract_functions.StartOrStop.START:
+            if start_or_stop == sd.StartOrStop.START:
 
                 # Initialize the RotateCurrentValue object, we need to have
                 # it for the animation to work.
                 if sprite.rotate_current_value is None:
-                    sprite.rotate_current_value =\
-                        RotateCurrentValue(sprite_name=sprite_name,
-                                           rotate_current_value=0)
+                    sprite.rotate_current_value = \
+                        sd.RotateCurrentValue(sprite_name=sprite_name,
+                                              rotate_current_value=0)
                 
                 sprite.start_rotating()
-            
-            elif start_or_stop == extract_functions.StartOrStop.STOP:
+
+            elif start_or_stop == sd.StartOrStop.STOP:
                 sprite.stop_rotating()
 
     def _sprite_scale_delay(self,
@@ -2588,8 +2461,8 @@ class StoryReader:
         return: None
         """
 
-        scale_delay: ScaleDelay
-        scale_delay = self._get_arguments(class_namedtuple=ScaleDelay,
+        scale_delay: sd.ScaleDelay
+        scale_delay = self._get_arguments(class_namedtuple=sd.ScaleDelay,
                                           given_arguments=arguments)
 
         if not scale_delay:
@@ -2605,7 +2478,7 @@ class StoryReader:
 
         # We use the object below because it's part of a class that keeps
         # track of the number of frames skipped.
-        scale_delay_main = ScaleDelayMain(scale_delay=scale_delay)
+        scale_delay_main = sd.ScaleDelayMain(scale_delay=scale_delay)
 
         # Set the property for the sprite so when the scaling animation
         # is working, it'll read this variable value and delay the scale effect.
@@ -2614,7 +2487,7 @@ class StoryReader:
     def _sprite_start_or_stop_scaling(self,
                                       sprite_type: file_reader.ContentType,
                                       arguments,
-                                      start_or_stop: extract_functions.StartOrStop):
+                                      start_or_stop: sd.StartOrStop):
         """
         Set the flag for the sprite object to indicate
         that a scaling animation should start or stop.
@@ -2633,23 +2506,23 @@ class StoryReader:
 
             # Get the active sprite using the general alias.
             sprite = self.story.get_visible_sprite(content_type=sprite_type,
-                                                             general_alias=sprite_name)
+                                                   general_alias=sprite_name)
 
             if not sprite:
-                return            
+                return
 
-            if start_or_stop == extract_functions.StartOrStop.START:
+            if start_or_stop == sd.StartOrStop.START:
                 
                 # Initialize the ScaleCurrentValue object, we need to have
                 # it for the animation to work.
                 if sprite.scale_current_value is None:
-                    sprite.scale_current_value =\
-                        ScaleCurrentValue(sprite_name=sprite_name,
-                                           scale_current_value=0)
+                    sprite.scale_current_value = \
+                        sd.ScaleCurrentValue(sprite_name=sprite_name,
+                                             scale_current_value=0)
                 
                 sprite.start_scaling()
-                
-            elif start_or_stop == extract_functions.StartOrStop.STOP:
+
+            elif start_or_stop == sd.StartOrStop.STOP:
                 sprite.stop_scaling()
 
     def _sprite_after_scaling_stop(self,
@@ -2666,8 +2539,8 @@ class StoryReader:
         return: None
         """
 
-        scale_stop_run_script: ScaleStopRunScript
-        scale_stop_run_script = self._get_arguments(class_namedtuple=ScaleStopRunScript,
+        scale_stop_run_script: sd.ScaleStopRunScript
+        scale_stop_run_script = self._get_arguments(class_namedtuple=sd.ScaleStopRunScript,
                                                     given_arguments=arguments)
 
         if not scale_stop_run_script:
@@ -2698,8 +2571,8 @@ class StoryReader:
         return: None
         """
 
-        scale_current_value: ScaleCurrentValue
-        scale_current_value = self._get_arguments(class_namedtuple=ScaleCurrentValue,
+        scale_current_value: sd.ScaleCurrentValue
+        scale_current_value = self._get_arguments(class_namedtuple=sd.ScaleCurrentValue,
                                                   given_arguments=arguments)
 
         if not scale_current_value:
@@ -2707,7 +2580,7 @@ class StoryReader:
 
         # Get the active/visible sprite
         sprite = self.story.get_visible_sprite(content_type=sprite_type,
-                                                         general_alias=scale_current_value.sprite_name)
+                                               general_alias=scale_current_value.sprite_name)
 
         if not sprite:
             return        
@@ -2732,8 +2605,8 @@ class StoryReader:
         return: None
         """
 
-        scale_until: ScaleUntil
-        scale_until = self._get_arguments(class_namedtuple=ScaleUntil,
+        scale_until: sd.ScaleUntil
+        scale_until = self._get_arguments(class_namedtuple=sd.ScaleUntil,
                                           given_arguments=arguments)
 
         if not scale_until:
@@ -2802,7 +2675,7 @@ class StoryReader:
     def _sprite_start_or_stop_fading(self,
                                      sprite_type: file_reader.ContentType,
                                      arguments,
-                                     start_or_stop: extract_functions.StartOrStop):
+                                     start_or_stop: sd.StartOrStop):
         """
         Set the flag for the sprite object to indicate that a fading animation
         should start or stop.
@@ -2827,12 +2700,12 @@ class StoryReader:
                                               general_alias=sprite_name)
 
             if not sprite:
-                return            
+                return
 
-            if start_or_stop == extract_functions.StartOrStop.START:
+            if start_or_stop == sd.StartOrStop.START:
                 sprite.start_fading()
-                
-            elif start_or_stop == extract_functions.StartOrStop.STOP:
+
+            elif start_or_stop == sd.StartOrStop.STOP:
                 sprite.stop_fading()
 
     def _sprite_fade_speed_get_value_from_percent(self, percent, fade_direction: str) -> float | None:
@@ -2855,7 +2728,7 @@ class StoryReader:
             return
         
         fade_direction = fade_direction.lower()
-        if not fade_direction in ("fade in", "fade out"):
+        if fade_direction not in ("fade in", "fade out"):
             return
 
         # The fade speed (slowest to fastest). There are 100 lines in the string.
@@ -3295,8 +3168,8 @@ class StoryReader:
         return: None
         """
 
-        fade_speed: FadeSpeed
-        fade_speed = self._get_arguments(class_namedtuple=FadeSpeed,
+        fade_speed: sd.FadeSpeed
+        fade_speed = self._get_arguments(class_namedtuple=sd.FadeSpeed,
                                          given_arguments=arguments)
 
         if not fade_speed:
@@ -3322,9 +3195,9 @@ class StoryReader:
             return
 
         # Use the new float value instead of the convenience value.
-        fade_speed = FadeSpeed(fade_speed.sprite_name,
-                               fade_float_value,
-                               fade_speed.fade_direction)
+        fade_speed = sd.FadeSpeed(fade_speed.sprite_name,
+                                  fade_float_value,
+                                  fade_speed.fade_direction)
 
         # Initialize the FadeCurrentValue object, we need to have
         # it for the animation to work.
@@ -3340,11 +3213,10 @@ class StoryReader:
                 initial_fade_value = 255
             else:
                 initial_fade_value = 0
-            
-            sprite.current_fade_value =\
-                FadeCurrentValue(sprite_name=fade_speed.sprite_name,
-                                 current_fade_value=initial_fade_value)
-            
+
+            sprite.current_fade_value = \
+                sd.FadeCurrentValue(sprite_name=fade_speed.sprite_name,
+                                    current_fade_value=initial_fade_value)
 
         # Set the fade speed.
         # A positive value will fade-in the sprite.
@@ -3365,8 +3237,8 @@ class StoryReader:
         return: None
         """
 
-        current_fade_value: FadeCurrentValue
-        current_fade_value = self._get_arguments(class_namedtuple=FadeCurrentValue,
+        current_fade_value: sd.FadeCurrentValue
+        current_fade_value = self._get_arguments(class_namedtuple=sd.FadeCurrentValue,
                                                  given_arguments=arguments)
 
         if not current_fade_value:
@@ -3400,8 +3272,8 @@ class StoryReader:
         return: None
         """
 
-        fade_until: FadeUntilValue
-        fade_until = self._get_arguments(class_namedtuple=FadeUntilValue,
+        fade_until: sd.FadeUntilValue
+        fade_until = self._get_arguments(class_namedtuple=sd.FadeUntilValue,
                                          given_arguments=arguments)
 
         if not fade_until:
@@ -3433,8 +3305,8 @@ class StoryReader:
         return: None
         """
 
-        fade_delay: FadeDelay
-        fade_delay = self._get_arguments(class_namedtuple=FadeDelay,
+        fade_delay: sd.FadeDelay
+        fade_delay = self._get_arguments(class_namedtuple=sd.FadeDelay,
                                          given_arguments=arguments)
 
         if not fade_delay:
@@ -3450,7 +3322,7 @@ class StoryReader:
 
         # We use the object below because it's part of a class that keeps
         # track of the number of frames skipped.
-        fade_delay_main = FadeDelayMain(fade_delay=fade_delay)
+        fade_delay_main = sd.FadeDelayMain(fade_delay=fade_delay)
 
         # Set the property for the sprite so when the fading animation
         # is working, it'll read this variable value and delay the fade effect.
@@ -3462,9 +3334,9 @@ class StoryReader:
         so it's ready to be displayed whenever it's needed.
         """
 
-        sprite_name_and_alias: SpriteLoad
-        sprite_name_and_alias =\
-            self._get_arguments(class_namedtuple=SpriteLoad,
+        sprite_name_and_alias: sd.SpriteLoad
+        sprite_name_and_alias = \
+            self._get_arguments(class_namedtuple=sd.SpriteLoad,
                                 given_arguments=arguments)
 
         if not sprite_name_and_alias:
@@ -3478,16 +3350,16 @@ class StoryReader:
             return            
 
         if sprite_type == file_reader.ContentType.CHARACTER:
-            sprite_group = active_story.Groups.character_group
+            sprite_group = sd.Groups.character_group
             
         elif sprite_type == file_reader.ContentType.OBJECT:
-            sprite_group = active_story.Groups.object_group
+            sprite_group = sd.Groups.object_group
             
         elif sprite_type == file_reader.ContentType.BACKGROUND:
-            sprite_group = active_story.Groups.background_group
+            sprite_group = sd.Groups.background_group
             
         elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
-            sprite_group = active_story.Groups.dialog_group
+            sprite_group = sd.Groups.dialog_group
 
         else:
             return
@@ -3509,8 +3381,8 @@ class StoryReader:
         return: None
         """
 
-        fade_stop_run_script: FadeStopRunScript
-        fade_stop_run_script = self._get_arguments(class_namedtuple=FadeStopRunScript,
+        fade_stop_run_script: sd.FadeStopRunScript
+        fade_stop_run_script = self._get_arguments(class_namedtuple=sd.FadeStopRunScript,
                                                    given_arguments=arguments)
 
         if not fade_stop_run_script:
@@ -3541,8 +3413,8 @@ class StoryReader:
         return: None
         """
 
-        movement_stop_run_script: MovementStopRunScript
-        movement_stop_run_script = self._get_arguments(class_namedtuple=MovementStopRunScript,
+        movement_stop_run_script: sd.MovementStopRunScript
+        movement_stop_run_script = self._get_arguments(class_namedtuple=sd.MovementStopRunScript,
                                                        given_arguments=arguments)
 
         if not movement_stop_run_script:
@@ -3602,7 +3474,7 @@ class StoryReader:
         after_manager_method = self._get_after_manager()
 
         # Remove the timer with the name that matches the
-        # specified reusuable script name. If the name doesn't exist,
+        # specified reusable script name. If the name doesn't exist,
         # it won't raise an exception.
         after_manager_method.remove_timer(reusable_script_name=after_cancel.reusable_script)
 
@@ -3752,7 +3624,7 @@ class StoryReader:
     def _sprite_start_or_stop_moving(self,
                                      sprite_type: file_reader.ContentType,
                                      arguments,
-                                     start_or_stop: extract_functions.StartOrStop):
+                                     start_or_stop: sd.StartOrStop):
         """
         Set the flag for the sprite object to indicate that
         a movement animation should start or stop.
@@ -3774,12 +3646,12 @@ class StoryReader:
                                               general_alias=sprite_name)
 
             if not sprite:
-                return            
+                return
 
-            if start_or_stop == extract_functions.StartOrStop.START:
+            if start_or_stop == sd.StartOrStop.START:
                 sprite.start_moving()
 
-            elif start_or_stop == extract_functions.StartOrStop.STOP:
+            elif start_or_stop == sd.StartOrStop.STOP:
                 # The user wants to stop moving this object.
                 sprite.stop_moving()
                 
@@ -3802,8 +3674,8 @@ class StoryReader:
         :return: None
         """
 
-        movement_speed: MovementSpeed
-        movement_speed = self._get_arguments(class_namedtuple=MovementSpeed,
+        movement_speed: sd.MovementSpeed
+        movement_speed = self._get_arguments(class_namedtuple=sd.MovementSpeed,
                                              given_arguments=arguments)
 
         if not movement_speed:
@@ -3925,7 +3797,7 @@ class StoryReader:
         fade_speed =\
             self._get_arguments(class_namedtuple=FontTextFadeSpeed,
                                 given_arguments=arguments)
-        
+
         fade_speed = fade_speed.fade_speed
 
         # Don't allow the speed to be less than 1 or more than 10
@@ -4108,7 +3980,7 @@ class StoryReader:
         """
         halt_auto: HaltAuto
         halt_auto = self._get_arguments(class_namedtuple=HaltAuto,
-                                   given_arguments=arguments)
+                                        given_arguments=arguments)
 
         if not halt_auto:
             return
@@ -4163,8 +4035,30 @@ class StoryReader:
         
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
-        main_reader = self.get_main_story_reader()   
-    
+        main_reader = self.get_main_story_reader()
+
+        main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+
+    def _wait_for_animation(self, arguments: str):
+        """
+        Pause the main story reader until a specific animation has finished.
+        This is similar to <halt> except it's not interactive (mouse-clicking)
+        will not unrest it.
+
+        It forces the main reader to pause. It has
+        no effect on background readers.
+        """
+        wait: WaitForAnimation
+        wait = self._get_arguments(class_namedtuple=WaitForAnimation,
+                                   given_arguments=arguments)
+
+        if not wait:
+            return
+
+        # Get the story reader that's not a reusable script reader,
+        # because everything in this method involves the main reader only.
+        main_reader = self.get_main_story_reader()
+
         main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
 
     def _sprite_hide(self,
@@ -4178,15 +4072,15 @@ class StoryReader:
         Otherwise, if it's a name object, use its sprite name, because
         name sprites don't have aliases.
         """
-        name: SpriteShowHide
-        name = self._get_arguments(class_namedtuple=SpriteShowHide,
+        name: sd.SpriteShowHide
+        name = self._get_arguments(class_namedtuple=sd.SpriteShowHide,
                                    given_arguments=arguments)
 
         if not name:
             return
         
         # Get the sprite
-        existing_sprite: active_story.SpriteObject
+        existing_sprite: sd.SpriteObject
 
         if sprite_type in (file_reader.ContentType.CHARACTER,
                            file_reader.ContentType.OBJECT,
@@ -4220,15 +4114,15 @@ class StoryReader:
         Changes:
         Oct 12, 2023 - Match flip values when swapping sprites (Jobin Rezai)
         """
-        name: SpriteShowHide
-        name = self._get_arguments(class_namedtuple=SpriteShowHide,
+        name: sd.SpriteShowHide
+        name = self._get_arguments(class_namedtuple=sd.SpriteShowHide,
                                    given_arguments=arguments)
 
         if not name:
             return
 
         # Get the sprite
-        new_sprite: active_story.SpriteObject
+        new_sprite: sd.SpriteObject
 
         # Get the new sprite from its name, not its alias.
         
@@ -4257,16 +4151,16 @@ class StoryReader:
                            file_reader.ContentType.DIALOG_SPRITE):
 
             if sprite_type == file_reader.ContentType.CHARACTER:
-                sprite_group = active_story.Groups.character_group
+                sprite_group = sd.Groups.character_group
 
             elif sprite_type == file_reader.ContentType.OBJECT:
-                sprite_group = active_story.Groups.object_group
+                sprite_group = sd.Groups.object_group
                 
             elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
-                sprite_group = active_story.Groups.dialog_group
+                sprite_group = sd.Groups.dialog_group
 
             # Find the sprite that we're swapping 'out'
-            visible_sprite: active_story.SpriteObject
+            visible_sprite: sd.SpriteObject
             for visible_sprite in sprite_group.sprites.values():
                 if visible_sprite.visible and \
                    visible_sprite.general_alias == new_sprite.general_alias:
@@ -4327,7 +4221,7 @@ class StoryReader:
             # Reason: only 1 background at a time should be allowed
             # to be displayed.
             if sprite_type == file_reader.ContentType.BACKGROUND:
-                active_story.Groups.background_group.hide_all()
+                sd.Groups.background_group.hide_all()
                 
             new_sprite.start_show()
 
@@ -4455,7 +4349,7 @@ class StoryReader:
 
             if arguments.count(",") == 2:
                 item_name, rect_section, stop_where = self._split_arguments_to_tuple(arguments=arguments)
-                rect_section = extract_functions.rect_section_to_type(rect_section=rect_section)
+                rect_section = sd.rect_section_to_type(rect_section=rect_section)
                 
             elif arguments.count(",") == 1:
                 item_name, stop_where = self._split_arguments_to_tuple(arguments=arguments)
@@ -4468,7 +4362,7 @@ class StoryReader:
             
             # If it's a string like "end of display", convert it to its Enum value.
             if not stop_where.isnumeric():
-                stop_where = extract_functions.str_to_position_type(position=stop_where)
+                stop_where = sd.str_to_position_type(position=stop_where)
                 
                 if not stop_where:
                     return
@@ -4494,3 +4388,146 @@ class StoryReader:
                                      reaches_where=stop_where)
 
          #   self.story.change_background(background_surface=background_surface)
+
+
+class WaitForAnimationHandler:
+    """
+    Used with the <wait_for_animation> command.
+
+    Used for adding new wait rules to pause the main story reader
+    until specific animations have finished for specific sprites.
+
+    Also used for checking if sprites have finished animating,
+    and if they have, the wait rules for the sprites that have
+    stopped animating will be removed automatically.
+    """
+
+    def __init__(self):
+        # (sprite group, general alias, animation type)
+        self.wait_list = []
+
+    def enable_wait_for(self, sprite_type: str, general_alias: str, animation_type: str):
+        """
+        Record a new reason to pause the main story reader.
+        Reusable scripts are not affected.
+        """
+        if not all([sprite_type, general_alias, animation_type]):
+            return
+
+        if sprite_type == "character":
+            sprite_type_to_check = file_reader.ContentType.CHARACTER
+        elif sprite_type == "object":
+            sprite_type_to_check = file_reader.ContentType.OBJECT
+        elif sprite_type == "dialog sprite":
+            sprite_type_to_check = file_reader.ContentType.DIALOG_SPRITE
+        else:
+            return
+
+        if animation_type == "fade":
+            animation_type_to_check = sd.SpriteAnimationType.FADE
+        elif animation_type == "move":
+            animation_type_to_check = sd.SpriteAnimationType.MOVE
+        elif animation_type == "rotate":
+            animation_type_to_check = sd.SpriteAnimationType.ROTATE
+        elif animation_type == "scale":
+            animation_type_to_check = sd.SpriteAnimationType.SCALE
+        elif animation_type == "all":
+            animation_type_to_check = "all",
+        elif animation_type == "any":
+            animation_type_to_check = "any"
+        else:
+            return
+
+        self.wait_list.append((sprite_type_to_check, general_alias, animation_type_to_check))
+
+    def check_wait(self) -> bool:
+        """
+        Check the wait list to see if the main reader should pause
+        until one or more sprites' animations have stopped.
+
+        Return: True if the main story reader should wait
+        or False if there is no need for the main reader to wait for animation(s) to finish.
+        """
+        if not self.wait_list:
+            return False
+
+        remove_indexes = []
+
+        # Loop through wait_list to see what animation(s) we need to wait for (if any).
+        for idx, wait_info in enumerate(self.wait_list):
+            # Type-hints
+            sprite_group: sd.SpriteGroup
+            general_alias: str | None
+            animation_type: sd.SpriteAnimationType | str
+
+            sprite_group, general_alias, animation_type = wait_info
+            wait = self._is_sprite_animating(sprite_group=sprite_group,
+                                             general_alias=general_alias,
+                                             animation_type=animation_type)
+            if wait:
+                return True
+            else:
+                # The wait rule is not animating, so remove it from the wait list later.
+                remove_indexes.append(idx)
+        else:
+
+            # Remove wait rules that need to be removed.
+            if remove_indexes:
+                # Get a new list with only wait rules that are still waiting.
+                self.wait_list = [item for idx, item in enumerate(self.wait_list)
+                                  if idx not in remove_indexes]
+
+            # So the caller knows that there is no need to wait
+            return False
+
+    @staticmethod
+    def _is_sprite_animating(sprite_group: sd.SpriteGroup,
+                             general_alias: str | None,
+                             animation_type: sd.SpriteAnimationType | str) -> bool | None:
+        """
+        Check if a specific type of animation is currently occurring.
+
+        Arguments:
+
+            - sprite_group: the sprite group we should check sprites in
+            - general_alias: we use the general alias to find a matching sprite
+            that is visible.
+            - animation_type: the type of animation to check for, or 'all', or 'any'.
+
+        Return: True if the given type of animation is occurring for the given
+        sprite alias in the given sprite group.
+        """
+        if not all([sprite_group, general_alias, animation_type]):
+            return
+
+        sprite_object: sd.SpriteObject
+        for sprite_object in sprite_group.sprites.values():
+
+            if not sprite_object.visible:
+                continue
+            elif not sprite_object.general_alias:
+                continue
+            elif sprite_object.general_alias != general_alias:
+                continue
+
+            if isinstance(animation_type, sd.SpriteAnimationType):
+                if animation_type == sd.SpriteAnimationType.FADE and sprite_object.is_fading:
+                    return True
+                elif animation_type == sd.SpriteAnimationType.MOVE and sprite_object.is_moving:
+                    return True
+                elif animation_type == sd.SpriteAnimationType.ROTATE and sprite_object.is_rotating:
+                    return True
+                elif animation_type == sd.SpriteAnimationType.SCALE and sprite_object.is_scaling:
+                    return True
+
+            elif isinstance(animation_type, str):
+                if animation_type == "all" and all([sprite_object.is_fading,
+                                                    sprite_object.is_moving,
+                                                    sprite_object.is_rotating,
+                                                    sprite_object.is_scaling]):
+                    return True
+                elif animation_type == "any" and any([sprite_object.is_fading,
+                                                      sprite_object.is_moving,
+                                                      sprite_object.is_rotating,
+                                                      sprite_object.is_scaling]):
+                    return True

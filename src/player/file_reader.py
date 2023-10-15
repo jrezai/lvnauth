@@ -25,6 +25,7 @@ from font_handler import FontSprite
 import json
 import pygame
 import active_story
+import sprite_definition as sd
 
 
 class ContentType(Enum):
@@ -236,22 +237,22 @@ class FileReader:
                 if content_type == ContentType.CHARACTER:
 
                     # Set the dictionary
-                    sprite_group = active_story.Groups.character_group
-                    create_sprite_method = active_story.Character
+                    sprite_group = sd.Groups.character_group
+                    create_sprite_method = sd.Character
                 
                 elif content_type == ContentType.OBJECT:
 
-                    sprite_group = active_story.Groups.object_group
-                    create_sprite_method = active_story.SpriteObject
+                    sprite_group = sd.Groups.object_group
+                    create_sprite_method = sd.SpriteObject
 
                 elif content_type == ContentType.DIALOG_SPRITE:
 
-                    sprite_group = active_story.Groups.dialog_group
-                    create_sprite_method = active_story.DialogSprite
+                    sprite_group = sd.Groups.dialog_group
+                    create_sprite_method = sd.DialogSprite
 
 
                 if sprite_group:
-                    existing_sprite: active_story.SpriteObject
+                    existing_sprite: sd.SpriteObject
                     existing_sprite = None
                     
                     #i_sprite: active_story.SpriteObject
@@ -279,13 +280,13 @@ class FileReader:
 
                 elif content_type == ContentType.BACKGROUND:
 
-                    existing_sprite = active_story.Groups.background_group.sprites.get(item_name)
+                    existing_sprite = sd.Groups.background_group.sprites.get(item_name)
                     if existing_sprite:
-                        return existing_sprite                    
-                    
-                    new_sprite = active_story.Background(name=item_name,
-                                                         image=surface_image,
-                                                         general_alias="fixed_alias")
+                        return existing_sprite
+
+                    new_sprite = sd.Background(name=item_name,
+                                               image=surface_image,
+                                               general_alias="fixed_alias")
                     return new_sprite
                 
 
