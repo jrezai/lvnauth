@@ -168,7 +168,7 @@ class ActiveStory:
             if not general_alias:
                 raise ValueError(f"No general alias provided {ContentType.name}.")
 
-        sprite: SpriteObject
+        sprite: sd.SpriteObject
         for sprite in group_to_check.sprites.values():
             if any((sprite.visible, sprite.pending_show)) and \
                not sprite.pending_hide:

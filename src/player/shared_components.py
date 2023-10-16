@@ -103,7 +103,6 @@ class ManualUpdate:
         return updated_rects
 
 
-
 class Passer:
     active_story = None
     

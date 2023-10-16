@@ -2208,8 +2208,8 @@ class StoryReader:
         return: None
         """
 
-        rotate_current_value: RotateCurrentValue
-        rotate_current_value = self._get_arguments(class_namedtuple=RotateCurrentValue,
+        rotate_current_value: sd.RotateCurrentValue
+        rotate_current_value = self._get_arguments(class_namedtuple=sd.RotateCurrentValue,
                                                    given_arguments=arguments)
 
         if not rotate_current_value:
@@ -2246,8 +2246,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_until: RotateUntil
-        rotate_until = self._get_arguments(class_namedtuple=RotateUntil,
+        rotate_until: sd.RotateUntil
+        rotate_until = self._get_arguments(class_namedtuple=sd.RotateUntil,
                                            given_arguments=arguments)
 
         if not rotate_until:
@@ -2295,8 +2295,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_delay: RotateDelay
-        rotate_delay = self._get_arguments(class_namedtuple=RotateDelay,
+        rotate_delay: sd.RotateDelay
+        rotate_delay = self._get_arguments(class_namedtuple=sd.RotateDelay,
                                            given_arguments=arguments)
 
         if not rotate_delay:
@@ -2312,7 +2312,7 @@ class StoryReader:
 
         # We use the object below because it's part of a class that keeps
         # track of the number of frames skipped.
-        rotate_delay_main = RotateDelayMain(rotate_delay=rotate_delay)
+        rotate_delay_main = sd.RotateDelayMain(rotate_delay=rotate_delay)
 
         # Set the property for the sprite so when the rotate animation
         # is working, it'll read this variable value and delay the rotate effect.
@@ -2335,8 +2335,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_speed: RotateSpeed
-        rotate_speed = self._get_arguments(class_namedtuple=RotateSpeed,
+        rotate_speed: sd.RotateSpeed
+        rotate_speed = self._get_arguments(class_namedtuple=sd.RotateSpeed,
                                            given_arguments=arguments)
 
         if not rotate_speed:
@@ -2362,9 +2362,9 @@ class StoryReader:
             return
         
         # Use the new float value instead of the convenience value.
-        rotate_speed = RotateSpeed(rotate_speed.sprite_name,
-                                   rotate_float_value,
-                                   rotate_speed.rotate_direction)
+        rotate_speed = sd.RotateSpeed(rotate_speed.sprite_name,
+                                      rotate_float_value,
+                                      rotate_speed.rotate_direction)
 
         # Set the property for the sprite to know how fast
         # (or slow) the rotation animation should occur, 
@@ -2385,8 +2385,8 @@ class StoryReader:
         return: None
         """
 
-        rotate_stop_run_script: RotateStopRunScript
-        rotate_stop_run_script = self._get_arguments(class_namedtuple=RotateStopRunScript,
+        rotate_stop_run_script: sd.RotateStopRunScript
+        rotate_stop_run_script = self._get_arguments(class_namedtuple=sd.RotateStopRunScript,
                                                      given_arguments=arguments)
 
         if not rotate_stop_run_script:
@@ -2640,8 +2640,8 @@ class StoryReader:
         return: None
         """
 
-        scale_by: ScaleBy
-        scale_by = self._get_arguments(class_namedtuple=ScaleBy,
+        scale_by: sd.ScaleBy
+        scale_by = self._get_arguments(class_namedtuple=sd.ScaleBy,
                                        given_arguments=arguments)
 
         if not scale_by:
@@ -3604,8 +3604,8 @@ class StoryReader:
         :param arguments: str, such as '3, 5' (which means delay x by 3 frames, delay y by 5 frames.
         :return: None
         """
-        movement_delay: MovementDelay
-        movement_delay = self._get_arguments(class_namedtuple=MovementDelay,
+        movement_delay: sd.MovementDelay
+        movement_delay = self._get_arguments(class_namedtuple=sd.MovementDelay,
                                              given_arguments=arguments)
 
         if not movement_delay:
@@ -4239,7 +4239,7 @@ class StoryReader:
 
         dialog_rectangle_arguments: DialogRectangleDefinition
         dialog_rectangle_arguments = self._get_arguments(class_namedtuple=DialogRectangleDefinition,
-                                                        given_arguments=arguments)
+                                                         given_arguments=arguments)
 
         
         if not dialog_rectangle_arguments:
