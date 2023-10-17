@@ -1056,6 +1056,15 @@ class StoryReader:
             self._sprite_hide(arguments=arguments,
                               sprite_type=file_reader.ContentType.DIALOG_SPRITE)
 
+        elif command_name in ("character_hide_all",
+                              "object_hide_all",
+                              "dialog_sprite_hide_all"):
+            """
+            Hide all the sprites in a specific sprite group,
+            depending on the command name.
+            """
+            self._sprite_hide_all(command_name=command_name)
+
         elif command_name == "dialog_text_sound":
             """
             Specify the sound to play for letter-by-letter non-gradual
@@ -4070,11 +4079,9 @@ class StoryReader:
                      sprite_type: file_reader.ContentType):
         """
         Hide a sprite (any sprite, such as character, name)
-        by setting its visibility to True.
+        by setting its visibility to False.
         
-        If it's a character or object, find the sprite using its general alias.
-        Otherwise, if it's a name object, use its sprite name, because
-        name sprites don't have aliases.
+        Find the sprite using its general alias.
         """
         name: sd.SpriteShowHide
         name = self._get_arguments(class_namedtuple=sd.SpriteShowHide,
@@ -4096,21 +4103,43 @@ class StoryReader:
                 self.story.get_visible_sprite(content_type=sprite_type,
                                               general_alias=name.sprite_name)
 
-        else:
-            # Get the visible sprite based on the sprite name (not the alias)
-            # Used for hiding name objects
-            existing_sprite =\
-                self.story.get_visible_sprite(content_type=sprite_type,
-                                              sprite_name=name.sprite_name)
+            if not existing_sprite:
+                return
 
-        if not existing_sprite:
+            existing_sprite.start_hide()
+
+    def _sprite_hide_all(self,
+                         command_name: str):
+        """
+        Hide all sprites in the given sprite group (such as character, object, dialog sprite)
+        by setting its visibility to False.
+        """
+
+        if not command_name:
             return
 
-        existing_sprite.start_hide()
+        if command_name == "character_hide_all":
+            sprite_group = sd.Groups.character_group
+
+        elif command_name == "object_hide_all":
+            sprite_group = sd.Groups.object_group
+
+        elif command_name == "dialog_sprite_hide_all":
+            sprite_group = sd.Groups.dialog_group
+
+        else:
+            return
+
+        # Go through the sprites in the given sprite group
+        # and hide the sprites if they're visible.
+        sprite_object: sd.SpriteObject
+        for sprite_object in sprite_group.sprites.values():
+            if sprite_object.visible:
+                sprite_object.start_hide()
 
     def _sprite_show(self,
-                          arguments: str,
-                          sprite_type: file_reader.ContentType):
+                     arguments: str,
+                     sprite_type: file_reader.ContentType):
         """
         Show a sprite (any sprite, such as character, name)
         by setting its visibility to True.
