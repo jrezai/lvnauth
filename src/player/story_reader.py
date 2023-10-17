@@ -1016,7 +1016,10 @@ class StoryReader:
             self._rest(arguments=arguments)
 
         elif command_name == "wait_for_animation":
-            pass
+            """
+            Pause the main story reader until a specific animation has finished.
+            """
+            self._wait_for_animation(arguments=arguments)
 
         elif command_name == "character_show":
             """
@@ -4043,10 +4046,9 @@ class StoryReader:
         """
         Pause the main story reader until a specific animation has finished.
         This is similar to <halt> except it's not interactive (mouse-clicking)
-        will not unrest it.
+        will not resume it.
 
-        It forces the main reader to pause. It has
-        no effect on background readers.
+        It forces the main reader to pause. It has no effect on background readers.
         """
         wait: WaitForAnimation
         wait = self._get_arguments(class_namedtuple=WaitForAnimation,
@@ -4059,7 +4061,9 @@ class StoryReader:
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+        main_reader.wait_for_animation_handler.enable_wait_for(sprite_type=wait.sprite_type,
+                                                               general_alias=wait.general_alias,
+                                                               animation_type=wait.animation_type)
 
     def _sprite_hide(self,
                      arguments: str,
@@ -4415,11 +4419,11 @@ class WaitForAnimationHandler:
             return
 
         if sprite_type == "character":
-            sprite_type_to_check = file_reader.ContentType.CHARACTER
+            sprite_group_to_check = sd.Groups.character_group
         elif sprite_type == "object":
-            sprite_type_to_check = file_reader.ContentType.OBJECT
+            sprite_group_to_check = sd.Groups.object_group
         elif sprite_type == "dialog sprite":
-            sprite_type_to_check = file_reader.ContentType.DIALOG_SPRITE
+            sprite_group_to_check = sd.Groups.dialog_group
         else:
             return
 
@@ -4438,7 +4442,7 @@ class WaitForAnimationHandler:
         else:
             return
 
-        self.wait_list.append((sprite_type_to_check, general_alias, animation_type_to_check))
+        self.wait_list.append((sprite_group_to_check, general_alias, animation_type_to_check))
 
     def check_wait(self) -> bool:
         """
