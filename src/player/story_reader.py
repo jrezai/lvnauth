@@ -24,7 +24,7 @@ import dialog_rectangle
 import font_handler
 import logging
 import sprite_definition as sd
-from re import search
+from re import search, findall
 from typing import Tuple, NamedTuple
 from font_handler import ActiveFontHandler
 from typing import Dict
@@ -128,6 +128,13 @@ class SceneLoad(NamedTuple):
     scene_name: str
 
 
+class CallWithArguments(NamedTuple):
+    reusable_script_name: str
+    arguments: str
+
+
+class CallWithNoArguments(NamedTuple):
+    reusable_script_name: str
 
 
 class AfterCounter:
@@ -329,8 +336,13 @@ class StoryReader:
         # This is used so we don't attempt to reload the story again.
         self.story_finished = False
 
+        # Only a reusable secondary reader should contain arguments
+        # (for use with <call> with arguments)
+        if self.background_reader_name:
+            self.argument_handler = ReusableScriptArgument()
+
         # Only the main story reader should contain the fields below.
-        if not self.background_reader_name:
+        elif not self.background_reader_name:
             # It's the main story reader.
 
             # Gets set to True when <halt> is reached.
@@ -559,6 +571,60 @@ class StoryReader:
                 # so clear the deletion queue.
                 self.background_readers_deletion_queue.clear()
 
+    def replace_tokens_with_arguments(self, line_to_check: str) -> str | None:
+        """
+        Look for (@parameter) tokens in the given string and
+        replace it with the value of the report from the reusable script's arguments
+        dictionary.
+
+        This is only used with reusable scripts that have parameters/arguments.
+
+        Arguments:
+            - line_to_check: a line in a reusable script
+
+        Return:
+            A new string with the (@parameter) tokens replaced, or None if
+            no parameters were found in the string.
+        """
+        # This check should only apply to background readers (reusable scripts)
+        if not self.background_reader_name:
+            return
+
+        if not line_to_check:
+            return
+
+        parameters = r"[(][@][a-zA-Z\d]*[_]*[\w ]+[)]"
+
+        results = findall(pattern=parameters,
+                          string=line_to_check)
+
+        replaced_token = False
+
+        # Example:
+        # ['(@)', '(@character)', '(@last name)']
+        for token in results:
+            # Get the token without the starting (@ and ending )
+            parameter_name = token.strip().lstrip("(@").rstrip(")")
+            if not parameter_name:
+                continue
+
+            # Get the argument value for the specified parameter in the reusable script.
+            parameter_value = self.argument_handler.get_argument_value(parameter_name)
+
+            # Argument not found for the token? Consider this an error in the visual novel.
+            if not parameter_value:
+                raise ValueError(f"Reusable script error - no replaceable value found for token '{parameter_name}',"
+                                 f" in reusable script: '{self.background_reader_name}'")
+
+            # Replace the token with the argument
+            line_to_check = line_to_check.replace(token, parameter_value)
+
+            # So we know whether to return the modified line or None
+            replaced_token = True
+
+        if replaced_token:
+            return line_to_check
+
     def read_story(self):
         """
         Read the story line by line, starting with the startup chapter script,
@@ -589,7 +655,6 @@ class StoryReader:
             script = chapter_script + "\n" + scene_script
 
             self.script_lines = script.splitlines()
-
 
         """
         If this is the main story reader and there are blocking animations
@@ -635,6 +700,12 @@ class StoryReader:
             # if this command is not used.
             elif line == "<line>":
                 line = ""
+
+            # Replaced tokens with argument values (reusable scripts only)
+            # The method below will check if we are in a reusable script or not.
+            line_with_replaced_tokens = self.replace_tokens_with_arguments(line)
+            if line_with_replaced_tokens:
+                line = line_with_replaced_tokens
 
             results = self.extract_arguments(line)
             if results:
@@ -1241,7 +1312,13 @@ class StoryReader:
                                      arguments=arguments)
             
         elif command_name == "call":
-            self.spawn_new_background_reader(reusable_script_name=arguments)
+
+            if "," in arguments:
+                use_arguments = True
+            else:
+                use_arguments = False
+            self.spawn_new_background_reader(reusable_script_name=arguments,
+                                             with_arguments=use_arguments)
             
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -1963,7 +2040,7 @@ class StoryReader:
 
         # Run a reusable script for when the animation has stopped?
         if run_reusable_script_name:
-            self.spawn_new_background_reader\
+            self.spawn_new_background_reader \
                 (reusable_script_name=run_reusable_script_name)
 
     def _sprite_set_center(self,
@@ -3523,26 +3600,41 @@ class StoryReader:
             
         return after_manager_method
 
-    def spawn_new_background_reader(self, reusable_script_name):
+    def spawn_new_background_reader(self, reusable_script_name, with_arguments: bool = False):
         """
         Create a new background reader.
         :param reusable_script_name: (str) the case-sensitive name of the reusable script we should load.
+        :param with_arguments: (bool) True if arguments have been supplied (comma separated)
+        as part of the reusable_script_name.
+        For example: 'character=theo,last name=something' (two arguments in this example)
         :return: None
         """
+
+        call: CallWithArguments
+
+        if not with_arguments:
+            # The class type will be CallWithNoArguments here
+            call = \
+                self._get_arguments(class_namedtuple=CallWithNoArguments,
+                                    given_arguments=reusable_script_name)
+        else:
+            call = \
+                self._get_arguments(class_namedtuple=CallWithArguments,
+                                    given_arguments=reusable_script_name)
 
         # If a reusable script is calling another reusable script, spawn the new background reader
         # from the main story reader, not from the background reader that requested the reusable script.
         # That way, all the background readers will be tied to the main story reader.
         if self.background_reader_name:
             # Load the reusable script from the main story reader.
-            self.story.reader.spawn_new_background_reader(reusable_script_name=reusable_script_name)
+            self.story.reader.spawn_new_background_reader(reusable_script_name=call.reusable_script_name)
             return
 
         # Is the requested reusable script already loaded and running? Don't allow another one.
-        elif reusable_script_name in self.background_readers:
+        elif call.reusable_script_name in self.background_readers:
             return
 
-        script = self._get_reusable_script(reusable_script_name=reusable_script_name)
+        script = self._get_reusable_script(reusable_script_name=call.reusable_script_name)
 
         if not script:
             return
@@ -3550,12 +3642,64 @@ class StoryReader:
         # Instantiate a new background reader
         reader = StoryReader(story=self.story,
                              data_requester=self.data_requester,
-                             background_reader_name=reusable_script_name)
+                             background_reader_name=call.reusable_script_name)
 
         reader.script_lines = script.splitlines()
 
         # Add the background reader to the main dictionary that holds the background readers.
-        self.background_readers[reusable_script_name] = reader
+        self.background_readers[call.reusable_script_name] = reader
+
+        def get_reusable_script_arguments(unsorted_arguments_line: str) -> Dict | None:
+            """
+            Parse the parameter name(s) and argument value(s) from
+            the given line.
+
+            Example:
+                character name=theo,last name=test
+                will result to: {"character name": "theo",
+                                 "last name": "test"}
+
+            return: Dict
+            """
+            if not unsorted_arguments_line:
+                return
+
+            pattern = r"^(?P<Parameter>[a-z]+[_]*[\w ]+)={1}(?P<Argument>.*)$"
+
+            # We need to evaluate multiple arguments separately,
+            # with each parameter/value pair on its own line.
+            argument_lines = unsorted_arguments_line.split(",")
+
+            parameters_and_arguments = {}
+
+            for line in argument_lines:
+                result = search(pattern=pattern,
+                                string=line)
+
+                if result:
+                    # Get the parameter name (ie: 'character name'
+                    parameter = result.groupdict().get("Parameter")
+
+                    # Get the argument value (after the = sign), ie: Theo
+                    argument_value = result.groupdict().get("Argument")
+
+                    # Add to dictionary which will be returned
+                    parameters_and_arguments[parameter] = argument_value
+
+            return parameters_and_arguments
+
+        # Was the reusable script called with parameters/arguments?
+        # Then add those arguments to argument_handler for the new background reader.
+        if with_arguments:
+            # Get the parameter names and values by recording them in a dictionary.
+            parameter_arguments = \
+                get_reusable_script_arguments(unsorted_arguments_line=call.arguments)
+
+            # Add the parameter names and argument values to
+            # the argument handler's dictionary, so <call> reusable scripts
+            # can read from that dictionary when (@symbol) tokens are found.
+            if parameter_arguments:
+                reader.argument_handler.add_arguments(parameter_arguments)
 
         # Start reading the new background reusable script.
         reader.read_story()
@@ -4166,9 +4310,10 @@ class StoryReader:
 
         if not new_sprite:
             return
-        
-        # Is the sprite already visible? return
-        elif new_sprite.visible:
+
+        # Is the sprite already visible and not waiting to hide? return
+        # because the sprite is already fully visible.
+        elif new_sprite.visible and not new_sprite.pending_hide:
             return
 
         # Set the visibility to True and also
@@ -4564,3 +4709,47 @@ class WaitForAnimationHandler:
                                                       sprite_object.is_rotating,
                                                       sprite_object.is_scaling]):
                     return True
+
+
+class ReusableScriptArgument:
+    """
+    Used for keeping a reusable script and its argument names and values.
+
+    The arguments only get populated when <call> is used on the reusable script.
+    After each <call>, the 'old' arguments are cleared.
+
+    For example:
+    <call: move left>
+    will run 'move left' with no arguments.
+
+    whereas:
+    <call: move left, character=theo>
+    will run 'move left' with argument: {'character': 'theo'}
+    After the reusable script finishes, the arguments for that reusable script will be cleared.
+
+    If we run <call: move left> again, with no arguments
+    then the old arguments {'character': 'theo') will no longer be there.
+    """
+
+    def __init__(self,
+                 arguments: Dict = None):
+        self.arguments = arguments
+
+        # Arguments is a dict:
+        # key: argument name
+        # value: the value of the argument
+        # example: {"character": "theo"}
+        if arguments is None:
+            self.arguments = {}
+
+    def get_all_arguments(self) -> Dict:
+        return self.arguments
+
+    def get_argument_value(self, argument_name) -> str | None:
+        return self.arguments.get(argument_name)
+
+    def add_arguments(self, arguments: Dict):
+        self.arguments = self.arguments | arguments
+
+    def clear_arguments(self):
+        self.arguments.clear()
