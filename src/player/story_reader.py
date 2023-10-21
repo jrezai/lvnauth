@@ -593,9 +593,9 @@ class StoryReader:
         if not line_to_check:
             return
 
-        parameters = r"[(][@][a-zA-Z\d]*[_]*[\w ]+[)]"
+        pattern = r"[(][@][a-zA-Z\d]*[_]*[\w ]+[)]"
 
-        results = findall(pattern=parameters,
+        results = findall(pattern=pattern,
                           string=line_to_check)
 
         replaced_token = False
