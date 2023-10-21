@@ -3672,6 +3672,7 @@ class StoryReader:
 
             parameters_and_arguments = {}
 
+            # Example: ["character=theo", "background=sky"]
             for line in argument_lines:
                 result = search(pattern=pattern,
                                 string=line)
@@ -3682,6 +3683,12 @@ class StoryReader:
 
                     # Get the argument value (after the = sign), ie: Theo
                     argument_value = result.groupdict().get("Argument")
+
+                    # Strip spaces around the parameter and argument
+                    # so that something like ' character =  theo ' will still work.
+                    if parameter and argument_value:
+                        parameter = parameter.strip()
+                        argument_value = argument_value.strip()
 
                     # Add to dictionary which will be returned
                     parameters_and_arguments[parameter] = argument_value
