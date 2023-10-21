@@ -2031,7 +2031,7 @@ class StoryReader:
 
             # The dialog rectangle has closed, so hide all
             # dialog-related sprites.
-            active_story.Groups.dialog_group.hide_all()
+            sd.Groups.dialog_group.hide_all()
 
         # Now that the animation has finished for the dialog rect, record
         # the dialog's rect so when we add letters to the dialog, we won't
