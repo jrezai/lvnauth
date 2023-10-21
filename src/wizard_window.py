@@ -380,52 +380,50 @@ class WizardWindow:
                          command_name="play_voice",
                          purpose_line="Play audio in the voice channel.")
 
+        page_audio_stop_fx = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_fx",
+                        command_name="stop_fx",
+                        purpose_line="Stops the audio in the FX channel.",
+                        when_to_use="When you want to stop playing an audio effect.")
 
-        page_audio_stop_fx =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_fx",
-                         command_name="stop_fx",
-                         purpose_line="Stops the audio in the FX channel.",
-                         when_to_use="When you want to stop playing an audio effect.")
-        
-        page_audio_stop_all_audio =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_all_audio",
-                         command_name="stop_all_audio",
-                         purpose_line="Stops playing the audio for: effects, voices, music.",
-                         when_to_use="When you want to stop playing audio effects, voices, and music.\n"
-                         "No error will occur if no audio is playing.")
+        page_audio_stop_all_audio = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_all_audio",
+                        command_name="stop_all_audio",
+                        purpose_line="Stops playing the audio for: effects, voices, music.",
+                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
+                                    "No error will occur if no audio is playing.")
 
+        page_audio_stop_music = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_music",
+                        command_name="stop_music",
+                        purpose_line="Stops the audio in the music channel.",
+                        when_to_use="When you want to stop playing music.")
 
-        page_audio_stop_music =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_music",
-                         command_name="stop_music",
-                         purpose_line="Stops the audio in the music channel.",
-                         when_to_use="When you want to stop playing music.")
-
-        page_audio_stop_voice =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_voice",
-                         command_name="stop_voice",
-                         purpose_line="Stops the audio in the voice channel.",
-                         when_to_use="When you want to stop playing audio in the voice channel.")
+        page_audio_stop_voice = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_voice",
+                        command_name="stop_voice",
+                        purpose_line="Stops the audio in the voice channel.",
+                        when_to_use="When you want to stop playing audio in the voice channel.")
 
 
         page_audio_volume_fx =\
@@ -500,17 +498,16 @@ class WizardWindow:
                             purpose_line="Set audio to play for each gradually shown letter.\n"
                             "Only works for gradually-shown text (non-fading).")
 
-
-        page_audio_dialog_text_sound_clear =\
-            DialogTextSoundClear(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Audio",
-                                 sub_display_text="dialog_text_sound_clear",
-                                 command_name="dialog_text_sound_clear",
-                                 purpose_line="Set no audio to play for each gradually shown letter.",
-                                 when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.")
+        page_audio_dialog_text_sound_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="dialog_text_sound_clear",
+                        command_name="dialog_text_sound_clear",
+                        purpose_line="Set no audio to play for each gradually shown letter.",
+                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.")
 
 
         page_load_background =\
@@ -575,6 +572,15 @@ class WizardWindow:
                           command_name="character_hide",
                           purpose_line="Hides the given sprite.")
 
+        page_hide_all_character = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Character",
+                        sub_display_text="character_hide_all",
+                        command_name="character_hide_all",
+                        purpose_line="Hides all character sprites.")
 
         page_character_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -1074,7 +1080,16 @@ class WizardWindow:
                           sub_display_text="object_hide",
                           command_name="object_hide",
                           purpose_line="Hides the given sprite.")
-        
+
+        page_hide_all_object = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Object",
+                        sub_display_text="object_hide_all",
+                        command_name="object_hide_all",
+                        purpose_line="Hides all object sprites.")
         
         page_object_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -1556,52 +1571,52 @@ class WizardWindow:
                                  command_name="text_dialog_define",
                                  purpose_line="Create a dialog rectangle for character text to appear in.")
 
-        page_dialog_show =\
-            TextDialogShow(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="text_dialog_show",
-                                 command_name="text_dialog_show",
-                                 purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
-                                 when_to_use="When a character wants to speak or for narration text.")
-    
-        page_dialog_close =\
-            TextDialogClose(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="text_dialog_close",
-                                 command_name="text_dialog_close",
-                                 purpose_line="Close the dialog by initiating its outro animation.",
-                                 when_to_use="When all the characters finish speaking.")
+        page_dialog_show = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="text_dialog_show",
+                        command_name="text_dialog_show",
+                        purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
+                        when_to_use="When a character wants to speak or for narration text.")
 
-        page_dialog_halt =\
-            DialogHalt(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="halt",
-                       command_name="halt",
-                       purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
-                       when_to_use="When you want to give the viewer a chance to pause and read.")
+        page_dialog_close = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="text_dialog_close",
+                        command_name="text_dialog_close",
+                        purpose_line="Close the dialog by initiating its outro animation.",
+                        when_to_use="When all the characters finish speaking.")
 
-        page_dialog_halt_auto =\
+        page_dialog_halt = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="halt",
+                        command_name="halt",
+                        purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
+                        when_to_use="When you want to give the viewer a chance to pause and read.")
+
+        page_dialog_halt_auto = \
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="halt_auto",
-                       command_name="halt_auto",
-                       purpose_line="Pause the dialog text for a specific number of frames.",
-                       scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
-                       scale_from_value=1,
-                       scale_to_value=600,
-                       scale_default_value=120)
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Dialog",
+                           sub_display_text="halt_auto",
+                           command_name="halt_auto",
+                           purpose_line="Pause the dialog text for a specific number of frames.",
+                           scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
+                           scale_from_value=1,
+                           scale_to_value=600,
+                           scale_default_value=120)
         
         page_dialog_continue =\
             DialogContinue(parent_frame=self.frame_contents_outer,
@@ -1643,6 +1658,16 @@ class WizardWindow:
                               sub_display_text="dialog_sprite_hide",
                               command_name="dialog_sprite_hide",
                               purpose_line="Hides the given sprite.")
+
+        page_hide_all_dialog = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="dialog_sprite_hide_all",
+                        command_name="dialog_sprite_hide_all",
+                        purpose_line="Hides all dialog sprites.")
 
         page_dialog_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -2273,17 +2298,17 @@ class WizardWindow:
                                  parent_display_text="General",
                                  sub_display_text="after_cancel",
                                  command_name="after_cancel",
-                                 purpose_line="Cancels an existing 'after' timer.")   
+                                 purpose_line="Cancels an existing 'after' timer.")
 
-        page_after_cancel_all =\
-            AfterCancelAll(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="General",
-                                 sub_display_text="after_cancel_all",
-                                 command_name="after_cancel_all",
-                                 purpose_line="Cancels all after-timers.")
+        page_after_cancel_all = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="General",
+                        sub_display_text="after_cancel_all",
+                        command_name="after_cancel_all",
+                        purpose_line="Cancels all after-timers.")
         
         page_call =\
             ReusableScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2347,6 +2372,7 @@ class WizardWindow:
         self.pages["load_character"] = page_load_character
         self.pages["character_show"] = page_show_character
         self.pages["character_hide"] = page_hide_character
+        self.pages["character_hide_all"] = page_hide_all_character
         
         self.pages["character_flip_both"] = page_character_flip_both
         self.pages["character_flip_horizontal"] = page_character_flip_horizontal
@@ -2408,6 +2434,7 @@ class WizardWindow:
         self.pages["load_object"] = page_load_object
         self.pages["object_show"] = page_show_object
         self.pages["object_hide"] = page_hide_object
+        self.pages["object_hide_all"] = page_hide_all_object
         
         self.pages["object_flip_both"] = page_object_flip_both
         self.pages["object_flip_horizontal"] = page_object_flip_horizontal
@@ -2462,6 +2489,7 @@ class WizardWindow:
         self.pages["load_dialog_sprite"] = page_load_dialog
         self.pages["dialog_sprite_show"] = page_show_dialog
         self.pages["dialog_sprite_hide"] = page_hide_dialog
+        self.pages["dialog_sprite_hide_all"] = page_hide_all_dialog
         
         self.pages["dialog_sprite_flip_both"] = page_dialog_flip_both
         self.pages["dialog_sprite_flip_horizontal"] = page_dialog_flip_horizontal
@@ -5431,29 +5459,6 @@ class AudioPlay(SharedPages.PlayAudioGeneric):
                          sub_display_text, command_name, purpose_line)
 
 
-class AudioStop(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-
-class AfterCancelAll(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-
-
 class Font_LoadFont(SharedPages.LoadSpriteNoAlias):
     """
     <load_font_sprite>
@@ -5730,34 +5735,14 @@ Comments:
         self.frame_content.grid()
 
 
-class TextDialogShow(SharedPages.CommandNoParameters):
+class CommandOnly(SharedPages.CommandNoParameters):
     def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-class TextDialogClose(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-class DialogHalt(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class Flip(SharedPages.StartStop):
@@ -5885,18 +5870,6 @@ class DialogTextSound(SharedPages.LoadSpriteNoAlias):
         Show audio specific instructions.
         """
         self.lbl_prompt.configure(text="Audio:")
-
-
-
-class DialogTextSoundClear(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
 
 
 class DialogHaltAuto(SharedPages.SpeedOnly):
