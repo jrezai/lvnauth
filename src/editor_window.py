@@ -2058,7 +2058,7 @@ class OpenManager:
         # Make sure all the expected dictionary keys exist
         for key in self.keys_must_exist:
             if key not in self.dict_data:
-                messagebox.showerror(parent=self.parent, 
+                messagebox.showerror(parent=Passer.toolbar.frame_toolbar.winfo_toplevel(),
                                      title="Project File Error",
                                      message="The project file is missing one or more required keys.")  
                 

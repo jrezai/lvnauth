@@ -17,6 +17,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pygame
+import sprite_definition as sd
 from enum import Enum, auto
 from typing import NamedTuple
 
@@ -706,7 +707,11 @@ class DialogRectangle:
         # Set the outro animation flag so the main game loop knows 
         # to run the outro animation method.
         # self.animating_intro = False
-        self.animating_outro = True        
+        self.animating_outro = True
+
+        # Hide all dialog-related sprites,
+        # because the dialog rectangle is about to close.
+        sd.Groups.dialog_group.hide_all()
 
         ## Consider the intro animation complete at this point, 
         ## even if it hasn't finished yet.
@@ -1011,7 +1016,7 @@ class DialogRectangle:
             # Don't redraw the rectangle if there is no outro animation.
             if self.outro_animation != RectangleOutroAnimation.NO_ANIMATION:
                 self.redraw_rectangle()
-            
+
             # pygame.draw.rect(self.surface, (self.r, self.g, self.b, self.fade_current_value), self.rect, self.width)
             
              
@@ -1078,7 +1083,7 @@ class DialogRectangle:
             # Calculate the animation
             self.rect.x += self.animation_speed
 
-            # Is the animation satisified?
+            # Is the animation satisfied?
             if self.rect.x >= self.rect_destination.x:
                 self.rect.x = self.rect_destination.x
 
@@ -1088,7 +1093,7 @@ class DialogRectangle:
             # Calculate the animation
             self.rect.x -= self.animation_speed
 
-            # Is the animation satisified?
+            # Is the animation satisfied?
             if self.rect.x <= self.rect_destination.x:
                 self.rect.x = self.rect_destination.x
 
@@ -1098,7 +1103,7 @@ class DialogRectangle:
             # Calculate the animation
             self.fade_current_value += self.animation_speed
 
-            # Is the animation satisified?
+            # Is the animation satisfied?
             if self.fade_current_value >= self.alpha:
                 self.fade_current_value = self.alpha
 
@@ -1119,10 +1124,10 @@ class DialogRectangle:
             if self.intro_animation == RectangleIntroAnimation.SCALE_UP_HEIGHT_THEN_WIDTH:
                 # Logic for Scale up height then width
 
-                # Is the height satisified?
+                # Is the height satisfied?
                 if self.rect.height < self.rect_destination.height:
 
-                    # The height hasn't been satisified yet. Increase its height.
+                    # The height hasn't been satisfied yet. Increase its height.
                     self.rect.height += self.animation_speed
 
                     # Is the rectangle's height taller than the destination rect? Make it the same size.
@@ -1133,15 +1138,14 @@ class DialogRectangle:
 
                 else:
 
-                    # The height is satisified. Now make the rectangle wider.
+                    # The height is satisfied. Now make the rectangle wider.
 
                     # Increase the width
                     self.rect.width += self.animation_speed
 
-                    # Has the width been satisified?
+                    # Has the width been satisfied?
                     if self.rect.width >= self.rect_destination.width:
-
-                        # The width has been satisified.
+                        # The width has been satisfied.
 
                         # Trim the width in case we're beyond the desired width.
                         self.rect.width = self.rect_destination.width
@@ -1152,10 +1156,10 @@ class DialogRectangle:
             elif self.intro_animation == RectangleIntroAnimation.SCALE_UP_WIDTH_THEN_HEIGHT:
                 # Logic for scaling the width first, then height.
 
-                # Is the width satisified?
+                # Is the width satisfied?
                 if self.rect.width < self.rect_destination.width:
 
-                    # The width hasn't been satisified yet. Increase its width.
+                    # The width hasn't been satisfied yet. Increase its width.
                     self.rect.width += self.animation_speed
 
                     # Is the rectangle's width wider than the destination rect? Make it the same size.
@@ -1166,15 +1170,14 @@ class DialogRectangle:
 
                 else:
 
-                    # The width is satisified. Now make the rectangle taller.
+                    # The width is satisfied. Now make the rectangle taller.
 
                     # Increase the height
                     self.rect.height += self.animation_speed
 
-                    # Has the height been satisified?
+                    # Has the height been satisfied?
                     if self.rect.height >= self.rect_destination.height:
-
-                        # The height has been satisified.
+                        # The height has been satisfied.
 
                         # Trim the height in case we're beyond the desired height.
                         self.rect.height = self.rect_destination.height
@@ -1186,12 +1189,12 @@ class DialogRectangle:
                 # Logic for scaling the width first, then height.
 
                 width_satisfied = False
-                height_satisified = False
+                height_satisfied = False
 
-                # Is the width satisified?
+                # Is the width satisfied?
                 if self.rect.width < self.rect_destination.width:
 
-                    # The width hasn't been satisified yet. Increase its width.
+                    # The width hasn't been satisfied yet. Increase its width.
                     self.rect.width += self.animation_speed
 
                     # Has the rectangle's width reached the destination rect?
@@ -1201,17 +1204,17 @@ class DialogRectangle:
                         # Trim the width to match what it needs to be, just in case.
                         self.rect.width = self.rect_destination.width
 
-                        # The width is now satisified
+                        # The width is now satisfied
                         width_satisfied = True
 
                 else:
                     # The width is already satisfied
                     width_satisfied = True
 
-                # Is the height satisified?
+                # Is the height satisfied?
                 if self.rect.height < self.rect_destination.height:
 
-                    # The height hasn't been satisified yet. Increase its height.
+                    # The height hasn't been satisfied yet. Increase its height.
                     self.rect.height += self.animation_speed
 
                     # Has the rectangle's height reached the destination rect? 
@@ -1221,15 +1224,15 @@ class DialogRectangle:
                         # Trim the height to match what it needs to be, just in case.
                         self.rect.height = self.rect_destination.height
 
-                        # The height is now satisified
-                        height_satisified = True
+                        # The height is now satisfied
+                        height_satisfied = True
 
                 else:
-                    # the height is already satisified
-                    height_satisified = True
+                    # the height is already satisfied
+                    height_satisfied = True
 
-                # If the height and width are satisified, consider the animation complete.
-                if width_satisfied and height_satisified:
+                # If the height and width are satisfied, consider the animation complete.
+                if width_satisfied and height_satisfied:
 
                     # The intro animation for this rectangle is now considered complete.
                     self.intro_complete = True
@@ -1306,7 +1309,7 @@ class DialogRectangle:
         animated_rect = self.rect.copy()
         animated_rect.x = 0
         animated_rect.y = 0
-        
+
         pygame.draw.rect(surface=self.surface,
                          color=(self.bg_color.r,
                                 self.bg_color.g,
@@ -1315,17 +1318,18 @@ class DialogRectangle:
                          rect=animated_rect,
                          width=0,
                          border_radius=self.border_radius_rounded_corners)
-        
-        
-        # Draw border
-        if self.border_alpha > 0 and self.border_width > 0:
-            pygame.draw.rect(surface=self.surface,
-                             color=(self.border_color.r,
-                                    self.border_color.g,
-                                    self.border_color.b,
-                                    self.border_alpha), 
-                             rect=animated_rect,
-                             width=self.border_width, 
-                             border_radius=self.border_radius_rounded_corners)
-        
 
+        # If the outro is being animated, don't draw the border
+        # because the border fade value can be different from the dialog's opacity,
+        # which can look odd if the two fades don't match, plus it won't update the rect
+        # properly on the last frame.
+        if not self.animating_outro:
+            if self.border_alpha > 0 and self.border_width > 0:
+                border_rect_only = pygame.draw.rect(surface=self.surface,
+                                                    color=(self.border_color.r,
+                                                           self.border_color.g,
+                                                           self.border_color.b,
+                                                           self.border_alpha),
+                                                    rect=animated_rect,
+                                                    width=self.border_width,
+                                                    border_radius=self.border_radius_rounded_corners)

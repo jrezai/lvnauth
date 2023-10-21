@@ -2029,9 +2029,9 @@ class StoryReader:
         elif self.story.dialog_rectangle.animating_outro:
             self.story.dialog_rectangle.animating_outro = False
 
-            # The dialog rectangle has closed, so hide all
-            # dialog-related sprites.
-            sd.Groups.dialog_group.hide_all()
+            # # The dialog rectangle has closed, so hide all
+            # # dialog-related sprites.
+            # sd.Groups.dialog_group.hide_all()
 
         # Now that the animation has finished for the dialog rect, record
         # the dialog's rect so when we add letters to the dialog, we won't
