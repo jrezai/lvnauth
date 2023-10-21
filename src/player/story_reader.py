@@ -3846,12 +3846,17 @@ class StoryReader:
         So convert the editor-convenient "left" and "up" values to
         a negative int.
         """
+
+        # Set the directions to lowercase
+        movement_speed._replace(x_direction=movement_speed.x_direction.lower())
+        movement_speed._replace(y_direction=movement_speed.y_direction.lower())
+
         # Horizontal direction going left? Set the X to a negative int.
-        if movement_speed.x_direction.lower() == "left":
+        if movement_speed.x_direction == "left":
             movement_speed = movement_speed._replace(x=-abs(movement_speed.x))
 
         # Vertical direction going up? Set the Y to a negative int.
-        if movement_speed.y_direction.lower() == "up":
+        if movement_speed.y_direction == "up":
             movement_speed = movement_speed._replace(y=-abs(movement_speed.y))
 
         # Get the visible sprite
@@ -4707,7 +4712,7 @@ class WaitForAnimationHandler:
                                                     sprite_object.is_rotating,
                                                     sprite_object.is_scaling]):
                     return True
-                
+
                 # Check if at least one animation is occurring on the sprite.
                 elif animation_type == "any" and any([sprite_object.is_fading,
                                                       sprite_object.is_moving,
