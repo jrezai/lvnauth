@@ -4688,6 +4688,8 @@ class WaitForAnimationHandler:
             elif sprite_object.general_alias != general_alias:
                 continue
 
+            # Check if a specific type of animation is occurring
+            # on a specific sprite.
             if isinstance(animation_type, sd.SpriteAnimationType):
                 if animation_type == sd.SpriteAnimationType.FADE and sprite_object.is_fading:
                     return True
@@ -4699,11 +4701,14 @@ class WaitForAnimationHandler:
                     return True
 
             elif isinstance(animation_type, str):
+                # Check if all the animations are occurring on the sprite.
                 if animation_type == "all" and all([sprite_object.is_fading,
                                                     sprite_object.is_moving,
                                                     sprite_object.is_rotating,
                                                     sprite_object.is_scaling]):
                     return True
+                
+                # Check if at least one animation is occurring on the sprite.
                 elif animation_type == "any" and any([sprite_object.is_fading,
                                                       sprite_object.is_moving,
                                                       sprite_object.is_rotating,

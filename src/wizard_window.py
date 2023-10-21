@@ -31,6 +31,7 @@ from entrylimit import EntryWithLimit
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
+WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
 
 
 class Purpose(Enum):
@@ -980,8 +981,17 @@ class WizardWindow:
                                  parent_display_text="Character",
                                  sub_display_text="character_start_moving",
                                  command_name="character_start_moving",
-                                 purpose_line="Starts a movement animation on specific character sprite.")
+                                 purpose_line="Starts a movement animation on a specific character sprite.")
 
+        page_character_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Character",
+                                 sub_display_text="character_stop_moving",
+                                 command_name="character_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific character sprite.")
 
         page_character_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -1471,8 +1481,17 @@ class WizardWindow:
                                  parent_display_text="Object",
                                  sub_display_text="object_start_moving",
                                  command_name="object_start_moving",
-                                 purpose_line="Starts a movement animation on specific object sprite.")
+                                 purpose_line="Starts a movement animation on a specific object sprite.")
 
+        page_object_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_stop_moving",
+                                 command_name="object_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific object sprite.")
 
         page_object_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -2030,9 +2049,18 @@ class WizardWindow:
                                      parent_display_text="Dialog",
                                      sub_display_text="dialog_sprite_start_moving",
                                      command_name="dialog_sprite_start_moving",
-                                     purpose_line="Starts a movement animation on specific dialog sprite.")
-    
-    
+                                     purpose_line="Starts a movement animation on a specific dialog sprite.")
+
+        page_dialog_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Dialog",
+                                 sub_display_text="dialog_sprite_stop_moving",
+                                 command_name="dialog_sprite_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific dialog sprite.")
+
         page_dialog_set_position_x =\
                 CharacterSetPositionX(parent_frame=self.frame_contents_outer,
                                       header_label=self.lbl_header,
@@ -2275,7 +2303,20 @@ class WizardWindow:
                               parent_display_text="General",
                               sub_display_text="scene",
                               command_name="scene",
-                              purpose_line="Run a scene in a specific chapter.")  
+                              purpose_line="Run a scene in a specific chapter.")
+
+        page_wait_for_animation = \
+            WaitForAnimation(parent_frame=self.frame_contents_outer,
+                             header_label=self.lbl_header,
+                             purpose_label=self.lbl_purpose,
+                             treeview_commands=self.treeview_commands,
+                             parent_display_text="General",
+                             sub_display_text="wait_for_animation",
+                             command_name="wait_for_animation",
+                             purpose_line="Pauses the main script until one or more types of animations\n"
+                                          "have finished animating.\n\n"
+                                          "This command will only pause the main script, but can\n"
+                                          "be called from anywhere (chapters/scenes/reusable scripts).")
 
         self.pages["Home"] = default_page
 
@@ -2341,6 +2382,7 @@ class WizardWindow:
         self.pages["character_move"] = page_character_move
         self.pages["character_move_delay"] = page_character_move_delay
         self.pages["character_start_moving"] = page_character_start_moving
+        self.pages["character_stop_moving"] = page_character_stop_moving
         self.pages["character_set_position_x"] = page_character_set_position_x
         self.pages["character_set_position_y"] = page_character_set_position_y
         self.pages["character_set_center"] = page_character_set_center
@@ -2357,6 +2399,8 @@ class WizardWindow:
         self.pages["call"] = page_call
         
         self.pages["scene"] = page_scene
+
+        self.pages["wait_for_animation"] = page_wait_for_animation
         
         """
         Object
@@ -2399,6 +2443,7 @@ class WizardWindow:
         self.pages["object_move"] = page_object_move
         self.pages["object_move_delay"] = page_object_move_delay
         self.pages["object_start_moving"] = page_object_start_moving
+        self.pages["object_stop_moving"] = page_object_stop_moving
         self.pages["object_set_position_x"] = page_object_set_position_x
         self.pages["object_set_position_y"] = page_object_set_position_y
         self.pages["object_set_center"] = page_object_set_center
@@ -2452,6 +2497,7 @@ class WizardWindow:
         self.pages["dialog_sprite_move"] = page_dialog_move
         self.pages["dialog_sprite_move_delay"] = page_dialog_move_delay
         self.pages["dialog_sprite_start_moving"] = page_dialog_start_moving
+        self.pages["dialog_sprite_stop_moving"] = page_dialog_stop_moving
         self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
         self.pages["dialog_sprite_set_position_y"] = page_dialog_set_position_y
         self.pages["dialog_sprite_set_center"] = page_dialog_set_center
@@ -2469,8 +2515,6 @@ class WizardWindow:
         self.pages["font_text_delay"] = page_font_text_delay
         self.pages["font_text_delay_punc"] = page_font_text_delay_punc
         self.pages["font_intro_animation"] = page_font_intro_animation
-        
-
 
         self.active_page = default_page
         default_page.show()
@@ -5726,6 +5770,100 @@ class Flip(SharedPages.StartStop):
                 sub_display_text, command_name, purpose_line, **kwargs)
 
 
+class WaitForAnimationFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(WAIT_FOR_ANIMATION_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_wait_for_animation", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_sprite_type: tk.StringVar = self.builder.get_variable("v_sprite_type")
+
+        # Default to the radio button, 'Character'
+        self.v_sprite_type.set("character")
+
+        self.entry_sprite_alias: ttk.Entry = self.builder.get_object("entry_sprite_alias")
+        self.cb_animation_type: ttk.Combobox = self.builder.get_object("cb_animation_type")
+
+
+class WaitForAnimation(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.wait_frame = WaitForAnimationFrame(self.frame_content)
+        self.wait_frame.mainframe.pack()
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        sprite_type = self.wait_frame.v_sprite_type.get()
+        sprite_alias = self.wait_frame.entry_sprite_alias.get()
+        animation_type = self.wait_frame.cb_animation_type.get()
+
+        if sprite_alias:
+            sprite_alias = sprite_alias.strip()
+
+        if not sprite_alias:
+            messagebox.showerror(title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.wait_frame.entry_sprite_alias.focus()
+            return
+
+        if not animation_type:
+            messagebox.showerror(title="Animation type",
+                                 message="Choose the animation type to wait for.")
+            self.wait_frame.cb_animation_type.focus()
+            return
+
+        # Shorten all/any from the combobox, so it works with the final command
+        if animation_type == "all (all combined)":
+            animation_type = "all"
+        elif animation_type == "any (at least one)":
+            animation_type = "any"
+
+        user_input = {"SpriteType": sprite_type,
+                      "SpriteAlias": sprite_alias,
+                      "AnimationType": animation_type}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # <wait_for_animation: sprite type, sprite alias, animation type>
+
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_type = user_inputs.get("SpriteType")
+        sprite_alias = user_inputs.get("SpriteAlias")
+        animation_type = user_inputs.get("AnimationType")
+
+        command_line = f"<{self.command_name}: {sprite_type}, {sprite_alias}, {animation_type}>"
+
+        return command_line
+
+
 class DialogTextSound(SharedPages.LoadSpriteNoAlias):
     """
     <dialog_text_sound: audio name>
@@ -6082,7 +6220,6 @@ class TextDialogDefine(WizardListing):
         border_color_hex = user_inputs.get("BorderColor")
         border_opacity = user_inputs.get("BorderOpacity")
         border_width = user_inputs.get("BorderWidth")
-        
 
         command_line = f"<{self.command_name}: {width}, {height}, {animation_speed}, " \
             f"{intro_animation}, {outro_animation}, {anchor}, " \
