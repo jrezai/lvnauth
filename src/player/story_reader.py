@@ -4693,7 +4693,8 @@ class WaitForAnimationHandler:
         sprite_object: sd.SpriteObject
         for sprite_object in sprite_group.sprites.values():
 
-            if not sprite_object.visible:
+            # Consider pending_show to be visible.
+            if not sprite_object.visible and not sprite_object.pending_show:
                 continue
             elif not sprite_object.general_alias:
                 continue
