@@ -854,8 +854,8 @@ class DialogRectangle:
 
                     # Is the height satisfied?
                     if self.rect.height > self.rect_destination.height:
-                        
-                        # The height hasn't been satisified yet. Decrease its height.
+
+                        # The height hasn't been satisfied yet. Decrease its height.
                         self.rect.height -= self.animation_speed
                         
                         # Is the rectangle's height less than the destination rect? Make it the same size.
@@ -879,7 +879,7 @@ class DialogRectangle:
                             self.rect.width = self.rect_destination.width
                         
                             # The outro animation for this rectangle is now considered complete.
-                            self.outro_animation = True
+                            self.outro_complete = True
                                                    
                             
                     # Clear the rectangle surface because we're going to draw a new rectangle.
@@ -925,7 +925,7 @@ class DialogRectangle:
                     # Logic for scaling down the width first, then height.
                     
                     width_satisfied = False
-                    height_satisified = False
+                    height_satisfied = False
 
                     # Is the width satisfied?
                     if self.rect.width > self.rect_destination.width:
@@ -945,9 +945,8 @@ class DialogRectangle:
                     else:
                         # The width is already satisfied
                         width_satisfied = True
-                        
 
-                    # Is the height satisified?
+                    # Is the height satisfied?
                     if self.rect.height > self.rect_destination.height:
 
                         # The height hasn't been satisfied yet. Decrease its height.
@@ -960,14 +959,14 @@ class DialogRectangle:
                             self.rect.height = self.rect_destination.height
 
                             # The height is now satisfied
-                            height_satisified = True
+                            height_satisfied = True
                             
                     else:
                         # the height is already satisfied
-                        height_satisified = True
+                        height_satisfied = True
 
                     # If the height and width are satisfied, consider the animation complete.
-                    if width_satisfied and height_satisified:
+                    if width_satisfied and height_satisfied:
                         
                         # The outro animation for this rectangle is now considered complete.
                         self.outro_complete = True
