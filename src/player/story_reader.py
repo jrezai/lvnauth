@@ -3664,7 +3664,7 @@ class StoryReader:
             if not unsorted_arguments_line:
                 return
 
-            pattern = r"^(?P<Parameter>[a-z]+[_]*[\w ]+)={1}(?P<Argument>.*)$"
+            pattern = r"^(?P<Parameter>[a-zA-Z\d]*[_]*[\w ]+)={1}(?P<Argument>.*)$"
 
             # We need to evaluate multiple arguments separately,
             # with each parameter/value pair on its own line.
