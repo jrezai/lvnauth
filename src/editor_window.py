@@ -1624,6 +1624,15 @@ class ChapterSceneManager:
 
         user_input_lcase = input_window.user_input.lower()
 
+        # Commas should not be allowed in reusable script names
+        # because arguments are separated with commas in the <call> command.
+        if "," in user_input_lcase:
+            messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(),
+                                   title="Commas not allowed",
+                                   message="Reusable script names cannot contain commas.")
+            self.create_new_reusable_script(prefill_script_name=input_window.user_input)
+            return
+
         for reusable_script_name in ProjectSnapshot.reusables:
             reusable_script_name = reusable_script_name.lower()
 
