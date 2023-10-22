@@ -31,6 +31,7 @@ from typing import Dict
 from shared_components import Passer
 from audio_player import AudioPlayer, AudioChannel
 from rest_handler import RestHandler
+from cover_screen_handler import CoverScreenHandler
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -361,6 +362,9 @@ class StoryReader:
             # It forces the main story reader to pause until there are
             # no more sprites animating that were in the wait list.
             self.wait_for_animation_handler = WaitForAnimationHandler()
+
+            # For complete-screen fade-ins and fade-outs (used primarily for scene transitions)
+            self.cover_screen_handler = CoverScreenHandler(main_surface=self.story.main_surface)
     
             # When halted in auto-mode, a mouse click or keyboard press won't
             # advance the story. Instead, the story will be advanced automatically

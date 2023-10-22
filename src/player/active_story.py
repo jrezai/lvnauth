@@ -289,7 +289,7 @@ class ActiveStory:
 
             # Note: The sequence is important here.
             # We need to draw the text *before* drawing the dialog box.
-            letter_rects = self.reader.active_font_handler.draw()
+            self.reader.active_font_handler.draw()
             letter_rects = self.reader.active_font_handler.get_updated_rects()
 
             # Draw the dialog rectangle on the main surface.
@@ -318,10 +318,16 @@ class ActiveStory:
 
                 self.dialog_rectangle.visible = False
 
+        main_reader = self.reader.get_main_story_reader()
+        main_reader.cover_screen_handler.update()
+        main_reader.cover_screen_handler.draw()
+        cover_color_rect = main_reader.cover_screen_handler.get_updated_rect()
+
         update_rects1 = sd.Groups.background_group.get_updated_rects() + \
                         sd.Groups.object_group.get_updated_rects() + \
                         sd.Groups.character_group.get_updated_rects() + \
-                        sd.Groups.dialog_group.get_updated_rects()
+                        sd.Groups.dialog_group.get_updated_rects() + \
+                        cover_color_rect
 
         
         # Update both Dialog rect and update_rects1

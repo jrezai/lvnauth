@@ -1310,6 +1310,7 @@ class DialogRectangle:
         animated_rect.x = 0
         animated_rect.y = 0
 
+        # Draw the dialog rectangle
         pygame.draw.rect(surface=self.surface,
                          color=(self.bg_color.r,
                                 self.bg_color.g,
@@ -1325,11 +1326,11 @@ class DialogRectangle:
         # properly on the last frame.
         if not self.animating_outro:
             if self.border_alpha > 0 and self.border_width > 0:
-                border_rect_only = pygame.draw.rect(surface=self.surface,
-                                                    color=(self.border_color.r,
-                                                           self.border_color.g,
-                                                           self.border_color.b,
-                                                           self.border_alpha),
-                                                    rect=animated_rect,
-                                                    width=self.border_width,
-                                                    border_radius=self.border_radius_rounded_corners)
+                pygame.draw.rect(surface=self.surface,
+                                 color=(self.border_color.r,
+                                        self.border_color.g,
+                                        self.border_color.b,
+                                        self.border_alpha),
+                                 rect=animated_rect,
+                                 width=self.border_width,
+                                 border_radius=self.border_radius_rounded_corners)
