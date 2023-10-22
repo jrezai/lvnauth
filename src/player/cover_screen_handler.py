@@ -32,7 +32,7 @@ class CoverScreenHandler:
     Handles fading in and fading out the entire screen.
     This is meant for transitioning between scenes.
 
-    It gets used using the <fade_screen> command.
+    It gets used using the <fade_screen_start/stop> command.
     """
     def __init__(self, main_surface: pygame.Surface):
 
@@ -85,9 +85,9 @@ class CoverScreenHandler:
             - fade_direction: fade in or fade out (based on the FadeDirection class).
         """
 
-        # Already animating? return
-        if self.is_cover_animating:
-            return
+        # # Already animating? return
+        # if self.is_cover_animating:
+        #     return
 
         # Initialize
         self.frame_delay = frame_delay
@@ -127,8 +127,12 @@ class CoverScreenHandler:
         if self.fade_direction == FadeDirection.FADE_IN:
 
             # Have we reached fully opacity?
-            if self.current_fade_value >= 255:
+            if self.current_fade_value > 255:
                 self.current_fade_value = 255
+                return
+
+            elif self.current_fade_value == 255:
+                return
             else:
                 # Fade-in more.
                 self.current_fade_value += 1
@@ -136,10 +140,16 @@ class CoverScreenHandler:
         elif self.fade_direction == FadeDirection.FADE_OUT:
 
             # Have we reached full transparency?
-            if self.current_fade_value == 0:
+            if self.current_fade_value < 0:
+                self.current_fade_value = 0
+                self.is_cover_animating = False
+                return
 
+            if self.current_fade_value == 0:
                 # There is no need to draw the cover surface anymore.
                 self.is_cover_animating = False
+                return
+
             else:
                 # Fade-out more
                 self.current_fade_value -= 1

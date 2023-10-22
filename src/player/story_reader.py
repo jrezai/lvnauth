@@ -24,6 +24,7 @@ import dialog_rectangle
 import font_handler
 import logging
 import sprite_definition as sd
+import cover_screen_handler
 from re import search, findall
 from typing import Tuple, NamedTuple
 from font_handler import ActiveFontHandler
@@ -72,6 +73,12 @@ class WaitForAnimation(NamedTuple):
     sprite_type: str
     general_alias: str
     animation_type: str
+
+
+class FadeScreenStart(NamedTuple):
+    hex_color: str
+    fade_delay: int
+    fade_direction: str
 
 
 class PlayAudio(NamedTuple):
@@ -1095,6 +1102,13 @@ class StoryReader:
             Pause the main story reader until a specific animation has finished.
             """
             self._wait_for_animation(arguments=arguments)
+
+        elif command_name == "fade_screen_start":
+            """
+            Gradually fade-in or fade-out the entire pygame window.
+            This is used when transitioning between scenes.
+            """
+            self._fade_screen_start(arguments=arguments)
 
         elif command_name == "character_show":
             """
@@ -4233,6 +4247,36 @@ class StoryReader:
         main_reader.wait_for_animation_handler.enable_wait_for(sprite_type=wait.sprite_type,
                                                                general_alias=wait.general_alias,
                                                                animation_type=wait.animation_type)
+
+    def _fade_screen_start(self, arguments: str):
+        """
+        Gradually fade in or fade out a color that covers the entire pygame window.
+        This is used when transitioning between scenes.
+        """
+        fade_screen: FadeScreenStart
+        fade_screen = self._get_arguments(class_namedtuple=FadeScreenStart,
+                                          given_arguments=arguments)
+
+        if not fade_screen:
+            return
+
+        # Get the story reader that's not a reusable script reader,
+        # because everything in this method involves the main reader only.
+        main_reader = self.get_main_story_reader()
+
+        if fade_screen.fade_direction.lower() == "fade in":
+            direction = cover_screen_handler.FadeDirection.FADE_IN
+            initial_fade = 0
+        elif fade_screen.fade_direction.lower() == "fade out":
+            direction = cover_screen_handler.FadeDirection.FADE_OUT
+            initial_fade = 255
+        else:
+            return
+
+        main_reader.cover_screen_handler.start_fading_screen(hex_color=fade_screen.hex_color,
+                                                             initial_fade_value=initial_fade,
+                                                             frame_delay=fade_screen.fade_delay,
+                                                             fade_direction=direction)
 
     def _sprite_hide(self,
                      arguments: str,
