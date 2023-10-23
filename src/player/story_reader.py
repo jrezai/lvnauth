@@ -77,7 +77,7 @@ class WaitForAnimation(NamedTuple):
 
 class FadeScreenStart(NamedTuple):
     hex_color: str
-    fade_delay: int
+    fade_speed: int
     fade_direction: str
 
 
@@ -2950,6 +2950,8 @@ class StoryReader:
             percent_mapping[counter + 1] = float(value)
 
         percent_to_float = percent_mapping.get(percent)
+        if percent_to_float is None:
+            return
 
         if fade_direction == "fade out":
             # Convert from a positive float to a negative float.
@@ -4272,10 +4274,17 @@ class StoryReader:
             initial_fade = 255
         else:
             return
+        
+        incremental_speed = \
+            self._sprite_fade_speed_get_value_from_percent(percent=fade_screen.fade_speed,
+                                                           fade_direction=fade_screen.fade_direction)
+
+        if incremental_speed is None:
+            return
 
         main_reader.cover_screen_handler.start_fading_screen(hex_color=fade_screen.hex_color,
                                                              initial_fade_value=initial_fade,
-                                                             frame_delay=fade_screen.fade_delay,
+                                                             fade_speed_incremental=incremental_speed,
                                                              fade_direction=direction)
 
     def _sprite_hide(self,

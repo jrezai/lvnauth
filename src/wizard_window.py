@@ -2252,7 +2252,26 @@ class WizardWindow:
                                 instructions="Dialog text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
 
-
+        page_general_fade_screen_start = \
+            FadeScreenStart(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="General",
+                            sub_display_text="fade_screen_start",
+                            command_name="fade_screen_start",
+                            purpose_line="Gradually cover the screen with a fade animation.\n"
+                                         "Provides a fade effect when transitioning between scenes.",
+                            radio_button_instructions="Fade direction:",
+                            radio_button_text_1="Fade in",
+                            radio_button_text_2="Fade out",
+                            radio_button_value_1="fade in",
+                            radio_button_value_2="fade out",
+                            default_radio_button_value="fade in",
+                            scale_default_value=5,
+                            scale_from_value=1,
+                            scale_to_value=100,
+                            scale_instructions="Fade speed (1 to 100):")
 
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
@@ -2427,6 +2446,8 @@ class WizardWindow:
         self.pages["scene"] = page_scene
 
         self.pages["wait_for_animation"] = page_wait_for_animation
+
+        self.pages["fade_screen_start"] = page_general_fade_screen_start
         
         """
         Object
@@ -4042,7 +4063,7 @@ class SharedPages:
 
             frame_content = ttk.Frame(self.parent_frame)
 
-            lbl_general_alias =\
+            self.lbl_general_alias = \
                 ttk.Label(frame_content,
                 text=f"{self.get_purpose_name(title_casing=True)} alias:")
             
@@ -4105,7 +4126,7 @@ class SharedPages:
             # Set the default value of the scale.
             self.v_scale_value.set(self.scale_default_value)
 
-            lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
+            self.lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
             self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
 
             self.lbl_radio_selection.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
@@ -5666,6 +5687,134 @@ class BackgroundShow(SharedPages.ShowSprite):
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line)
+
+
+class FadeScreenStart(SharedPages.Speed):
+    """
+    <fade_screen_start: (hex color code) general alias, speed percentage, 'fade in' or 'fade out'>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text, sub_display_text,
+                 command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name,
+                         purpose_line, **kwargs)
+
+        # Create a frame that contains:
+        #   Label: Fade colour
+        #   Label: the chosen background colour
+        #   Button: the Change Colour button
+        self.frame_color_chooser = ttk.Frame(self.frame_content)
+        self.lbl_color_chooser_title = ttk.Label(self.frame_color_chooser,
+                                                 text="Fade colour:")
+        self.lbl_color = ttk.Label(self.frame_color_chooser,
+                                   text=" \n",
+                                   width=5,
+                                   background="#000000")
+        self.btn_change_colour = ttk.Button(self.frame_color_chooser,
+                                            text="Change Colour...",
+                                            command=self.on_change_color_clicked)
+
+        self.replace_general_alias_with_color_chooser()
+
+    def replace_general_alias_with_color_chooser(self):
+        # Remove lbl_general_alias and entry_general_alias
+        # with a frame that contains:
+        # - color label title
+        # - color label (that shows the bg color)
+        # - change colour button
+
+        self.lbl_general_alias.grid_forget()
+        self.entry_general_alias.grid_forget()
+
+        self.lbl_color_chooser_title.pack(anchor=tk.W)
+        self.lbl_color.pack(pady=5)
+        self.btn_change_colour.pack()
+
+        self.frame_color_chooser.grid(row=0, column=0)
+
+    def on_change_color_clicked(self):
+        """
+        Show the colour chooser dialog for the background.
+
+        The 'Change Colour' button has been clicked.
+        """
+
+        current_color_hex = self.lbl_color.cget("background")
+        current_color_rgb = self.lbl_color.winfo_rgb(current_color_hex)
+
+        # winfo_rgb() returns a maximum value of 65535 instead of 255,
+        # for some reason, we need to divide each color (rgb) by 256
+        # to get a max 255 value.
+        red, green, blue = current_color_rgb
+
+        if red > 0:
+            red = red // 256
+        if green > 0:
+            green = green // 256
+        if blue > 0:
+            blue = blue // 256
+
+        # Record the new max-255 color values
+        current_color_rgb = (red, green, blue)
+
+        color = colorchooser.askcolor(parent=self.lbl_color.winfo_toplevel(),
+                                      title="Background Colour",
+                                      initialcolor=current_color_rgb)
+
+        # The return value will be like this if a colour is chosen:
+        # ((0, 153, 0), '#009900')
+
+        # Or like this if no color is chosen
+        # (None, None)
+        hex_new_color = color[1]
+
+        if not hex_new_color:
+            return
+
+        self.lbl_color.configure(background=hex_new_color)
+
+    def check_inputs(self) -> Dict:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: the selection (str) if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the label's background color in hex format.
+        bg_color_hex = self.lbl_color.cget("background")
+        radio_button_selection = self.v_radio_button_selection.get()
+        scale_value = self.v_scale_value.get()
+
+        user_input = {"FadeColor": bg_color_hex,
+                      "Type": radio_button_selection,
+                      "ScaleValue": scale_value}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # The user input will be a dictionary like this:
+        # {"FadeColor": "#000000",
+        # "ScaleValue": 30,
+        # "Type": "fade in"}
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        fade_color = user_inputs.get("FadeColor")
+        scale_value = user_inputs.get("ScaleValue")
+        radio_button_selection = user_inputs.get("Type")
+
+        return f"<{self.command_name}: {fade_color}, {scale_value}, {radio_button_selection}>"
 
 
 class BackgroundHide(SharedPages.HideSpriteNoAlias):

@@ -22,7 +22,7 @@ from enum import Enum, auto
 from typing import List
 
 
-class FadeDirection:
+class FadeDirection(Enum):
     FADE_IN = auto()
     FADE_OUT = auto()
 
@@ -55,12 +55,12 @@ class CoverScreenHandler:
         # This will get overwritten in the start_fading_screen() method
         self.fade_direction = FadeDirection.FADE_IN
 
-        # Controls the fade-speed
-        self.frame_delay = 0
+        # Controls the fade-speed (float value)
+        self.fade_speed_incremental = 0
 
         # So we know when to apply the fading animation
         # (when elapsed_frames reaches frame_delay)
-        self.elapsed_frames = 0
+        self.skipped_frames = 0
 
         # So we know to draw the cover surface or not.
         self.is_cover_animating = False
@@ -70,10 +70,33 @@ class CoverScreenHandler:
         # Fade color
         self.color = None
 
+    def is_busy_fading(self) -> bool:
+        """
+        Check whether the screen is fading in or out and not finished fading yet.
+
+        Purpose: to prevent a second fade-in / fade-out attempt while the first one is busy.
+        """
+
+        # Already currently fading in and not finished yet? return True
+        if self.is_cover_animating and \
+                self.fade_direction == FadeDirection.FADE_IN and \
+                self.current_fade_value < 255:
+            return True
+
+        # Already currently fading out and not finished yet? return True
+        elif self.is_cover_animating and \
+                self.fade_direction == FadeDirection.FADE_OUT and \
+                self.current_fade_value > 0:
+            return True
+
+        else:
+            # We're not fading in or fading out.
+            return False
+
     def start_fading_screen(self,
                             hex_color: str,
                             initial_fade_value: int,
-                            frame_delay: int,
+                            fade_speed_incremental: float,
                             fade_direction: FadeDirection = FadeDirection.FADE_IN):
         """
         Start fading in or fading out the entire pygame screen.
@@ -81,17 +104,17 @@ class CoverScreenHandler:
         Arguments:
             - hex_color: the color, in hex, that we want to cover the screen with.
             - initial_fade_value: 0 for fully transparent, 255 for fully opaque.
-            - frame_delay: how many frames to skip before applying each fade animation.
+            - fade_speed_incremental: the fade-in / fade-out will increment by this much (a float value)
             - fade_direction: fade in or fade out (based on the FadeDirection class).
         """
 
-        # # Already animating? return
-        # if self.is_cover_animating:
-        #     return
+        # Already fading in or fading out? return
+        if self.is_busy_fading():
+            return
 
         # Initialize
-        self.frame_delay = frame_delay
-        self.elapsed_frames = 0
+        self.fade_speed_incremental = fade_speed_incremental
+        self.skipped_frames = 0
         self.color = pygame.Color(hex_color)
         self.current_fade_value = initial_fade_value
         self.fade_direction = fade_direction
@@ -115,44 +138,40 @@ class CoverScreenHandler:
 
         No rect is updated, because it's always the full size of the pygame window.
         """
-        if not self.is_cover_animating:
+        
+        # Not animating or no speed specified? Return.
+        if not self.is_cover_animating or not self.fade_speed_incremental:
             return
-
-        if self.elapsed_frames <= self.frame_delay:
-            self.elapsed_frames += 1
-            return
-
-        self.color: pygame.Color
 
         if self.fade_direction == FadeDirection.FADE_IN:
 
             # Have we reached fully opacity?
             if self.current_fade_value > 255:
+                # We've reached full opacity, but we should not
+                # stop drawing the cover surface on the screen,
+                # because otherwise, the cover surface will just disappear.
                 self.current_fade_value = 255
                 return
-
-            elif self.current_fade_value == 255:
-                return
-            else:
-                # Fade-in more.
-                self.current_fade_value += 1
 
         elif self.fade_direction == FadeDirection.FADE_OUT:
 
             # Have we reached full transparency?
-            if self.current_fade_value < 0:
+            if self.current_fade_value <= 0:
+                # Stop animating, we've reached full transparency.
                 self.current_fade_value = 0
                 self.is_cover_animating = False
                 return
 
-            if self.current_fade_value == 0:
-                # There is no need to draw the cover surface anymore.
-                self.is_cover_animating = False
-                return
+        # Fade-in / fade-out more
+        # (fade_speed_incremental will be a negative value when fading out).
+        self.current_fade_value += self.fade_speed_incremental
 
-            else:
-                # Fade-out more
-                self.current_fade_value -= 1
+        # Don't allow the fade to go out of range.
+        if self.current_fade_value > 255:
+            self.current_fade_value = 255
+
+        elif self.current_fade_value < 0:
+            self.current_fade_value = 0
 
     def draw(self):
         """
