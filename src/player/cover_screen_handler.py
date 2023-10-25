@@ -32,7 +32,7 @@ class CoverScreenHandler:
     Handles fading in and fading out the entire screen.
     This is meant for transitioning between scenes.
 
-    It gets used using the <fade_screen_start/stop> command.
+    It gets used using the <scene_with_fade> command.
     """
     def __init__(self, main_surface: pygame.Surface):
 

@@ -32,6 +32,7 @@ PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
 WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
+SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
 
 
 class Purpose(Enum):
@@ -2252,26 +2253,16 @@ class WizardWindow:
                                 instructions="Dialog text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
 
-        page_general_fade_screen_start = \
-            FadeScreenStart(parent_frame=self.frame_contents_outer,
-                            header_label=self.lbl_header,
-                            purpose_label=self.lbl_purpose,
-                            treeview_commands=self.treeview_commands,
-                            parent_display_text="General",
-                            sub_display_text="fade_screen_start",
-                            command_name="fade_screen_start",
-                            purpose_line="Gradually cover the screen with a fade animation.\n"
-                                         "Provides a fade effect when transitioning between scenes.",
-                            radio_button_instructions="Fade direction:",
-                            radio_button_text_1="Fade in",
-                            radio_button_text_2="Fade out",
-                            radio_button_value_1="fade in",
-                            radio_button_value_2="fade out",
-                            default_radio_button_value="fade in",
-                            scale_default_value=5,
-                            scale_from_value=1,
-                            scale_to_value=100,
-                            scale_instructions="Fade speed (1 to 100):")
+        page_general_scene_with_fade = \
+            SceneWithFade(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="General",
+                          sub_display_text="scene_with_fade",
+                          command_name="scene_with_fade",
+                          purpose_line="Gradually fade into another scene.\n"
+                                       "Provides a fade effect when transitioning between scenes.")
 
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
@@ -2447,7 +2438,7 @@ class WizardWindow:
 
         self.pages["wait_for_animation"] = page_wait_for_animation
 
-        self.pages["fade_screen_start"] = page_general_fade_screen_start
+        self.pages["scene_with_fade"] = page_general_scene_with_fade
         
         """
         Object
@@ -4554,7 +4545,6 @@ class SharedPages:
                 # <after_cancel: reusable script name>
                 return f"<{self.command_name}: {reusable_script_name}>"
 
-
     class SceneScriptSelect(WizardListing):
         """
         <scene: chapter name, scene name>
@@ -4574,11 +4564,11 @@ class SharedPages:
                              treeview_commands, parent_display_text,
                              sub_display_text, command_name, purpose_line, **kwargs)
 
-
             self.frame_content = self.create_content_frame()
-            
-            # Populate chapter and scene names comboboxes
-            self.populate()
+
+            # Populate chapter and scene names combo boxes
+            self.populate(self.cb_chapters,
+                          self.cb_scenes)
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -4602,26 +4592,28 @@ class SharedPages:
 
             return frame_content
 
-        def populate(self):
+        @staticmethod
+        def populate(combo_box_chapters: ttk.Combobox,
+                     combo_box_scenes: ttk.Combobox):
             """
-            Populate the comboboxes with a list of
+            Populate the combo boxes with a list of
             chapter and scene names.
             """
 
-            # Clear the existing comboboxs, just in case there are values in them.
-            self.cb_chapters.configure(values=())
-            self.cb_scenes.configure(values=())
+            # Clear the existing combo boxes, just in case there are values in them.
+            combo_box_chapters.configure(values=())
+            combo_box_scenes.configure(values=())
 
             # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
             chapter_names = [item for item in ProjectSnapshot.chapters_and_scenes]         
             scene_names = [item[1] for item in ProjectSnapshot.chapters_and_scenes.values()]
             scene_names = [scene_name for scene_name in scene_names[0]]
 
-            self.cb_chapters.configure(values=chapter_names)
-            self.cb_chapters.delete(0, "end")
-            
-            self.cb_scenes.configure(values=scene_names)
-            self.cb_scenes.delete(0, "end")            
+            combo_box_chapters.configure(values=chapter_names)
+            combo_box_chapters.delete(0, "end")
+
+            combo_box_scenes.configure(values=scene_names)
+            combo_box_scenes.delete(0, "end")
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5279,8 +5271,6 @@ class SharedPages:
             self.lbl_general_alias.configure(text=f"Hide which {self.get_purpose_name()}?\n"
                                              f"{self.get_purpose_name(title_casing=True)} alias:")
 
-
-
     class HideSpriteNoAlias(LoadSpriteNoAlias):
         """
         <background_hide>
@@ -5689,134 +5679,6 @@ class BackgroundShow(SharedPages.ShowSprite):
                 sub_display_text, command_name, purpose_line)
 
 
-class FadeScreenStart(SharedPages.Speed):
-    """
-    <fade_screen_start: (hex color code) general alias, speed percentage, 'fade in' or 'fade out'>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                 treeview_commands, parent_display_text, sub_display_text,
-                 command_name, purpose_line, **kwargs):
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
-        # Create a frame that contains:
-        #   Label: Fade colour
-        #   Label: the chosen background colour
-        #   Button: the Change Colour button
-        self.frame_color_chooser = ttk.Frame(self.frame_content)
-        self.lbl_color_chooser_title = ttk.Label(self.frame_color_chooser,
-                                                 text="Fade colour:")
-        self.lbl_color = ttk.Label(self.frame_color_chooser,
-                                   text=" \n",
-                                   width=5,
-                                   background="#000000")
-        self.btn_change_colour = ttk.Button(self.frame_color_chooser,
-                                            text="Change Colour...",
-                                            command=self.on_change_color_clicked)
-
-        self.replace_general_alias_with_color_chooser()
-
-    def replace_general_alias_with_color_chooser(self):
-        # Remove lbl_general_alias and entry_general_alias
-        # with a frame that contains:
-        # - color label title
-        # - color label (that shows the bg color)
-        # - change colour button
-
-        self.lbl_general_alias.grid_forget()
-        self.entry_general_alias.grid_forget()
-
-        self.lbl_color_chooser_title.pack(anchor=tk.W)
-        self.lbl_color.pack(pady=5)
-        self.btn_change_colour.pack()
-
-        self.frame_color_chooser.grid(row=0, column=0)
-
-    def on_change_color_clicked(self):
-        """
-        Show the colour chooser dialog for the background.
-
-        The 'Change Colour' button has been clicked.
-        """
-
-        current_color_hex = self.lbl_color.cget("background")
-        current_color_rgb = self.lbl_color.winfo_rgb(current_color_hex)
-
-        # winfo_rgb() returns a maximum value of 65535 instead of 255,
-        # for some reason, we need to divide each color (rgb) by 256
-        # to get a max 255 value.
-        red, green, blue = current_color_rgb
-
-        if red > 0:
-            red = red // 256
-        if green > 0:
-            green = green // 256
-        if blue > 0:
-            blue = blue // 256
-
-        # Record the new max-255 color values
-        current_color_rgb = (red, green, blue)
-
-        color = colorchooser.askcolor(parent=self.lbl_color.winfo_toplevel(),
-                                      title="Background Colour",
-                                      initialcolor=current_color_rgb)
-
-        # The return value will be like this if a colour is chosen:
-        # ((0, 153, 0), '#009900')
-
-        # Or like this if no color is chosen
-        # (None, None)
-        hex_new_color = color[1]
-
-        if not hex_new_color:
-            return
-
-        self.lbl_color.configure(background=hex_new_color)
-
-    def check_inputs(self) -> Dict:
-        """
-        Check whether the user has inputted sufficient information
-        to use this command.
-
-        Return: the selection (str) if there is sufficient information;
-        otherwise, None.
-        """
-
-        # Get the label's background color in hex format.
-        bg_color_hex = self.lbl_color.cget("background")
-        radio_button_selection = self.v_radio_button_selection.get()
-        scale_value = self.v_scale_value.get()
-
-        user_input = {"FadeColor": bg_color_hex,
-                      "Type": radio_button_selection,
-                      "ScaleValue": scale_value}
-
-        return user_input
-
-    def generate_command(self) -> str | None:
-        """
-        Return the command based on the user's configuration/selection.
-        """
-
-        # The user input will be a dictionary like this:
-        # {"FadeColor": "#000000",
-        # "ScaleValue": 30,
-        # "Type": "fade in"}
-        user_inputs = self.check_inputs()
-
-        if not user_inputs:
-            return
-
-        fade_color = user_inputs.get("FadeColor")
-        scale_value = user_inputs.get("ScaleValue")
-        radio_button_selection = user_inputs.get("Type")
-
-        return f"<{self.command_name}: {fade_color}, {scale_value}, {radio_button_selection}>"
-
-
 class BackgroundHide(SharedPages.HideSpriteNoAlias):
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
@@ -5902,6 +5764,161 @@ class Flip(SharedPages.StartStop):
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line, **kwargs)
+
+
+class SceneWithFadeFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SCENE_WITH_FADE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_scene_with_fade", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.lbl_color = builder.get_object("lbl_color")
+        self.btn_change_color = builder.get_object("btn_change_color")
+
+        self.cb_chapters = builder.get_object("cb_chapters")
+        self.cb_scenes = builder.get_object("cb_scenes")
+
+        self.v_scale_fade_in = builder.get_variable("v_scale_fade_in")
+        self.v_scale_fade_in.set(10)
+
+        self.v_scale_fade_out = builder.get_variable("v_scale_fade_out")
+        self.v_scale_fade_out.set(10)
+
+        self.v_scale_hold_frames = builder.get_variable("v_scale_hold_frames")
+        self.v_scale_hold_frames.set(80)
+
+    def on_change_color_button_clicked(self):
+        """
+        Show the colour chooser dialog for the background.
+
+        The 'Change Colour' button has been clicked.
+        """
+
+        current_color_hex = self.lbl_color.cget("background")
+        current_color_rgb = self.lbl_color.winfo_rgb(current_color_hex)
+
+        # winfo_rgb() returns a maximum value of 65535 instead of 255,
+        # for some reason, we need to divide each color (rgb) by 256
+        # to get a max 255 value.
+        red, green, blue = current_color_rgb
+
+        if red > 0:
+            red = red // 256
+        if green > 0:
+            green = green // 256
+        if blue > 0:
+            blue = blue // 256
+
+        # Record the new max-255 color values
+        current_color_rgb = (red, green, blue)
+
+        color = colorchooser.askcolor(parent=self.lbl_color.winfo_toplevel(),
+                                      title="Background Colour",
+                                      initialcolor=current_color_rgb)
+
+        # The return value will be like this if a colour is chosen:
+        # ((0, 153, 0), '#009900')
+
+        # Or like this if no color is chosen
+        # (None, None)
+        hex_new_color = color[1]
+
+        if not hex_new_color:
+            return
+
+        self.lbl_color.configure(background=hex_new_color)
+
+
+class SceneWithFade(WizardListing):
+    """
+    <scene_with_fade: hex color, fade in speed (1-100), fade out speed (1-100),
+    fade hold frame count (number of frames to stay at full opacity,
+    chapter name, scene name>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text, sub_display_text,
+                 command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.scene_frame = SceneWithFadeFrame(self.frame_content)
+        self.scene_frame.mainframe.pack()
+
+        # Populate chapter and scene names combo boxes
+        SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
+                                               self.scene_frame.cb_scenes)
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: the selection (str) if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the label's background color in hex format.
+        chapter_name = self.scene_frame.cb_chapters.get().strip()
+        scene_name = self.scene_frame.cb_scenes.get().strip()
+        bg_color_hex = self.scene_frame.lbl_color.cget("background")
+        fade_in_speed = self.scene_frame.v_scale_fade_in.get()
+        fade_out_speed = self.scene_frame.v_scale_fade_out.get()
+        hold_frames = self.scene_frame.v_scale_hold_frames.get()
+
+        if not chapter_name:
+            messagebox.showerror(parent=self.scene_frame.lbl_color.winfo_toplevel(),
+                                 title="No chapter",
+                                 message="The chapter name is missing")
+            self.scene_frame.cb_chapters.focus()
+            return
+        elif not scene_name:
+            messagebox.showerror(parent=self.scene_frame.lbl_color.winfo_toplevel(),
+                                 title="No scene",
+                                 message="The scene name is missing")
+            self.scene_frame.cb_scenes.focus()
+            return
+
+        user_input = {"ChapterName": chapter_name,
+                      "SceneName": scene_name,
+                      "FadeColor": bg_color_hex,
+                      "FadeInSpeed": fade_in_speed,
+                      "FadeOutSpeed": fade_out_speed,
+                      "HoldFrames": hold_frames}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # The user input will be a dictionary like this:
+        # {"ChapterName": chapter_name,
+        #  "SceneName": scene_name,
+        #  "FadeColor": bg_color_hex,
+        #  "FadeInSpeed": fade_in_speed,
+        #  "FadeOutSpeed": fade_out_speed,
+        #  "HoldFrames": hold_frames}
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        chapter_name = user_inputs.get("ChapterName")
+        scene_name = user_inputs.get("SceneName")
+        fade_color = user_inputs.get("FadeColor")
+        fade_in_speed = user_inputs.get("FadeInSpeed")
+        fade_out_speed = user_inputs.get("FadeOutSpeed")
+        hold_frames = user_inputs.get("HoldFrames")
+
+        return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_frames}, {chapter_name}, {scene_name}>"
 
 
 class WaitForAnimationFrame:

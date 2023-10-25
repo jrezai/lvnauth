@@ -4733,7 +4733,7 @@ class WaitForAnimationHandler:
         Reusable scripts are not affected.
         """
 
-        # Should we wait for a screen cover animation? (ie: <fade_screen_start>
+        # Should we wait for a screen cover animation? (ie: <scene_with_fade>
         if sprite_type == "cover":
 
             # Already in the wait_list? return.
