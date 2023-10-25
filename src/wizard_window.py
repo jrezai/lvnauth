@@ -1612,21 +1612,21 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
-                           purpose_line="Pause the dialog text for a specific number of frames.",
+                           purpose_line="Pause the dialog text for a specific number of frames.\n\n",
                            scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
                            scale_from_value=1,
                            scale_to_value=600,
                            scale_default_value=120)
-        
-        page_dialog_continue =\
+
+        page_dialog_continue = \
             DialogContinue(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="continue",
-                       command_name="continue",
-                       purpose_line="Stay on the same line as the previous text.")
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Dialog",
+                           sub_display_text="continue",
+                           command_name="continue",
+                           purpose_line="Stay on the same line as the previous text.\n\n")
 
         page_load_dialog =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -1647,7 +1647,7 @@ class WizardWindow:
                               sub_display_text="dialog_sprite_show",
                               command_name="dialog_sprite_show",
                               purpose_line="Shows the given sprite and it hides the currently visible\n"
-                              "sprite with the same general alias as the one we’re about to show.")
+                                           "sprite with the same general alias as the one we’re about to show.")
     
         page_hide_dialog =\
                 CharacterHide(parent_frame=self.frame_contents_outer,
@@ -5919,8 +5919,36 @@ class WaitForAnimationFrame:
         # Default to the radio button, 'Character'
         self.v_sprite_type.set("character")
 
+        # So we can disable the sprite alias and animation type widgets
+        # when 'Screen fade' is selected.
+        self.v_sprite_type.trace_add("write", self.on_sprite_type_changed)
+        self.frame_sprite_alias = self.builder.get_object("frame_sprite_alias")
+        self.frame_animation_type = self.builder.get_object("frame_animation_type")
+
         self.entry_sprite_alias: ttk.Entry = self.builder.get_object("entry_sprite_alias")
         self.cb_animation_type: ttk.Combobox = self.builder.get_object("cb_animation_type")
+
+    def on_sprite_type_changed(self, *args):
+        """
+        Disable the sprite alias and animation type widgets
+        if the wait is for 'Screen fade'. Otherwise, enable all the widgets.
+
+        Purpose: when 'Screen fade' is selected, there is no general alias
+        or animation type - it's just one type of wait.
+        """
+        sprite_type = self.v_sprite_type.get()
+
+        if sprite_type == "cover":
+            set_state = "disabled"
+        else:
+            set_state = "!disabled"
+
+        # Enable or widgets in the following two frames.
+        for widget in self.frame_sprite_alias.winfo_children():
+            widget.state([set_state])
+
+        for widget in self.frame_animation_type.winfo_children():
+            widget.state([set_state])
 
 
 class WaitForAnimation(WizardListing):
@@ -5983,7 +6011,15 @@ class WaitForAnimation(WizardListing):
         """
 
         # <wait_for_animation: sprite type, sprite alias, animation type>
+        # or
+        # <wait_for_animation: screen fade>
 
+        # For <wait_for_animation: screen fade>
+        if self.wait_frame.v_sprite_type.get() == "cover":
+            command_line = f"<{self.command_name}: fade screen>"
+            return command_line
+
+        # For # <wait_for_animation: sprite type, sprite alias, animation type>
         user_inputs = self.check_inputs()
 
         if not user_inputs:

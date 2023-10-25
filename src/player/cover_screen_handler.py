@@ -17,9 +17,9 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pygame
-from shared_components import Passer
 from enum import Enum, auto
 from typing import List
+from shared_components import Passer
 
 
 class FadeDirection(Enum):
@@ -56,16 +56,25 @@ class CoverScreenHandler:
         self.fade_direction = FadeDirection.FADE_IN
 
         # Controls the fade-speed (float value)
-        self.fade_speed_incremental = 0
+        self.fade_in_speed_incremental = 0
+        self.fade_out_speed_incremental = 0
 
-        # So we know when to apply the fading animation
-        # (when elapsed_frames reaches frame_delay)
-        self.skipped_frames = 0
+        # The number of frames that have elapsed so far
+        # while at full opacity.
+        self.hold_full_frame_counter = 0
+
+        # The number of frames that we need to reach before
+        # starting to fade-out.
+        self.hold_frame_limit = 0
 
         # So we know to draw the cover surface or not.
         self.is_cover_animating = False
 
         self.current_fade_value = 0
+
+        # Initialize
+        self.chapter_name = None
+        self.scene_name = None
 
         # Fade color
         self.color = None
@@ -96,7 +105,11 @@ class CoverScreenHandler:
     def start_fading_screen(self,
                             hex_color: str,
                             initial_fade_value: int,
-                            fade_speed_incremental: float,
+                            fade_in_speed_incremental: float,
+                            fade_out_speed_incremental: float,
+                            hold_frame_count: int,
+                            chapter_name: str,
+                            scene_name: str,
                             fade_direction: FadeDirection = FadeDirection.FADE_IN):
         """
         Start fading in or fading out the entire pygame screen.
@@ -104,7 +117,11 @@ class CoverScreenHandler:
         Arguments:
             - hex_color: the color, in hex, that we want to cover the screen with.
             - initial_fade_value: 0 for fully transparent, 255 for fully opaque.
-            - fade_speed_incremental: the fade-in / fade-out will increment by this much (a float value)
+            - fade_in_speed_incremental: the fade-in will increment by this much (a float value)
+            - fade_out_speed_incremental: the fade-out will increment by this much (a float value)
+            - hold_frame_count: the number of frames to hold the full opacity before starting to fade out
+            - chapter_name: the chapter the scene is in that we need to run before starting to fade out
+            - scene_name: the scene we need to run before starting to fade out
             - fade_direction: fade in or fade out (based on the FadeDirection class).
         """
 
@@ -113,11 +130,15 @@ class CoverScreenHandler:
             return
 
         # Initialize
-        self.fade_speed_incremental = fade_speed_incremental
-        self.skipped_frames = 0
+        self.fade_in_speed_incremental = fade_in_speed_incremental
+        self.fade_out_speed_incremental = fade_out_speed_incremental
         self.color = pygame.Color(hex_color)
         self.current_fade_value = initial_fade_value
+        self.chapter_name = chapter_name
+        self.scene_name = scene_name
         self.fade_direction = fade_direction
+        self.hold_frame_limit = hold_frame_count
+        self.hold_full_frame_counter = 0
 
         # So the main draw method knows to draw the cover surface.
         self.is_cover_animating = True
@@ -131,6 +152,24 @@ class CoverScreenHandler:
 
         self.is_cover_animating = False
 
+    def _get_main_reader(self):
+        """
+        Return the main active story reader (non-reusable script reader).
+
+        Purpose: we need the main reader object to play a scene
+        right before the fade out process.
+        """
+        main_reader = Passer.active_story.reader.get_main_story_reader()
+
+        return main_reader
+
+    def play_scene(self, chapter_name: str, scene_name: str):
+        """
+        Play a scene in a specific chapter.
+        """
+        main_reader = self._get_main_reader()
+        main_reader.spawn_new_reader(arguments=f"{chapter_name}, {scene_name}")
+
     def update(self):
         """
         Elapse the frame counter and increase/decrease the fade value
@@ -140,18 +179,47 @@ class CoverScreenHandler:
         """
         
         # Not animating or no speed specified? Return.
-        if not self.is_cover_animating or not self.fade_speed_incremental:
+        if not self.is_cover_animating or not all([self.fade_in_speed_incremental,
+                                                   self.fade_out_speed_incremental]):
             return
 
         if self.fade_direction == FadeDirection.FADE_IN:
 
             # Have we reached fully opacity?
-            if self.current_fade_value > 255:
+            if self.current_fade_value >= 255:
                 # We've reached full opacity, but we should not
                 # stop drawing the cover surface on the screen,
                 # because otherwise, the cover surface will just disappear.
                 self.current_fade_value = 255
-                return
+
+                if self.hold_full_frame_counter > self.hold_frame_limit:
+                    # We've reached the frame count limit at full opacity.
+
+                    # Run the scene that is supposed to run and then
+                    # start fading-out.
+                    self.play_scene(self.chapter_name, self.scene_name)
+
+                    # Start fading-out
+                    self.fade_direction = FadeDirection.FADE_OUT
+
+                    # Re-run this method immediately, now that we're in fade-out mode.
+                    self.update()
+
+                    return
+
+                else:
+                    # We haven't reached the frames-elapsed limit at full
+                    # opacity. We're not ready to start fading-out yet.
+                    self.hold_full_frame_counter += 1
+
+                    return
+
+            # Fade-in more
+            self.current_fade_value += self.fade_in_speed_incremental
+
+            # Don't allow the fade to go out of range.
+            if self.current_fade_value > 255:
+                self.current_fade_value = 255
 
         elif self.fade_direction == FadeDirection.FADE_OUT:
 
@@ -162,16 +230,13 @@ class CoverScreenHandler:
                 self.is_cover_animating = False
                 return
 
-        # Fade-in / fade-out more
-        # (fade_speed_incremental will be a negative value when fading out).
-        self.current_fade_value += self.fade_speed_incremental
+            # Fade-out more
+            # (fade_speed_incremental will be a negative value when fading out).
+            self.current_fade_value += self.fade_out_speed_incremental
 
-        # Don't allow the fade to go out of range.
-        if self.current_fade_value > 255:
-            self.current_fade_value = 255
-
-        elif self.current_fade_value < 0:
-            self.current_fade_value = 0
+            # Don't allow the fade to go out of range.
+            if self.current_fade_value < 0:
+                self.current_fade_value = 0
 
     def draw(self):
         """

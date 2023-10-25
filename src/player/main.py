@@ -164,10 +164,6 @@ class Main:
             # The number of milliseconds elapsed in this frame
             milliseconds_elapsed = clock.tick(60)
 
-            # Used for a constant move speed of all objects
-            # regardless of the FPS
-            Passer.seconds_elapsed = milliseconds_elapsed / 1000
-
             main_surface.fill((0, 0, 0))
 
             for event in pygame.event.get():

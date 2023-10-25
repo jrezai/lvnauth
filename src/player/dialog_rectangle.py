@@ -782,7 +782,8 @@ class DialogRectangle:
         if not self.animating_outro or not self.visible:
             return
 
-        # Clear the surface. The fourth zero is the alpha (opacity).
+        # Clear the surface because we're going to draw a new rectangle.
+        # The fourth zero is the alpha (opacity).
         self.surface.fill((0, 0, 0, 0))        
         
         # Get the rect before the animation has been calculated
@@ -838,18 +839,16 @@ class DialogRectangle:
                 self.fade_current_value -= self.animation_speed
     
                 # Clear the rectangle surface because we're going to draw a new rectangle.
-                self.surface.fill((0, 0, 0, 0))
+                # self.surface.fill((0, 0, 0, 0))
 
                 # Is the animation satisfied?
                 if self.fade_current_value <= 0:
                     self.fade_current_value = 0
                 
                     self.outro_complete = True
-                    
-                else:
-                    # Re-draw rectangle
-                    self.redraw_rectangle()
-                    # pygame.draw.rect(self.surface, (self.r, self.g, self.b, self.fade_current_value), self.rect, self.width)
+
+                # Re-draw rectangle
+                self.redraw_rectangle()
 
             elif self.outro_animation in (RectangleOutroAnimation.SCALE_DOWN_HEIGHT_THEN_WIDTH, RectangleOutroAnimation.SCALE_DOWN_WIDTH_THEN_HEIGHT, RectangleOutroAnimation.SCALE_DOWN_WIDTH_AND_HEIGHT):
                 # Calculate the animation
@@ -1324,7 +1323,9 @@ class DialogRectangle:
         # because the border fade value can be different from the dialog's opacity,
         # which can look odd if the two fades don't match, plus it won't update the rect
         # properly on the last frame.
-        if not self.animating_outro:
+        if not self.animating_outro and not self.outro_complete:
+
+            # We're not doing an outro animation, so it's OK to draw the border.
             if self.border_alpha > 0 and self.border_width > 0:
                 pygame.draw.rect(surface=self.surface,
                                  color=(self.border_color.r,

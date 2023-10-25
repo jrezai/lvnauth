@@ -32,7 +32,6 @@ from typing import Dict
 from shared_components import Passer
 from audio_player import AudioPlayer, AudioChannel
 from rest_handler import RestHandler
-from cover_screen_handler import CoverScreenHandler
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -75,10 +74,17 @@ class WaitForAnimation(NamedTuple):
     animation_type: str
 
 
-class FadeScreenStart(NamedTuple):
+class WaitForAnimationFadeScreen(NamedTuple):
+    fade_screen: str
+
+
+class SceneWithFade(NamedTuple):
     hex_color: str
-    fade_speed: int
-    fade_direction: str
+    fade_in_speed: int
+    fade_out_speed: int
+    fade_hold_for_frame_count: int
+    chapter_name: str
+    scene_name: str
 
 
 class PlayAudio(NamedTuple):
@@ -297,12 +303,10 @@ class StoryReader:
                                   "character_set_position_y", "character_stop_movement_condition",
                                   "character_move", "character_start_moving", "character_move_delay",
                                   "call")
-    
 
     # These commands will be ignored if used in a reusable script.
-    # (currently there are no commands that can't be used in a reusable script)
+    # (There are currently no commands that can't be called from a reusable script)
     COMMANDS_CANNOT_RUN_IN_REUSABLE_SCRIPTS = ()
-    
 
     def __init__(self,
                  story,
@@ -329,6 +333,9 @@ class StoryReader:
         # So we can spawn new background readers
         self.story: active_story
         self.story = story
+
+        # self.dialog_rectangle: dialog_rectangle.DialogRectangle
+        # self.dialog_rectangle = None
 
         # So we can load sprites and audio
         self.data_requester: file_reader.FileReader
@@ -369,9 +376,6 @@ class StoryReader:
             # It forces the main story reader to pause until there are
             # no more sprites animating that were in the wait list.
             self.wait_for_animation_handler = WaitForAnimationHandler()
-
-            # For complete-screen fade-ins and fade-outs (used primarily for scene transitions)
-            self.cover_screen_handler = CoverScreenHandler(main_surface=self.story.main_surface)
     
             # When halted in auto-mode, a mouse click or keyboard press won't
             # advance the story. Instead, the story will be advanced automatically
@@ -392,7 +396,6 @@ class StoryReader:
             
             # so unload all previously loaded sprites so we can start fresh.
             self.clear_all_sprite_groups()
-            
 
             # Deals with showing/hiding dialog text
             self.active_font_handler = ActiveFontHandler(story=self.story)
@@ -660,6 +663,8 @@ class StoryReader:
 
         # Loading the startup script for the first time.
         if not self.script_lines:
+            # The chapter's script gets loaded automatically
+            # for each scene.
             chapter_script = self._get_startup_chapter_script()
             scene_script = self._get_startup_scene_script()
 
@@ -727,7 +732,17 @@ class StoryReader:
                     arguments = arguments.strip()
 
                 if command_name:
+
                     self.run_command(command_name, arguments)
+
+                    # <scene> and <scene_with_fade> will cause the current story reader
+                    # to finish (to make way for a new scene - new main reader), so those
+                    # two commands will set story_finished to True
+                    if self.story_finished:
+                        # Either <scene> or <scene_with_fade> was used, so don't continue
+                        # with this reader anymore.
+                        command_line = False
+                        self.script_lines.clear()
 
                     # Did we run just a command that should cause this loop
                     # to stop? Then break the loop.
@@ -742,7 +757,7 @@ class StoryReader:
                         
             else:
                 # Not a command, probably dialog text.
-                
+
                 # Reading letters should only be allowed in the main script.
                 if self.background_reader_name:
                     continue                     
@@ -1052,14 +1067,10 @@ class StoryReader:
                     self.story.dialog_rectangle.start_show()
 
         elif command_name == "text_dialog_close":
-
-            self.story: StoryReader
-            if self.story.dialog_rectangle and self.story.dialog_rectangle.visible:
-
-                # Used to indicate that the main script should pause
-                self.animating_dialog_rectangle = True
-                
-                self.story.dialog_rectangle.start_hide()
+            """
+            Start the outro animation of the dialog rectangle if it's visible.
+            """
+            self._text_dialog_close()
                 
         elif command_name in ("character_flip_both", "character_flip_horizontal",
                               "character_flip_vertical", "object_flip_both",
@@ -1103,12 +1114,13 @@ class StoryReader:
             """
             self._wait_for_animation(arguments=arguments)
 
-        elif command_name == "fade_screen_start":
+        elif command_name == "scene_with_fade":
             """
-            Gradually fade-in or fade-out the entire pygame window.
+            Gradually fade-in then fade-out the entire pygame window.
+            Right before it starts fading out, play a specific scene.
             This is used when transitioning between scenes.
             """
-            self._fade_screen_start(arguments=arguments)
+            self._scene_with_fade(arguments=arguments)
 
         elif command_name == "character_show":
             """
@@ -3765,19 +3777,29 @@ class StoryReader:
         if scene_name not in chapters[1]:
             return
 
+        # Each time a new scene plays, the dialog rectangle should be re-initialized
+        # manually by the visual novel author, because any scene might start first,
+        # without being transitioned-into from another scene.
+        self.story.dialog_rectangle = None
+
+        # So the main reader does not continue reading its script
+        # (because a new main reader scene will be loaded/played soon).
+        # Without this, loading a new scene will produce some expected results if
+        # the scene we're coming out of has more lines of script in it after the <scene> line.
+        self.story_finished = True
+
         # {chapter_name: scene_name}
         # When StoryReader() instantiates, it will look at the startup
         # script and will load it automatically.
         Passer.manual_startup_chapter_scene = {chapter_name: scene_name}
-        
 
+        # Create a new main reader
         self.story.reader = StoryReader(story=self.story.reader.story,
                                         data_requester=self.story.data_requester,
                                         background_reader_name=None)
 
         # Start reading the new scene script.
         self.story.reader.read_story()
-
 
     def _set_movement_delay(self,
                             sprite_type: file_reader.ContentType,
@@ -4235,57 +4257,95 @@ class StoryReader:
 
         It forces the main reader to pause. It has no effect on background readers.
         """
-        wait: WaitForAnimation
-        wait = self._get_arguments(class_namedtuple=WaitForAnimation,
-                                   given_arguments=arguments)
 
-        if not wait:
-            return
+        # <wait_for_animation: fade screen> ?
+        if "," not in arguments:
+            # There are no commas, which means it is probably: <wait_for_animation: fade screen>
 
-        # Get the story reader that's not a reusable script reader,
-        # because everything in this method involves the main reader only.
-        main_reader = self.get_main_story_reader()
+            wait_for_fade_screen: WaitForAnimationFadeScreen
+            wait_for_fade_screen = self._get_arguments(class_namedtuple=WaitForAnimationFadeScreen,
+                                                       given_arguments=arguments)
 
-        main_reader.wait_for_animation_handler.enable_wait_for(sprite_type=wait.sprite_type,
-                                                               general_alias=wait.general_alias,
-                                                               animation_type=wait.animation_type)
+            if not wait_for_fade_screen:
+                return
 
-    def _fade_screen_start(self, arguments: str):
+            if wait_for_fade_screen.fade_screen.lower() != "fade screen":
+                return
+
+            # Get the story reader that's not a reusable script reader,
+            # because everything in this method involves the main reader only.
+            main_reader = self.get_main_story_reader()
+
+            main_reader.wait_for_animation_handler.enable_wait_for(sprite_type="cover",
+                                                                   general_alias=None,
+                                                                   animation_type=None)
+
+        else:
+            # We probably need to wait for a specific type of sprite.
+            # Example: <wait_for_animation: character, theo, move>
+
+            wait_for_sprite_animation: WaitForAnimation
+            wait_for_sprite_animation = self._get_arguments(class_namedtuple=WaitForAnimation,
+                                                            given_arguments=arguments)
+
+            if not wait_for_sprite_animation:
+                return
+
+            # Get the story reader that's not a reusable script reader,
+            # because everything in this method involves the main reader only.
+            main_reader = self.get_main_story_reader()
+
+            main_reader.wait_for_animation_handler. \
+                enable_wait_for(sprite_type=wait_for_sprite_animation.sprite_type,
+                                general_alias=wait_for_sprite_animation.general_alias,
+                                animation_type=wait_for_sprite_animation.animation_type)
+
+    def _scene_with_fade(self, arguments: str):
         """
-        Gradually fade in or fade out a color that covers the entire pygame window.
+        Gradually fade in, then fade-out a color that covers the entire pygame window.
+        Right before it starts fading out, play a specific scene.
         This is used when transitioning between scenes.
         """
-        fade_screen: FadeScreenStart
-        fade_screen = self._get_arguments(class_namedtuple=FadeScreenStart,
-                                          given_arguments=arguments)
+        scene_with_fade: SceneWithFade
+        scene_with_fade = self._get_arguments(class_namedtuple=SceneWithFade,
+                                              given_arguments=arguments)
 
-        if not fade_screen:
+        if not scene_with_fade:
             return
 
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        if fade_screen.fade_direction.lower() == "fade in":
-            direction = cover_screen_handler.FadeDirection.FADE_IN
-            initial_fade = 0
-        elif fade_screen.fade_direction.lower() == "fade out":
-            direction = cover_screen_handler.FadeDirection.FADE_OUT
-            initial_fade = 255
-        else:
-            return
-        
-        incremental_speed = \
-            self._sprite_fade_speed_get_value_from_percent(percent=fade_screen.fade_speed,
-                                                           fade_direction=fade_screen.fade_direction)
+        # Start off with zero opacity in fade-in mode
+        direction = cover_screen_handler.FadeDirection.FADE_IN
+        initial_fade = 0
 
-        if incremental_speed is None:
+        incremental_fade_in_speed = \
+            self._sprite_fade_speed_get_value_from_percent(percent=scene_with_fade.fade_in_speed,
+                                                           fade_direction="fade in")
+
+        incremental_fade_out_speed = \
+            self._sprite_fade_speed_get_value_from_percent(percent=scene_with_fade.fade_out_speed,
+                                                           fade_direction="fade out")
+
+        # None and zero are not proper values and will result to an exception.
+        if not all([incremental_fade_in_speed, incremental_fade_out_speed]):
             return
 
-        main_reader.cover_screen_handler.start_fading_screen(hex_color=fade_screen.hex_color,
-                                                             initial_fade_value=initial_fade,
-                                                             fade_speed_incremental=incremental_speed,
-                                                             fade_direction=direction)
+        # So the main reader does not continue reading while
+        # the screen is fading-out. (a new scene will be shown soon).
+        main_reader.story_finished = True
+
+        main_reader.story.cover_screen_handler. \
+            start_fading_screen(hex_color=scene_with_fade.hex_color,
+                                initial_fade_value=initial_fade,
+                                fade_in_speed_incremental=incremental_fade_in_speed,
+                                fade_out_speed_incremental=incremental_fade_out_speed,
+                                hold_frame_count=scene_with_fade.fade_hold_for_frame_count,
+                                chapter_name=scene_with_fade.chapter_name,
+                                scene_name=scene_with_fade.scene_name,
+                                fade_direction=direction)
 
     def _sprite_hide(self,
                      arguments: str,
@@ -4472,6 +4532,16 @@ class StoryReader:
                 
             new_sprite.start_show()
 
+    def _text_dialog_close(self):
+        """
+        Start the outro animation of the dialog rectangle if it's visible.
+        """
+        if self.story.dialog_rectangle and self.story.dialog_rectangle.visible:
+            # Used to indicate that the main script should pause
+            self.animating_dialog_rectangle = True
+
+            self.story.dialog_rectangle.start_hide()
+
     def _text_dialog_define(self, arguments: str):
         """
         Handle reading and storing a new definition for a dialog
@@ -4488,13 +4558,16 @@ class StoryReader:
         dialog_rectangle_arguments = self._get_arguments(class_namedtuple=DialogRectangleDefinition,
                                                          given_arguments=arguments)
 
-        
         if not dialog_rectangle_arguments:
             return
 
+        # Get the main reader, because a dialog rectangle can only
+        # be part of the main reader.
+        main_reader = self.get_main_story_reader()
+
         # If the dialog is currently visible, don't allow the properties
         # to change while it's being displayed.
-        if self.story.dialog_rectangle and self.story.dialog_rectangle.visible:
+        if main_reader.story.dialog_rectangle and main_reader.story.dialog_rectangle.visible:
             return
 
         # Don't allow 'starting intro/outro' reusable scripts to run
@@ -4544,10 +4617,9 @@ class StoryReader:
         reusable_on_halt = dialog_rectangle_arguments.reusable_on_halt
         reusable_on_unhalt = dialog_rectangle_arguments.reusable_on_unhalt
 
-
-        self.story.dialog_rectangle =\
+        main_reader.story.dialog_rectangle = \
             dialog_rectangle.DialogRectangle(
-                main_screen=self.story.main_surface,
+                main_screen=main_reader.story.main_surface,
                 width_rectangle=dialog_rectangle_arguments.width,
                 height_rectangle=dialog_rectangle_arguments.height,
                 animation_speed=dialog_rectangle_arguments.animation_speed,
@@ -4555,8 +4627,8 @@ class StoryReader:
                 outro_animation=outro_animation,
                 anchor=anchor,
                 bg_color_hex=dialog_rectangle_arguments.bg_color_hex,
-                animation_finished_method=self.on_dialog_rectangle_animation_completed,
-                spawn_new_background_reader_method=self.spawn_new_background_reader,
+                animation_finished_method=main_reader.on_dialog_rectangle_animation_completed,
+                spawn_new_background_reader_method=main_reader.spawn_new_background_reader,
                 padding_x=dialog_rectangle_arguments.padding_x,
                 padding_y=dialog_rectangle_arguments.padding_y,
                 alpha=dialog_rectangle_arguments.opacity,
@@ -4651,41 +4723,54 @@ class WaitForAnimationHandler:
 
     def __init__(self):
         # (sprite group, general alias, animation type)
+        # or
+        # "cover" (single string) which means screen cover (screen fade-in/fade-out)
         self.wait_list = []
 
-    def enable_wait_for(self, sprite_type: str, general_alias: str, animation_type: str):
+    def enable_wait_for(self, sprite_type: str, general_alias: str = None, animation_type: str = None):
         """
         Record a new reason to pause the main story reader.
         Reusable scripts are not affected.
         """
-        if not all([sprite_type, general_alias, animation_type]):
-            return
 
-        if sprite_type == "character":
-            sprite_group_to_check = sd.Groups.character_group
-        elif sprite_type == "object":
-            sprite_group_to_check = sd.Groups.object_group
-        elif sprite_type == "dialog sprite":
-            sprite_group_to_check = sd.Groups.dialog_group
+        # Should we wait for a screen cover animation? (ie: <fade_screen_start>
+        if sprite_type == "cover":
+
+            # Already in the wait_list? return.
+            if "cover" in self.wait_list:
+                return
+
+            self.wait_list.append("cover")
         else:
-            return
 
-        if animation_type == "fade":
-            animation_type_to_check = sd.SpriteAnimationType.FADE
-        elif animation_type == "move":
-            animation_type_to_check = sd.SpriteAnimationType.MOVE
-        elif animation_type == "rotate":
-            animation_type_to_check = sd.SpriteAnimationType.ROTATE
-        elif animation_type == "scale":
-            animation_type_to_check = sd.SpriteAnimationType.SCALE
-        elif animation_type == "all":
-            animation_type_to_check = "all",
-        elif animation_type == "any":
-            animation_type_to_check = "any"
-        else:
-            return
+            if not all([sprite_type, general_alias, animation_type]):
+                return
 
-        self.wait_list.append((sprite_group_to_check, general_alias, animation_type_to_check))
+            if sprite_type == "character":
+                sprite_group_to_check = sd.Groups.character_group
+            elif sprite_type == "object":
+                sprite_group_to_check = sd.Groups.object_group
+            elif sprite_type == "dialog sprite":
+                sprite_group_to_check = sd.Groups.dialog_group
+            else:
+                return
+
+            if animation_type == "fade":
+                animation_type_to_check = sd.SpriteAnimationType.FADE
+            elif animation_type == "move":
+                animation_type_to_check = sd.SpriteAnimationType.MOVE
+            elif animation_type == "rotate":
+                animation_type_to_check = sd.SpriteAnimationType.ROTATE
+            elif animation_type == "scale":
+                animation_type_to_check = sd.SpriteAnimationType.SCALE
+            elif animation_type == "all":
+                animation_type_to_check = "all",
+            elif animation_type == "any":
+                animation_type_to_check = "any"
+            else:
+                return
+
+            self.wait_list.append((sprite_group_to_check, general_alias, animation_type_to_check))
 
     def check_wait(self) -> bool:
         """
@@ -4702,15 +4787,30 @@ class WaitForAnimationHandler:
 
         # Loop through wait_list to see what animation(s) we need to wait for (if any).
         for idx, wait_info in enumerate(self.wait_list):
-            # Type-hints
-            sprite_group: sd.SpriteGroup
-            general_alias: str | None
-            animation_type: sd.SpriteAnimationType | str
 
-            sprite_group, general_alias, animation_type = wait_info
-            wait = self._is_sprite_animating(sprite_group=sprite_group,
-                                             general_alias=general_alias,
-                                             animation_type=animation_type)
+            # Initialize
+            wait = False
+
+            if isinstance(wait_info, str) and wait_info == "cover":
+                # Wait for a screen fade-in / fade-out animation to finish
+                # (even if the screen is fully faded-in, it's still considered to be animating)
+
+                main_reader = Passer.active_story.reader.get_main_story_reader()
+                if main_reader.cover_screen_handler.is_cover_animating:
+                    wait = True
+
+            else:
+                # Wait for a sprite to finish a specific animation
+
+                # Type-hints
+                sprite_group: sd.SpriteGroup
+                general_alias: str | None
+                animation_type: sd.SpriteAnimationType | str
+
+                sprite_group, general_alias, animation_type = wait_info
+                wait = self._is_sprite_animating(sprite_group=sprite_group,
+                                                 general_alias=general_alias,
+                                                 animation_type=animation_type)
             if wait:
                 return True
             else:

@@ -19,10 +19,11 @@
         </layout>
         <child>
           <object class="ttk.Label" id="label1">
-            <property name="text" translatable="yes">Sprite type:</property>
+            <property name="text" translatable="yes">Wait for:</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="row">0</property>
+              <property name="sticky">w</property>
             </layout>
           </object>
         </child>
@@ -61,10 +62,22 @@
             </layout>
           </object>
         </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton4">
+            <property name="text" translatable="yes">Screen fade</property>
+            <property name="value">cover</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">3</property>
+              <property name="padx">10 0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
       </object>
     </child>
     <child>
-      <object class="ttk.Frame" id="frame4">
+      <object class="ttk.Frame" id="frame_sprite_alias" named="True">
         <property name="height">200</property>
         <property name="width">200</property>
         <layout manager="grid">
@@ -96,7 +109,7 @@
       </object>
     </child>
     <child>
-      <object class="ttk.Frame" id="frame5">
+      <object class="ttk.Frame" id="frame_animation_type" named="True">
         <property name="height">200</property>
         <property name="width">200</property>
         <layout manager="grid">

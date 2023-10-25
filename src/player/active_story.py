@@ -31,7 +31,7 @@ from dialog_rectangle import DialogRectangle, \
      RectangleIntroAnimation, \
      RectangleOutroAnimation, \
      AnchorRectangle
-
+from cover_screen_handler import CoverScreenHandler
 
 
 
@@ -74,6 +74,9 @@ class ActiveStory:
 
         self.dialog_rectangle: DialogRectangle
         self.dialog_rectangle = None
+
+        # For complete-screen fade-ins and fade-outs (used primarily for scene transitions)
+        self.cover_screen_handler = CoverScreenHandler(main_surface=self.main_surface)
 
         # Used for storing the rect of the dialog rect (after all its
         # animations are complete), so that when we add letters to the dialog,
@@ -284,7 +287,6 @@ class ActiveStory:
         dialog_rect = None
         letter_rects = None
 
-
         if self.dialog_rectangle and self.dialog_rectangle.visible:
 
             # Note: The sequence is important here.
@@ -318,10 +320,9 @@ class ActiveStory:
 
                 self.dialog_rectangle.visible = False
 
-        main_reader = self.reader.get_main_story_reader()
-        main_reader.cover_screen_handler.update()
-        main_reader.cover_screen_handler.draw()
-        cover_color_rect = main_reader.cover_screen_handler.get_updated_rect()
+        self.cover_screen_handler.update()
+        self.cover_screen_handler.draw()
+        cover_color_rect = self.cover_screen_handler.get_updated_rect()
 
         update_rects1 = sd.Groups.background_group.get_updated_rects() + \
                         sd.Groups.object_group.get_updated_rects() + \

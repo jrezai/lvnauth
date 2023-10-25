@@ -106,10 +106,6 @@ class ManualUpdate:
 class Passer:
     active_story = None
     
-    # Used for a constant move speed of all objects
-    # regardless of the FPS    
-    seconds_elapsed = 0
-    
     # Used for specifying a custom chapter/scene
     # to play from the Launch window.
     # {chapter_name: scene_name}
