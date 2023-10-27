@@ -383,7 +383,7 @@ class StoryReader:
             self.halt_main_script_auto_mode_frames = 0
             
             # This will increment until we reach the frame count above.
-            self.halt_main_script_frame_counter = 0            
+            self.halt_main_script_frame_counter = 0
 
             # Used for starting a timer which runs a reusable script
             # after X number of frames have elapsed.
@@ -566,10 +566,10 @@ class StoryReader:
             # Background reader deletions need to occur below and not inside an actual reader
             # because if we delete inside a reader, we'll get a 'deletion during enumeration' exception.
 
-            # Are there any background reusable scripts that are no longer needed
+            # Are there any running background reusable scripts that are no longer needed
             # and need to be deleted?
             if self.background_readers_deletion_queue:
-                # Yes, there are some background readers that need to be deleted.
+                # Yes, there are some running background readers that need to be deleted.
 
                 for bg_reader_name in self.background_readers_deletion_queue:
 
@@ -760,7 +760,7 @@ class StoryReader:
 
                 # Reading letters should only be allowed in the main script.
                 if self.background_reader_name:
-                    continue                     
+                    continue
                 
                 command_line = False
 
@@ -2120,8 +2120,7 @@ class StoryReader:
                 # Yes, we've reached the amount needed to wait.
 
                 # Now we can reset the counter and unhalt the story.
-                main_reader.halt_main_script_auto_mode_frames = 0
-                main_reader.halt_main_script_frame_counter = 0
+                # The unhalt() method below will reset the halt_auto counter variables.
                 main_reader.unhalt()
                 
             else:
@@ -2213,7 +2212,7 @@ class StoryReader:
             return True
         
         return False
-        
+
     def unhalt(self):
         """
         Unhalt the main script reader.
@@ -2222,11 +2221,18 @@ class StoryReader:
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
-        
+
         main_reader.halt_main_script = False
 
         # Clear the fade-in intro animation, if any.
         main_reader.active_font_handler.font_animation.stop_intro_animation()
+
+        # Reset halt_auto variables, if they were used.
+        # Note: these two variables need to be here, *after* stop_intro_animation() above,
+        # because stop_intro_animation() will try and run reusable_on_halt, which we shouldn't
+        # if we just came out of halt_auto.
+        main_reader.halt_main_script_auto_mode_frames = 0
+        main_reader.halt_main_script_frame_counter = 0
 
         # Clear the current letter list because we should make way for
         # other dialog text.
@@ -3684,6 +3690,9 @@ class StoryReader:
         # Add the background reader to the main dictionary that holds the background readers.
         self.background_readers[call.reusable_script_name] = reader
 
+        # Debugging
+        # print("BG Reader:", call.reusable_script_name)
+
         def get_reusable_script_arguments(unsorted_arguments_line: str) -> Dict | None:
             """
             Parse the parameter name(s) and argument value(s) from
@@ -4607,18 +4616,31 @@ class StoryReader:
         
         reusable_on_intro_starting =\
             dialog_rectangle_arguments.reusable_on_intro_starting
+        if reusable_on_intro_starting == "none":
+            reusable_on_intro_starting = None
 
         reusable_on_intro_finished =\
             dialog_rectangle_arguments.reusable_on_intro_finished
+        if reusable_on_intro_finished == "none":
+            reusable_on_intro_finished = None
         
         reusable_on_outro_starting =\
             dialog_rectangle_arguments.reusable_on_outro_starting
+        if reusable_on_outro_starting == "none":
+            reusable_on_outro_starting = None
         
         reusable_on_outro_finished =\
             dialog_rectangle_arguments.reusable_on_outro_finished
+        if reusable_on_outro_finished == "none":
+            reusable_on_outro_finished = None
         
         reusable_on_halt = dialog_rectangle_arguments.reusable_on_halt
+        if reusable_on_halt == "none":
+            reusable_on_halt = None
+
         reusable_on_unhalt = dialog_rectangle_arguments.reusable_on_unhalt
+        if reusable_on_unhalt == "none":
+            reusable_on_unhalt = None
 
         main_reader.story.dialog_rectangle = \
             dialog_rectangle.DialogRectangle(

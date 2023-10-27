@@ -369,8 +369,9 @@ class FontAnimation:
         if not self.is_start_animating and \
                 self.start_animation_type != FontAnimationShowingType.SUDDEN:
             return
-        
-        print(datetime.now())
+
+        # For debugging
+        # print(datetime.now())
 
         # No letters to show? Return.
         # Needed if <halt> is used multiple times in a row, with no letters to show.
@@ -595,7 +596,12 @@ class FontAnimation:
 
         # Run a reusable script now that the dialog text is finished displaying?
         # (ie: for when <halt> is used)
-        if active_story.Passer.active_story.dialog_rectangle.reusable_on_halt:
+        main_reader = active_story.Passer.active_story.reader.get_main_story_reader()
+
+        # Run reusable_on_halt, if we're not in halt_auto mode.
+        # halt_auto should not show on_halt animations, because it will proceed on its own.
+        if active_story.Passer.active_story.dialog_rectangle.reusable_on_halt and \
+                not main_reader.halt_main_script_auto_mode_frames:
             active_story.Passer.active_story.reader.spawn_new_background_reader(
                 reusable_script_name=active_story.Passer.active_story.dialog_rectangle.reusable_on_halt)
 
@@ -1176,11 +1182,6 @@ class ActiveFontHandler:
                     # We've blitted sudden-mode text
                     # So we don't redraw the dialog rectangle again in the next frame.
                     self.sudden_text_drawn_already = True
-
-                    # Check for <no_clear> and run the on_halt script, if there is one.
-                    # This is called here specifically for sudden-mode. Other modes
-                    # will call stop_intro_animation() elsewhere.
-                    # self.font_animation.stop_intro_animation()
 
     def set_active_font(self, font_name):
         """
