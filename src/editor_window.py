@@ -123,6 +123,9 @@ class EditorMainApp:
         builder.connect_callbacks(self)
         
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
+
+        # Maximize the editor window
+        self.mainwindow.wm_attributes("-zoomed", True)
         
         # Debug button (uncomment the two lines below if debugging)
         self.btn_debug = builder.get_object("btn_debug")

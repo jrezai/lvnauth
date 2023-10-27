@@ -77,8 +77,7 @@ class StartupWindow:
 
             open_manager = editor_window.OpenManager(self.mainwindow)
             open_manager.open(lvnap_file_path=ProjectSnapshot.save_full_path)
-            
-            
+
             self.mainwindow.withdraw()
             
     def on_open_project_menu_clicked(self):
