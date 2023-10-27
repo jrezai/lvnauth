@@ -2560,11 +2560,14 @@ class WizardWindow:
         default_page.show()
 
     def on_ok_btn_clicked(self):
-        generated_command = self.active_page.generate_command()
-        if not generated_command:
-            return
-        else:
-            self.generated_command = generated_command
+        # The 'Default' page doesn't have a generate_command method,
+        # so check for it, in case the customer clicked OK at the default page.
+        if hasattr(self.active_page, "generate_command"):
+            generated_command = self.active_page.generate_command()
+            if not generated_command:
+                return
+            else:
+                self.generated_command = generated_command
             
         self.mainwindow.destroy()
         

@@ -2235,7 +2235,6 @@ class StoryReader:
         # Re-draw the dialog rectangle shape so that any previous text
         # gets blitted over with the new rectangle.
         main_reader.story.dialog_rectangle.clear_text()
-               
 
     def _continue(self, arguments: str):
         """
@@ -3632,13 +3631,17 @@ class StoryReader:
             
         return after_manager_method
 
-    def spawn_new_background_reader(self, reusable_script_name, with_arguments: bool = False):
+    def spawn_new_background_reader(self,
+                                    reusable_script_name: str,
+                                    with_arguments: bool = False):
         """
         Create a new background reader.
         :param reusable_script_name: (str) the case-sensitive name of the reusable script we should load.
+
         :param with_arguments: (bool) True if arguments have been supplied (comma separated)
         as part of the reusable_script_name.
         For example: 'character=theo,last name=something' (two arguments in this example)
+
         :return: None
         """
 

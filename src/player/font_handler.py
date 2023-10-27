@@ -20,6 +20,7 @@ import pygame
 import active_story
 import logging
 import audio_player
+import story_reader
 from typing import Dict, List, Tuple
 from enum import Enum, auto
 from shared_components import Passer
@@ -268,6 +269,11 @@ class FontAnimation:
         is set to 'sudden'.
         """
 
+        # Run the on unhalt reusable script (if any) here
+        if Passer.active_story.dialog_rectangle.reusable_on_unhalt:
+            Passer.active_story.reader.spawn_new_background_reader(
+                reusable_script_name=Passer.active_story.dialog_rectangle.reusable_on_unhalt)
+
         if self.start_animation_type == FontAnimationShowingType.SUDDEN:
             pass
 
@@ -355,7 +361,13 @@ class FontAnimation:
         Also, re-draw each of the letters with the new fade value.
         """
 
-        if not self.is_start_animating:
+        # Not animating and not in sudden-mode? There is nothing to animate, so return.
+
+        # However, if we are in sudden-mode, we must run this method until the end, because
+        # the end of this method will run stop_intro_animation(), which needs to happen for
+        # the on_halt script run, even when in sudden-mode.
+        if not self.is_start_animating and \
+                self.start_animation_type != FontAnimationShowingType.SUDDEN:
             return
         
         print(datetime.now())
@@ -364,6 +376,8 @@ class FontAnimation:
         # Needed if <halt> is used multiple times in a row, with no letters to show.
         if not self.letters:
             return
+
+        stop_intro = False
 
         if self.start_animation_type == FontAnimationShowingType.FADE_IN:
             
@@ -410,8 +424,7 @@ class FontAnimation:
 
             # Has the fade-in animation finished?
             if self.current_font_fade_value >= 255:
-                
-                self.stop_intro_animation()
+                stop_intro = True
                 
         elif self.start_animation_type == FontAnimationShowingType.GRADUAL_LETTER_FADE_IN:
 
@@ -492,8 +505,8 @@ class FontAnimation:
 
                     # Reset flags so the novel knows we're ready for the
                     # next dialog text, if any.
-                    self.stop_intro_animation()
-
+                    nonlocal stop_intro
+                    stop_intro = True
 
             increase_opacity_three_letters()
 
@@ -545,10 +558,20 @@ class FontAnimation:
                 self.gradual_letter_cursor_position += 1
 
                 if self.gradual_letter_cursor_position >= len(self.letters):
-                    self.stop_intro_animation()
+                    stop_intro = True
                     
             else:
                 self.gradual_delay_counter += 1
+
+        elif self.start_animation_type == FontAnimationShowingType.SUDDEN:
+            # The text in sudden-mode has finished being displayed, so
+            # set the flag to run stop_intro_animation(), so that the
+            # on_halt reusable script (if any) can run and <no_clear>
+            # can be checked.
+            stop_intro = True
+
+        if stop_intro:
+            self.stop_intro_animation()
 
     def stop_intro_animation(self):
         """
@@ -560,9 +583,10 @@ class FontAnimation:
         """
         self.is_start_animating = False
         self.faster_text_mode = False
-        
-        # Now that the text intro animation has stopped, should we
-        # stop pass on clearing the text during the next <halt> or <halt_auto>?
+
+        # Now that the text intro animation has stopped,
+        # check if we should skip clearing the text the next time
+        # a <halt> or <halt_auto> command is used.
         self.no_clear_handler.clear_text_check()
         
         self.gradual_letter_cursor_position = 0
@@ -572,8 +596,8 @@ class FontAnimation:
         # Run a reusable script now that the dialog text is finished displaying?
         # (ie: for when <halt> is used)
         if active_story.Passer.active_story.dialog_rectangle.reusable_on_halt:
-            active_story.Passer.active_story.reader.spawn_new_background_reader(reusable_script_name=active_story.Passer.active_story.dialog_rectangle.reusable_on_halt)
-
+            active_story.Passer.active_story.reader.spawn_new_background_reader(
+                reusable_script_name=active_story.Passer.active_story.dialog_rectangle.reusable_on_halt)
 
 
 class LetterProperties:
@@ -1094,7 +1118,7 @@ class ActiveFontHandler:
                 # only be used once each time.
                 self.font_animation.no_clear_handler.\
                     pass_clearing_next_halt = False
-                
+
                 # Don't clear the text in this run, stop here.
                 return
             
@@ -1104,7 +1128,6 @@ class ActiveFontHandler:
             # has already been blitted (to prevent repeated letter blittings in sudden-mode
             # because there is no gradual animation for sudden-mode).
             self.reset_sudden_text_finished_flag()
-
 
     def draw(self):
         """
@@ -1150,8 +1173,14 @@ class ActiveFontHandler:
             # in the next call to this method.
             if blitted_a_letter:
                 if self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN:
+                    # We've blitted sudden-mode text
                     # So we don't redraw the dialog rectangle again in the next frame.
                     self.sudden_text_drawn_already = True
+
+                    # Check for <no_clear> and run the on_halt script, if there is one.
+                    # This is called here specifically for sudden-mode. Other modes
+                    # will call stop_intro_animation() elsewhere.
+                    # self.font_animation.stop_intro_animation()
 
     def set_active_font(self, font_name):
         """
@@ -1256,7 +1285,6 @@ class NoClearHandler:
             
             # So the caller knows a custom position was set.
             return True
-        
 
     def clear_text_check(self):
         """
@@ -1271,11 +1299,11 @@ class NoClearHandler:
         the dialog text starting from the last blitted position.
         
         For gradual letter or gradual letter fade:
-        - Record where the letter cursor position if the font animation
+        - Record where the letter cursor position is, if the font animation
         is set to gradual or gradual fade.
         
         For all-letter fade in:
-        - Record how many letters have been faded in so far.
+        - Record how many letters have been faded-in so far.
         
         
         If we're not passing on clearing the dialog text,

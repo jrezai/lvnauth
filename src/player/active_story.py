@@ -233,20 +233,20 @@ class ActiveStory:
                     return
 
                 # Run a reusable script for when <unhalt> is used?
-                
-                # (We don't have this check in the unhalt() method because
-                # the unhalt method also gets used for automated unhalt,
-                # so we shouldn't run a reusable script on automated unhalt.)
-                if self.dialog_rectangle.reusable_on_unhalt:
-                    self.reader.spawn_new_background_reader(reusable_script_name=self.dialog_rectangle.reusable_on_unhalt)
-                
+
+                # # (We don't have this check in the unhalt() method because
+                # # the unhalt method also gets used for automated unhalt,
+                # # so we shouldn't run a reusable script on automated unhalt.)
+                # if self.dialog_rectangle.reusable_on_unhalt:
+                #     self.reader.spawn_new_background_reader(reusable_script_name=self.dialog_rectangle.reusable_on_unhalt)
+                #
 
                 # unhalt story
                 self.reader.unhalt()
 
-                ## Re-draw the dialog rectangle shape so that any previous text
-                ## gets blitted over with the new rectangle.
-                #self.reader.story.dialog_rectangle.clear_text()
+                # # Re-draw the dialog rectangle shape so that any previous text
+                # # gets blitted over with the new rectangle.
+                # self.reader.story.dialog_rectangle.clear_text()
                 
         if event.type == pygame.MOUSEMOTION:
             # Record the mouse coordinates (used for draft-mode)
