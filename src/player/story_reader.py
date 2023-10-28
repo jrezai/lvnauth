@@ -1838,6 +1838,13 @@ class StoryReader:
         if not dialog_sound:
             return
 
+        # Don't allow the dialog sound to be set if the dialog rectangle hasn't been
+        # initialized yet.
+        if not self.story.dialog_rectangle:
+            raise ValueError(
+                "Cannot set the dialog text sound because the dialog has not been defined yet."
+                " Use <text_dialog_define> first.")
+
         # Set the audio name to use for each letter.
         # Only applies to: gradual-letter-by-letter (not fade)
         self.story.dialog_rectangle.text_sound_name = dialog_sound.audio_name

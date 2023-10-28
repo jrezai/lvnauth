@@ -552,9 +552,11 @@ class FontAnimation:
                 self.letters[self.gradual_letter_cursor_position].set_opacity(255)
 
                 # Play a sound for this letter, if configured to do so.
-                Passer.active_story.audio_player.play_audio(
-                    audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
-                    audio_channel=audio_player.AudioChannel.TEXT)
+                # Don't play a sound for a space ' ' character.
+                if not is_space:
+                    Passer.active_story.audio_player.play_audio(
+                        audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
+                        audio_channel=audio_player.AudioChannel.TEXT)
 
                 self.gradual_letter_cursor_position += 1
 
