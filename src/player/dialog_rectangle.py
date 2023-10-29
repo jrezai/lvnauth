@@ -480,6 +480,12 @@ class DialogRectangle:
         # so the animation is not finished.
         self.intro_complete = False
 
+        # Reset the outro animation flag, because if outro_complete is set to True,
+        # it will not be reset again until here. It's necessary for it to be here,
+        # so that the outro animation finishes properly; otherwise, the border during
+        # the outro will draw in the last few frames of the outro.
+        self.outro_complete = False
+
         # Initial alpha-value
         if self.intro_animation == RectangleIntroAnimation.FADE_IN:
             # We're going to do a fade-in animation,
