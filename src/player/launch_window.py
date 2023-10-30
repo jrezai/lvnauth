@@ -265,6 +265,12 @@ class LaunchWindow:
 
             # Add all the scenes in the current chapter.
             for scene_name in scene_list:
+                # Don't add scene names starting with a period, because
+                # these are hidden scenes.
+                if scene_name.startswith("."):
+                    continue
+
+                # Add the scene
                 self.treeview_chapter_scenes.insert(parent=chapter_item_iid,
                                                     index="end",
                                                     values=(scene_name, ))
