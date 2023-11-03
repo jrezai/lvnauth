@@ -690,8 +690,28 @@ class StoryReader:
                 # but not limited to dialog text), then elapse the counter.
                 # The method below will check fot his.
                 self.rest_handler.tick()
-                
-                return
+
+                # Still pause? We quickly double-check here because
+                # elapse_halt_timer() just ran a few lines above, so it's possible that
+                # we won't need to pause anymore. If we don't check in this frame
+                # and wait for the next frame, in some cases, any text after <halt_auto> will
+                # be skipped if we're in sudden-mode.
+                # To elaborate, the quick check here will avoid not reading 'You look familiar'
+                # in this script, when in sudden-mode.
+                """
+                Hello
+                <no_clear>
+                <continue>
+                <halt_auto: 60>
+                   ...
+                <no_clear>
+                <halt_auto: 60>
+                You look familiar.  <--- this won't run if we don't re-check for a halt in this frame.
+                <halt>
+                """
+                # Re-check
+                if self.main_script_should_pause():
+                    return
 
         command_line = True
 
@@ -2132,7 +2152,7 @@ class StoryReader:
                 
             else:
                 # No, we still need to halt the story.
-                
+
 
                 # If the dialog text is still being animated
                 # (ie: fading in, or being shown letter-by-letter),
@@ -2161,8 +2181,8 @@ class StoryReader:
         
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
-        main_reader = self.get_main_story_reader()        
-        
+        main_reader = self.get_main_story_reader()
+
         # Is the story already halted? return so we don't
         # re-run the font animation for no reason.
         if main_reader.halt_main_script:
@@ -4229,8 +4249,8 @@ class StoryReader:
     def _no_clear(self):
         
         main_reader = self.get_main_story_reader()
-        main_reader.active_font_handler.font_animation.no_clear_handler.\
-            pass_clearing_next_halt = True
+        main_reader.active_font_handler.font_animation. \
+            no_clear_handler.pass_clearing_next_halt = True
 
     def _rest(self, arguments: str):
         """

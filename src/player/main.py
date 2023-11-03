@@ -19,6 +19,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 import sys
 import pygame
 import argparse
+import sprite_definition as sd
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
@@ -27,6 +28,7 @@ from launch_window import LaunchWindow
 from io import BytesIO
 from typing import Dict
 from pathlib import Path
+from pygame import scrap
 
 # We need to add the parent directory so
 # the snap_handler module will be seen.
@@ -66,7 +68,7 @@ class Main:
         image_file_object = self._get_poster_image(data_requester=data_requester)
 
         # Instantiate the launch window
-        self.launch_window =\
+        self.launch_window = \
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
@@ -108,6 +110,13 @@ class Main:
         # in pixels (width, height)
         screen_size = tuple(data_requester.general_header.get("StoryWindowSize"))
 
+        # 'Draft' or 'Final'
+        # To know whether to show the draft rectangle or not, and
+        # whether to allow some keyboard shortcuts or not.
+        compile_mode = data_requester.general_header.get("StoryCompileMode")
+
+        draft_mode = compile_mode == "Draft"
+
         # Should we show the launch window?
         if show_launch:
             self.show_launch_window(data_requester=data_requester)
@@ -117,6 +126,11 @@ class Main:
         # screen_size = (640, 480)
 
         pygame.init()
+
+        # Used for copying text to the clipboard.
+        scrap.init()
+        scrap.set_mode(pygame.SCRAP_CLIPBOARD)
+
         clock = pygame.time.Clock()
 
         pygame.display.set_caption("LVNAuth Player")
@@ -145,7 +159,8 @@ class Main:
         story = ActiveStory(screen_size=screen_size,
                             data_requester=data_requester,
                             main_surface=main_surface,
-                            background_surface=background_surface)
+                            background_surface=background_surface,
+                            draft_mode=draft_mode)
         Passer.active_story = story
 
         # The first time the story starts, we need to refresh the whole screen
@@ -169,6 +184,10 @@ class Main:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     story.story_running = False
+
+                elif event.type == pygame.KEYDOWN:
+                    self.on_key_down(event.key)
+
                 else:
                     story.on_event(event)
 
@@ -196,6 +215,63 @@ class Main:
 
             # For debugging
             # pygame.display.flip()
+
+    def on_key_down(self, key_pressed):
+        """
+        Handle keyboard letter presses.
+        """
+
+        # The following key presses only apply to draft-mode.
+        if not Passer.active_story.draft_mode:
+            return
+
+        if key_pressed == pygame.K_h:
+            # Toggle the visibility of the draft rectangle.
+            Passer.active_story.draft_rectangle.toggle_visibility()
+
+        elif key_pressed == pygame.K_c:
+            """
+            Copy the visible sprite locations, as commands, to the clipboard.
+            """
+
+            # The lines that will be copied to the clipboard.
+            copy_info = []
+
+            # The words to use in the commands.
+            group_words = {0: "character",
+                           1: "object",
+                           2: "dialog_sprite"}
+
+            # Loop through all visible sprites in 3 sprite groups
+            # and generate the X/Y commands for them.
+            for idx, sprite_group in enumerate((sd.Groups.character_group,
+                                                sd.Groups.object_group,
+                                                sd.Groups.dialog_group)):
+
+                # Get the word to use in the commands (ie: character, object, dialog_sprite).
+                group_word = group_words.get(idx)
+
+                # Loop through the visible sprites in the current group we're looping on.
+                for sprite_name, sprite_object in sprite_group.sprites.items():
+                    if sprite_object.visible:
+                        copy_info.append(f"# {sprite_object.general_alias}")
+                        copy_info.append(
+                            f"<{group_word}_set_position_x: {sprite_object.general_alias}, {sprite_object.rect.x}>")
+                        copy_info.append(
+                            f"<{group_word}_set_position_y: {sprite_object.general_alias}, {sprite_object.rect.y}>")
+                        copy_info.append("\n")
+
+            # Anything to copy to the clipboard?
+            if copy_info:
+                # Combine the list into one string
+                generated_str = "\n".join(copy_info)
+
+                # Copy the string to the clipboard
+                scrap.put_text(generated_str)
+
+                # Show a 'copied' text in the draft rectangle
+                # so that the user knows it's been copied to the clipboard.
+                Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
 
     def refresh_screen(self, update_rects):
         """

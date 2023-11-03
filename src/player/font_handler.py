@@ -591,7 +591,7 @@ class FontAnimation:
         # check if we should skip clearing the text the next time
         # a <halt> or <halt_auto> command is used.
         self.no_clear_handler.clear_text_check()
-        
+
         self.gradual_letter_cursor_position = 0
         self.gradual_delay_counter = 0
         self.current_font_fade_value = 255
@@ -1342,7 +1342,7 @@ class NoClearHandler:
                     len(self.font_animation.letters)
 
             elif self.get_start_animation_type() == FontAnimationShowingType.SUDDEN:
-                # This resets a bool flag so that blit attempts continue for dialog letters
+                # This resets a bool flag so that blit attempts will continue for dialog letters
                 # in ActiveFontHandler's draw method.
                 # Reason: <no_clear> has been used, so there might be more text to show.
 

@@ -190,7 +190,7 @@ class LaunchWindow:
                 self.btn_play_selection.state(["!disabled"])
                 return
 
-            # Set the shared shared variable so ActiveStory will read it later
+            # Set the shared variable so ActiveStory will read it later
             # and know to set a custom startup chapter/scene.
             Passer.manual_startup_chapter_scene = {chapter_name: first_scene_name}
 
@@ -213,7 +213,7 @@ class LaunchWindow:
             # Get the chapter name
             chapter_name = chapter_row_details.get("text")
 
-            # Set the shared shared variable so ActiveStory will read it later
+            # Set the shared variable so ActiveStory will read it later
             # and know to set a custom startup chapter/scene.
             Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
 
