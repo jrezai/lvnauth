@@ -4119,6 +4119,10 @@ class StoryReader:
         - arguments: an int between 0 and 600.
         For example: a value of 2 means: apply the letter by letter animation
         every 2 frames. A value of 0 means apply the animation at every frame.
+
+        Changes:
+        Nov 4, 2023 (Jobin Rezai) - Fix <font_text_delay> trying to access the
+        active font handler in a reusable script.
         """
 
         text_speed_delay: FontTextDelay
@@ -4135,13 +4139,16 @@ class StoryReader:
         elif text_speed_delay < 0:
             text_speed_delay = 0
 
+        # The active font handler is only available in the main reader, not in reusable scripts.
+        main_reader = self.get_main_story_reader()
+
         # Record the delay value
-        self.active_font_handler.font_animation.font_text_delay = text_speed_delay
+        main_reader.active_font_handler.font_animation.font_text_delay = text_speed_delay
         
         # For the initial text frame, consider the text delay limit having been reached,
         # so that the delay doesn't occur before the first letter has been shown.
         # Without this, the text delay will apply before the first letter has been shown.
-        self.active_font_handler.font_animation.gradual_delay_counter = text_speed_delay
+        main_reader.active_font_handler.font_animation.gradual_delay_counter = text_speed_delay
 
     def _font_start_position(self, x: bool, arguments: str):
         """
