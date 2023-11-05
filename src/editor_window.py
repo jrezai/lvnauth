@@ -1800,10 +1800,20 @@ class ChapterSceneManager:
         :param chapter_name:
         :param scene_name:
         :return: None
+
+        Changes:
+        Nov 4, 2023 (Jobin Rezai) - Show the text, 'Hidden Scene', in the editor's header
+        if the scene being edited starts with a period.
         """
         scene_script = ProjectSnapshot.get_scene_script(chapter_name, scene_name)
 
-        self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [Scene]")
+        # Show the scene heading as 'Hidden Scene' if the scene name starts with a period.
+        if scene_name.startswith("."):
+            scene_heading = "Hidden Scene"
+        else:
+            scene_heading = "Scene"
+
+        self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [{scene_heading}]")
 
         # Set the type of script that is currently active so we know.
         self.active_script = (chapter_name, scene_name)
