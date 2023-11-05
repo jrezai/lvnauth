@@ -219,6 +219,10 @@ class Main:
     def on_key_down(self, key_pressed):
         """
         Handle keyboard letter presses.
+
+        Changes:
+        Nov 4, 2023 (Jobin Rezai) - Copy sprite horizontal / vertical flip values,
+        but only if the values have been changed.
         """
 
         # The following key presses only apply to draft-mode.
@@ -252,6 +256,8 @@ class Main:
                 group_word = group_words.get(idx)
 
                 # Loop through the visible sprites in the current group we're looping on.
+                sprite_name: str
+                sprite_object: sd.SpriteObject
                 for sprite_name, sprite_object in sprite_group.sprites.items():
                     if sprite_object.visible:
                         copy_info.append(f"# {sprite_object.general_alias}")
@@ -259,6 +265,20 @@ class Main:
                             f"<{group_word}_set_position_x: {sprite_object.general_alias}, {sprite_object.rect.x}>")
                         copy_info.append(
                             f"<{group_word}_set_position_y: {sprite_object.general_alias}, {sprite_object.rect.y}>")
+
+                        # Flip both directions?
+                        if all([sprite_object.flipped_vertically, sprite_object.flipped_horizontally]):
+                            copy_info.append(f"<{group_word}_flip_both: {sprite_object.general_alias}>")
+
+                        # Flip only horizontally?
+                        elif sprite_object.flipped_horizontally:
+                            copy_info.append(f"<{group_word}_flip_horizontal: {sprite_object.general_alias}>")
+
+                        # Flip only vertically?
+                        elif sprite_object.flipped_vertically:
+                            copy_info.append(f"<{group_word}_flip_vertical: {sprite_object.general_alias}>")
+
+                        # Add an empty line
                         copy_info.append("\n")
 
             # Anything to copy to the clipboard?
