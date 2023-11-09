@@ -37,28 +37,32 @@ class AudioPlayer:
 
     def __init__(self):
 
-        self.channel_text: pygame.mixer.Sound
-        self.channel_text = None
+        # Limit it to 3 audio channels (excluding the music channel)
+        # (built-in pygame music channel) - Music channel
+        # 0 - Sound FX channel
+        # 1 - Voice channel
+        # 2 - Text (letter) channel
+        pygame.mixer.set_num_channels(3)
 
-        self.channel_fx: pygame.mixer.Sound
-        self.channel_fx = None
+        self.channel_fx: pygame.mixer.Channel
+        self.channel_fx = pygame.mixer.Channel(0)
 
-        self.channel_voice: pygame.mixer.Sound
-        self.channel_voice = None
+        self.channel_voice: pygame.mixer.Channel
+        self.channel_voice = pygame.mixer.Channel(1)
 
-        self.channel_music: pygame.mixer.Sound
-        self.channel_music = None
-        
-        self.loaded_text = None
-        self.loaded_voice = None
-        self.loaded_fx = None
+        self.channel_text: pygame.mixer.Channel
+        self.channel_text = pygame.mixer.Channel(2)
+
         self.loaded_music = None
+        self.loaded_fx = None
+        self.loaded_voice = None
+        self.loaded_text = None
 
         # Volume is 0 to 1 (ie: 0.5 means 50% volume)
-        self._volume_text = 1
+        self._volume_music = 1
         self._volume_sound = 1
         self._volume_voice = 1
-        self._volume_music = 1
+        self._volume_text = 1
         
     def stop_audio(self, audio_channel: AudioChannel):
         """
@@ -67,8 +71,8 @@ class AudioPlayer:
         """
 
         if audio_channel == AudioChannel.MUSIC:
-            if self.channel_music:
-                self.channel_music.stop()
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
 
         elif audio_channel == AudioChannel.FX:
             if self.channel_fx:
@@ -79,18 +83,18 @@ class AudioPlayer:
                 #self.channel_text.stop()
                 
         elif audio_channel == AudioChannel.VOICE:
-            if self.channel_voice:
+            if self.channel_voice.get_busy():
                 self.channel_voice.stop()
                 
         elif audio_channel == AudioChannel.ALL:
-            if self.channel_voice:
+            if self.channel_voice.get_busy():
                 self.channel_voice.stop()
-                
-            if self.channel_fx:
+
+            if self.channel_fx.get_busy():
                 self.channel_fx.stop()
-                
-            if self.channel_music:
-                self.channel_music.stop()        
+
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
 
     @property
     def volume_text(self):
@@ -100,9 +104,8 @@ class AudioPlayer:
     def volume_text(self, value: float):
         self._volume_text = value
 
-        # Set the volume for the channel, if it's initialized.
-        if self.channel_text:
-            self.channel_text.set_volume(value)
+        # Set the volume for the channel.
+        self.channel_text.set_volume(value)
 
     @property
     def volume_sound(self):
@@ -112,9 +115,8 @@ class AudioPlayer:
     def volume_sound(self, value: float):
         self._volume_sound = value
 
-        # Set the volume for the channel, if it's initialized.
-        if self.channel_fx:
-            self.channel_fx.set_volume(value)
+        # Set the volume for the channel
+        self.channel_fx.set_volume(value)
           
     @property
     def volume_voice(self):
@@ -124,9 +126,8 @@ class AudioPlayer:
     def volume_voice(self, value: float):
         self._volume_voice = value
 
-        # Set the volume for the channel, if it's initialized.
-        if self.channel_voice:
-            self.channel_voice.set_volume(value)
+        # Set the volume for the channel
+        self.channel_voice.set_volume(value)
     
     @property
     def volume_music(self):
@@ -136,9 +137,8 @@ class AudioPlayer:
     def volume_music(self, value: float):
         self._volume_music = value
 
-        # Set the volume for the channel, if it's initialized.
-        if self.channel_music:
-            self.channel_music.set_volume(value)
+        # Set the volume for the channel
+        pygame.mixer.music.set_volume(value)
 
     def play_audio(self,
                    audio_name: str,
@@ -166,6 +166,9 @@ class AudioPlayer:
         elif audio_channel == AudioChannel.MUSIC:
             content_type = file_reader.ContentType.MUSIC
 
+        else:
+            return
+
         # Get the bytes of the sound
         sound_bytes =\
             Passer.active_story.data_requester.get_audio(content_type=content_type,
@@ -174,26 +177,16 @@ class AudioPlayer:
         if not sound_bytes:
             return
 
-        if audio_channel == AudioChannel.TEXT:
-            
-            self._play_text_sound(audio_name=audio_name,
-                                 bytes_data=sound_bytes)
-            
-        elif audio_channel == AudioChannel.VOICE:
-
-            self._play_voice(audio_name=audio_name,
-                             bytes_data=sound_bytes)
-            
-        elif audio_channel == AudioChannel.FX:
-
-            self._play_fx(audio_name=audio_name,
-                          bytes_data=sound_bytes)
-            
         elif audio_channel == AudioChannel.MUSIC:
 
             self._play_music(audio_name=audio_name,
                              bytes_data=sound_bytes,
                              loop_music=loop_music)
+
+        else:
+            self._play_audio_in_channel(audio_channel=audio_channel,
+                                        audio_name=audio_name,
+                                        bytes_data=sound_bytes)
 
     def _play_music(self,
                     audio_name: str,
@@ -209,32 +202,34 @@ class AudioPlayer:
         - bytes_data: the bytes representation of the wav/ogg data.
         """
 
-        # Create a new text audio channel if not initialized
-        # or if the last loaded audio is different than what needs to be played.
-        if not self.channel_music or self.loaded_music != audio_name:
+        # If the requested music is different than what's playing, stop the music.
+        if pygame.mixer.music.get_busy() and self.loaded_music != audio_name:
+            pygame.mixer.music.stop()
 
-            # pygame works well with BytesIO
-            # Convert the bytes sound to a BytesIO stream
-            io_bytes_data = BytesIO(bytes_data)
+        # If the music channel is playing something, it's the same as what is being requested,
+        # so don't interrupt it.
+        # The music will need to be stopped first if the music needs to start from the beginning.
+        elif pygame.mixer.music.get_busy():
+            return
 
-            # Initialize a new audio channel.
-            self.channel_music = pygame.mixer.Sound(file=io_bytes_data)
+        # pygame works well with BytesIO
+        # Convert the bytes sound to a BytesIO stream
+        io_bytes_data = BytesIO(bytes_data)
 
-        # Save the filename of the loaded .wav
+        pygame.mixer.music.set_volume(self.volume_music)
+
+        # Play the music data
+        pygame.mixer.music.load(io_bytes_data, namehint=audio_name)
+
+        # Save the filename of the loaded .wav/.ogg
         self.loaded_music = audio_name
 
-        # If we don't stop the existing, sound, the sound
-        # won't play until the previous sound has stopped.
-        self.channel_music.stop()
-
-        self.channel_music.set_volume(self.volume_music)
-        
         if loop_music:
             # Continuously loop the music.
-            self.channel_music.play(-1)
+            pygame.mixer.music.play(loops=-1)
         else:
             # Play the music with no loop.
-            self.channel_music.play()
+            pygame.mixer.music.play()
 
     def _play_fx(self, audio_name: str, bytes_data: bytes):
         """
@@ -300,35 +295,49 @@ class AudioPlayer:
         self.channel_voice.set_volume(self.volume_voice)
         self.channel_voice.play()
 
-    def _play_text_sound(self, audio_name: str, bytes_data: bytes):
+    def _play_audio_in_channel(self, audio_channel: AudioChannel, audio_name: str, bytes_data: bytes):
         """
-        Play an audio file from bytes data.
-        
+        Play an audio file from bytes data, in a specific audio channel.
+
+        Music is not played in this method; music is using pygame's built-in music module.
+
         Arguments:
+
+        - audio_channel: the audio channel to play bytes_data in.
         
         - audio_name: the resource/item name of the sound to be played.
         
         - bytes_data: the bytes representation of the wav/ogg data.
         """
 
-        # Create a new text audio channel if not initialized
-        # or if the last loaded audio is different than what needs to be played.
-        if not self.channel_text or self.loaded_text != audio_name:
+        if audio_channel == AudioChannel.FX:
+            channel = self.channel_fx
+            volume = self.volume_sound
 
-            # pygame works well with BytesIO
-            # Convert the bytes sound to a BytesIO stream
-            io_bytes_data = BytesIO(bytes_data)
+        elif audio_channel == AudioChannel.VOICE:
+            channel = self.channel_voice
+            volume = self.volume_voice
 
-            # Initialize a new audio channel.
-            self.channel_text = pygame.mixer.Sound(file=io_bytes_data)
+        elif audio_channel == AudioChannel.TEXT:
+            channel = self.channel_text
+            volume = self.volume_text
 
-        # Save the filename of the loaded .wav
+        else:
+            return
+
+        # If the requested audio is different than what's playing, stop the existing audio.
+        if channel.get_busy() and self.loaded_text != audio_name:
+            channel.stop()
+
+        # pygame works well with BytesIO
+        # Convert the bytes sound to a BytesIO stream
+        io_bytes_data = BytesIO(bytes_data)
+
+        # Initialize a new sound object.
+        sound = pygame.mixer.Sound(file=io_bytes_data)
+
+        # Save the filename of the loaded .wav/.ogg
         self.loaded_text = audio_name
 
-        # If we don't stop the existing, sound, the sound
-        # won't play until the previous sound has stopped.
-        self.channel_text.stop()
-
-        self.channel_text.set_volume(self.volume_text)
-        self.channel_text.play()
-
+        channel.set_volume(volume)
+        channel.play(sound)

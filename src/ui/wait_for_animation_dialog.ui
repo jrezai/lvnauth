@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="ttk.Frame" id="frame_wait_for_animation" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame3">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">5</property>
+          <property name="pady">5</property>
+          <property name="row">0</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="label1">
+            <property name="text" translatable="yes">Wait for:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton1">
+            <property name="text" translatable="yes">Character</property>
+            <property name="value">character</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton2">
+            <property name="text" translatable="yes">Object</property>
+            <property name="value">object</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">10 0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton3">
+            <property name="text" translatable="yes">Dialog sprite</property>
+            <property name="value">dialog_sprite</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">2</property>
+              <property name="padx">10 0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton4">
+            <property name="text" translatable="yes">Screen fade</property>
+            <property name="value">cover</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">3</property>
+              <property name="padx">10 0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_sprite_alias" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">5</property>
+          <property name="pady">5</property>
+          <property name="row">1</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="label2">
+            <property name="text" translatable="yes">Sprite alias:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Entry" id="entry_sprite_alias" named="True">
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_animation_type" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">5</property>
+          <property name="pady">5</property>
+          <property name="row">2</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="label3">
+            <property name="text" translatable="yes">Wait for which animation to finish?:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="cb_animation_type" named="True">
+            <property name="state">readonly</property>
+            <property name="values">fade move rotate scale "all (all combined)" "any (at least one)"</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -476,9 +476,8 @@ class StoryCompiler:
                 ProjectSnapshot.get_chapter_script_with_one_level_call(\
                     self.startup_chapter_name)
             
-            scene_script =\
-                ProjectSnapshot.get_scene_script(\
-                    self.startup_chapter_name, self.startup_scene_name)
+            scene_script = \
+                ProjectSnapshot.get_scene_script(self.startup_chapter_name, self.startup_scene_name)
 
             analyze_script = chapter_script + "\n" + scene_script
 

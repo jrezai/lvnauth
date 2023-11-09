@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+import sys
 import pathlib
 import tkinter as tk
 from tkinter import messagebox
@@ -28,6 +29,13 @@ from pathlib import Path
 from shared_components import Passer
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
+
+# We need to add the parent directory so
+# the snap_handler module will be seen.
+this_module_path = Path(__file__)
+one_level_up_directory = str(Path(*this_module_path.parts[0:-2]))
+sys.path.append(one_level_up_directory)
+from snap_handler import SnapHandler
 
 
 class LaunchWindow:
@@ -82,10 +90,14 @@ class LaunchWindow:
         # If the icon exists in the current folder, use it.
         # Otherwise, it might be one-directory up (depends on how the
         # player is launched - from the Editor or directly in an IDE.)
-        icon_path = Path(r"app_icon.png")
-        if not icon_path.exists():
-            # The icon is likely in a directory one level up.
-            icon_path = Path(r"../app_icon.png")
+        icon_path = SnapHandler.get_lvnauth_editor_icon_path()
+        if not icon_path:
+            # Not a Snap package.
+
+            icon_path = Path(r"app_icon.png")
+            if not icon_path.exists():
+                # The icon is likely in a directory one level up.
+                icon_path = Path(r"../app_icon.png")
             
         app_icon = tk.PhotoImage(file=icon_path)
         self.mainwindow.app_icon = app_icon
@@ -178,7 +190,7 @@ class LaunchWindow:
                 self.btn_play_selection.state(["!disabled"])
                 return
 
-            # Set the shared shared variable so ActiveStory will read it later
+            # Set the shared variable so ActiveStory will read it later
             # and know to set a custom startup chapter/scene.
             Passer.manual_startup_chapter_scene = {chapter_name: first_scene_name}
 
@@ -201,7 +213,7 @@ class LaunchWindow:
             # Get the chapter name
             chapter_name = chapter_row_details.get("text")
 
-            # Set the shared shared variable so ActiveStory will read it later
+            # Set the shared variable so ActiveStory will read it later
             # and know to set a custom startup chapter/scene.
             Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
 
@@ -220,10 +232,10 @@ class LaunchWindow:
         self.lbl_genre.configure(text=self.story_info.get("Genre"))
         self.lbl_version.configure(text=self.story_info.get("Version"))
         
-        self.txt_description.insert("end", self.story_info.get("Description"))
+        self.txt_description.insert("end", self.story_info.get("Description", ""))
         self.txt_description.configure(state="disabled")
 
-        # Showt the story's poster image.
+        # Show the story's poster image.
         self.show_poster_image()
         
         # Show the chapter names and scene names
@@ -253,6 +265,12 @@ class LaunchWindow:
 
             # Add all the scenes in the current chapter.
             for scene_name in scene_list:
+                # Don't add scene names starting with a period, because
+                # these are hidden scenes.
+                if scene_name.startswith("."):
+                    continue
+
+                # Add the scene
                 self.treeview_chapter_scenes.insert(parent=chapter_item_iid,
                                                     index="end",
                                                     values=(scene_name, ))

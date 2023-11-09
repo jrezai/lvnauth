@@ -1113,14 +1113,25 @@ class TraceToolApp:
         Look for the nearest transparent pixels around the pixel
         that has just been clicked. Then form a rectangle around the
         transparent areas.
+        
+        Changes:
+        Nov 7, 2023 (Jobin Rezai) - Show a message if the loaded image
+        is not in RGBA mode.
         """
         
         img_width, img_height = self.img.size
         
         x_pos = x
         y_pos = y
-        
-        
+
+        img_mode = self.img.mode
+        if img_mode != "RGBA":
+            messagebox.showerror(parent=self.mainwindow,
+                                 message="Only RGBA images with transparency can be traced.\n"
+                                         f"The image you have selected is of mode: {img_mode}.",
+                                 title="No Transparency")
+            return
+
         pixel = self.img.getpixel((x, y))
         if pixel[3] == 0:
             print("Nothing selected")

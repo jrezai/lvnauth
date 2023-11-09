@@ -43,6 +43,7 @@ from wizard_window import WizardWindow
 from play_error_window import PlayErrorWindow
 from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
+from snap_handler import SnapHandler
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -122,6 +123,9 @@ class EditorMainApp:
         builder.connect_callbacks(self)
         
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
+
+        # Maximize the editor window
+        self.mainwindow.wm_attributes("-zoomed", True)
         
         # Debug button (uncomment the two lines below if debugging)
         self.btn_debug = builder.get_object("btn_debug")
@@ -848,7 +852,8 @@ class EditorMainApp:
             #active_script = {active_chapter_name: ProjectSnapshot.chapters_and_scenes[active_chapter_name]}
 
             # For playing/testing the story
-            compile_path = Path(r"draft/draft.lvna")
+            draft_path = SnapHandler.get_draft_path()
+            compile_path = Path(draft_path)
 
             compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
                                      startup_scene_name=active_scene_name,
@@ -896,7 +901,8 @@ class EditorMainApp:
         """
 
         player_script_file: Path
-        player_script_file = Path("player") / "main.py"
+        # Get the path to main.py (the player Python script file.)
+        player_script_file = SnapHandler.get_lvnauth_player_python_file()
         
         # Get the path to the Python interpreter that's being used now.
         # This is the recommended way when using subprocess.run()
@@ -962,7 +968,8 @@ class EditorMainApp:
         """
 
         # For playing/testing the story
-        compile_path = Path(r"draft/draft.lvna")
+        draft_path = SnapHandler.get_draft_path()
+        compile_path = Path(draft_path)
         
         # Make sure the draft folder exists.
         draft_folder = compile_path.parents[0]
@@ -1000,7 +1007,7 @@ class EditorMainApp:
                                  title="Error",
                                  message="An error occurred when attempting to compile your visual novel.")            
 
-    def compile(self, lvna_full_path: str, draft_mode: bool):
+    def compile(self, lvna_full_path: [str, Path], draft_mode: bool):
         """
         Compile a 'play from beginning' .lvna file.
         
@@ -1620,6 +1627,15 @@ class ChapterSceneManager:
 
         user_input_lcase = input_window.user_input.lower()
 
+        # Commas should not be allowed in reusable script names
+        # because arguments are separated with commas in the <call> command.
+        if "," in user_input_lcase:
+            messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(),
+                                   title="Commas not allowed",
+                                   message="Reusable script names cannot contain commas.")
+            self.create_new_reusable_script(prefill_script_name=input_window.user_input)
+            return
+
         for reusable_script_name in ProjectSnapshot.reusables:
             reusable_script_name = reusable_script_name.lower()
 
@@ -1784,10 +1800,20 @@ class ChapterSceneManager:
         :param chapter_name:
         :param scene_name:
         :return: None
+
+        Changes:
+        Nov 4, 2023 (Jobin Rezai) - Show the text, 'Hidden Scene', in the editor's header
+        if the scene being edited starts with a period.
         """
         scene_script = ProjectSnapshot.get_scene_script(chapter_name, scene_name)
 
-        self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [Scene]")
+        # Show the scene heading as 'Hidden Scene' if the scene name starts with a period.
+        if scene_name.startswith("."):
+            scene_heading = "Hidden Scene"
+        else:
+            scene_heading = "Scene"
+
+        self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [{scene_heading}]")
 
         # Set the type of script that is currently active so we know.
         self.active_script = (chapter_name, scene_name)
@@ -2045,7 +2071,7 @@ class OpenManager:
         # Make sure all the expected dictionary keys exist
         for key in self.keys_must_exist:
             if key not in self.dict_data:
-                messagebox.showerror(parent=self.parent, 
+                messagebox.showerror(parent=Passer.toolbar.frame_toolbar.winfo_toplevel(),
                                      title="Project File Error",
                                      message="The project file is missing one or more required keys.")  
                 

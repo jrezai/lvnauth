@@ -1,0 +1,66 @@
+name: lvnauth
+summary: a visual novel creator and player
+description: |
+     LVNAuth lets you create and play visual novels.
+     LVNAuth's GUI editor lets you create chapters and scenes,
+     dialogue text, and simple animations.
+version: initial
+base: core22
+grade: devel
+confinement: strict
+issues: https://github.com/jrezai/lvnauth/issues
+icon: lvnauth/snap/gui/lvnauth.png
+
+apps:
+  lvnauth:
+    command: bin/python3 $SNAP/lvnauth/src/startup.py
+    desktop: lvnauth/snap/gui/lvnauth.desktop
+    extensions: [gnome]
+    plugs:
+      - x11
+      - audio-playback
+      - home
+      - removable-media
+    environment:
+      PYTHONPATH: "$PYTHONPATH:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.10:$SNAP/usr/lib/python3.10/lib-dynload"
+
+    command-chain:
+    - bin/debian-multiarch-triplet-provider-launch
+    - bin/tcltk-launch
+
+parts:
+
+  # https://forum.snapcraft.io/t/the-debian-multiarch-triplet-provider-launch-stage-snap/11738
+  debian-multiarch-triplet-provider-launch:
+    plugin: nil
+    stage-snaps:
+    - debian-multiarch-triplet-provider-launch
+
+  cpython:
+    plugin: python
+    python-packages:
+       - Pillow == 10.0.0
+       - pygame-ce == 2.3.1
+       - pygubu == 0.31
+    source: .
+    stage-packages:
+       - python3-tk
+       - fontconfig-config
+       - fonts-dejavu-core
+       - fonts-dejavu-extra
+       - locales-all
+    organize:
+      startup.py: bin/lvnauth
+
+  lvnauth:
+    plugin: dump
+    source: .
+    organize:
+      '*.py': pythonfiles/
+
+  # https://forum.snapcraft.io/t/the-tcltk-launch-stage-snap/11740
+  tcltk-launch:
+    plugin: nil
+    stage-snaps:
+    - tcltk-launch
+

@@ -19,6 +19,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 import sys
 import pygame
 import argparse
+import sprite_definition as sd
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
@@ -27,11 +28,20 @@ from launch_window import LaunchWindow
 from io import BytesIO
 from typing import Dict
 from pathlib import Path
+from pygame import scrap
+
+# We need to add the parent directory so
+# the snap_handler module will be seen.
+this_module_path = Path(__file__)
+one_level_up_directory = str(Path(*this_module_path.parts[0:-2]))
+sys.path.append(one_level_up_directory)
+from snap_handler import SnapHandler
 
 
 class Main:
-    
+
     def __init__(self):
+
         self.launch_window: LaunchWindow
         self.launch_window = None
 
@@ -50,7 +60,7 @@ class Main:
         # Get the 'StoryInfo' dictionary, which contains details like
         # author, copyright, description, etc.
         story_info = story_details.get("StoryInfo")
-        
+
         chapters_and_scenes = story_details.get("StoryChapterAndSceneNames")
 
         # Get the BytesIO of the poster image.
@@ -58,19 +68,19 @@ class Main:
         image_file_object = self._get_poster_image(data_requester=data_requester)
 
         # Instantiate the launch window
-        self.launch_window =\
+        self.launch_window = \
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
-        
+
         # Run tkinter's main loop
         self.launch_window.run()
-        
+
     def _get_poster_image(self, data_requester: FileReader) -> BytesIO:
         """
         Return the poster image (if any), as a BytesIO object.
         """
-        
+
         # Example:
         # ['8-157434', '.png']
         range_and_file_extension = data_requester.general_header.get("PosterTitleImageLocation")
@@ -100,6 +110,13 @@ class Main:
         # in pixels (width, height)
         screen_size = tuple(data_requester.general_header.get("StoryWindowSize"))
 
+        # 'Draft' or 'Final'
+        # To know whether to show the draft rectangle or not, and
+        # whether to allow some keyboard shortcuts or not.
+        compile_mode = data_requester.general_header.get("StoryCompileMode")
+
+        draft_mode = compile_mode == "Draft"
+
         # Should we show the launch window?
         if show_launch:
             self.show_launch_window(data_requester=data_requester)
@@ -109,18 +126,28 @@ class Main:
         # screen_size = (640, 480)
 
         pygame.init()
+
+        # Used for copying text to the clipboard.
+        scrap.init()
+        scrap.set_mode(pygame.SCRAP_CLIPBOARD)
+
         clock = pygame.time.Clock()
-        
+
         pygame.display.set_caption("LVNAuth Player")
-        
+
         # The app's icon file will be either in the current directory
         # or in the 'player' directory. It depends whether the visual novel
         # is being played from the editor, or directly.
-        app_icon_path = Path(r"app_icon_small.png")
-        if not app_icon_path.exists():
-            app_icon_path = Path(r"./player/app_icon_small.png")
+        if SnapHandler.is_in_snap_package():
+            app_icon_path = SnapHandler.get_lvnauth_editor_icon_path_small()
+        else:
+            # Not in a Snap package.
+            app_icon_path = Path(r"app_icon_small.png")
+            if not app_icon_path.exists():
+                app_icon_path = Path(r"./player/app_icon_small.png")
+
         pygame.display.set_icon(pygame.image.load(app_icon_path))
-        
+
         # Create the main surface
         main_surface = pygame.display.set_mode(screen_size)
 
@@ -132,7 +159,8 @@ class Main:
         story = ActiveStory(screen_size=screen_size,
                             data_requester=data_requester,
                             main_surface=main_surface,
-                            background_surface=background_surface)
+                            background_surface=background_surface,
+                            draft_mode=draft_mode)
         Passer.active_story = story
 
         # The first time the story starts, we need to refresh the whole screen
@@ -142,64 +170,128 @@ class Main:
         # We need this flag because when we minimize pygame and restore it again,
         # the window won't update until we refresh the whole screen.
         self.pygame_window_last_visible = pygame.display.get_active()
-        
-        # Hodls the number of milliseconds elapsed in each frame
+
+        # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
-        
+
         while story.story_running:
-            
+
             # The number of milliseconds elapsed in this frame
-            milliseconds_elapsed = clock.tick(60)               
-                        
-            # Used for a constant move speed of all objects
-            # regardless of the FPS
-            Passer.seconds_elapsed = milliseconds_elapsed / 1000
-            
+            milliseconds_elapsed = clock.tick(60)
 
             main_surface.fill((0, 0, 0))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     story.story_running = False
+
+                elif event.type == pygame.KEYDOWN:
+                    self.on_key_down(event.key)
+
                 else:
                     story.on_event(event)
 
                     # print("Mouse:", pygame.mouse.get_pos())
-                    
-                    left_clicked = False
-                    list_test = []
-                    
-                    if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                        left_clicked = True
-                        manual_update = pygame.Rect(15, 352, 45, 47)
 
-                        list_test.append(manual_update)
-
+                    # left_clicked = False
+                    # list_test = []
+                    #
+                    # if pygame.mouse.get_pressed(num_buttons=3)[0]:
+                    #     left_clicked = True
+                    #     manual_update = pygame.Rect(15, 352, 45, 47)
+                    #
+                    #     list_test.append(manual_update)
 
             # Handle movements
             story.on_loop()
 
             # Handle drawing
             update_rects = story.on_render()
-            
-            # TODO: For debugging, remove later
-            if left_clicked:
-                pass
-
-
 
             # Update portions of the screen or the entire screen, depending on some factors.
             self.refresh_screen(update_rects)
-       
 
-            #print(update_rects)
+            # print(update_rects)
 
             # For debugging
             # pygame.display.flip()
-            
 
-                        
+    def on_key_down(self, key_pressed):
+        """
+        Handle keyboard letter presses.
 
+        Changes:
+        Nov 4, 2023 (Jobin Rezai) - Copy sprite horizontal / vertical flip values,
+        but only if the values have been changed.
+        """
+
+        # The following key presses only apply to draft-mode.
+        if not Passer.active_story.draft_mode:
+            return
+
+        if key_pressed == pygame.K_h:
+            # Toggle the visibility of the draft rectangle.
+            Passer.active_story.draft_rectangle.toggle_visibility()
+
+        elif key_pressed == pygame.K_c:
+            """
+            Copy the visible sprite locations, as commands, to the clipboard.
+            """
+
+            # The lines that will be copied to the clipboard.
+            copy_info = []
+
+            # The words to use in the commands.
+            group_words = {0: "character",
+                           1: "object",
+                           2: "dialog_sprite"}
+
+            # Loop through all visible sprites in 3 sprite groups
+            # and generate the X/Y commands for them.
+            for idx, sprite_group in enumerate((sd.Groups.character_group,
+                                                sd.Groups.object_group,
+                                                sd.Groups.dialog_group)):
+
+                # Get the word to use in the commands (ie: character, object, dialog_sprite).
+                group_word = group_words.get(idx)
+
+                # Loop through the visible sprites in the current group we're looping on.
+                sprite_name: str
+                sprite_object: sd.SpriteObject
+                for sprite_name, sprite_object in sprite_group.sprites.items():
+                    if sprite_object.visible:
+                        copy_info.append(f"# {sprite_object.general_alias}")
+                        copy_info.append(
+                            f"<{group_word}_set_position_x: {sprite_object.general_alias}, {sprite_object.rect.x}>")
+                        copy_info.append(
+                            f"<{group_word}_set_position_y: {sprite_object.general_alias}, {sprite_object.rect.y}>")
+
+                        # Flip both directions?
+                        if all([sprite_object.flipped_vertically, sprite_object.flipped_horizontally]):
+                            copy_info.append(f"<{group_word}_flip_both: {sprite_object.general_alias}>")
+
+                        # Flip only horizontally?
+                        elif sprite_object.flipped_horizontally:
+                            copy_info.append(f"<{group_word}_flip_horizontal: {sprite_object.general_alias}>")
+
+                        # Flip only vertically?
+                        elif sprite_object.flipped_vertically:
+                            copy_info.append(f"<{group_word}_flip_vertical: {sprite_object.general_alias}>")
+
+                        # Add an empty line
+                        copy_info.append("\n")
+
+            # Anything to copy to the clipboard?
+            if copy_info:
+                # Combine the list into one string
+                generated_str = "\n".join(copy_info)
+
+                # Copy the string to the clipboard
+                scrap.put_text(generated_str)
+
+                # Show a 'copied' text in the draft rectangle
+                # so that the user knows it's been copied to the clipboard.
+                Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
 
     def refresh_screen(self, update_rects):
         """
@@ -244,7 +336,7 @@ class Main:
 
 
 if __name__ == "__main__":
-    
+
     read_arguments = argparse.ArgumentParser()
     read_arguments.add_argument("--file",
                                 dest="file",
@@ -258,9 +350,14 @@ if __name__ == "__main__":
 
     # Debug for playing in the player
     if not args.file:
-        args.file = "../draft/draft.lvna"
+
+        if SnapHandler.is_in_snap_package():
+            draft_path = SnapHandler.get_draft_path()
+            args.file = str(draft_path)
+        else:
+            args.file = r"../draft/draft.lvna"
         args.show_launch = "True"
-        
+
     if not args.file:
         print("No file specified. Use --file to specify a path to a .lvna file.")
         quit()
@@ -269,6 +366,6 @@ if __name__ == "__main__":
     show_launch = args.show_launch in ("true", "True")
 
     # print(f"{args.file=},{args.show_menu=}")
-    
+
     main = Main()
     main.begin()

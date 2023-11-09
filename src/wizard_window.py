@@ -31,6 +31,8 @@ from entrylimit import EntryWithLimit
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
+WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
+SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
 
 
 class Purpose(Enum):
@@ -379,52 +381,50 @@ class WizardWindow:
                          command_name="play_voice",
                          purpose_line="Play audio in the voice channel.")
 
+        page_audio_stop_fx = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_fx",
+                        command_name="stop_fx",
+                        purpose_line="Stops the audio in the FX channel.",
+                        when_to_use="When you want to stop playing an audio effect.")
 
-        page_audio_stop_fx =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_fx",
-                         command_name="stop_fx",
-                         purpose_line="Stops the audio in the FX channel.",
-                         when_to_use="When you want to stop playing an audio effect.")
-        
-        page_audio_stop_all_audio =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_all_audio",
-                         command_name="stop_all_audio",
-                         purpose_line="Stops playing the audio for: effects, voices, music.",
-                         when_to_use="When you want to stop playing audio effects, voices, and music.\n"
-                         "No error will occur if no audio is playing.")
+        page_audio_stop_all_audio = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_all_audio",
+                        command_name="stop_all_audio",
+                        purpose_line="Stops playing the audio for: effects, voices, music.",
+                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
+                                    "No error will occur if no audio is playing.")
 
+        page_audio_stop_music = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_music",
+                        command_name="stop_music",
+                        purpose_line="Stops the audio in the music channel.",
+                        when_to_use="When you want to stop playing music.")
 
-        page_audio_stop_music =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_music",
-                         command_name="stop_music",
-                         purpose_line="Stops the audio in the music channel.",
-                         when_to_use="When you want to stop playing music.")
-
-        page_audio_stop_voice =\
-            AudioStop(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="stop_voice",
-                         command_name="stop_voice",
-                         purpose_line="Stops the audio in the voice channel.",
-                         when_to_use="When you want to stop playing audio in the voice channel.")
+        page_audio_stop_voice = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_voice",
+                        command_name="stop_voice",
+                        purpose_line="Stops the audio in the voice channel.",
+                        when_to_use="When you want to stop playing audio in the voice channel.")
 
 
         page_audio_volume_fx =\
@@ -499,17 +499,16 @@ class WizardWindow:
                             purpose_line="Set audio to play for each gradually shown letter.\n"
                             "Only works for gradually-shown text (non-fading).")
 
-
-        page_audio_dialog_text_sound_clear =\
-            DialogTextSoundClear(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Audio",
-                                 sub_display_text="dialog_text_sound_clear",
-                                 command_name="dialog_text_sound_clear",
-                                 purpose_line="Set no audio to play for each gradually shown letter.",
-                                 when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.")
+        page_audio_dialog_text_sound_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="dialog_text_sound_clear",
+                        command_name="dialog_text_sound_clear",
+                        purpose_line="Set no audio to play for each gradually shown letter.",
+                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.")
 
 
         page_load_background =\
@@ -574,6 +573,15 @@ class WizardWindow:
                           command_name="character_hide",
                           purpose_line="Hides the given sprite.")
 
+        page_hide_all_character = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Character",
+                        sub_display_text="character_hide_all",
+                        command_name="character_hide_all",
+                        purpose_line="Hides all character sprites.")
 
         page_character_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -980,8 +988,17 @@ class WizardWindow:
                                  parent_display_text="Character",
                                  sub_display_text="character_start_moving",
                                  command_name="character_start_moving",
-                                 purpose_line="Starts a movement animation on specific character sprite.")
+                                 purpose_line="Starts a movement animation on a specific character sprite.")
 
+        page_character_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Character",
+                                 sub_display_text="character_stop_moving",
+                                 command_name="character_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific character sprite.")
 
         page_character_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -1064,7 +1081,16 @@ class WizardWindow:
                           sub_display_text="object_hide",
                           command_name="object_hide",
                           purpose_line="Hides the given sprite.")
-        
+
+        page_hide_all_object = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Object",
+                        sub_display_text="object_hide_all",
+                        command_name="object_hide_all",
+                        purpose_line="Hides all object sprites.")
         
         page_object_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -1471,8 +1497,17 @@ class WizardWindow:
                                  parent_display_text="Object",
                                  sub_display_text="object_start_moving",
                                  command_name="object_start_moving",
-                                 purpose_line="Starts a movement animation on specific object sprite.")
+                                 purpose_line="Starts a movement animation on a specific object sprite.")
 
+        page_object_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_stop_moving",
+                                 command_name="object_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific object sprite.")
 
         page_object_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -1537,62 +1572,72 @@ class WizardWindow:
                                  command_name="text_dialog_define",
                                  purpose_line="Create a dialog rectangle for character text to appear in.")
 
-        page_dialog_show =\
-            TextDialogShow(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="text_dialog_show",
-                                 command_name="text_dialog_show",
-                                 purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
-                                 when_to_use="When a character wants to speak or for narration text.")
-    
-        page_dialog_close =\
-            TextDialogClose(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="text_dialog_close",
-                                 command_name="text_dialog_close",
-                                 purpose_line="Close the dialog by initiating its outro animation.",
-                                 when_to_use="When all the characters finish speaking.")
+        page_dialog_show = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="text_dialog_show",
+                        command_name="text_dialog_show",
+                        purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
+                        when_to_use="When a character wants to speak or for narration text.")
 
-        page_dialog_halt =\
-            DialogHalt(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="halt",
-                       command_name="halt",
-                       purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
-                       when_to_use="When you want to give the viewer a chance to pause and read.")
+        page_dialog_close = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="text_dialog_close",
+                        command_name="text_dialog_close",
+                        purpose_line="Close the dialog by initiating its outro animation.",
+                        when_to_use="When all the characters finish speaking.")
 
-        page_dialog_halt_auto =\
+        page_dialog_halt = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="halt",
+                        command_name="halt",
+                        purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
+                        when_to_use="When you want to give the viewer a chance to pause and read.")
+
+        page_dialog_halt_auto = \
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="halt_auto",
-                       command_name="halt_auto",
-                       purpose_line="Pause the dialog text for a specific number of frames.",
-                       scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
-                       scale_from_value=1,
-                       scale_to_value=600,
-                       scale_default_value=120)
-        
-        page_dialog_continue =\
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Dialog",
+                           sub_display_text="halt_auto",
+                           command_name="halt_auto",
+                           purpose_line="Pause the dialog text for a specific number of frames.\n\n",
+                           scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
+                           scale_from_value=1,
+                           scale_to_value=600,
+                           scale_default_value=120)
+
+        page_dialog_no_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="no_clear",
+                        command_name="no_clear",
+                        purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.")
+
+        page_dialog_continue = \
             DialogContinue(parent_frame=self.frame_contents_outer,
-                       header_label=self.lbl_header,
-                       purpose_label=self.lbl_purpose,
-                       treeview_commands=self.treeview_commands,
-                       parent_display_text="Dialog",
-                       sub_display_text="continue",
-                       command_name="continue",
-                       purpose_line="Stay on the same line as the previous text.")
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Dialog",
+                           sub_display_text="continue",
+                           command_name="continue",
+                           purpose_line="Stay on the same line as the previous text.")
 
         page_load_dialog =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -1613,7 +1658,7 @@ class WizardWindow:
                               sub_display_text="dialog_sprite_show",
                               command_name="dialog_sprite_show",
                               purpose_line="Shows the given sprite and it hides the currently visible\n"
-                              "sprite with the same general alias as the one we’re about to show.")
+                                           "sprite with the same general alias as the one we’re about to show.")
     
         page_hide_dialog =\
                 CharacterHide(parent_frame=self.frame_contents_outer,
@@ -1624,6 +1669,16 @@ class WizardWindow:
                               sub_display_text="dialog_sprite_hide",
                               command_name="dialog_sprite_hide",
                               purpose_line="Hides the given sprite.")
+
+        page_hide_all_dialog = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="dialog_sprite_hide_all",
+                        command_name="dialog_sprite_hide_all",
+                        purpose_line="Hides all dialog sprites.")
 
         page_dialog_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -2030,9 +2085,18 @@ class WizardWindow:
                                      parent_display_text="Dialog",
                                      sub_display_text="dialog_sprite_start_moving",
                                      command_name="dialog_sprite_start_moving",
-                                     purpose_line="Starts a movement animation on specific dialog sprite.")
-    
-    
+                                     purpose_line="Starts a movement animation on a specific dialog sprite.")
+
+        page_dialog_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Dialog",
+                                 sub_display_text="dialog_sprite_stop_moving",
+                                 command_name="dialog_sprite_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific dialog sprite.")
+
         page_dialog_set_position_x =\
                 CharacterSetPositionX(parent_frame=self.frame_contents_outer,
                                       header_label=self.lbl_header,
@@ -2199,7 +2263,16 @@ class WizardWindow:
                                 instructions="Dialog text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
 
-
+        page_general_scene_with_fade = \
+            SceneWithFade(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="General",
+                          sub_display_text="scene_with_fade",
+                          command_name="scene_with_fade",
+                          purpose_line="Gradually fade into another scene.\n"
+                                       "Provides a fade effect when transitioning between scenes.")
 
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
@@ -2245,17 +2318,17 @@ class WizardWindow:
                                  parent_display_text="General",
                                  sub_display_text="after_cancel",
                                  command_name="after_cancel",
-                                 purpose_line="Cancels an existing 'after' timer.")   
+                                 purpose_line="Cancels an existing 'after' timer.")
 
-        page_after_cancel_all =\
-            AfterCancelAll(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="General",
-                                 sub_display_text="after_cancel_all",
-                                 command_name="after_cancel_all",
-                                 purpose_line="Cancels all after-timers.")
+        page_after_cancel_all = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="General",
+                        sub_display_text="after_cancel_all",
+                        command_name="after_cancel_all",
+                        purpose_line="Cancels all after-timers.")
         
         page_call =\
             ReusableScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2275,7 +2348,20 @@ class WizardWindow:
                               parent_display_text="General",
                               sub_display_text="scene",
                               command_name="scene",
-                              purpose_line="Run a scene in a specific chapter.")  
+                              purpose_line="Run a scene in a specific chapter.")
+
+        page_wait_for_animation = \
+            WaitForAnimation(parent_frame=self.frame_contents_outer,
+                             header_label=self.lbl_header,
+                             purpose_label=self.lbl_purpose,
+                             treeview_commands=self.treeview_commands,
+                             parent_display_text="General",
+                             sub_display_text="wait_for_animation",
+                             command_name="wait_for_animation",
+                             purpose_line="Pauses the main script until one or more types of animations\n"
+                                          "have finished animating.\n\n"
+                                          "This command will only pause the main script, but can\n"
+                                          "be called from anywhere (chapters/scenes/reusable scripts).")
 
         self.pages["Home"] = default_page
 
@@ -2306,6 +2392,7 @@ class WizardWindow:
         self.pages["load_character"] = page_load_character
         self.pages["character_show"] = page_show_character
         self.pages["character_hide"] = page_hide_character
+        self.pages["character_hide_all"] = page_hide_all_character
         
         self.pages["character_flip_both"] = page_character_flip_both
         self.pages["character_flip_horizontal"] = page_character_flip_horizontal
@@ -2341,6 +2428,7 @@ class WizardWindow:
         self.pages["character_move"] = page_character_move
         self.pages["character_move_delay"] = page_character_move_delay
         self.pages["character_start_moving"] = page_character_start_moving
+        self.pages["character_stop_moving"] = page_character_stop_moving
         self.pages["character_set_position_x"] = page_character_set_position_x
         self.pages["character_set_position_y"] = page_character_set_position_y
         self.pages["character_set_center"] = page_character_set_center
@@ -2357,6 +2445,10 @@ class WizardWindow:
         self.pages["call"] = page_call
         
         self.pages["scene"] = page_scene
+
+        self.pages["wait_for_animation"] = page_wait_for_animation
+
+        self.pages["scene_with_fade"] = page_general_scene_with_fade
         
         """
         Object
@@ -2364,6 +2456,7 @@ class WizardWindow:
         self.pages["load_object"] = page_load_object
         self.pages["object_show"] = page_show_object
         self.pages["object_hide"] = page_hide_object
+        self.pages["object_hide_all"] = page_hide_all_object
         
         self.pages["object_flip_both"] = page_object_flip_both
         self.pages["object_flip_horizontal"] = page_object_flip_horizontal
@@ -2399,6 +2492,7 @@ class WizardWindow:
         self.pages["object_move"] = page_object_move
         self.pages["object_move_delay"] = page_object_move_delay
         self.pages["object_start_moving"] = page_object_start_moving
+        self.pages["object_stop_moving"] = page_object_stop_moving
         self.pages["object_set_position_x"] = page_object_set_position_x
         self.pages["object_set_position_y"] = page_object_set_position_y
         self.pages["object_set_center"] = page_object_set_center
@@ -2412,11 +2506,13 @@ class WizardWindow:
         self.pages["text_dialog_close"] = page_dialog_close
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
+        self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
         self.pages["load_dialog_sprite"] = page_load_dialog
         self.pages["dialog_sprite_show"] = page_show_dialog
         self.pages["dialog_sprite_hide"] = page_hide_dialog
+        self.pages["dialog_sprite_hide_all"] = page_hide_all_dialog
         
         self.pages["dialog_sprite_flip_both"] = page_dialog_flip_both
         self.pages["dialog_sprite_flip_horizontal"] = page_dialog_flip_horizontal
@@ -2452,6 +2548,7 @@ class WizardWindow:
         self.pages["dialog_sprite_move"] = page_dialog_move
         self.pages["dialog_sprite_move_delay"] = page_dialog_move_delay
         self.pages["dialog_sprite_start_moving"] = page_dialog_start_moving
+        self.pages["dialog_sprite_stop_moving"] = page_dialog_stop_moving
         self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
         self.pages["dialog_sprite_set_position_y"] = page_dialog_set_position_y
         self.pages["dialog_sprite_set_center"] = page_dialog_set_center
@@ -2469,18 +2566,19 @@ class WizardWindow:
         self.pages["font_text_delay"] = page_font_text_delay
         self.pages["font_text_delay_punc"] = page_font_text_delay_punc
         self.pages["font_intro_animation"] = page_font_intro_animation
-        
-
 
         self.active_page = default_page
         default_page.show()
 
     def on_ok_btn_clicked(self):
-        generated_command = self.active_page.generate_command()
-        if not generated_command:
-            return
-        else:
-            self.generated_command = generated_command
+        # The 'Default' page doesn't have a generate_command method,
+        # so check for it, in case the customer clicked OK at the default page.
+        if hasattr(self.active_page, "generate_command"):
+            generated_command = self.active_page.generate_command()
+            if not generated_command:
+                return
+            else:
+                self.generated_command = generated_command
             
         self.mainwindow.destroy()
         
@@ -3970,7 +4068,7 @@ class SharedPages:
 
             frame_content = ttk.Frame(self.parent_frame)
 
-            lbl_general_alias =\
+            self.lbl_general_alias = \
                 ttk.Label(frame_content,
                 text=f"{self.get_purpose_name(title_casing=True)} alias:")
             
@@ -4033,7 +4131,7 @@ class SharedPages:
             # Set the default value of the scale.
             self.v_scale_value.set(self.scale_default_value)
 
-            lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
+            self.lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
             self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
 
             self.lbl_radio_selection.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
@@ -4461,7 +4559,6 @@ class SharedPages:
                 # <after_cancel: reusable script name>
                 return f"<{self.command_name}: {reusable_script_name}>"
 
-
     class SceneScriptSelect(WizardListing):
         """
         <scene: chapter name, scene name>
@@ -4481,11 +4578,11 @@ class SharedPages:
                              treeview_commands, parent_display_text,
                              sub_display_text, command_name, purpose_line, **kwargs)
 
-
             self.frame_content = self.create_content_frame()
-            
-            # Populate chapter and scene names comboboxes
-            self.populate()
+
+            # Populate chapter and scene names combo boxes
+            self.populate(self.cb_chapters,
+                          self.cb_scenes)
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -4509,26 +4606,28 @@ class SharedPages:
 
             return frame_content
 
-        def populate(self):
+        @staticmethod
+        def populate(combo_box_chapters: ttk.Combobox,
+                     combo_box_scenes: ttk.Combobox):
             """
-            Populate the comboboxes with a list of
+            Populate the combo boxes with a list of
             chapter and scene names.
             """
 
-            # Clear the existing comboboxs, just in case there are values in them.
-            self.cb_chapters.configure(values=())
-            self.cb_scenes.configure(values=())
+            # Clear the existing combo boxes, just in case there are values in them.
+            combo_box_chapters.configure(values=())
+            combo_box_scenes.configure(values=())
 
             # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
             chapter_names = [item for item in ProjectSnapshot.chapters_and_scenes]         
             scene_names = [item[1] for item in ProjectSnapshot.chapters_and_scenes.values()]
             scene_names = [scene_name for scene_name in scene_names[0]]
 
-            self.cb_chapters.configure(values=chapter_names)
-            self.cb_chapters.delete(0, "end")
-            
-            self.cb_scenes.configure(values=scene_names)
-            self.cb_scenes.delete(0, "end")            
+            combo_box_chapters.configure(values=chapter_names)
+            combo_box_chapters.delete(0, "end")
+
+            combo_box_scenes.configure(values=scene_names)
+            combo_box_scenes.delete(0, "end")
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5186,8 +5285,6 @@ class SharedPages:
             self.lbl_general_alias.configure(text=f"Hide which {self.get_purpose_name()}?\n"
                                              f"{self.get_purpose_name(title_casing=True)} alias:")
 
-
-
     class HideSpriteNoAlias(LoadSpriteNoAlias):
         """
         <background_hide>
@@ -5385,29 +5482,6 @@ class AudioPlay(SharedPages.PlayAudioGeneric):
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
-
-
-class AudioStop(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-
-class AfterCancelAll(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
 
 
 class Font_LoadFont(SharedPages.LoadSpriteNoAlias):
@@ -5686,34 +5760,14 @@ Comments:
         self.frame_content.grid()
 
 
-class TextDialogShow(SharedPages.CommandNoParameters):
+class CommandOnly(SharedPages.CommandNoParameters):
     def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-class TextDialogClose(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
-
-class DialogHalt(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class Flip(SharedPages.StartStop):
@@ -5724,6 +5778,291 @@ class Flip(SharedPages.StartStop):
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line, **kwargs)
+
+
+class SceneWithFadeFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SCENE_WITH_FADE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_scene_with_fade", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.lbl_color = builder.get_object("lbl_color")
+        self.btn_change_color = builder.get_object("btn_change_color")
+
+        self.cb_chapters = builder.get_object("cb_chapters")
+        self.cb_scenes = builder.get_object("cb_scenes")
+
+        self.v_scale_fade_in = builder.get_variable("v_scale_fade_in")
+        self.v_scale_fade_in.set(10)
+
+        self.v_scale_fade_out = builder.get_variable("v_scale_fade_out")
+        self.v_scale_fade_out.set(10)
+
+        self.v_scale_hold_frames = builder.get_variable("v_scale_hold_frames")
+        self.v_scale_hold_frames.set(80)
+
+    def on_change_color_button_clicked(self):
+        """
+        Show the colour chooser dialog for the background.
+
+        The 'Change Colour' button has been clicked.
+        """
+
+        current_color_hex = self.lbl_color.cget("background")
+        current_color_rgb = self.lbl_color.winfo_rgb(current_color_hex)
+
+        # winfo_rgb() returns a maximum value of 65535 instead of 255,
+        # for some reason, we need to divide each color (rgb) by 256
+        # to get a max 255 value.
+        red, green, blue = current_color_rgb
+
+        if red > 0:
+            red = red // 256
+        if green > 0:
+            green = green // 256
+        if blue > 0:
+            blue = blue // 256
+
+        # Record the new max-255 color values
+        current_color_rgb = (red, green, blue)
+
+        color = colorchooser.askcolor(parent=self.lbl_color.winfo_toplevel(),
+                                      title="Background Colour",
+                                      initialcolor=current_color_rgb)
+
+        # The return value will be like this if a colour is chosen:
+        # ((0, 153, 0), '#009900')
+
+        # Or like this if no color is chosen
+        # (None, None)
+        hex_new_color = color[1]
+
+        if not hex_new_color:
+            return
+
+        self.lbl_color.configure(background=hex_new_color)
+
+
+class SceneWithFade(WizardListing):
+    """
+    <scene_with_fade: hex color, fade in speed (1-100), fade out speed (1-100),
+    fade hold frame count (number of frames to stay at full opacity,
+    chapter name, scene name>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text, sub_display_text,
+                 command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.scene_frame = SceneWithFadeFrame(self.frame_content)
+        self.scene_frame.mainframe.pack()
+
+        # Populate chapter and scene names combo boxes
+        SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
+                                               self.scene_frame.cb_scenes)
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: the selection (str) if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the label's background color in hex format.
+        chapter_name = self.scene_frame.cb_chapters.get().strip()
+        scene_name = self.scene_frame.cb_scenes.get().strip()
+        bg_color_hex = self.scene_frame.lbl_color.cget("background")
+        fade_in_speed = self.scene_frame.v_scale_fade_in.get()
+        fade_out_speed = self.scene_frame.v_scale_fade_out.get()
+        hold_frames = self.scene_frame.v_scale_hold_frames.get()
+
+        if not chapter_name:
+            messagebox.showerror(parent=self.scene_frame.lbl_color.winfo_toplevel(),
+                                 title="No chapter",
+                                 message="The chapter name is missing")
+            self.scene_frame.cb_chapters.focus()
+            return
+        elif not scene_name:
+            messagebox.showerror(parent=self.scene_frame.lbl_color.winfo_toplevel(),
+                                 title="No scene",
+                                 message="The scene name is missing")
+            self.scene_frame.cb_scenes.focus()
+            return
+
+        user_input = {"ChapterName": chapter_name,
+                      "SceneName": scene_name,
+                      "FadeColor": bg_color_hex,
+                      "FadeInSpeed": fade_in_speed,
+                      "FadeOutSpeed": fade_out_speed,
+                      "HoldFrames": hold_frames}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # The user input will be a dictionary like this:
+        # {"ChapterName": chapter_name,
+        #  "SceneName": scene_name,
+        #  "FadeColor": bg_color_hex,
+        #  "FadeInSpeed": fade_in_speed,
+        #  "FadeOutSpeed": fade_out_speed,
+        #  "HoldFrames": hold_frames}
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        chapter_name = user_inputs.get("ChapterName")
+        scene_name = user_inputs.get("SceneName")
+        fade_color = user_inputs.get("FadeColor")
+        fade_in_speed = user_inputs.get("FadeInSpeed")
+        fade_out_speed = user_inputs.get("FadeOutSpeed")
+        hold_frames = user_inputs.get("HoldFrames")
+
+        return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_frames}, {chapter_name}, {scene_name}>"
+
+
+class WaitForAnimationFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(WAIT_FOR_ANIMATION_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_wait_for_animation", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_sprite_type: tk.StringVar = self.builder.get_variable("v_sprite_type")
+
+        # Default to the radio button, 'Character'
+        self.v_sprite_type.set("character")
+
+        # So we can disable the sprite alias and animation type widgets
+        # when 'Screen fade' is selected.
+        self.v_sprite_type.trace_add("write", self.on_sprite_type_changed)
+        self.frame_sprite_alias = self.builder.get_object("frame_sprite_alias")
+        self.frame_animation_type = self.builder.get_object("frame_animation_type")
+
+        self.entry_sprite_alias: ttk.Entry = self.builder.get_object("entry_sprite_alias")
+        self.cb_animation_type: ttk.Combobox = self.builder.get_object("cb_animation_type")
+
+    def on_sprite_type_changed(self, *args):
+        """
+        Disable the sprite alias and animation type widgets
+        if the wait is for 'Screen fade'. Otherwise, enable all the widgets.
+
+        Purpose: when 'Screen fade' is selected, there is no general alias
+        or animation type - it's just one type of wait.
+        """
+        sprite_type = self.v_sprite_type.get()
+
+        if sprite_type == "cover":
+            set_state = "disabled"
+        else:
+            set_state = "!disabled"
+
+        # Enable or widgets in the following two frames.
+        for widget in self.frame_sprite_alias.winfo_children():
+            widget.state([set_state])
+
+        for widget in self.frame_animation_type.winfo_children():
+            widget.state([set_state])
+
+
+class WaitForAnimation(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.wait_frame = WaitForAnimationFrame(self.frame_content)
+        self.wait_frame.mainframe.pack()
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        sprite_type = self.wait_frame.v_sprite_type.get()
+        sprite_alias = self.wait_frame.entry_sprite_alias.get()
+        animation_type = self.wait_frame.cb_animation_type.get()
+
+        if sprite_alias:
+            sprite_alias = sprite_alias.strip()
+
+        if not sprite_alias:
+            messagebox.showerror(title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.wait_frame.entry_sprite_alias.focus()
+            return
+
+        if not animation_type:
+            messagebox.showerror(title="Animation type",
+                                 message="Choose the animation type to wait for.")
+            self.wait_frame.cb_animation_type.focus()
+            return
+
+        # Shorten all/any from the combobox, so it works with the final command
+        if animation_type == "all (all combined)":
+            animation_type = "all"
+        elif animation_type == "any (at least one)":
+            animation_type = "any"
+
+        user_input = {"SpriteType": sprite_type,
+                      "SpriteAlias": sprite_alias,
+                      "AnimationType": animation_type}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # <wait_for_animation: sprite type, sprite alias, animation type>
+        # or
+        # <wait_for_animation: screen fade>
+
+        # For <wait_for_animation: screen fade>
+        if self.wait_frame.v_sprite_type.get() == "cover":
+            command_line = f"<{self.command_name}: fade screen>"
+            return command_line
+
+        # For # <wait_for_animation: sprite type, sprite alias, animation type>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_type = user_inputs.get("SpriteType")
+        sprite_alias = user_inputs.get("SpriteAlias")
+        animation_type = user_inputs.get("AnimationType")
+
+        command_line = f"<{self.command_name}: {sprite_type}, {sprite_alias}, {animation_type}>"
+
+        return command_line
 
 
 class DialogTextSound(SharedPages.LoadSpriteNoAlias):
@@ -5747,18 +6086,6 @@ class DialogTextSound(SharedPages.LoadSpriteNoAlias):
         Show audio specific instructions.
         """
         self.lbl_prompt.configure(text="Audio:")
-
-
-
-class DialogTextSoundClear(SharedPages.CommandNoParameters):
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line, **kwargs)
-
 
 
 class DialogHaltAuto(SharedPages.SpeedOnly):
@@ -6082,7 +6409,6 @@ class TextDialogDefine(WizardListing):
         border_color_hex = user_inputs.get("BorderColor")
         border_opacity = user_inputs.get("BorderOpacity")
         border_width = user_inputs.get("BorderWidth")
-        
 
         command_line = f"<{self.command_name}: {width}, {height}, {animation_speed}, " \
             f"{intro_animation}, {outro_animation}, {anchor}, " \
