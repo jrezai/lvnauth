@@ -94,7 +94,7 @@ class SnapHandler:
             snap_directory = Path(snap_directory)
 
             full_path: Path
-            full_path = snap_directory / "lvnauth" / "src" / "app_icon.png"
+            full_path = snap_directory / "src" / "app_icon.png"
 
             return full_path
 
