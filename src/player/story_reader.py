@@ -4254,6 +4254,10 @@ class StoryReader:
         self.halt(automate_after_frame_count=frames_to_elapse)
 
     def _no_clear(self):
+        """
+        Set a flag so the dialog text won't clear
+        when the next halt or halt_auto is reached.
+        """
         
         main_reader = self.get_main_story_reader()
         main_reader.active_font_handler.font_animation. \

@@ -1619,6 +1619,16 @@ class WizardWindow:
                            scale_to_value=600,
                            scale_default_value=120)
 
+        page_dialog_no_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Dialog",
+                        sub_display_text="no_clear",
+                        command_name="no_clear",
+                        purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.")
+
         page_dialog_continue = \
             DialogContinue(parent_frame=self.frame_contents_outer,
                            header_label=self.lbl_header,
@@ -1627,7 +1637,7 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="continue",
                            command_name="continue",
-                           purpose_line="Stay on the same line as the previous text.\n\n")
+                           purpose_line="Stay on the same line as the previous text.")
 
         page_load_dialog =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -2496,6 +2506,7 @@ class WizardWindow:
         self.pages["text_dialog_close"] = page_dialog_close
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
+        self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
         self.pages["load_dialog_sprite"] = page_load_dialog
