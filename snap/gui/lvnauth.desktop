@@ -1,9 +1,9 @@
 [Desktop Entry]
-Version=0.2
+Version=1.0
 Name=LVNAuth
 Comment=Create and play visual novels
 Exec=lvnauth
 Icon=${SNAP}/meta/gui/lvnauth.png
 Terminal=false
 Type=Application
-Categories=Multimedia;
+Categories=Graphics;
