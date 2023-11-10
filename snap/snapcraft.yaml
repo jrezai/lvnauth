@@ -5,7 +5,7 @@ description: |
      LVNAuth lets you create and play visual novels.
      It includes a built-in editor for creating chapters, scenes,
      and for managing sprite images and simple animations.
-version: 0.2
+version: '0.2'
 base: core22
 grade: stable
 confinement: strict
