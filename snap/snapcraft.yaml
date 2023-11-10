@@ -1,20 +1,28 @@
 name: lvnauth
+title: LVNAuth
 summary: a visual novel creator and player
 description: |
      LVNAuth lets you create and play visual novels.
-     LVNAuth's GUI editor lets you create chapters and scenes,
-     dialogue text, and simple animations.
-version: initial
+     It includes a built-in editor for creating chapters, scenes,
+     and for managing sprite images and simple animations.
+version: 0.2
 base: core22
-grade: devel
+grade: stable
 confinement: strict
 issues: https://github.com/jrezai/lvnauth/issues
 icon: lvnauth/snap/gui/lvnauth.png
+license: GPL-3.0
+donation: https://lvnauth.org/pages/donate.html
+website: https://lvnauth.org
+
+architectures:
+  - build-on: [amd64]
+    build-for: [amd64]
 
 apps:
   lvnauth:
-    command: bin/python3 $SNAP/lvnauth/src/startup.py
-    desktop: lvnauth/snap/gui/lvnauth.desktop
+    command: bin/python3 $SNAP/src/startup.py
+    desktop: snap/gui/lvnauth.desktop # lvnauth/snap/gui/lvnauth.desktop
     extensions: [gnome]
     plugs:
       - x11
@@ -39,7 +47,7 @@ parts:
   cpython:
     plugin: python
     python-packages:
-       - Pillow == 10.0.0
+       - Pillow == 10.1.0
        - pygame-ce == 2.3.1
        - pygubu == 0.31
     source: .
@@ -54,9 +62,9 @@ parts:
 
   lvnauth:
     plugin: dump
-    source: .
-    organize:
-      '*.py': pythonfiles/
+    source: https://github.com/jrezai/lvnauth.git
+    source-type: git
+    source-branch: snapdetection
 
   # https://forum.snapcraft.io/t/the-tcltk-launch-stage-snap/11740
   tcltk-launch:

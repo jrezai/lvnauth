@@ -69,7 +69,7 @@ class SnapHandler:
             snap_directory = Path(snap_directory)
 
             full_path: Path
-            full_path = snap_directory / "lvnauth" / "src" / "player" / "main.py"
+            full_path = snap_directory / "src" / "player" / "main.py"
 
             return full_path
         else:
@@ -94,7 +94,7 @@ class SnapHandler:
             snap_directory = Path(snap_directory)
 
             full_path: Path
-            full_path = snap_directory / "lvnauth" / "src" / "app_icon.png"
+            full_path = snap_directory / "src" / "app_icon.png"
 
             return full_path
 
@@ -115,7 +115,7 @@ class SnapHandler:
         snap_directory = Path(snap_directory)
 
         full_path: Path
-        full_path = snap_directory / "lvnauth" / "src" / "player" / "app_icon_small.png"
+        full_path = snap_directory / "src" / "player" / "app_icon_small.png"
 
         return full_path
 
@@ -134,6 +134,6 @@ class SnapHandler:
             return
 
         snap_directory = Path(snap_directory)
-        snap_directory = snap_directory / "lvnauth" / "src"
+        snap_directory = snap_directory / "src"
 
         return snap_directory
