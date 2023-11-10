@@ -10,7 +10,7 @@ base: core22
 grade: stable
 confinement: strict
 issues: https://github.com/jrezai/lvnauth/issues
-icon: gui/lvnauth.png
+icon: snap/gui/lvnauth.png
 license: GPL-3.0
 donation: https://lvnauth.org/pages/donate.html
 website: https://lvnauth.org
