@@ -478,7 +478,13 @@ class StoryReader:
             return
 
         # {chapter name: [chapter script, {scene name: scene script}] }
-        chapter_script = self.chapters_and_scenes.get(startup_chapter_name)[0]
+        chapter_script = self.chapters_and_scenes.get(startup_chapter_name)
+        if chapter_script:
+            # Get just the chapter's script
+            chapter_script = chapter_script[0]
+        else:
+            # Chapter not found
+            return
 
         return chapter_script
 
@@ -3810,7 +3816,9 @@ class StoryReader:
         # {chapter name: [chapter script, {scene name: scene script}] }
         chapters = self.chapters_and_scenes.get(chapter_name)
         if not chapters:
-            return
+            raise ValueError(f"The chapter '{chapter_name}' was not found in the visual novel.\n"
+                             "Possible reason: the visual novel might have been played from a different chapter.\n"
+                             "Try playing the visual novel from the beginning rather than a specific scene so it includes all the chapters.")
 
         # Make sure the given scene name exists.
         if scene_name not in chapters[1]:
