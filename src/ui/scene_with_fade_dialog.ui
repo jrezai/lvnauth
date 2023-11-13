@@ -56,7 +56,7 @@
     <child>
       <object class="ttk.Labelframe" id="labelframe3">
         <property name="height">200</property>
-        <property name="text" translatable="yes">Fade-in speed (1 to 100)</property>
+        <property name="text" translatable="yes">Fade-out speed (1 to 100)</property>
         <property name="width">200</property>
         <layout manager="grid">
           <property name="column">1</property>
