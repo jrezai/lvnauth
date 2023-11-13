@@ -183,6 +183,7 @@
             </child>
             <child>
               <object class="ttk.Combobox" id="cb_chapters" named="True">
+                <property name="state">readonly</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">2</property>
@@ -202,6 +203,7 @@
             </child>
             <child>
               <object class="ttk.Combobox" id="cb_scenes" named="True">
+                <property name="state">readonly</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">4</property>

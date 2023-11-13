@@ -16,6 +16,13 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+"""
+Changes:
+
+Nov 13, 2023 (Jobin Rezai) - The scenes combo box now only show scenes
+in the selected chapter.
+"""
+
 import pathlib
 import tkinter as tk
 import pygubu
@@ -26,6 +33,7 @@ from typing import Dict
 from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entrylimit import EntryWithLimit
+from functools import partial
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -4593,10 +4601,10 @@ class SharedPages:
             frame_content = ttk.Frame(self.parent_frame)
             
             self.lbl_chapters_title = ttk.Label(frame_content, text="Chapters:")
-            self.cb_chapters = ttk.Combobox(frame_content, width=25)
+            self.cb_chapters = ttk.Combobox(frame_content, width=25, state="readonly")
 
             self.lbl_scenes_title = ttk.Label(frame_content, text="Scenes:")
-            self.cb_scenes = ttk.Combobox(frame_content, width=25)
+            self.cb_scenes = ttk.Combobox(frame_content, width=25, state="readonly")
             
             self.lbl_chapters_title.grid(row=0, column=0, sticky="w")
             self.cb_chapters.grid(row=1, column=0, sticky="w")
@@ -4620,14 +4628,62 @@ class SharedPages:
 
             # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
             chapter_names = [item for item in ProjectSnapshot.chapters_and_scenes]         
-            scene_names = [item[1] for item in ProjectSnapshot.chapters_and_scenes.values()]
-            scene_names = [scene_name for scene_name in scene_names[0]]
 
             combo_box_chapters.configure(values=chapter_names)
             combo_box_chapters.delete(0, "end")
-
-            combo_box_scenes.configure(values=scene_names)
             combo_box_scenes.delete(0, "end")
+            
+            # A partial method for on_chapter_selection_changed(), which
+            # attaches the scenes combo box.
+            partial_on_chapter_changed =\
+                partial(SharedPages.SceneScriptSelect.on_chapter_selection_changed,
+                        combo_box_scenes)
+            
+            # When the chapters combo box changes selection, populate
+            # the scenes combo box with scenes in the selected chapter.
+            combo_box_chapters.bind("<<ComboboxSelected>>",
+                                    partial_on_chapter_changed)
+            
+        
+        @staticmethod
+        def on_chapter_selection_changed(cb_scenes: ttk.Combobox,
+                                         event: tk.Event):
+            """
+            Populate the scenes combo box with a list of scenes
+            in the selected chapter.
+            """
+            
+            # A reference to the chapters combobox
+            cb_chapters: ttk.Combobox = event.widget
+            
+            # Get the selected chapter
+            chapter_name = cb_chapters.get()
+            
+            if not chapter_name:
+                return
+            
+            # Clear the combobox entry portion
+            cb_scenes.configure(state="normal")
+            cb_scenes.configure(values="")
+            cb_scenes.delete(0, tk.END)
+            cb_scenes.configure(state="readonly")
+            
+            # Get all the scenes in the given chapter.
+            scenes = ProjectSnapshot.chapters_and_scenes.get(chapter_name)
+            if not scenes:
+                return
+            
+            # Example of what we have so far:
+            # ['<load_background: some image>', {'Some scene name': '<background_show: ..>'}]
+            # Get just the scene names and scene scripts.
+            scenes = scenes[1]
+            
+            # Get just the scene names, excluding the scene scripts.
+            scene_names = [scene_name for scene_name in scenes.keys()]
+            
+            # Populate the scenes combo box with a list of scenes
+            # in the selected chapter.
+            cb_scenes.configure(values=scene_names)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5868,6 +5924,8 @@ class SceneWithFade(WizardListing):
         # Populate chapter and scene names combo boxes
         SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
                                                self.scene_frame.cb_scenes)
+                                               
+        
 
     def check_inputs(self) -> Dict | None:
         """
