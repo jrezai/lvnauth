@@ -1102,28 +1102,6 @@
                               <property type="row" id="0" name="weight">1</property>
                             </containerlayout>
                             <child>
-                              <object class="tk.Text" id="text_script">
-                                <property name="exportselection">false</property>
-                                <property name="font">{Ubuntu} 16 {}</property>
-                                <property name="height">10</property>
-                                <property name="highlightbackground">#2c2cd8</property>
-                                <property name="highlightcolor">#2c2cac</property>
-                                <property name="highlightthickness">2</property>
-                                <property name="insertbackground">#b4c134</property>
-                                <property name="relief">flat</property>
-                                <property name="selectbackground">#2c2cb1</property>
-                                <property name="setgrid">false</property>
-                                <property name="state">disabled</property>
-                                <property name="width">50</property>
-                                <property name="wrap">none</property>
-                                <layout manager="grid">
-                                  <property name="column">0</property>
-                                  <property name="row">0</property>
-                                  <property name="sticky">nsew</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
                               <object class="ttk.Scrollbar" id="sb_horizontal_text" named="True">
                                 <property name="orient">horizontal</property>
                                 <layout manager="grid">
@@ -1140,6 +1118,19 @@
                                   <property name="column">1</property>
                                   <property name="row">0</property>
                                   <property name="sticky">ns</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="lvnauthwidgets.editorwidget" id="text_script" named="True">
+                                <property name="exportselection">false</property>
+                                <property name="relief">flat</property>
+                                <property name="setgrid">false</property>
+                                <property name="state">disabled</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsew</property>
                                 </layout>
                               </object>
                             </child>

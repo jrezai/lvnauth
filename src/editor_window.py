@@ -44,6 +44,7 @@ from play_error_window import PlayErrorWindow
 from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
 from snap_handler import SnapHandler
+from custom_pygubu_widgets import LVNAuthEditorWidget
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -204,10 +205,11 @@ class EditorMainApp:
         self.treeview_reusables.configure(style="LVNAuth.Treeview")
 
         # The main text widget
-        self.text_script: tk.Text
+        self.text_script: LVNAuthEditorWidget
         self.text_script = builder.get_object("text_script")
         self.text_script.bind("<<Modified>>", self._on_script_modified)
-        
+        self.text_script.configure(font=("tkDefaultText", 19, "normal"))
+
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
         sb_horizontal_text.configure(command=self.text_script.xview)
@@ -1219,11 +1221,25 @@ class EditorMainApp:
         # If there is any text, add the command on a new line.
         if current_line_text:
             possible_new_line = "\n"
+            
+            # We need to move the insert cursor to the next line
+            # so the colorization gets done on the newly added line.
+            line_number = self.text_script.get_current_line_number()
+            line_number += 1
+
         else:
             possible_new_line = ""
 
         # Insert the command into the text widget.
         self.text_script.insert("insert lineend", possible_new_line + command)
+        
+        # Move the insert cursor to the new line?
+        if possible_new_line:
+            # So that colorization can occur on the newly added line.
+            self.text_script.mark_set("insert", f"{line_number}.0")
+            
+        # Colorize the modified line.
+        self.text_script.reevaluate_current_line()
 
     def on_debug_button_clicked(self):
         
@@ -1234,6 +1250,7 @@ class EditorMainApp:
             add_new_line = ""
 
         self.text_script.insert("insert lineend", add_new_line + "ok")
+        self.text_script.reevaluate_entire_contents()
 
     def run(self):
         self.mainwindow.mainloop()
@@ -1337,6 +1354,7 @@ class ChapterSceneManager:
 
         Passer.editor.text_script.delete("1.0", "end")
         Passer.editor.text_script.insert("1.0", script)
+        Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
 
     def on_reusables_treeview_item_selected(self, event):
@@ -1487,6 +1505,7 @@ class ChapterSceneManager:
 
         Passer.editor.text_script.delete("1.0", "end")
         Passer.editor.text_script.insert("1.0", current_script)
+        Passer.editor.text_script.reevaluate_entire_contents()
 
         self._disable_cancel_changes_button()
         self.disable_save_button()
@@ -1789,8 +1808,9 @@ class ChapterSceneManager:
 
         Passer.editor.text_script.delete("1.0", "end")
         Passer.editor.text_script.insert("1.0", chapter_script)
+        Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
-
+        
     def show_scene_script(self, chapter_name: str, scene_name: str):
         """
         Show the scene that has the given name (case-sensitive)
@@ -1820,6 +1840,7 @@ class ChapterSceneManager:
 
         Passer.editor.text_script.delete("1.0", "end")
         Passer.editor.text_script.insert("1.0", scene_script)
+        Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
 
 class StatusBar:
