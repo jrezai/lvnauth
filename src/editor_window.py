@@ -208,6 +208,7 @@ class EditorMainApp:
         self.text_script: LVNAuthEditorWidget
         self.text_script = builder.get_object("text_script")
         self.text_script.bind("<<Modified>>", self._on_script_modified)
+        self.text_script.bind("<KP_Enter>", self._on_num_pad_enter_key_pressed)
         self.text_script.configure(font=("tkDefaultText", 19, "normal"),
                                    wrap=tk.NONE)
 
@@ -308,7 +309,14 @@ class EditorMainApp:
         self.set_initial_sash_position()
         
         self._connect_scrollbars()
-        
+
+    def _on_num_pad_enter_key_pressed(self, event):
+        """
+        Insert a new line in the text widget, because the num pad
+        enter key has been pressed.
+        """
+        self.text_script: LVNAuthEditorWidget
+        self.text_script.insert("insert lineend", "\n")
 
     def _connect_scrollbars(self):
         """
