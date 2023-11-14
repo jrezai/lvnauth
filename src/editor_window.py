@@ -208,7 +208,8 @@ class EditorMainApp:
         self.text_script: LVNAuthEditorWidget
         self.text_script = builder.get_object("text_script")
         self.text_script.bind("<<Modified>>", self._on_script_modified)
-        self.text_script.configure(font=("tkDefaultText", 19, "normal"))
+        self.text_script.configure(font=("tkDefaultText", 19, "normal"),
+                                   wrap=tk.NONE)
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
