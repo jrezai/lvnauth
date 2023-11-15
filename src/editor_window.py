@@ -198,6 +198,7 @@ class EditorMainApp:
             treeview_widget.tag_configure("folder_row", image=self.folder_image)
             treeview_widget.tag_configure("normal_row", image=self.blue_dot_image)
 
+        self.treeview_scripts: ttk.Treeview
         self.treeview_scripts = builder.get_object("treeview_scripts")
         self.treeview_scripts.configure(style="LVNAuth.Treeview")
         self.treeview_scripts.tag_configure("startup_script", background="lightgreen", foreground="darkblue")
