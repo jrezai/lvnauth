@@ -43,7 +43,9 @@ class LVNAuthEditorWidget(tk.Text):
             tagName="comment_tag", foreground=Colors.EDITOR_COMMENTS.value)
         
         self.tag_configure(\
-            tagName="dialog_text", foreground=Colors.EDITOR_DIALOG_TEXT.value)
+            tagName="dialog_text",
+            foreground=Colors.EDITOR_DIALOG_TEXT_FG.value,
+            background=Colors.EDITOR_DIALOG_TEXT_BG.value)
 
         self.tag_configure(\
             tagName="highlight_row",

@@ -292,15 +292,16 @@ class Colors(Enum):
     
     EDITOR_BACKGROUND = "#1c2733"           # The text widget's bg color
     EDITOR_FOREGROUND = "#ebcdcd"           # <> text (non-dialog) forecolor
-    EDITOR_SELECT_BACKGROUND = "#865789"    # Highlighted text background color
+    EDITOR_SELECT_BACKGROUND = "#6a42b3"    # Highlighted text background color
     EDITOR_INSERT_BACKGROUND = "#b58a7a"    # The blinking cursor color
 
-    EDITOR_COMMANDS = "#e0b3e4"         # Command forecolor (before the colon)
+    EDITOR_COMMANDS = "#9199d9"         # Command forecolor (before the colon)
     EDITOR_AFTER_COLON = "#9e8c5a"      # Arguments forecolor (after the colon)
     EDITOR_COMMENTS = "#827145"         # Comment text forecolor
-    EDITOR_DIALOG_TEXT = "lightgreen"   # Regular character dialog text
+    EDITOR_DIALOG_TEXT_FG = "lightgreen"   # Character dialog text forecolor
+    EDITOR_DIALOG_TEXT_BG = "#444953"   # Character dialog text backcolor
     
-    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#673c6a" # Current insert row bg color
+    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#13476b" # Current insert row bg color
     
 
 class LetterProperties:
