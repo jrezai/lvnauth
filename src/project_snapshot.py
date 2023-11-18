@@ -281,6 +281,22 @@ class SubPaths(Enum):
 
     SOUND_FOLDER = Path("audio") / "sounds"
     MUSIC_FOLDER = Path("audio") / "music"
+    
+    
+class Colors(Enum):
+    
+    EDITOR_BACKGROUND = "#1c2733"
+    EDITOR_FOREGROUND = "#ebcdcd"
+    EDITOR_SELECT_BACKGROUND = "#865789"
+    EDITOR_INSERT_BACKGROUND = "#b58a7a"
+
+    EDITOR_COMMANDS = "#e0b3e4"
+    EDITOR_AFTER_COLON = "#9e8c5a"
+    EDITOR_COMMENTS = "#827145"
+    EDITOR_DIALOG_TEXT = "lightgreen"
+    
+    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#673c6a"
+    
 
 class LetterProperties:
     """
