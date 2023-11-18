@@ -17,6 +17,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import tkinter as tk
+from project_snapshot import Colors
 
 
 class LVNAuthEditorWidget(tk.Text):
@@ -27,18 +28,27 @@ class LVNAuthEditorWidget(tk.Text):
 
         self.bind("<KeyRelease>", self.on_key_release)
 
-        # self.configure(background="#2b1a1a")
-        self.configure(background="#1c2733")
-        self.configure(foreground="#ebcdcd")
-        self.configure(selectbackground="#865789")
-        self.configure(insertbackground="#b58a7a")
+        self.configure(background=Colors.EDITOR_BACKGROUND.value)
+        self.configure(foreground=Colors.EDITOR_FOREGROUND.value)
+        self.configure(selectbackground=Colors.EDITOR_SELECT_BACKGROUND.value)
+        self.configure(insertbackground=Colors.EDITOR_INSERT_BACKGROUND.value)
 
-        self.tag_configure(tagName="command_tag", foreground="#e0b3e4")
-        self.tag_configure(tagName="after_command", foreground="#9e8c5a")
-        self.tag_configure(tagName="comment_tag", foreground="#827145")
-        self.tag_configure(tagName="dialog_text", foreground="lightgreen")
+        self.tag_configure(\
+            tagName="command_tag", foreground=Colors.EDITOR_COMMANDS.value)
+        
+        self.tag_configure(\
+            tagName="after_command", foreground=Colors.EDITOR_AFTER_COLON.value)
+        
+        self.tag_configure(\
+            tagName="comment_tag", foreground=Colors.EDITOR_COMMENTS.value)
+        
+        self.tag_configure(\
+            tagName="dialog_text", foreground=Colors.EDITOR_DIALOG_TEXT.value)
 
-        self.tag_configure(tagName="highlight_row", background="#673c6a")
+        self.tag_configure(\
+            tagName="highlight_row",
+            background=Colors.EDITOR_HIGHLIGHT_ROW_BACKGROUND.value)
+        
         self.tag_raise(tagName="highlight_row")
 
         self.bind("<<Paste>>", self._on_pasted_text)

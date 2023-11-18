@@ -284,18 +284,23 @@ class SubPaths(Enum):
     
     
 class Colors(Enum):
+    """
+    Define colors for LVNAuth's user interface.
     
-    EDITOR_BACKGROUND = "#1c2733"
-    EDITOR_FOREGROUND = "#ebcdcd"
-    EDITOR_SELECT_BACKGROUND = "#865789"
-    EDITOR_INSERT_BACKGROUND = "#b58a7a"
+    For example: the text widget's colors.
+    """
+    
+    EDITOR_BACKGROUND = "#1c2733"           # The text widget's bg color
+    EDITOR_FOREGROUND = "#ebcdcd"           # <> text (non-dialog) forecolor
+    EDITOR_SELECT_BACKGROUND = "#865789"    # Highlighted text background color
+    EDITOR_INSERT_BACKGROUND = "#b58a7a"    # The blinking cursor color
 
-    EDITOR_COMMANDS = "#e0b3e4"
-    EDITOR_AFTER_COLON = "#9e8c5a"
-    EDITOR_COMMENTS = "#827145"
-    EDITOR_DIALOG_TEXT = "lightgreen"
+    EDITOR_COMMANDS = "#e0b3e4"         # Command forecolor (before the colon)
+    EDITOR_AFTER_COLON = "#9e8c5a"      # Arguments forecolor (after the colon)
+    EDITOR_COMMENTS = "#827145"         # Comment text forecolor
+    EDITOR_DIALOG_TEXT = "lightgreen"   # Regular character dialog text
     
-    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#673c6a"
+    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#673c6a" # Current insert row bg color
     
 
 class LetterProperties:
