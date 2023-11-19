@@ -979,11 +979,14 @@ class SpriteObject:
                 # 1) If a 'rotate_until' value has been specified
                 # 2) and the current rotate value is greater than 0 (if we don't have
                 # this check, then no rotation will start, because a rotation typically starts at 0 degrees)
-                # 3) and if the current rotation value has reached its destination
+                # 3) and if 360 minus the current rotation value has reached the destination angle.
+                # The reason we take 360 minus the current rotation value is because pygame
+                # starts from 360 and goes down when rotating clockwise, so for example
+                # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
                 # 4) then stop the rotation
                 if self.rotate_until and \
                    self.rotate_current_value.rotate_current_value > 0 and \
-                   self.rotate_current_value.rotate_current_value <= self.rotate_until.rotate_until:
+                   (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_until.rotate_until:
                     
                     # Stop the rotation
                     self.stop_rotating()
