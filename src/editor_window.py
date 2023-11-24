@@ -16,6 +16,13 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+
+"""
+Changes:
+
+Nov 23, 2023 (Jobin Rezai) - Added 'Colors' toolbar button. 
+"""
+
 import tkinter as tk
 from tkinter import ttk
 import pathlib
@@ -45,6 +52,7 @@ from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
 from snap_handler import SnapHandler
 from custom_pygubu_widgets import LVNAuthEditorWidget
+from edit_colors_window import EditColorsWindow
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -79,6 +87,7 @@ class Icons(Enum):
     WAND_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAYVJREFUSImt1D1rVEEUxvHfEWEVtBGJxnRWNhZu5UJAg0QLscgH0A/hB4mlaKugdbCxsjSVKChYi5WNaEQlITsWntXhkr0vmwwcGM6def5znplzlVLMC5zCZ9xvW9cWx7SPs1jB5Y51c8c/QETciYjNiBh1bYqItYh4FBEnOwmVHZsoeIFR5s5jiofVunX8zFjusqgGjFK84HmVX8O5nF+pxG/2uYPmpY7wDE/nXPpVfOgrXkoRubHN71Us4VUp5Wun5weM07iYcaFx4idpWcEXTIY+U/hUiRTcyA+rjfwU34dCjuMBLmU1u3if86WmW/423suIuFVKed3Ln5bSzqQt00Yl+/jWt5KDhMezzZikLTPIG9zLSntBmuKzJvpY5WaQfdzN3G38xg9c69to1/1vovUGeJIn3sXGEEgt8hi/zGmiRSG1wAmsdLzpwZBBTbMIZDBgKGQhwBDIwoAWyEbVJ+NDAToge9g+NKAF8hY7RwJoQPbwLn8tW0cGSMgY29jBFpb/AEEYFltv0cCKAAAAAElFTkSuQmCC"
     CANCEL_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAdxJREFUSImt1rtuk0EQBeBvkUhqQkViIqjyLkQyNCEiN9GiEHieAHkFLkVEEZoICQg8ACA7oQBaDKQMzlL84/jC70tsVtrC3jPnzM6ef3ZTzlm/kVKax00s4hoqsfQNX7CLFznnr31Jcs7/zCDawR9knKCG1zFr8V8OzBPMlXKVkN/CcQS/xSouleBmsIaDwP5GdaAAHqKJH1hCKsuqJyZhGY2I3SoViMybOMUepoaR9wgtoB4c1S6BqPlxZL4XW97F9BgijSjXbKfATpAu4SKeTSByJ2IftRw6H05406r5JCJxJgfBWYEHQbTSA5xEZD3iNuFleLrMimOJhIVPIkYNtQHgcUUO8Um4Z38I+Nwiii/++IJiJANGzvkEt/EcN/A0pTQ9KCY4T+Ez6iNue+Sd4AgfOw955n+J4HLnId8P8No5bDhQBHdj7R5cVXwU74zQ3IaJRO0/xA4qLfDjAC6PKtBPBCvxezvndi+aUzSoBhYmENnHz5hXzgQCWFW02voYIlN4FbZsYvFsrQe4FYCGoiuOeuGsRtZNbHatlwRUo1xZ0RXXyywcVtzA+8D+6sy8r0AEz8bBd176h9qX/mHP2nar5r2z1f9LR0qpov1sua772XKk/Wz53o/jLzj11RR4QENCAAAAAElFTkSuQmCC"
     CANCEL_SCRIPT_24_F = r"iVBORw0KGgoAAAANSUhEUgAAAB8AAAAYCAYAAAACqyaBAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAiBJREFUSInF1k1vTVEUBuBnk6gEZdAYqFmFESGSDhqRqoqYiBGSIqIGKn6DH2BAmoiPmanfwNAQg0ZFSny0jURU4qs+UroM7q573N57ey4XK9mDs/Y++33Xu96zzxYRGg0cwn3MIdowvuEBTkSEZsCHMd8m0HrjWMpAv0RKaT3G0YUJjGbWfxrLcQbbMNao6puZ3Rx2NmtNqwPDCy1YVqfqgyqSw4WIuNeGiovx/acKNazWYToze4SV7aw6Y5zM+0dt5aPoVjHa6Yj4UqPKspTSrZTSeEppc6PSUkoDKaWplNLlphoUGB1QdeLFBqxX4UteM41Nddb0Yzavedis8oVEJyZz8ilWN5HtqIrzA1PoKcztxsc89xa9ZcCv58Q8Bkv07bDqwTOJHvThfc59xO6leg57VA+TKy0Y53hBgckC8Hv0lTEcFVcvbNDZonOLLYjc6/7fdXur8RyfC8+vVTxTOvpVZb/aQtW9KqYKfFI5PAJPsLGU7DlxTdVw+0oA78AbVakHcKpA4DG6y4J34kVOPtP8U9uOmULFewtzwwUCE/UILALPycGC/JcaAHfgVQF4kUo4W9jnTinwPHEjT3zHrjovrlA5WGaxv4k65/Iet1sBX2uJHwvWoKuELzago/SnFhHvMJIft+C8moiIDxExU5uvs+5lRHxdalE91v/iMjH3P65RI9iq0TUqEzri714gh5aS6CDuau/VeQxDEeEHUnw6hWF+FLkAAAAASUVORK5CYII="
+    COLORS_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABkAAAAYCAYAAAAPtVbGAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAqxJREFUSIml1k2IllUUB/DfnRKmdFQ0RzNNamCIiKiggSYSkoJwIYiKRQ19LYM20S5CpBaCQZuoVS36gBZW4EoIso9NtpqCKAlRo4EmRkiL1Jpui3uemTu3ZyacLlye9/mfc/7nnHvOPc+bcs6WWimlQWzHAxjHZgxjADM4g89xLOd8vJck59y7sQ4vYhq52hfxY5D/1si+xv5/cS3i4An8GoaX8B4msLlHdxsexyeVs/exttcJVoZCxmW8ghuwCTuwstFfG/j6eB/H92F/AqsXOMEgPg6Fk7g78FtxPvBvcW3g63E28F+wtQq043mjdfJhCL7Cmgp/vjn3ewLf1eBPNvWcxixu7MCHQ/G7LvXK4M4odsZpDAW+MTLIkenNjd2hkD0D1+An/K206hhexURlMIK9WNcQbcK+7qgaWRf4YdgTLx/gOlyojmDPYi3+XxtPB8fBAexX1tu4HqvMr1HLXw/Fc5LSSVnpioQ3lYJNYuMys7gvOH6OcvgdM43S4P84pjFl3GQ81o2ty5haLmnjYHcEnXGgwp2N1FYEMISX8DpGrsDBDvyJv/BsI5u7nfcG8Jr57vrmCpx8FDYTrWxAaV1KX8OWqkPq31JKYymlXSml4Z5uuhTPkT75MP6Is9yGu/ADznVR4aoIpsvwPHY2mdxR1SPjM4zOzS4cCMFRDPQcxaMWzqmMKaRGb1SZFpOh82XtZFCZW1kpeGt8sMdJVn0zegI7qYyqoRq8SfniZbxr4SR+sMfB5BIO9kaNZpBa4S04ZX7iPoKrQ/ZCGHbfldt6yEfwTujM6i5jj+JqvFVFfAYvK38kNmBLD/FTSgvPhs0pbJ/TWSLlcRypDLt9IUimlGlRy07jOayquVJ3IxdbKaWtkcX9uD2y2aC0/XTU8Qt8iuM559mW4x9p7ExjTVL6WQAAAABJRU5ErkJggg=="
     OPEN_24_F = r"iVBORw0KGgoAAAANSUhEUgAAAB4AAAAYCAYAAADtaU2/AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAATlJREFUSIntlk9Kw1AQh7/JIi220rXeoytxJ1iwHkcRD+CfG3kEtQu9g0J1bYutlPxcZB6E9CmmJl1l4EeSSTLfMDPJe0giCBgDE2AJqKQ5cAcMi+9sqiL0NAKLaQXcAoO6wBMPfAGkaw/CwIGrPyYYtAQegfFP4FDeNWgpgaGXfFYxAQEnMbAA1dG/UqIpcOnxH4Lf/CZmltMlo2Yzs9QrupTUBUjqhsRM0pefdor+lHxoqvZrU107k5stQoOuAF794qDuwYoM2qGzXoz8s+gBu5JmVXpX1cysD3wA8wR4d/9ek1C3fT++JcB0i+DAmLbgFtyCawMb+Qo1A7pAT9JnE0Qz23HOAugnkjLgGTDgzMw6vwXYENoBzp3xJCkLP+8jIKP5VSkDRuWtzwi4J761/a8WHvs48L4B1MwtHez0M+IAAAAASUVORK5CYII="
     EDIT_DETAILS_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAVxJREFUSInt1r9KHFEUx/HPlS0MuxFNY2sp+ASJSAIRXIu8RKoUFj6EjVimMi8RAkZIAiYBd5G8QIRYBjFFSGEX0JNi78A4uOzMuOk8cIq55873d87h/ksRYdqWUurhLbozU6eP7DGe44+ImJqjh32sYB29Ti4pYTl7Z0J2VziJiPPyYG7LIdYQEfGqiC3gE6KBH1Uy7+Jzjh3jYRHrYC+X8w1fcV2jxx9LmXdxgGcYYDMiLsuTf+E3Zlv0fGzmpTkC3+8IH9wGby1QF95KIMO/VOFYxTssthYYB8+x3Tz+ovxP7Z2cV8t7PMUQ/epqKaaWPyZtqgLewwc8MWYpjrO6FbzM8GETeBOBOWxjowmcmi2KiJ0m0LL9r+P6XqCZQKhsjjuwqBz3M/iBpZTScltySumB0X0AZzdi2MJr/MXPlhqPMG90EfWj8lQpRE6NymtydRZ+gTeYrx6Q/wB3drfVSlf2YwAAAABJRU5ErkJggg=="
     COMPILE_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAaCAYAAACtv5zzAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAdNJREFUSInd1rtuE0EUBuBvo2CEZKcACQpzkVBSQQMVtJAKXiFKylSAQkNLR5Qur8BNgpZHABqgDLJEihQJNCkARUCwwEuxx2Swdu21BQ0jjTSe81/msnOO5XluVMccHuFj9IeYq8UdIdzEKr4jTwzymFtFc2wDZFjA+xD7hBU0oq/EXB6YBWS1DHABz4Pcw32cKMEdwzp+BPYVLlUa4OgA4TUu17ifi3hRtaA+aDk52w9YrNrykCNdDG7/rpYj5mlMdrGGVl3hEqNWaHRD88kU5hVtGu0ATdpaoTEdv+eF0za2YvwFd3F4jJUfwi18Do2d5Ljk6OBICH+LuXe4VkP8CjYcvI11xfvp/GGQEE4pvoQ8+jOcLRE+OQxXaZAAruJtycr6O/0asU1cL+EPNwhQA3ewF7it5K72Itao4I42SMBtPFY8pF6M2yM49Q0S0i52a2I7yKf84/Z/GGzidJZl5/6WaJZl53FG8VjddPCtr2Fm0kvGTGj0K+CNqnS9pCRdVxko0vWSsnSdgAYLzhsDBafMQFFwXgbnpyJ9HP8dL1lNZclMDYxbMku2PFj0b/cNYjxZ0R8wauIe9pMd9WK8H7Hx/7aUGM3igaIUdmM8W4f7C7EAm10DmY3dAAAAAElFTkSuQmCC"
@@ -90,7 +99,7 @@ class Icons(Enum):
     AUDIO_16_F = r"iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAQtJREFUKJGl00ErhGEQB/DfbHtTLlJOe/EBHJyURCnCTVEOPoSDz+CozdVdThzdnRU3sdIepDhQDm7j4Fm91r60mZpmnmae/zPP/GdkpkGKJg5wj/HavJrLozjDOxIbffEVrGWmhj6JiBbOMY3F/niRWRxGxEgzIhawVAlu4w0zmXkTEVXwmeLuYweb8IJHdIoeYaxS7tcX0MZl8U9w+i2hph9VgLlynsQuuj968IdcFjtZqh4fFqDXkCx+DgswVWwHE3hq4BXtiOgUPYqIsRqAdVxl5p1PKi8C81iuJPVoXC00JjYz87jQGHjALbYGdb2FKzyXVwZN4h66aP5nlFdrd6GyTG1c+2WZPgC+yveQlTS6AQAAAABJRU5ErkJggg=="
     IMAGE_16_F = r"iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAARVJREFUKJGV080qxGEUBvDfYcbOVilpFjQps5EotpOVlVuwxQXYSEKxRdlYugV7G2K4ADZWpMhHsWH8Lbwzja8xTj31dk7vc57zdA6UcIoqshZRxQlKgWMcYBMvWos8ZjAKryhmWeY3oCc1mEc+5Yp4zaE9SWoW28hhAg+JrIr2thYld+IC9+ldj28EEdEREeWI6G5Iz6EfZ9j6+idDX5qrC0e4Sd3GmvjSh6yuICIK2Mc1erGIvYgY/Wu+DJO4xA5yDV3mcYdhDOEcV5iqKagRPGIV8YPUBdwmrGAaz1hvJFhqMusgnrDckBtPhBlNFgkDyZO1H2plvNVW+RAbPq9yAbvYw9IX3/KYxQgfx1Tx/2OqoPQOfhPFLBN6WyEAAAAASUVORK5CYII="
     STARTUP_SCRIPT_16_F = r"iVBORw0KGgoAAAANSUhEUgAAABAAAAATCAYAAACZZ43PAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAOZJREFUOI3t0s8qhAEUhvHf0dQUO7b+LdTERnasFBaugP1ciJtwB7OUrCwtpeECpIhpigg7KYpjMd/ULHyf2bHw1rs4dc6zOQ+s4RCXeMETTrCLddQyU1kDj7jAER5QRwOrWMAz9nGAM7xiFpsISGx9R8c8dnBe7A32A59RDNuZuaciETGNRYyiizm0alVHg8nMbnHYB07ByLCAsvwD6H+hGRFNTOAd97jCKdqZeVcG6HvQwbGedTVM6tnYKHY6Bewab5jBBsYqRYqIcSxjBUt6CtdxizZaVKg8TH//C38DcIPSP/+ULyx4jHl3Hl9DAAAAAElFTkSuQmCC"
-
+    
     
 class Passer:
     toolbar = None
@@ -292,7 +301,14 @@ class EditorMainApp:
         self.btn_save_script.configure(command=Passer.chapter_scenes.on_save_script_button_clicked,
                                        image=self.btn_save_script.image)
 
+        # Colors image
+        colors_image = PhotoImage(data=Icons.COLORS_24_F.value)
 
+        # Binding for the 'Colors' button
+        self.btn_colors = builder.get_object("btn_colors")
+        self.btn_colors.image = colors_image
+        self.btn_colors.configure(command=self.on_colors_button_clicked,
+                                  image=self.btn_colors.image)
 
         # Cancel image
         cancel_image = PhotoImage(data=Icons.CANCEL_SCRIPT_24_F.value)
@@ -310,7 +326,16 @@ class EditorMainApp:
         self.set_initial_sash_position()
         
         self._connect_scrollbars()
-
+        
+    def on_colors_button_clicked(self):
+        """
+        Show the color settings window.
+        
+        The 'Colors' button has been clicked.
+        """
+        edit_colors_window = EditColorsWindow(self.mainwindow,
+                                              self.text_script.refresh_colors)
+    
     def _on_num_pad_enter_key_pressed(self, event):
         """
         Insert a new line in the text widget, because the num pad

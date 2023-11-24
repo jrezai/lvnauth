@@ -1037,7 +1037,7 @@
                                 <property name="style">Toolbutton</property>
                                 <property name="text" translatable="yes">Save Script</property>
                                 <layout manager="grid">
-                                  <property name="column">2</property>
+                                  <property name="column">4</property>
                                   <property name="ipadx">5</property>
                                   <property name="ipady">5</property>
                                   <property name="padx">0 5</property>
@@ -1051,7 +1051,7 @@
                                 <property name="style">Toolbutton</property>
                                 <property name="text" translatable="yes">Cancel Changes</property>
                                 <layout manager="grid">
-                                  <property name="column">3</property>
+                                  <property name="column">5</property>
                                   <property name="ipadx">5</property>
                                   <property name="ipady">5</property>
                                   <property name="padx">5</property>
@@ -1083,6 +1083,30 @@
                                   <property name="column">0</property>
                                   <property name="padx">5</property>
                                   <property name="row">1</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Button" id="btn_colors" named="True">
+                                <property name="compound">left</property>
+                                <property name="style">Toolbutton</property>
+                                <property name="text" translatable="yes">Colors</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="ipadx">5</property>
+                                  <property name="ipady">5</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Separator" id="separator6">
+                                <property name="orient">vertical</property>
+                                <layout manager="grid">
+                                  <property name="column">3</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">ns</property>
                                 </layout>
                               </object>
                             </child>

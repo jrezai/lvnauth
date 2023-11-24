@@ -17,7 +17,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import tkinter as tk
-from project_snapshot import Colors
+from project_snapshot import ProjectSnapshot
 
 
 class LVNAuthEditorWidget(tk.Text):
@@ -27,38 +27,94 @@ class LVNAuthEditorWidget(tk.Text):
         self.tags = ["command_tag", "after_command", "comment_tag", "dialog_text"]
 
         self.bind("<KeyRelease>", self.on_key_release)
-
-        self.configure(background=Colors.EDITOR_BACKGROUND.value)
-        self.configure(foreground=Colors.EDITOR_FOREGROUND.value)
-        self.configure(selectbackground=Colors.EDITOR_SELECT_BACKGROUND.value)
-        self.configure(insertbackground=Colors.EDITOR_INSERT_BACKGROUND.value)
-
-        self.tag_configure(\
-            tagName="command_tag", foreground=Colors.EDITOR_COMMANDS.value)
-        
-        self.tag_configure(\
-            tagName="after_command", foreground=Colors.EDITOR_AFTER_COLON.value)
-        
-        self.tag_configure(\
-            tagName="comment_tag", foreground=Colors.EDITOR_COMMENTS.value)
-        
-        self.tag_configure(\
-            tagName="dialog_text",
-            foreground=Colors.EDITOR_DIALOG_TEXT_FG.value,
-            background=Colors.EDITOR_DIALOG_TEXT_BG.value)
-
-        self.tag_configure(\
-            tagName="highlight_row",
-            background=Colors.EDITOR_HIGHLIGHT_ROW_BACKGROUND.value)
-        
-        self.tag_raise(tagName="highlight_row")
-
         self.bind("<<Paste>>", self._on_pasted_text)
 
         # So the keypress method gets ignored when pasting text.
         self.pasted = False
+        
+        # Read the color values from the config file and apply them
+        # to the text widget.        
+        self.refresh_colors()
 
+        # Highlight the row that the insert cursor is currently on.
         self.highlight_insert_row()
+        
+    def refresh_colors(self):
+        """
+        Read the color values from the config file and apply them
+        to the text widget.
+        """
+        
+        config = ProjectSnapshot.config.config
+        config.read(ProjectSnapshot.config.config_file_path)
+
+        # Get the selected preset, so we can read its color values.
+        selected_preset_section = ProjectSnapshot.config.get_selected_color_preset_section()
+        
+        editor_background = config.get(selected_preset_section,
+                                       "editor.background")
+        
+        editor_foreground = config.get(selected_preset_section,
+                                       "editor.foreground")
+        
+        select_background = config.get(selected_preset_section,
+                                       "editor.select.background")
+        
+        insert_background = config.get(selected_preset_section,
+                                       "editor.insert.background")
+        
+        editor_commands = config.get(selected_preset_section,
+                                     "editor.commands")
+        
+        editor_after_colon = config.get(selected_preset_section,
+                                        "editor.after.colon")
+        
+        editor_comments = config.get(selected_preset_section,
+                                     "editor.comments")
+        
+        dialog_text = config.get(selected_preset_section,
+                                 "editor.dialog.text.forecolor")
+        
+        dialog_text_bg = config.get(selected_preset_section,
+                                    "editor.dialog.text.backcolor")
+        
+        # Checkbox value, so read it as a boolean.
+        dialog_text_bg_disable =\
+            config.getboolean(selected_preset_section,
+                              "editor.dialog.text.backcolor.disable")
+        
+        # Disable the dialog text background color?
+        if dialog_text_bg_disable:
+            # Yes, disable the dialog text background color.
+            dialog_text_bg = ""
+        
+        highlight_row_bg = config.get(selected_preset_section,
+                                      "editor.highlight.row.background")          
+                
+        self.configure(background=editor_background)
+        self.configure(foreground=editor_foreground)
+        self.configure(selectbackground=select_background)
+        self.configure(insertbackground=insert_background)
+
+        self.tag_configure(\
+            tagName="command_tag", foreground=editor_commands)
+        
+        self.tag_configure(\
+            tagName="after_command", foreground=editor_after_colon)
+        
+        self.tag_configure(\
+            tagName="comment_tag", foreground=editor_comments)
+        
+        self.tag_configure(\
+            tagName="dialog_text",
+            foreground=dialog_text,
+            background=dialog_text_bg)
+
+        self.tag_configure(\
+            tagName="highlight_row",
+            background=highlight_row_bg)
+        
+        self.tag_raise(tagName="highlight_row")        
 
     def _on_pasted_text(self, event):
         """

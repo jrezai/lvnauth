@@ -1,0 +1,518 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="colors_window" named="True">
+    <property name="height">200</property>
+    <property name="resizable">none</property>
+    <property name="title" translatable="yes">Edit Colors</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Frame" id="frame14">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">1</property>
+        </layout>
+        <child>
+          <object class="ttk.Frame" id="frame12">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="pady">10</property>
+              <property name="row">0</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="label21">
+                <property name="text" translatable="yes">Presets:</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Combobox" id="cb_presets" named="True">
+                <property name="state">readonly</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="pady">0 4</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame13">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">5</property>
+                </layout>
+                <child>
+                  <object class="ttk.Button" id="btn_save_as" named="True">
+                    <property name="command" type="command" cbtype="simple">on_save_as_button_clicked</property>
+                    <property name="text" translatable="yes">Save As...</property>
+                    <layout manager="grid">
+                      <property name="column">1</property>
+                      <property name="padx">4</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Button" id="btn_delete" named="True">
+                    <property name="command" type="command" cbtype="simple">on_delete_button_clicked</property>
+                    <property name="text" translatable="yes">Delete</property>
+                    <layout manager="grid">
+                      <property name="column">2</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame1">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+            <child>
+              <object class="ttk.Frame" id="frame2">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">0</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_editor_background" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label2">
+                    <property name="text" translatable="yes">Editor background</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame3">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">1</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_non_dialog_forecolor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label4">
+                    <property name="text" translatable="yes">Non-dialog forecolor</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame4">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">2</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_highlighted_text_bg_color" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label6">
+                    <property name="text" translatable="yes">Highlighted text background color</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame5">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">3</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_blinking_cursor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label8">
+                    <property name="text" translatable="yes">Blinking cursor color</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame6">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">4</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_command_forecolor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label10">
+                    <property name="text" translatable="yes">Command forecolor (before the colon)</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame7">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">5</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_arguments_forecolor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label12">
+                    <property name="text" translatable="yes">Arguments forecolor (after the colon)</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame8">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">6</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_comments_forecolor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label14">
+                    <property name="text" translatable="yes">Comments forecolor</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame9">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">7</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_character_text_forecolor" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label16">
+                    <property name="text" translatable="yes">Character dialog text forecolor</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame10">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">8</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_character_text_bg" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="rowspan">2</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label18">
+                    <property name="text" translatable="yes">Character dialog text backcolor</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Checkbutton" id="chk_no_dialog_text_bg" named="True">
+                    <property name="text" translatable="yes">No background</property>
+                    <property name="variable">boolean:v_no_background_dialog_text</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">1</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame11">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">9</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_current_row_bg" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label20">
+                    <property name="text" translatable="yes">Current row background color</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Separator" id="separator1">
+            <property name="orient">horizontal</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="pady">8</property>
+              <property name="row">2</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame15">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">0 4</property>
+              <property name="pady">0 10</property>
+              <property name="row">3</property>
+              <property name="sticky">e</property>
+            </layout>
+            <child>
+              <object class="ttk.Button" id="btn_ok" named="True">
+                <property name="command" type="command" cbtype="simple">on_ok_button_clicked</property>
+                <property name="text" translatable="yes">OK</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Button" id="btn_cancel" named="True">
+                <property name="command" type="command" cbtype="simple">on_cancel_button_clicked</property>
+                <property name="text" translatable="yes">Cancel</property>
+                <layout manager="grid">
+                  <property name="column">1</property>
+                  <property name="padx">4</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -1,3 +1,26 @@
+"""
+Copyright 2023 Jobin Rezai
+
+This file is part of LVNAuth.
+
+LVNAuth is free software: you can redistribute it and/or modify it under the terms of
+the GNU General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+more details.
+
+You should have received a copy of the GNU General Public License along with
+LVNAuth. If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
+Changes:
+- Nov 23, 2023 (Jobin Rezai) - Added get_snap_user_data_folder()
+"""
+
 import os
 from pathlib import Path
 
@@ -38,6 +61,30 @@ class SnapHandler:
             snap_user_common_folder = Path(snap_user_common_folder)
 
             return snap_user_common_folder
+        
+    @staticmethod
+    def get_snap_user_data_folder() -> Path | None:
+        """
+        Return a path to the snap user data folder.
+            
+        The snap user data folder is versioned and the data
+        is copied when upgrading.
+        
+        This directory is used for storing the latest config file.
+        
+        return a string path or None if the snap user data path
+        was not found.
+        """
+
+        if SnapHandler.is_in_snap_package():
+            snap_user_data_folder = os.environ.get("SNAP_USER_DATA")
+
+            if not snap_user_data_folder:
+                return
+
+            snap_user_data_folder = Path(snap_user_data_folder)
+
+            return snap_user_data_folder
     
     @staticmethod
     def get_draft_path() -> Path:

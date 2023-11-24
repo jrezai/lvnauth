@@ -19,6 +19,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from enum import Enum
 from typing import Dict, Tuple, List
+from config_handler import ConfigHandler
 
 
 class ProjectSnapshot:
@@ -34,6 +35,9 @@ class ProjectSnapshot:
 
     # Path to full save project file (.lvnap extension)
     save_full_path = None
+    
+    # Config parser
+    config = ConfigHandler()
 
     # Story details (author, license, etc.)
     # Key (str): 'Author', Value (str): 'Name Here'
@@ -283,27 +287,6 @@ class SubPaths(Enum):
     MUSIC_FOLDER = Path("audio") / "music"
     
     
-class Colors(Enum):
-    """
-    Define colors for LVNAuth's user interface.
-    
-    For example: the text widget's colors.
-    """
-    
-    EDITOR_BACKGROUND = "#1c2733"           # The text widget's bg color
-    EDITOR_FOREGROUND = "#ebcdcd"           # <> text (non-dialog) forecolor
-    EDITOR_SELECT_BACKGROUND = "#6a42b3"    # Highlighted text background color
-    EDITOR_INSERT_BACKGROUND = "#b58a7a"    # The blinking cursor color
-
-    EDITOR_COMMANDS = "#9199d9"         # Command forecolor (before the colon)
-    EDITOR_AFTER_COLON = "#9e8c5a"      # Arguments forecolor (after the colon)
-    EDITOR_COMMENTS = "#827145"         # Comment text forecolor
-    EDITOR_DIALOG_TEXT_FG = "lightgreen"   # Character dialog text forecolor
-    EDITOR_DIALOG_TEXT_BG = "#444953"   # Character dialog text backcolor
-    
-    EDITOR_HIGHLIGHT_ROW_BACKGROUND = "#13476b" # Current insert row bg color
-    
-
 class LetterProperties:
     """
     Stores properties of a single letter font spritesheet.
