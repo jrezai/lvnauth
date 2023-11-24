@@ -24,6 +24,8 @@ in the selected chapter.
 
 Nov 16, 2023 (Jobin Rezai) - Add these commands to the wizard:
 <dialog_sprite_center_x_with>, <object_center_x_with>, <character_center_x_with>
+
+Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 """
 
 import pathlib
@@ -300,6 +302,8 @@ class WizardWindow:
         builder.add_from_file(PROJECT_UI)
         # Main widget
         self.mainwindow = builder.get_object("toplevel1", master)
+        self.mainwindow.bind("<Escape>", self.on_cancel_button_clicked)
+        
         builder.connect_callbacks(self)
         
         self.sb_vertical = builder.get_object("sb_vertical")
@@ -2628,7 +2632,7 @@ class WizardWindow:
             
         self.mainwindow.destroy()
         
-    def on_cancel_button_clicked(self):
+    def on_cancel_button_clicked(self, *args):
         self.mainwindow.destroy()
         
     def on_treeview_item_selected(self, event):
