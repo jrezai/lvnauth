@@ -16,6 +16,14 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
+"""
+Changes:
+
+- Nov 24, 2023 (Jobin Rezai) - Prevent middle mouse button from pasting
+text into the text widget.
+"""
+
+
 import tkinter as tk
 from project_snapshot import ProjectSnapshot
 
@@ -28,6 +36,11 @@ class LVNAuthEditorWidget(tk.Text):
 
         self.bind("<KeyRelease>", self.on_key_release)
         self.bind("<<Paste>>", self._on_pasted_text)
+        
+        # To prevent middle-button pasting text.
+        self.bind("<<PasteSelection>>", self.on_middle_button_clicked)
+        
+        self.configure(exportselection=False)
 
         # So the keypress method gets ignored when pasting text.
         self.pasted = False
@@ -114,7 +127,13 @@ class LVNAuthEditorWidget(tk.Text):
             tagName="highlight_row",
             background=highlight_row_bg)
         
-        self.tag_raise(tagName="highlight_row")        
+        self.tag_raise(tagName="highlight_row")
+        
+    def on_middle_button_clicked(self, event):
+        """
+        Prevent the middle mouse button from pasting text.
+        """
+        return "break"
 
     def _on_pasted_text(self, event):
         """
