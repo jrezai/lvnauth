@@ -1027,7 +1027,8 @@ class EditorMainApp:
         
         file_types = [("Visual Novel", ".lvna")]
         save_full_path = filedialog.asksaveasfilename(parent=self.mainwindow,
-                                                      filetypes=file_types)
+                                                      filetypes=file_types,
+                                                      title="Compile to File")
         
         if not save_full_path:
             return

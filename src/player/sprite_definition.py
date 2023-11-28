@@ -1228,7 +1228,7 @@ class SpriteObject:
         if not self.is_fading:
             return
 
-            # If there is no fade_until value, but the fade
+        # If there is no fade_until value, but the fade
         # value is not fully opaque, then apply the fade,
         # even though we're not fading to a fade-destination.
         if not self.fade_until and self.current_fade_value is not None:

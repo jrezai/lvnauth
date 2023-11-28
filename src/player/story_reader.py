@@ -16,6 +16,12 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+
+"""
+Nov 27, 2023 (Jobin Rezai) - Improve _is_sprite_animating() detection with
+fade animations.
+"""
+
 import copy
 import pygame
 import active_story
@@ -4932,10 +4938,32 @@ class WaitForAnimationHandler:
             # Check if a specific type of animation is occurring
             # on a specific sprite.
             if isinstance(animation_type, sd.SpriteAnimationType):
-                if animation_type == sd.SpriteAnimationType.FADE and sprite_object.is_fading:
+                
+                # Fading in or out and haven't reached the fade destination?
+                # Consider that as still animating.
+                
+                # The reason we don't just use 'is_fading' is because when
+                # a destination fade value is somewhere in the middle, not
+                # fully transparent (0) and not fully opaque (255), then
+                # the flag 'is_fading' will still be True, even though it
+                # doesn't appear to be fading in or out anyomre.
+                
+                # So we use the logic below to determine if it's actually
+                # reached its destination fade value, and we'll use that
+                # to know whether the sprite is still fading or not.
+                if animation_type == sd.SpriteAnimationType.FADE \
+                   and sprite_object.is_fading \
+                   and isinstance(sprite_object.current_fade_value,
+                                  sd.FadeCurrentValue) \
+                   and isinstance(sprite_object.fade_until,
+                                  sd.FadeUntilValue) \
+                   and sprite_object.current_fade_value != sprite_object.fade_until.fade_value:
                     return True
-                elif animation_type == sd.SpriteAnimationType.MOVE and sprite_object.is_moving:
+                
+                elif animation_type == sd.SpriteAnimationType.MOVE \
+                     and sprite_object.is_moving:
                     return True
+                
                 elif animation_type == sd.SpriteAnimationType.ROTATE and sprite_object.is_rotating:
                     return True
                 elif animation_type == sd.SpriteAnimationType.SCALE and sprite_object.is_scaling:
