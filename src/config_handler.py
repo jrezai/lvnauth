@@ -16,6 +16,14 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+
+"""
+Changes:
+
+- Nov 24, 2023 (Jobin Rezai) - Changed default preset colors for:
+editor.foreground, editor.commands, editor.select.background
+"""
+
 import configparser
 from typing import Dict
 from pathlib import Path
@@ -29,10 +37,10 @@ class ConfigHandler:
         # exist in the config file.
         self.latest_default_config_values =\
             {"editor.background": "#1c2733",
-             "editor.foreground": "#ebcdcd",
-             "editor.select.background": "#6a42b3",
+             "editor.foreground": "#ce9474",
+             "editor.select.background": "#36411b",
              "editor.insert.background": "#b58a7a",
-             "editor.commands": "#9199d9",
+             "editor.commands": "#6cb1d9",
              "editor.after.colon": "#9e8c5a",
              "editor.comments": "#827145",
              "editor.dialog.text.forecolor": "lightgreen",
