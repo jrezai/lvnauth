@@ -6322,9 +6322,9 @@ class WaitForAnimation(WizardListing):
             return
 
         # Shorten all/any from the combobox, so it works with the final command
-        if animation_type == "all (all combined)":
+        if animation_type == "all (wait when *all* types of animations are occurring)":
             animation_type = "all"
-        elif animation_type == "any (at least one)":
+        elif animation_type == "any (wait when at least one type of animation is occurring)":
             animation_type = "any"
 
         user_input = {"SpriteType": sprite_type,
