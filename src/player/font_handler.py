@@ -16,6 +16,14 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+"""
+Changes:
+
+Nov 29, 2023 (Jobin Rezai) - check for gradual_delay_counter >= instead of
+just '>'. fade_text_delay value of 1 was being represented as 2 before
+this fix.)
+"""
+
 import pygame
 import active_story
 import logging
@@ -540,7 +548,7 @@ class FontAnimation:
             # Then process the letter-by-letter animation.
             if num_of_frames_to_skip == 0 \
                or (is_space and num_of_frames_to_skip == 0) \
-               or self.gradual_delay_counter > num_of_frames_to_skip \
+               or self.gradual_delay_counter >= num_of_frames_to_skip \
                or self.faster_text_mode:
                 
                 # Process the letter-by-letter animation, we don't need
