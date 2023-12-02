@@ -16,6 +16,18 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+"""
+Changes:
+
+Nov 13, 2023 (Jobin Rezai) - The scenes combo box now only show scenes
+in the selected chapter.
+
+Nov 16, 2023 (Jobin Rezai) - Add these commands to the wizard:
+<dialog_sprite_center_x_with>, <object_center_x_with>, <character_center_x_with>
+
+Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
+"""
+
 import pathlib
 import tkinter as tk
 import pygubu
@@ -26,6 +38,7 @@ from typing import Dict
 from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entrylimit import EntryWithLimit
+from functools import partial
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -289,6 +302,8 @@ class WizardWindow:
         builder.add_from_file(PROJECT_UI)
         # Main widget
         self.mainwindow = builder.get_object("toplevel1", master)
+        self.mainwindow.bind("<Escape>", self.on_cancel_button_clicked)
+        
         builder.connect_callbacks(self)
         
         self.sb_vertical = builder.get_object("sb_vertical")
@@ -1045,517 +1060,19 @@ class WizardWindow:
                                subject_sentence_2="the vertical center position",
                                spinbox_from_value=-5000,
                                spinbox_to_value=9000)
-
-
-        """
-        Object
-        """
-
-        page_load_object =\
-            Character_LoadCharacter(parent_frame=self.frame_contents_outer,
-                                    header_label=self.lbl_header,
-                                    purpose_label=self.lbl_purpose,
-                                    treeview_commands=self.treeview_commands,
-                                    parent_display_text="Object",
-                                    sub_display_text="load_object",
-                                    command_name="load_object",
-                                    purpose_line="Load an object sprite into memory.")
-
-        page_show_object =\
-            CharacterShow(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_show",
-                          command_name="object_show",
-                          purpose_line="Shows the given sprite and it hides the currently visible\n"
-                          "sprite with the same general alias as the one we’re about to show.")
-
-        page_hide_object =\
-            CharacterHide(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_hide",
-                          command_name="object_hide",
-                          purpose_line="Hides the given sprite.")
-
-        page_hide_all_object = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Object",
-                        sub_display_text="object_hide_all",
-                        command_name="object_hide_all",
-                        purpose_line="Hides all object sprites.")
         
-        page_object_flip_both =\
-            Flip(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_flip_both",
-                          command_name="object_flip_both",
-                          purpose_line="Flips the given sprite both horizontally and vertically.")
-
-
-        page_object_flip_horizontal =\
-            Flip(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_flip_horizontal",
-                          command_name="object_flip_horizontal",
-                          purpose_line="Flips the given sprite horizontally.")
-
-
-        page_object_flip_vertical =\
-            Flip(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_flip_vertical",
-                          command_name="object_flip_vertical",
-                          purpose_line="Flips the given sprite vertically.")
-        
-
-        page_object_after_fading_stop =\
-            CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
-                                    header_label=self.lbl_header,
-                                    purpose_label=self.lbl_purpose,
-                                    treeview_commands=self.treeview_commands,
-                                    parent_display_text="Object",
-                                    sub_display_text="object_after_fading_stop",
-                                    command_name="object_after_fading_stop",
-                                    purpose_line="Run a reusable script after a specific object sprite stops fading.")
-
-        page_object_fade_current_value =\
-            CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Object",
-                                      sub_display_text="object_fade_current_value",
-                                      command_name="object_fade_current_value",
-                                      purpose_line="Set the opacity level of a specific object.\n"
-                                      "Note: the object sprite must already be visible.",
-                                      from_value=0,
-                                      to_value=255,
-                                      amount_usage_info="Opacity level:\n"
-                                      "0=fully transparent  255=fully opaque",
-                                      amount_name="opacity level")
-
-        page_object_fade_delay =\
-            CharacterFadeDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_delay",
-                               command_name="object_fade_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's fade animation.\n"
-                               "This is used to create an extra-slow fade effect.\n\n"
-                               "Example: a value of 30 (frames) will delay the fade every 1 second.\n"
-                               "Note: the character sprite must already be visible.",
-                               from_value=1,
-                               to_value=120,
-                               amount_usage_info="Number of frames to skip:",
-                               amount_name="number of frames to skip")
-
-        page_object_fade_speed =\
-            CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_speed",
-                               command_name="object_fade_speed",
-                               purpose_line="Set the fade-speed of an object sprite.\n"
-                               "Note: the object sprite must already be visible.",
-                               radio_button_instructions="Fade direction:",
-                               radio_button_text_1="Fade in",
-                               radio_button_text_2="Fade out",
-                               radio_button_value_1="fade in",
-                               radio_button_value_2="fade out",
-                               default_radio_button_value="fade in",
-                               scale_default_value=5,
-                               scale_from_value=1,
-                               scale_to_value=100,
-                               scale_instructions="Fade speed (1 to 100):")
-
-        page_object_fade_until =\
-            CharacterFadeUntil(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_until",
-                               command_name="object_fade_until",
-                               purpose_line="Indicate at what fade level a fade animation should stop.\n"
-                               "Note: the object sprite must already be visible.",
-                               scale_instructions="Stop fading when the opacity reaches... (0 to 255)\n"
-                               "0 = fully transparent  255 = fully opaque",
-                               scale_from_value=0,
-                               scale_to_value=255,
-                               scale_default_value=128)
-
-        page_object_start_fading =\
-            CharacterStartFading(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_start_fading",
-                                 command_name="object_start_fading",
-                                 purpose_line="Starts an object sprite fading animation.\n"
-                                 "Note: the object sprite must already be visible.")
-
-        page_object_stop_fading =\
-            CharacterStopFading(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Object",
-                                sub_display_text="object_stop_fading",
-                                command_name="object_stop_fading",
-                                purpose_line="Stops an object sprite fading animation.\n"
-                                "Note: the object sprite must already be visible.")
-
-        page_object_after_rotating_stop =\
-            CharacterAfterRotatingStop(parent_frame=self.frame_contents_outer,
-                                       header_label=self.lbl_header,
-                                       purpose_label=self.lbl_purpose,
-                                       treeview_commands=self.treeview_commands,
-                                       parent_display_text="Object",
-                                       sub_display_text="object_after_rotating_stop",
-                                       command_name="object_after_rotating_stop",
-                                       purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
-                                       "Note: the object sprite must already be visible.")
-
-        page_object_rotate_current_value =\
-            CharacterRotateCurrentValue(parent_frame=self.frame_contents_outer,
+        page_character_center_x_with =\
+            SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Object",
-                                        sub_display_text="object_rotate_current_value",
-                                        command_name="object_rotate_current_value",
-                                        purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
-                                        "Note: the object sprite must already be visible.")
+                                        parent_display_text="Character",
+                                        sub_display_text="character_center_x_with",
+                                        command_name="character_center_x_with",
+                                        purpose_line="Center the X of a character sprite with the center X of another sprite.\n"
+                                        "Note: both sprites must already be visible.")              
 
-        page_object_rotate_delay =\
-            CharacterRotateDelay(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_delay",
-                                 command_name="object_rotate_delay",
-                                 purpose_line="Specify the number of frames to skip for this sprite's rotate animation.\n"
-                                 "This is used to create an extra-slow rotating effect.\n\n"
-                                 "Example: a value of 2 means to delay the rotation animation\n"
-                                 "by 2 frames each time.\n\n"
-                                 "Note: the object sprite must already be visible.",
-                                 from_value=1,
-                                 to_value=120,
-                                 amount_usage_info="Number of frames to skip:",
-                                 amount_name="number of frames to skip")
 
-        page_object_rotate_speed =\
-            CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_speed",
-                                 command_name="object_rotate_speed",
-                                 purpose_line="Set the rotation speed percentage of an object sprite.\n"
-                                 "The speed range is 1 (slowest) to 100 (fastest).\n\n"
-                                 "Note: the object sprite must already be visible.",
-                                 radio_button_instructions="Rotate direction:",
-                                 radio_button_text_1="Clockwise",
-                                 radio_button_text_2="Counterclockwise",
-                                 radio_button_value_1="clockwise",
-                                 radio_button_value_2="counterclockwise",
-                                 default_radio_button_value="clockwise",
-                                 scale_default_value=5,
-                                 scale_from_value=1,
-                                 scale_to_value=100,
-                                 scale_instructions="Rotation speed (1 to 100):")
-
-        page_object_rotate_until =\
-            CharacterRotateUntil(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_until",
-                                 command_name="object_rotate_until",
-                                 purpose_line="Indicate at what degree a rotation animation should stop.\n"
-                                 "Note: the object sprite must already be visible.",
-                                 scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
-                                 scale_from_value=0,
-                                 scale_to_value=359,
-                                 scale_default_value=180)
-
-        page_object_start_rotating =\
-            CharacterStartRotating(parent_frame=self.frame_contents_outer,
-                                   header_label=self.lbl_header,
-                                   purpose_label=self.lbl_purpose,
-                                   treeview_commands=self.treeview_commands,
-                                   parent_display_text="Object",
-                                   sub_display_text="object_start_rotating",
-                                   command_name="object_start_rotating",
-                                   purpose_line="Starts an object sprite rotation animation.\n"
-                                   "Note: the object sprite must already be visible.")
-
-        page_object_stop_rotating =\
-            CharacterStopRotating(parent_frame=self.frame_contents_outer,
-                                  header_label=self.lbl_header,
-                                  purpose_label=self.lbl_purpose,
-                                  treeview_commands=self.treeview_commands,
-                                  parent_display_text="Object",
-                                  sub_display_text="object_stop_rotating",
-                                  command_name="object_stop_rotating",
-                                  purpose_line="Stops an object sprite rotation animation.\n"
-                                  "Note: the object sprite must already be visible.")
-
-        page_object_after_scaling_stop =\
-            CharacterAfterScalingStop(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Object",
-                                      sub_display_text="object_after_scaling_stop",
-                                      command_name="object_after_scaling_stop",
-                                      purpose_line="When a specific sprite image stops scaling using <object_scale_until>,\n"
-                                      "run a specific reusable script.\n\n"
-                                      "Note: the object sprite must already be visible.")
-
-        page_object_scale_by =\
-            CharacterScaleBy(parent_frame=self.frame_contents_outer,
-                             header_label=self.lbl_header,
-                             purpose_label=self.lbl_purpose,
-                             treeview_commands=self.treeview_commands,
-                             parent_display_text="Object",
-                             sub_display_text="object_scale_by",
-                             command_name="object_scale_by",
-                             purpose_line="Sets the scale speed of an object sprite.\n"
-                             "Note: the object sprite must already be visible.",
-                             radio_button_instructions="Scale direction:",
-                             radio_button_text_1="Scale up",
-                             radio_button_text_2="Scale down",
-                             radio_button_value_1="scale up",
-                             radio_button_value_2="scale down",
-                             default_radio_button_value="scale up",
-                             scale_default_value=5,
-                             scale_from_value=1,
-                             scale_to_value=100,
-                             scale_instructions="Scale speed (1 to 100):")
-
-        page_object_scale_current_value =\
-            CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
-                                       header_label=self.lbl_header,
-                                       purpose_label=self.lbl_purpose,
-                                       treeview_commands=self.treeview_commands,
-                                       parent_display_text="Object",
-                                       sub_display_text="object_scale_current_value",
-                                       command_name="object_scale_current_value",
-                                       purpose_line="Immediately set a sprite's scale value (no gradual animation).\n"
-                                       "Note: the object sprite must already be visible.",
-                                       from_value=0,
-                                       to_value=100,
-                                       amount_usage_info="Scale value:\n"
-                                       "(example: 2 means twice as big as the original size)",
-                                       amount_name="scale")
-
-        page_object_scale_delay =\
-            CharacterScaleDelay(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Object",
-                                sub_display_text="object_scale_delay",
-                                command_name="object_scale_delay",
-                                purpose_line="Specify the number of frames to skip for this sprite's scale animation.\n"
-                                "This is used to create an extra-slow scaling effect.\n\n"
-                                "Example: a value of 2 means to delay the scaling animation\n"
-                                "by 2 frames each time.\n\n"
-                                "Note: the object sprite must already be visible.",
-                                from_value=1,
-                                to_value=120,
-                                amount_usage_info="Number of frames to skip:",
-                                amount_name="number of frames to skip")
-
-        page_object_scale_until =\
-            CharacterScaleUntil(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Object",
-                                sub_display_text="object_scale_until",
-                                command_name="object_scale_until",
-                                purpose_line="Indicate at what scale a scaling animation should stop.\n"
-                                "Note: the object sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
-                                scale_from_value=0,
-                                scale_to_value=100,
-                                scale_default_value=2)
-
-        page_object_start_scaling =\
-            CharacterStartScaling(parent_frame=self.frame_contents_outer,
-                                  header_label=self.lbl_header,
-                                  purpose_label=self.lbl_purpose,
-                                  treeview_commands=self.treeview_commands,
-                                  parent_display_text="Object",
-                                  sub_display_text="object_start_scaling",
-                                  command_name="object_start_scaling",
-                                  purpose_line="Starts an object sprite scaling animation.\n\n"
-                                  "Note: the object sprite must already be visible.\n"
-                                  "Also, <object_scale_until> should be used prior.")
-
-        page_object_stop_scaling =\
-            CharacterStopScaling(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_stop_scaling",
-                                 command_name="object_stop_scaling",
-                                 purpose_line="Stops an object sprite scaling animation.\n\n"
-                                 "The scale value is not lost. If the scaling is started again,\n"
-                                 "it will resume from where it stopped last.\n\n"
-                                 "Note: the object sprite must already be visible.")
-
-        page_object_after_movement_stop =\
-            CharacterAfterMovementStop(parent_frame=self.frame_contents_outer,
-                                       header_label=self.lbl_header,
-                                       purpose_label=self.lbl_purpose,
-                                       treeview_commands=self.treeview_commands,
-                                       parent_display_text="Object",
-                                       sub_display_text="object_after_movement_stop",
-                                       command_name="object_after_movement_stop",
-                                       purpose_line="Run a reusable script after a specific object sprite stops moving.")
-   
-        page_object_stop_movement_condition =\
-            CharacterStopMovementCondition(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Object",
-                                      sub_display_text="object_stop_movement_condition",
-                                      command_name="object_stop_movement_condition",
-                                      purpose_line="Add a condition that defines when to stop a moving sprite.\n\n"
-                                      "Multiple stop conditions can be added for a single sprite by calling\n"
-                                      "this command multiple times with different parameters.\n\n"
-                                      "Once all the stop conditions have been satisfied, then the specified sprite\n"
-                                      "will stop moving.")
-
-        page_object_move =\
-            CharacterMove(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Object",
-                          sub_display_text="object_move",
-                          command_name="object_move",
-                          purpose_line="Sets the movement amount and direction of an object sprite.")
-
-        page_object_move_delay =\
-            CharacterMoveDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_move_delay",
-                               command_name="object_move_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's movement animation.\n"
-                               "This is used to create an extra-slow movement.\n\n"
-                               "The higher the values, the slower the animation.",
-                               spinbox_1_instructions="Number of frames to skip\n"
-                               "(horizontal movement):",
-                               spinbox_2_instructions="Number of frames to skip\n"
-                               "(vertical movement):",
-                               spinbox_1_subject="horizontal",
-                               spinbox_2_subject="vertical",
-                               subject_sentence_1="the number of frames to skip for horizontal movements",
-                               subject_sentence_2="the number of frames to skip for vertical movements",
-                               spinbox_from_value=1,
-                               spinbox_to_value=120)
-
-        page_object_start_moving =\
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_start_moving",
-                                 command_name="object_start_moving",
-                                 purpose_line="Starts a movement animation on a specific object sprite.")
-
-        page_object_stop_moving = \
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_stop_moving",
-                                 command_name="object_stop_moving",
-                                 purpose_line="Stops a movement animation on a specific object sprite.")
-
-        page_object_set_position_x =\
-            CharacterSetPositionX(parent_frame=self.frame_contents_outer,
-                                  header_label=self.lbl_header,
-                                  purpose_label=self.lbl_purpose,
-                                  treeview_commands=self.treeview_commands,
-                                  parent_display_text="Object",
-                                  sub_display_text="object_set_position_x",
-                                  command_name="object_set_position_x",
-                                  purpose_line="Sets the horizontal position of a specific object relative to the top-left\n"
-                                  "corner of the sprite.\n\n"
-                                  "Note: the object sprite must already be visible.",
-                                  direction="horizontal")
-
-        page_object_set_position_y =\
-            CharacterSetPositionY(parent_frame=self.frame_contents_outer,
-                                  header_label=self.lbl_header,
-                                  purpose_label=self.lbl_purpose,
-                                  treeview_commands=self.treeview_commands,
-                                  parent_display_text="Object",
-                                  sub_display_text="object_set_position_y",
-                                  command_name="object_set_position_y",
-                                  purpose_line="Sets the vertical position of a specific object relative to the top-left\n"
-                                  "corner of the sprite.\n\n"
-                                  "Note: the object sprite must already be visible.",
-                                  direction="vertical")
-
-        page_object_set_center =\
-            CharacterSetCenter(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_set_center",
-                               command_name="object_set_center",
-                               purpose_line="Set the center point of the sprite.\n"
-                               "corner of the sprite.\n\n"
-                               "Note: the object sprite must already be visible.",
-                               spinbox_1_instructions="Center of X (horizontal position):",
-                               spinbox_2_instructions="Center of Y (vertical position):",
-                               spinbox_1_subject="horizontal",
-                               spinbox_2_subject="vertical",
-                               subject_sentence_1="the horizontal center position",
-                               subject_sentence_2="the vertical center position",
-                               spinbox_from_value=-5000,
-                               spinbox_to_value=9000)
-
-        
 
         """
         Dialog
@@ -2143,6 +1660,537 @@ class WizardWindow:
                                    spinbox_from_value=-5000,
                                    spinbox_to_value=9000)
 
+        page_dialog_sprite_center_x_with =\
+            SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_center_x_with",
+                                        command_name="dialog_sprite_center_x_with",
+                                        purpose_line="Center the X of a dialog sprite with the center X of another sprite.\n"
+                                        "Note: both sprites must already be visible.")     
+
+
+        """
+        Object
+        """
+
+        page_load_object =\
+            Character_LoadCharacter(parent_frame=self.frame_contents_outer,
+                                    header_label=self.lbl_header,
+                                    purpose_label=self.lbl_purpose,
+                                    treeview_commands=self.treeview_commands,
+                                    parent_display_text="Object",
+                                    sub_display_text="load_object",
+                                    command_name="load_object",
+                                    purpose_line="Load an object sprite into memory.")
+
+        page_show_object =\
+            CharacterShow(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_show",
+                          command_name="object_show",
+                          purpose_line="Shows the given sprite and it hides the currently visible\n"
+                          "sprite with the same general alias as the one we’re about to show.")
+
+        page_hide_object =\
+            CharacterHide(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_hide",
+                          command_name="object_hide",
+                          purpose_line="Hides the given sprite.")
+
+        page_hide_all_object = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Object",
+                        sub_display_text="object_hide_all",
+                        command_name="object_hide_all",
+                        purpose_line="Hides all object sprites.")
+        
+        page_object_flip_both =\
+            Flip(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_flip_both",
+                          command_name="object_flip_both",
+                          purpose_line="Flips the given sprite both horizontally and vertically.")
+
+
+        page_object_flip_horizontal =\
+            Flip(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_flip_horizontal",
+                          command_name="object_flip_horizontal",
+                          purpose_line="Flips the given sprite horizontally.")
+
+
+        page_object_flip_vertical =\
+            Flip(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_flip_vertical",
+                          command_name="object_flip_vertical",
+                          purpose_line="Flips the given sprite vertically.")
+        
+
+        page_object_after_fading_stop =\
+            CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
+                                    header_label=self.lbl_header,
+                                    purpose_label=self.lbl_purpose,
+                                    treeview_commands=self.treeview_commands,
+                                    parent_display_text="Object",
+                                    sub_display_text="object_after_fading_stop",
+                                    command_name="object_after_fading_stop",
+                                    purpose_line="Run a reusable script after a specific object sprite stops fading.")
+
+        page_object_fade_current_value =\
+            CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Object",
+                                      sub_display_text="object_fade_current_value",
+                                      command_name="object_fade_current_value",
+                                      purpose_line="Set the opacity level of a specific object.\n"
+                                      "Note: the object sprite must already be visible.",
+                                      from_value=0,
+                                      to_value=255,
+                                      amount_usage_info="Opacity level:\n"
+                                      "0=fully transparent  255=fully opaque",
+                                      amount_name="opacity level")
+
+        page_object_fade_delay =\
+            CharacterFadeDelay(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Object",
+                               sub_display_text="object_fade_delay",
+                               command_name="object_fade_delay",
+                               purpose_line="Specify the number of frames to skip for a sprite's fade animation.\n"
+                               "This is used to create an extra-slow fade effect.\n\n"
+                               "Example: a value of 30 (frames) will delay the fade every 1 second.\n"
+                               "Note: the character sprite must already be visible.",
+                               from_value=1,
+                               to_value=120,
+                               amount_usage_info="Number of frames to skip:",
+                               amount_name="number of frames to skip")
+
+        page_object_fade_speed =\
+            CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Object",
+                               sub_display_text="object_fade_speed",
+                               command_name="object_fade_speed",
+                               purpose_line="Set the fade-speed of an object sprite.\n"
+                               "Note: the object sprite must already be visible.",
+                               radio_button_instructions="Fade direction:",
+                               radio_button_text_1="Fade in",
+                               radio_button_text_2="Fade out",
+                               radio_button_value_1="fade in",
+                               radio_button_value_2="fade out",
+                               default_radio_button_value="fade in",
+                               scale_default_value=5,
+                               scale_from_value=1,
+                               scale_to_value=100,
+                               scale_instructions="Fade speed (1 to 100):")
+
+        page_object_fade_until =\
+            CharacterFadeUntil(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Object",
+                               sub_display_text="object_fade_until",
+                               command_name="object_fade_until",
+                               purpose_line="Indicate at what fade level a fade animation should stop.\n"
+                               "Note: the object sprite must already be visible.",
+                               scale_instructions="Stop fading when the opacity reaches... (0 to 255)\n"
+                               "0 = fully transparent  255 = fully opaque",
+                               scale_from_value=0,
+                               scale_to_value=255,
+                               scale_default_value=128)
+
+        page_object_start_fading =\
+            CharacterStartFading(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_start_fading",
+                                 command_name="object_start_fading",
+                                 purpose_line="Starts an object sprite fading animation.\n"
+                                 "Note: the object sprite must already be visible.")
+
+        page_object_stop_fading =\
+            CharacterStopFading(parent_frame=self.frame_contents_outer,
+                                header_label=self.lbl_header,
+                                purpose_label=self.lbl_purpose,
+                                treeview_commands=self.treeview_commands,
+                                parent_display_text="Object",
+                                sub_display_text="object_stop_fading",
+                                command_name="object_stop_fading",
+                                purpose_line="Stops an object sprite fading animation.\n"
+                                "Note: the object sprite must already be visible.")
+
+        page_object_after_rotating_stop =\
+            CharacterAfterRotatingStop(parent_frame=self.frame_contents_outer,
+                                       header_label=self.lbl_header,
+                                       purpose_label=self.lbl_purpose,
+                                       treeview_commands=self.treeview_commands,
+                                       parent_display_text="Object",
+                                       sub_display_text="object_after_rotating_stop",
+                                       command_name="object_after_rotating_stop",
+                                       purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
+                                       "Note: the object sprite must already be visible.")
+
+        page_object_rotate_current_value =\
+            CharacterRotateCurrentValue(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_rotate_current_value",
+                                        command_name="object_rotate_current_value",
+                                        purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
+                                        "Note: the object sprite must already be visible.")
+
+        page_object_rotate_delay =\
+            CharacterRotateDelay(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_rotate_delay",
+                                 command_name="object_rotate_delay",
+                                 purpose_line="Specify the number of frames to skip for this sprite's rotate animation.\n"
+                                 "This is used to create an extra-slow rotating effect.\n\n"
+                                 "Example: a value of 2 means to delay the rotation animation\n"
+                                 "by 2 frames each time.\n\n"
+                                 "Note: the object sprite must already be visible.",
+                                 from_value=1,
+                                 to_value=120,
+                                 amount_usage_info="Number of frames to skip:",
+                                 amount_name="number of frames to skip")
+
+        page_object_rotate_speed =\
+            CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_rotate_speed",
+                                 command_name="object_rotate_speed",
+                                 purpose_line="Set the rotation speed percentage of an object sprite.\n"
+                                 "The speed range is 1 (slowest) to 100 (fastest).\n\n"
+                                 "Note: the object sprite must already be visible.",
+                                 radio_button_instructions="Rotate direction:",
+                                 radio_button_text_1="Clockwise",
+                                 radio_button_text_2="Counterclockwise",
+                                 radio_button_value_1="clockwise",
+                                 radio_button_value_2="counterclockwise",
+                                 default_radio_button_value="clockwise",
+                                 scale_default_value=5,
+                                 scale_from_value=1,
+                                 scale_to_value=100,
+                                 scale_instructions="Rotation speed (1 to 100):")
+
+        page_object_rotate_until =\
+            CharacterRotateUntil(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_rotate_until",
+                                 command_name="object_rotate_until",
+                                 purpose_line="Indicate at what degree a rotation animation should stop.\n"
+                                 "Note: the object sprite must already be visible.",
+                                 scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
+                                 scale_from_value=0,
+                                 scale_to_value=359,
+                                 scale_default_value=180)
+
+        page_object_start_rotating =\
+            CharacterStartRotating(parent_frame=self.frame_contents_outer,
+                                   header_label=self.lbl_header,
+                                   purpose_label=self.lbl_purpose,
+                                   treeview_commands=self.treeview_commands,
+                                   parent_display_text="Object",
+                                   sub_display_text="object_start_rotating",
+                                   command_name="object_start_rotating",
+                                   purpose_line="Starts an object sprite rotation animation.\n"
+                                   "Note: the object sprite must already be visible.")
+
+        page_object_stop_rotating =\
+            CharacterStopRotating(parent_frame=self.frame_contents_outer,
+                                  header_label=self.lbl_header,
+                                  purpose_label=self.lbl_purpose,
+                                  treeview_commands=self.treeview_commands,
+                                  parent_display_text="Object",
+                                  sub_display_text="object_stop_rotating",
+                                  command_name="object_stop_rotating",
+                                  purpose_line="Stops an object sprite rotation animation.\n"
+                                  "Note: the object sprite must already be visible.")
+
+        page_object_after_scaling_stop =\
+            CharacterAfterScalingStop(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Object",
+                                      sub_display_text="object_after_scaling_stop",
+                                      command_name="object_after_scaling_stop",
+                                      purpose_line="When a specific sprite image stops scaling using <object_scale_until>,\n"
+                                      "run a specific reusable script.\n\n"
+                                      "Note: the object sprite must already be visible.")
+
+        page_object_scale_by =\
+            CharacterScaleBy(parent_frame=self.frame_contents_outer,
+                             header_label=self.lbl_header,
+                             purpose_label=self.lbl_purpose,
+                             treeview_commands=self.treeview_commands,
+                             parent_display_text="Object",
+                             sub_display_text="object_scale_by",
+                             command_name="object_scale_by",
+                             purpose_line="Sets the scale speed of an object sprite.\n"
+                             "Note: the object sprite must already be visible.",
+                             radio_button_instructions="Scale direction:",
+                             radio_button_text_1="Scale up",
+                             radio_button_text_2="Scale down",
+                             radio_button_value_1="scale up",
+                             radio_button_value_2="scale down",
+                             default_radio_button_value="scale up",
+                             scale_default_value=5,
+                             scale_from_value=1,
+                             scale_to_value=100,
+                             scale_instructions="Scale speed (1 to 100):")
+
+        page_object_scale_current_value =\
+            CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
+                                       header_label=self.lbl_header,
+                                       purpose_label=self.lbl_purpose,
+                                       treeview_commands=self.treeview_commands,
+                                       parent_display_text="Object",
+                                       sub_display_text="object_scale_current_value",
+                                       command_name="object_scale_current_value",
+                                       purpose_line="Immediately set a sprite's scale value (no gradual animation).\n"
+                                       "Note: the object sprite must already be visible.",
+                                       from_value=0,
+                                       to_value=100,
+                                       amount_usage_info="Scale value:\n"
+                                       "(example: 2 means twice as big as the original size)",
+                                       amount_name="scale")
+
+        page_object_scale_delay =\
+            CharacterScaleDelay(parent_frame=self.frame_contents_outer,
+                                header_label=self.lbl_header,
+                                purpose_label=self.lbl_purpose,
+                                treeview_commands=self.treeview_commands,
+                                parent_display_text="Object",
+                                sub_display_text="object_scale_delay",
+                                command_name="object_scale_delay",
+                                purpose_line="Specify the number of frames to skip for this sprite's scale animation.\n"
+                                "This is used to create an extra-slow scaling effect.\n\n"
+                                "Example: a value of 2 means to delay the scaling animation\n"
+                                "by 2 frames each time.\n\n"
+                                "Note: the object sprite must already be visible.",
+                                from_value=1,
+                                to_value=120,
+                                amount_usage_info="Number of frames to skip:",
+                                amount_name="number of frames to skip")
+
+        page_object_scale_until =\
+            CharacterScaleUntil(parent_frame=self.frame_contents_outer,
+                                header_label=self.lbl_header,
+                                purpose_label=self.lbl_purpose,
+                                treeview_commands=self.treeview_commands,
+                                parent_display_text="Object",
+                                sub_display_text="object_scale_until",
+                                command_name="object_scale_until",
+                                purpose_line="Indicate at what scale a scaling animation should stop.\n"
+                                "Note: the object sprite must already be visible.",
+                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                scale_from_value=0,
+                                scale_to_value=100,
+                                scale_default_value=2)
+
+        page_object_start_scaling =\
+            CharacterStartScaling(parent_frame=self.frame_contents_outer,
+                                  header_label=self.lbl_header,
+                                  purpose_label=self.lbl_purpose,
+                                  treeview_commands=self.treeview_commands,
+                                  parent_display_text="Object",
+                                  sub_display_text="object_start_scaling",
+                                  command_name="object_start_scaling",
+                                  purpose_line="Starts an object sprite scaling animation.\n\n"
+                                  "Note: the object sprite must already be visible.\n"
+                                  "Also, <object_scale_until> should be used prior.")
+
+        page_object_stop_scaling =\
+            CharacterStopScaling(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_stop_scaling",
+                                 command_name="object_stop_scaling",
+                                 purpose_line="Stops an object sprite scaling animation.\n\n"
+                                 "The scale value is not lost. If the scaling is started again,\n"
+                                 "it will resume from where it stopped last.\n\n"
+                                 "Note: the object sprite must already be visible.")
+
+        page_object_after_movement_stop =\
+            CharacterAfterMovementStop(parent_frame=self.frame_contents_outer,
+                                       header_label=self.lbl_header,
+                                       purpose_label=self.lbl_purpose,
+                                       treeview_commands=self.treeview_commands,
+                                       parent_display_text="Object",
+                                       sub_display_text="object_after_movement_stop",
+                                       command_name="object_after_movement_stop",
+                                       purpose_line="Run a reusable script after a specific object sprite stops moving.")
+   
+        page_object_stop_movement_condition =\
+            CharacterStopMovementCondition(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Object",
+                                      sub_display_text="object_stop_movement_condition",
+                                      command_name="object_stop_movement_condition",
+                                      purpose_line="Add a condition that defines when to stop a moving sprite.\n\n"
+                                      "Multiple stop conditions can be added for a single sprite by calling\n"
+                                      "this command multiple times with different parameters.\n\n"
+                                      "Once all the stop conditions have been satisfied, then the specified sprite\n"
+                                      "will stop moving.")
+
+        page_object_move =\
+            CharacterMove(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Object",
+                          sub_display_text="object_move",
+                          command_name="object_move",
+                          purpose_line="Sets the movement amount and direction of an object sprite.")
+
+        page_object_move_delay =\
+            CharacterMoveDelay(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Object",
+                               sub_display_text="object_move_delay",
+                               command_name="object_move_delay",
+                               purpose_line="Specify the number of frames to skip for a sprite's movement animation.\n"
+                               "This is used to create an extra-slow movement.\n\n"
+                               "The higher the values, the slower the animation.",
+                               spinbox_1_instructions="Number of frames to skip\n"
+                               "(horizontal movement):",
+                               spinbox_2_instructions="Number of frames to skip\n"
+                               "(vertical movement):",
+                               spinbox_1_subject="horizontal",
+                               spinbox_2_subject="vertical",
+                               subject_sentence_1="the number of frames to skip for horizontal movements",
+                               subject_sentence_2="the number of frames to skip for vertical movements",
+                               spinbox_from_value=1,
+                               spinbox_to_value=120)
+
+        page_object_start_moving =\
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_start_moving",
+                                 command_name="object_start_moving",
+                                 purpose_line="Starts a movement animation on a specific object sprite.")
+
+        page_object_stop_moving = \
+            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Object",
+                                 sub_display_text="object_stop_moving",
+                                 command_name="object_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific object sprite.")
+
+        page_object_set_position_x =\
+            CharacterSetPositionX(parent_frame=self.frame_contents_outer,
+                                  header_label=self.lbl_header,
+                                  purpose_label=self.lbl_purpose,
+                                  treeview_commands=self.treeview_commands,
+                                  parent_display_text="Object",
+                                  sub_display_text="object_set_position_x",
+                                  command_name="object_set_position_x",
+                                  purpose_line="Sets the horizontal position of a specific object relative to the top-left\n"
+                                  "corner of the sprite.\n\n"
+                                  "Note: the object sprite must already be visible.",
+                                  direction="horizontal")
+
+        page_object_set_position_y =\
+            CharacterSetPositionY(parent_frame=self.frame_contents_outer,
+                                  header_label=self.lbl_header,
+                                  purpose_label=self.lbl_purpose,
+                                  treeview_commands=self.treeview_commands,
+                                  parent_display_text="Object",
+                                  sub_display_text="object_set_position_y",
+                                  command_name="object_set_position_y",
+                                  purpose_line="Sets the vertical position of a specific object relative to the top-left\n"
+                                  "corner of the sprite.\n\n"
+                                  "Note: the object sprite must already be visible.",
+                                  direction="vertical")
+
+        page_object_set_center =\
+            CharacterSetCenter(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Object",
+                               sub_display_text="object_set_center",
+                               command_name="object_set_center",
+                               purpose_line="Set the center point of the sprite.\n"
+                               "corner of the sprite.\n\n"
+                               "Note: the object sprite must already be visible.",
+                               spinbox_1_instructions="Center of X (horizontal position):",
+                               spinbox_2_instructions="Center of Y (vertical position):",
+                               spinbox_1_subject="horizontal",
+                               spinbox_2_subject="vertical",
+                               subject_sentence_1="the horizontal center position",
+                               subject_sentence_2="the vertical center position",
+                               spinbox_from_value=-5000,
+                               spinbox_to_value=9000)
+
+        page_object_center_x_with =\
+            SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_center_x_with",
+                                        command_name="object_center_x_with",
+                                        purpose_line="Center the X of an object sprite with the center X of another sprite.\n"
+                                        "Note: both sprites must already be visible.")  
+
 
         """
         Font
@@ -2432,6 +2480,7 @@ class WizardWindow:
         self.pages["character_set_position_x"] = page_character_set_position_x
         self.pages["character_set_position_y"] = page_character_set_position_y
         self.pages["character_set_center"] = page_character_set_center
+        self.pages["character_center_x_with"] = page_character_center_x_with
         
         """
         General
@@ -2496,6 +2545,7 @@ class WizardWindow:
         self.pages["object_set_position_x"] = page_object_set_position_x
         self.pages["object_set_position_y"] = page_object_set_position_y
         self.pages["object_set_center"] = page_object_set_center
+        self.pages["object_center_x_with"] = page_object_center_x_with
 
 
         """
@@ -2552,7 +2602,7 @@ class WizardWindow:
         self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
         self.pages["dialog_sprite_set_position_y"] = page_dialog_set_position_y
         self.pages["dialog_sprite_set_center"] = page_dialog_set_center
-
+        self.pages["dialog_sprite_center_x_with"] = page_dialog_sprite_center_x_with
 
         
         """
@@ -2582,7 +2632,7 @@ class WizardWindow:
             
         self.mainwindow.destroy()
         
-    def on_cancel_button_clicked(self):
+    def on_cancel_button_clicked(self, *args):
         self.mainwindow.destroy()
         
     def on_treeview_item_selected(self, event):
@@ -3865,7 +3915,204 @@ class SharedPages:
     
             return f"<{self.command_name}: {alias}>"
       
+    class CenterWithAlias(WizardListing):
+        """
+        <character_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
+        <object_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
+        <dialog_sprite_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
+        """
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line, **kwargs):
+    
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name,
+                             purpose_line, **kwargs)
+            
+            # Used for label display purposes on the wizard's page.
+            self.sprite_type = self.get_sprite_type()
+            
+            self.v_alias_to_move = tk.StringVar()
+            self.v_sprite_type_center_with = tk.StringVar()
+            self.v_center_with_alias = tk.StringVar()
+            
+            # We're going to change the label's text depending
+            # on the sprite type selected in the combo box.
+            self.lbl_center_with_alias: ttk.Label = None
+            
+            # The page's contents.
+            self.frame_content = self.create_content_frame()
+            
+        def on_combo_box_selection_changed(self, event: tk.Event):
+            """
+            Change the 'Center with alias:' label to mention
+            the type of sprite in the combo box.
+            
+            For example: 'Center with character alias:'
+            """
+            
+            # Get the combo box widget
+            cb_widget: ttk.Combobox
+            cb_widget = self.frame_content.nametowidget(event.widget)
+            
+            # Get the chosen combo box item text.
+            selection: str
+            selection = cb_widget.get()
+            
+            # Update the label's text.
+            self.lbl_center_with_alias.\
+                configure(text=f"Center with {selection.lower()} alias:")
+            
+        def get_sprite_type(self) -> str:
+            """
+            Return the source sprite type depending on the
+            command name.
+            
+            For example: 'character' will be returned (lowercase)
+            if the command is <character_center_x_with>.
+            
+            Purpose: used for label display purposes on the wizard's page.
+            """
+            
+            command_name = self.command_name.lower()
+            
+            if "character" in command_name:
+                return "character"
+            elif "dialog" in command_name:
+                return "dialog_sprite"
+            elif "object" in command_name:
+                return "object"
+                
+        def create_content_frame(self) -> ttk.Frame:
+            """
+            Label: '<subject> alias to move:'
+            Entry: 25 width
+            
+            Label: 'Sprite type to center with:'
+            Combobox: (character, dialog, object)
+            
+            Label: 'Center with alias:'
+            Entry: 25 width
+            """
+            frame_content = ttk.Frame(self.parent_frame)
 
+            # Alias to move
+            frame_sprite_to_move = ttk.Frame(frame_content)
+            lbl_alias_to_move =\
+                ttk.Label(frame_sprite_to_move,
+                          text=f"{self.sprite_type.replace('_', ' ').capitalize()} alias to move:",
+                          anchor=tk.W)
+            
+            entry_alias_to_move = ttk.Entry(frame_sprite_to_move,
+                                            width=25,
+                                            textvariable=self.v_alias_to_move)
+
+            lbl_alias_to_move.pack(anchor=tk.W)
+            entry_alias_to_move.pack(anchor=tk.W)
+            
+            # Sprite type to center with
+            frame_sprite_type = ttk.Frame(frame_content)
+            lbl_sprite_type_center_with =\
+                ttk.Label(frame_sprite_type,
+                text="Sprite type to center with:",
+                anchor=tk.W)
+            
+            cb_sprite_type =\
+                ttk.Combobox(frame_sprite_type,
+                             state="readonly",
+                             values=("Character", "Dialog sprite", "Object"),
+                             width=20,
+                             textvariable=self.v_sprite_type_center_with)
+            
+            # So we can change the 'Center with alias:' label to mention
+            # the type of sprite alias.
+            cb_sprite_type.bind("<<ComboboxSelected>>",
+                                self.on_combo_box_selection_changed)
+            
+            lbl_sprite_type_center_with.pack(anchor=tk.W)
+            cb_sprite_type.pack(anchor=tk.W)
+            
+            # Center with alias:
+            frame_center_with_alias = ttk.Frame(frame_content)
+            self.lbl_center_with_alias = ttk.Label(frame_center_with_alias,
+                                                   text="Center with sprite alias:",
+                                                   anchor=tk.W)
+            entry_center_with_alias =\
+                ttk.Entry(frame_center_with_alias,
+                          width=25,
+                          textvariable=self.v_center_with_alias)
+            
+            self.lbl_center_with_alias.pack(anchor=tk.W)
+            entry_center_with_alias.pack(anchor=tk.W)
+            
+            frame_sprite_to_move.pack(anchor=tk.W)
+            frame_sprite_type.pack(anchor=tk.W, pady=8)
+            frame_center_with_alias.pack(anchor=tk.W)
+            
+            return frame_content
+        
+        def check_inputs(self) -> Dict | None:
+            """
+            Check whether the user has inputted sufficient information
+            to use this command.
+            
+            Return: the selection (str) if there is sufficient information;
+            otherwise, None.
+            """
+            
+            user_input = {}
+            
+            # Get the alias to move
+            alias_to_move = self.v_alias_to_move.get().strip()
+            
+            if not alias_to_move:
+                messagebox.showwarning(\
+                    parent=self.treeview_commands.winfo_toplevel(),
+                    title="Alias to move",
+                    message="Missing: alias to move")
+                return
+            
+            # Get the selected value in the combobox.
+            sprite_type_center_with = self.v_sprite_type_center_with.get().lower()
+            if not sprite_type_center_with:
+                messagebox.showwarning(\
+                    parent=self.treeview_commands.winfo_toplevel(),
+                    title=f"No sprite type selected",
+                    message=f"Choose a sprite type to center with from the drop-down menu.")
+                return
+            
+            # Get the alias to center with
+            center_with_alias = self.v_center_with_alias.get().strip()
+            
+            if not center_with_alias:
+                messagebox.showwarning(\
+                    parent=self.treeview_commands.winfo_toplevel(),
+                    title="Alias to center with",
+                    message="Missing: alias to center with")
+                return            
+            
+            user_input = {"AliasToMove": alias_to_move,
+                          "CenterWithAlias": center_with_alias,
+                          "SpriteTypeCenterWith": sprite_type_center_with}
+            
+            return user_input
+        
+        def generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            """
+            selection = self.check_inputs()
+            if not selection:
+                return
+            
+            alias_to_move = selection.get("AliasToMove")
+            center_with_alias = selection.get("CenterWithAlias")
+            sprite_type_center_with = selection.get("SpriteTypeCenterWith")
+            
+            return f"<{self.command_name}: {alias_to_move}, {sprite_type_center_with}, {center_with_alias}>"
+            
+    
     class Until(WizardListing):
         """
         <character_fade_until: general alias, fade value>
@@ -4593,10 +4840,10 @@ class SharedPages:
             frame_content = ttk.Frame(self.parent_frame)
             
             self.lbl_chapters_title = ttk.Label(frame_content, text="Chapters:")
-            self.cb_chapters = ttk.Combobox(frame_content, width=25)
+            self.cb_chapters = ttk.Combobox(frame_content, width=25, state="readonly")
 
             self.lbl_scenes_title = ttk.Label(frame_content, text="Scenes:")
-            self.cb_scenes = ttk.Combobox(frame_content, width=25)
+            self.cb_scenes = ttk.Combobox(frame_content, width=25, state="readonly")
             
             self.lbl_chapters_title.grid(row=0, column=0, sticky="w")
             self.cb_chapters.grid(row=1, column=0, sticky="w")
@@ -4620,14 +4867,62 @@ class SharedPages:
 
             # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
             chapter_names = [item for item in ProjectSnapshot.chapters_and_scenes]         
-            scene_names = [item[1] for item in ProjectSnapshot.chapters_and_scenes.values()]
-            scene_names = [scene_name for scene_name in scene_names[0]]
 
             combo_box_chapters.configure(values=chapter_names)
             combo_box_chapters.delete(0, "end")
-
-            combo_box_scenes.configure(values=scene_names)
             combo_box_scenes.delete(0, "end")
+            
+            # A partial method for on_chapter_selection_changed(), which
+            # attaches the scenes combo box.
+            partial_on_chapter_changed =\
+                partial(SharedPages.SceneScriptSelect.on_chapter_selection_changed,
+                        combo_box_scenes)
+            
+            # When the chapters combo box changes selection, populate
+            # the scenes combo box with scenes in the selected chapter.
+            combo_box_chapters.bind("<<ComboboxSelected>>",
+                                    partial_on_chapter_changed)
+            
+        
+        @staticmethod
+        def on_chapter_selection_changed(cb_scenes: ttk.Combobox,
+                                         event: tk.Event):
+            """
+            Populate the scenes combo box with a list of scenes
+            in the selected chapter.
+            """
+            
+            # A reference to the chapters combobox
+            cb_chapters: ttk.Combobox = event.widget
+            
+            # Get the selected chapter
+            chapter_name = cb_chapters.get()
+            
+            if not chapter_name:
+                return
+            
+            # Clear the combobox entry portion
+            cb_scenes.configure(state="normal")
+            cb_scenes.configure(values="")
+            cb_scenes.delete(0, tk.END)
+            cb_scenes.configure(state="readonly")
+            
+            # Get all the scenes in the given chapter.
+            scenes = ProjectSnapshot.chapters_and_scenes.get(chapter_name)
+            if not scenes:
+                return
+            
+            # Example of what we have so far:
+            # ['<load_background: some image>', {'Some scene name': '<background_show: ..>'}]
+            # Get just the scene names and scene scripts.
+            scenes = scenes[1]
+            
+            # Get just the scene names, excluding the scene scripts.
+            scene_names = [scene_name for scene_name in scenes.keys()]
+            
+            # Populate the scenes combo box with a list of scenes
+            # in the selected chapter.
+            cb_scenes.configure(values=scene_names)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5868,6 +6163,8 @@ class SceneWithFade(WizardListing):
         # Populate chapter and scene names combo boxes
         SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
                                                self.scene_frame.cb_scenes)
+                                               
+        
 
     def check_inputs(self) -> Dict | None:
         """
@@ -6025,9 +6322,9 @@ class WaitForAnimation(WizardListing):
             return
 
         # Shorten all/any from the combobox, so it works with the final command
-        if animation_type == "all (all combined)":
+        if animation_type == "all (wait when *all* types of animations are occurring)":
             animation_type = "all"
-        elif animation_type == "any (at least one)":
+        elif animation_type == "any (wait when at least one type of animation is occurring)":
             animation_type = "any"
 
         user_input = {"SpriteType": sprite_type,

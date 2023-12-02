@@ -19,6 +19,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from enum import Enum
 from typing import Dict, Tuple, List
+from config_handler import ConfigHandler
 
 
 class ProjectSnapshot:
@@ -27,13 +28,16 @@ class ProjectSnapshot:
     EDITOR_VERSION = 1
     
     # Used in the About dialog
-    EXACT_EDITOR_VERSION = "0.2"
+    EXACT_EDITOR_VERSION = "0.3"
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
 
     # Path to full save project file (.lvnap extension)
     save_full_path = None
+    
+    # Config parser
+    config = ConfigHandler()
 
     # Story details (author, license, etc.)
     # Key (str): 'Author', Value (str): 'Name Here'
@@ -281,7 +285,8 @@ class SubPaths(Enum):
 
     SOUND_FOLDER = Path("audio") / "sounds"
     MUSIC_FOLDER = Path("audio") / "music"
-
+    
+    
 class LetterProperties:
     """
     Stores properties of a single letter font spritesheet.

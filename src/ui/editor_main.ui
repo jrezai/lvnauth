@@ -1037,7 +1037,7 @@
                                 <property name="style">Toolbutton</property>
                                 <property name="text" translatable="yes">Save Script</property>
                                 <layout manager="grid">
-                                  <property name="column">2</property>
+                                  <property name="column">4</property>
                                   <property name="ipadx">5</property>
                                   <property name="ipady">5</property>
                                   <property name="padx">0 5</property>
@@ -1051,7 +1051,7 @@
                                 <property name="style">Toolbutton</property>
                                 <property name="text" translatable="yes">Cancel Changes</property>
                                 <layout manager="grid">
-                                  <property name="column">3</property>
+                                  <property name="column">5</property>
                                   <property name="ipadx">5</property>
                                   <property name="ipady">5</property>
                                   <property name="padx">5</property>
@@ -1086,6 +1086,30 @@
                                 </layout>
                               </object>
                             </child>
+                            <child>
+                              <object class="ttk.Button" id="btn_colors" named="True">
+                                <property name="compound">left</property>
+                                <property name="style">Toolbutton</property>
+                                <property name="text" translatable="yes">Colors</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
+                                  <property name="ipadx">5</property>
+                                  <property name="ipady">5</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Separator" id="separator6">
+                                <property name="orient">vertical</property>
+                                <layout manager="grid">
+                                  <property name="column">3</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">ns</property>
+                                </layout>
+                              </object>
+                            </child>
                           </object>
                         </child>
                         <child>
@@ -1101,28 +1125,6 @@
                               <property type="col" id="0" name="weight">1</property>
                               <property type="row" id="0" name="weight">1</property>
                             </containerlayout>
-                            <child>
-                              <object class="tk.Text" id="text_script">
-                                <property name="exportselection">false</property>
-                                <property name="font">{Ubuntu} 16 {}</property>
-                                <property name="height">10</property>
-                                <property name="highlightbackground">#2c2cd8</property>
-                                <property name="highlightcolor">#2c2cac</property>
-                                <property name="highlightthickness">2</property>
-                                <property name="insertbackground">#b4c134</property>
-                                <property name="relief">flat</property>
-                                <property name="selectbackground">#2c2cb1</property>
-                                <property name="setgrid">false</property>
-                                <property name="state">disabled</property>
-                                <property name="width">50</property>
-                                <property name="wrap">none</property>
-                                <layout manager="grid">
-                                  <property name="column">0</property>
-                                  <property name="row">0</property>
-                                  <property name="sticky">nsew</property>
-                                </layout>
-                              </object>
-                            </child>
                             <child>
                               <object class="ttk.Scrollbar" id="sb_horizontal_text" named="True">
                                 <property name="orient">horizontal</property>
@@ -1140,6 +1142,19 @@
                                   <property name="column">1</property>
                                   <property name="row">0</property>
                                   <property name="sticky">ns</property>
+                                </layout>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="lvnauthwidgets.editorwidget" id="text_script" named="True">
+                                <property name="exportselection">false</property>
+                                <property name="relief">flat</property>
+                                <property name="setgrid">false</property>
+                                <property name="state">disabled</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsew</property>
                                 </layout>
                               </object>
                             </child>

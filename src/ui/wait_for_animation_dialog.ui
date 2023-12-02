@@ -6,6 +6,7 @@
     <layout manager="grid">
       <property name="column">0</property>
       <property name="row">0</property>
+      <property name="sticky">ew</property>
     </layout>
     <child>
       <object class="ttk.Frame" id="frame3">
@@ -16,6 +17,7 @@
           <property name="padx">5</property>
           <property name="pady">5</property>
           <property name="row">0</property>
+          <property name="sticky">w</property>
         </layout>
         <child>
           <object class="ttk.Label" id="label1">
@@ -117,7 +119,7 @@
           <property name="padx">5</property>
           <property name="pady">5</property>
           <property name="row">2</property>
-          <property name="sticky">w</property>
+          <property name="sticky">ew</property>
         </layout>
         <child>
           <object class="ttk.Label" id="label3">
@@ -132,7 +134,8 @@
         <child>
           <object class="ttk.Combobox" id="cb_animation_type" named="True">
             <property name="state">readonly</property>
-            <property name="values">fade move rotate scale "all (all combined)" "any (at least one)"</property>
+            <property name="values">fade move rotate scale "all (wait when *all* types of animations are occurring)" "any (wait when at least one type of animation is occurring)"</property>
+            <property name="width">45</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="row">1</property>

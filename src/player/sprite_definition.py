@@ -975,7 +975,19 @@ class SpriteObject:
             # if rotate_until is None, it means rotate continuously.
             elif rotate_type == RotateType.CLOCKWISE:
 
-                if self.rotate_until and self.rotate_current_value.rotate_current_value <= self.rotate_until.rotate_until:
+                # Conditions for stopping a rotation that's not rotating forever:
+                # 1) If a 'rotate_until' value has been specified
+                # 2) and the current rotate value is greater than 0 (if we don't have
+                # this check, then no rotation will start, because a rotation typically starts at 0 degrees)
+                # 3) and if 360 minus the current rotation value has reached the destination angle.
+                # The reason we take 360 minus the current rotation value is because pygame
+                # starts from 360 and goes down when rotating clockwise, so for example
+                # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
+                # 4) then stop the rotation
+                if self.rotate_until and \
+                   self.rotate_current_value.rotate_current_value > 0 and \
+                   (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_until.rotate_until:
+                    
                     # Stop the rotation
                     self.stop_rotating()
                     reached_destination_rotate = True
@@ -995,7 +1007,7 @@ class SpriteObject:
 
                 # Should we run a specific script now that the rotating animation
                 # has stopped for this sprite?
-                if self.rotate_stop_run_script.reusable_script_name:
+                if self.rotate_stop_run_script and self.rotate_stop_run_script.reusable_script_name:
 
                     # Get the name of the script we need to run now.
                     reusable_script_name = self.rotate_stop_run_script.reusable_script_name
@@ -1216,7 +1228,7 @@ class SpriteObject:
         if not self.is_fading:
             return
 
-            # If there is no fade_until value, but the fade
+        # If there is no fade_until value, but the fade
         # value is not fully opaque, then apply the fade,
         # even though we're not fading to a fade-destination.
         if not self.fade_until and self.current_fade_value is not None:

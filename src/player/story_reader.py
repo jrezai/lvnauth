@@ -16,6 +16,12 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+
+"""
+Nov 27, 2023 (Jobin Rezai) - Improve _is_sprite_animating() detection with
+fade animations.
+"""
+
 import copy
 import pygame
 import active_story
@@ -478,7 +484,13 @@ class StoryReader:
             return
 
         # {chapter name: [chapter script, {scene name: scene script}] }
-        chapter_script = self.chapters_and_scenes.get(startup_chapter_name)[0]
+        chapter_script = self.chapters_and_scenes.get(startup_chapter_name)
+        if chapter_script:
+            # Get just the chapter's script
+            chapter_script = chapter_script[0]
+        else:
+            # Chapter not found
+            return
 
         return chapter_script
 
@@ -3810,7 +3822,9 @@ class StoryReader:
         # {chapter name: [chapter script, {scene name: scene script}] }
         chapters = self.chapters_and_scenes.get(chapter_name)
         if not chapters:
-            return
+            raise ValueError(f"The chapter '{chapter_name}' was not found in the visual novel.\n"
+                             "Possible reason: the visual novel might have been played from a different chapter.\n"
+                             "Try playing the visual novel from the beginning rather than a specific scene so it includes all the chapters.")
 
         # Make sure the given scene name exists.
         if scene_name not in chapters[1]:
@@ -4924,10 +4938,17 @@ class WaitForAnimationHandler:
             # Check if a specific type of animation is occurring
             # on a specific sprite.
             if isinstance(animation_type, sd.SpriteAnimationType):
-                if animation_type == sd.SpriteAnimationType.FADE and sprite_object.is_fading:
+                
+                # Fading in or out and haven't reached the fade destination?
+                # Consider that as still animating.
+                if WaitForAnimationHandler.\
+                   is_fading_extended_check(sprite_object=sprite_object):
                     return True
-                elif animation_type == sd.SpriteAnimationType.MOVE and sprite_object.is_moving:
+                
+                elif animation_type == sd.SpriteAnimationType.MOVE \
+                     and sprite_object.is_moving:
                     return True
+                
                 elif animation_type == sd.SpriteAnimationType.ROTATE and sprite_object.is_rotating:
                     return True
                 elif animation_type == sd.SpriteAnimationType.SCALE and sprite_object.is_scaling:
@@ -4935,19 +4956,43 @@ class WaitForAnimationHandler:
 
             elif isinstance(animation_type, str):
                 # Check if all the animations are occurring on the sprite.
-                if animation_type == "all" and all([sprite_object.is_fading,
+                if animation_type == "all" and all([WaitForAnimationHandler.is_fading_extended_check(sprite_object=sprite_object),
                                                     sprite_object.is_moving,
                                                     sprite_object.is_rotating,
                                                     sprite_object.is_scaling]):
                     return True
 
                 # Check if at least one animation is occurring on the sprite.
-                elif animation_type == "any" and any([sprite_object.is_fading,
+                elif animation_type == "any" and any([WaitForAnimationHandler.is_fading_extended_check(sprite_object=sprite_object),
                                                       sprite_object.is_moving,
                                                       sprite_object.is_rotating,
                                                       sprite_object.is_scaling]):
                     return True
 
+    @staticmethod
+    def is_fading_extended_check(sprite_object: sd.SpriteObject) -> bool:
+        """
+        Return whether the sprite object is busy fading in or fading out.
+        
+        Fading in or out and haven't reached the fade destination?
+        Consider that as still animating.
+        
+        The reason we don't just use 'is_fading' is because when
+        a destination fade value is somewhere in the middle, not
+        fully transparent (0) and not fully opaque (255), then
+        the flag 'is_fading' will still be True, even though it
+        doesn't appear to be fading in or out anyomre.
+        
+        So we use the logic below to determine if it has actually
+        reached its destination fade value, and we'll use that
+        to know whether the sprite is still fading or not.
+        """
+        return sprite_object.is_fading \
+        and isinstance(sprite_object.current_fade_value,
+                       sd.FadeCurrentValue) \
+        and isinstance(sprite_object.fade_until,
+                       sd.FadeUntilValue) \
+        and sprite_object.current_fade_value != sprite_object.fade_until.fade_value
 
 class ReusableScriptArgument:
     """
