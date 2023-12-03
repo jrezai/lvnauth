@@ -399,6 +399,7 @@ class EditColorsWindow:
             [item.lower() for item in ProjectSnapshot.config.config.sections()
              if item.startswith("colorpreset.")]
         
+        # Preset already exists? tell the user.
         if new_preset_section.lower() in existing_sections:
             messagebox.showwarning(parent=self.mainwindow, 
                                    title="Already Exists",
@@ -423,6 +424,11 @@ class EditColorsWindow:
         
         # Save the selected preset to the config file.
         self.save_selected_preset(is_new_preset=True)
+        
+        # Causes the Delete button and 'No background' checkbox
+        # to be enabled; the same as selecting the new preset's name
+        # in the combobox.
+        self.show_options_in_widgets()
         
     def get_selected_preset_section(self) -> str:
         """
