@@ -45,7 +45,7 @@ class ConfigHandler:
              "editor.comments": "#827145",
              "editor.dialog.text.forecolor": "lightgreen",
              "editor.dialog.text.backcolor": "#444953",
-             "editor.dialog.text.backcolor.disable": False,
+             "editor.dialog.text.backcolor.disable": True,
              "editor.highlight.row.background": "#13476b",
              "selected.color.preset": "DEFAULT"}
         
