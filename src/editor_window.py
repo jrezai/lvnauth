@@ -890,7 +890,7 @@ class EditorMainApp:
 
             # For playing/testing the story
             draft_path = SnapHandler.get_draft_path()
-            compile_path = Path(draft_path)
+            compile_path = Path(draft_path)              
 
             compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
                                      startup_scene_name=active_scene_name,
@@ -1006,11 +1006,7 @@ class EditorMainApp:
 
         # For playing/testing the story
         draft_path = SnapHandler.get_draft_path()
-        compile_path = Path(draft_path)
-        
-        # Make sure the draft folder exists.
-        draft_folder = compile_path.parents[0]
-        draft_folder.mkdir(parents=True, exist_ok=True)        
+        compile_path = Path(draft_path)     
 
         compile_result = self.compile(lvna_full_path=compile_path,
                                       draft_mode=True)

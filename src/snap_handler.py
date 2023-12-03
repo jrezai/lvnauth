@@ -89,16 +89,27 @@ class SnapHandler:
     @staticmethod
     def get_draft_path() -> Path:
         """
-        Get the path for saving and playing a .lvna draft file. 
+        Get the path for saving and playing a .lvna draft file
+        and if the draft folder doesn't exist, create it.
         """
+        full_path = None
+        
         if SnapHandler.is_in_snap_package():
             snap_common = SnapHandler.get_snap_user_common_folder()
             if snap_common:
-                draft_path = snap_common / "draft" / "draft.lvna"
-                
-                return draft_path
+                full_path = snap_common / "draft" / "draft.lvna"                  
         else:
-            return Path(r"draft/draft.lvna")
+            full_path = Path(r"draft/draft.lvna")
+            
+        # Do we have a full path to draft.lvna?
+        if full_path:
+            
+            # Make sure the draft folder exists.
+            draft_folder = full_path.parents[0]
+            draft_folder.mkdir(parents=True, exist_ok=True)
+            
+            # Return a full path to draft.lvna
+            return full_path
         
     @staticmethod
     def get_lvnauth_player_python_file() -> Path | None:
