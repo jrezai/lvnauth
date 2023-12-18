@@ -4871,9 +4871,7 @@ class WaitForAnimationHandler:
             if isinstance(wait_info, str) and wait_info == "cover":
                 # Wait for a screen fade-in / fade-out animation to finish
                 # (even if the screen is fully faded-in, it's still considered to be animating)
-
-                main_reader = Passer.active_story.reader.get_main_story_reader()
-                if main_reader.cover_screen_handler.is_cover_animating:
+                if Passer.active_story.cover_screen_handler.is_cover_animating:
                     wait = True
 
             else:
