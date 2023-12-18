@@ -184,6 +184,13 @@ class Main:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     story.story_running = False
+                    
+                    # Without the block below, attempting to
+                    # close pygame using the window manager
+                    # will sometimes freeze pygame.
+                    pygame.display.quit()
+                    sys.exit(0)
+                    return
 
                 elif event.type == pygame.KEYDOWN:
                     self.on_key_down(event.key)
