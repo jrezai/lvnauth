@@ -274,6 +274,9 @@ class StoryCompiler:
             detail_header["StoryStartScript"] = self.story_start_script_info
             detail_header["StoryReusables"] = self.story_reusables_dict
             detail_header["StoryScript"] = self.story_scripts_dict
+            
+            # Variables for the visual novel.
+            detail_header["StoryVariables"] = ProjectSnapshot.variables
 
             # Font sprite letter assignments, rects, and other properties
             # Example: {"test_font": {'Width': 49, 'Height': 46,

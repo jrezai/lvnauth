@@ -111,7 +111,7 @@
                         <property name="style">Toolbutton</property>
                         <property name="text" translatable="yes">Trace Tool</property>
                         <layout manager="grid">
-                          <property name="column">0</property>
+                          <property name="column">1</property>
                           <property name="pady">5 0</property>
                           <property name="row">0</property>
                         </layout>
@@ -123,7 +123,7 @@
                         <property name="style">Toolbutton</property>
                         <property name="text" translatable="yes">Compile</property>
                         <layout manager="grid">
-                          <property name="column">1</property>
+                          <property name="column">2</property>
                           <property name="padx">5</property>
                           <property name="pady">5 0</property>
                           <property name="row">0</property>
@@ -163,6 +163,19 @@
                         <layout manager="grid">
                           <property name="column">4</property>
                           <property name="padx">0 5</property>
+                          <property name="pady">5 0</property>
+                          <property name="row">0</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="btn_variables" named="True">
+                        <property name="compound">left</property>
+                        <property name="style">Toolbutton</property>
+                        <property name="text" translatable="yes">Variables</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">5</property>
                           <property name="pady">5 0</property>
                           <property name="row">0</property>
                         </layout>

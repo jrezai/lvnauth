@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="variable_editor_window" named="True">
+    <property name="geometry">700x400</property>
+    <property name="height">200</property>
+    <property name="minsize">500|200</property>
+    <property name="title" translatable="yes">Variables</property>
+    <property name="width">200</property>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Frame" id="frame1">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="1" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Frame" id="frame2">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="label1">
+                <property name="font">TkHeadingFont</property>
+                <property name="text" translatable="yes">Create and Edit Variables</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">sw</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Label" id="label2">
+                <property name="text" translatable="yes">Double-click a variable to edit it.</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame6">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="pady">5</property>
+              <property name="row">0</property>
+              <property name="sticky">e</property>
+            </layout>
+            <child>
+              <object class="ttk.Button" id="btn_new_variable" named="True">
+                <property name="command" type="command" cbtype="simple">on_new_variable_button_clicked</property>
+                <property name="text" translatable="yes">New variable...</property>
+                <layout manager="pack">
+                  <property name="padx">5</property>
+                  <property name="side">left</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Button" id="btn_remove_variable" named="True">
+                <property name="command" type="command" cbtype="simple">on_remove_variable_button_clicked</property>
+                <property name="text" translatable="yes">Remove</property>
+                <layout manager="pack">
+                  <property name="side">left</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame4">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
+              <property name="row">1</property>
+              <property name="sticky">nsew</property>
+            </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="0" name="weight">1</property>
+              <property type="row" id="0" name="weight">1</property>
+            </containerlayout>
+            <child>
+              <object class="lvnauthwidgets.treeviewedit" id="treeviewedit1">
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">nsew</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Scrollbar" id="sb_vertical" named="True">
+                <property name="orient">vertical</property>
+                <layout manager="grid">
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                  <property name="sticky">nsw</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Separator" id="separator1">
+            <property name="orient">horizontal</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="pady">5 0</property>
+              <property name="row">2</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame3">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">0 5</property>
+              <property name="pady">10</property>
+              <property name="row">3</property>
+              <property name="sticky">e</property>
+            </layout>
+            <child>
+              <object class="ttk.Button" id="btn_cancel" named="True">
+                <property name="command" type="command" cbtype="simple">on_cancel_button_clicked</property>
+                <property name="text" translatable="yes">Cancel</property>
+                <layout manager="grid">
+                  <property name="column">1</property>
+                  <property name="padx">0 3</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Button" id="btn_ok" named="True">
+                <property name="command" type="command" cbtype="simple">on_ok_button_clicked</property>
+                <property name="text" translatable="yes">OK</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">5</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
