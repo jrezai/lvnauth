@@ -54,6 +54,8 @@ class ProjectSnapshot:
     #  Key (str): image name, Value: FontSprite class object
     font_sprite_properties = {}
     
+    # Visual novel variables (key: variable name, value: variable value)
+    variables = {}
 
     sounds = {}
     music = {}
@@ -67,6 +69,19 @@ class ProjectSnapshot:
     reusables = {}
 
     project_path = None
+    
+    @staticmethod
+    def sort_variables_dictionary():
+        """
+        Sort the variables dictionary by key.
+        
+        Purpose: when populating the variables dictionary from
+        a file or when adding a new variable to the dictionary, this
+        method gets used so variables get shown in alphabetical order
+        in the variables treeview widget.
+        """
+        ProjectSnapshot.variables =\
+            dict(sorted(ProjectSnapshot.variables.items()))        
 
     @staticmethod
     def get_chapter_script(chapter_name: str) -> str:

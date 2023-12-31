@@ -38,6 +38,7 @@ from typing import Dict
 from shared_components import Passer
 from audio_player import AudioPlayer, AudioChannel
 from rest_handler import RestHandler
+from variable_handler import VariableHandler
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -295,8 +296,6 @@ class AfterManager:
 class StoryReader:
     """
     Reads a story script line by line.
-    When reading dialogue text, it will also look for in-between text commands,
-    such as <delay: 400>.
 
     This class populates the story variable with the sprites/audio that it needs.
     It also starts/stops animation by calling the story variable to do things as needed.
@@ -352,6 +351,10 @@ class StoryReader:
 
         # The story is read line by line
         self.script_lines = []
+
+        # For reading variables and replacing them with values.
+        # Both the main scripts and reusable scripts can use variables.
+        self.variable_handler = VariableHandler()
 
         # This gets set to True once there are no more scripts to read.
         # This is used so we don't attempt to reload the story again.
@@ -440,7 +443,10 @@ class StoryReader:
 
             # {chapter name: [chapter script, {scene name: scene script}] }
             self.chapters_and_scenes = self.data_requester.detail_header.get("StoryScript")
-
+            
+            # Read the visual novel's variables.
+            VariableHandler.variables = self.data_requester.detail_header.get("StoryVariables")
+            
     def main_script_should_pause(self):
         """
         Check if there are any animations occurring
@@ -732,6 +738,9 @@ class StoryReader:
         while command_line:
             
             line = self.script_lines.pop(0)
+            
+            # Replace variable names with variable values, if possible.
+            line = self.variable_handler.find_and_replace_variables(line=line)
 
             # Nothing else to read?
             # Consider the current script to be now finished.
@@ -4871,9 +4880,7 @@ class WaitForAnimationHandler:
             if isinstance(wait_info, str) and wait_info == "cover":
                 # Wait for a screen fade-in / fade-out animation to finish
                 # (even if the screen is fully faded-in, it's still considered to be animating)
-
-                main_reader = Passer.active_story.reader.get_main_story_reader()
-                if main_reader.cover_screen_handler.is_cover_animating:
+                if Passer.active_story.cover_screen_handler.is_cover_animating:
                     wait = True
 
             else:

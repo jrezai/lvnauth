@@ -53,6 +53,7 @@ from about_window import AboutWindow
 from snap_handler import SnapHandler
 from custom_pygubu_widgets import LVNAuthEditorWidget
 from edit_colors_window import EditColorsWindow
+from variable_editor_window import VariableEditorWindow
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -91,6 +92,7 @@ class Icons(Enum):
     OPEN_24_F = r"iVBORw0KGgoAAAANSUhEUgAAAB4AAAAYCAYAAADtaU2/AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAATlJREFUSIntlk9Kw1AQh7/JIi220rXeoytxJ1iwHkcRD+CfG3kEtQu9g0J1bYutlPxcZB6E9CmmJl1l4EeSSTLfMDPJe0giCBgDE2AJqKQ5cAcMi+9sqiL0NAKLaQXcAoO6wBMPfAGkaw/CwIGrPyYYtAQegfFP4FDeNWgpgaGXfFYxAQEnMbAA1dG/UqIpcOnxH4Lf/CZmltMlo2Yzs9QrupTUBUjqhsRM0pefdor+lHxoqvZrU107k5stQoOuAF794qDuwYoM2qGzXoz8s+gBu5JmVXpX1cysD3wA8wR4d/9ek1C3fT++JcB0i+DAmLbgFtyCawMb+Qo1A7pAT9JnE0Qz23HOAugnkjLgGTDgzMw6vwXYENoBzp3xJCkLP+8jIKP5VSkDRuWtzwi4J761/a8WHvs48L4B1MwtHez0M+IAAAAASUVORK5CYII="
     EDIT_DETAILS_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAVxJREFUSInt1r9KHFEUx/HPlS0MuxFNY2sp+ASJSAIRXIu8RKoUFj6EjVimMi8RAkZIAiYBd5G8QIRYBjFFSGEX0JNi78A4uOzMuOk8cIq55873d87h/ksRYdqWUurhLbozU6eP7DGe44+ImJqjh32sYB29Ti4pYTl7Z0J2VziJiPPyYG7LIdYQEfGqiC3gE6KBH1Uy7+Jzjh3jYRHrYC+X8w1fcV2jxx9LmXdxgGcYYDMiLsuTf+E3Zlv0fGzmpTkC3+8IH9wGby1QF95KIMO/VOFYxTssthYYB8+x3Tz+ovxP7Z2cV8t7PMUQ/epqKaaWPyZtqgLewwc8MWYpjrO6FbzM8GETeBOBOWxjowmcmi2KiJ0m0LL9r+P6XqCZQKhsjjuwqBz3M/iBpZTScltySumB0X0AZzdi2MJr/MXPlhqPMG90EfWj8lQpRE6NymtydRZ+gTeYrx6Q/wB3drfVSlf2YwAAAABJRU5ErkJggg=="
     COMPILE_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAaCAYAAACtv5zzAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAdNJREFUSInd1rtuE0EUBuBvo2CEZKcACQpzkVBSQQMVtJAKXiFKylSAQkNLR5Qur8BNgpZHABqgDLJEihQJNCkARUCwwEuxx2Swdu21BQ0jjTSe81/msnOO5XluVMccHuFj9IeYq8UdIdzEKr4jTwzymFtFc2wDZFjA+xD7hBU0oq/EXB6YBWS1DHABz4Pcw32cKMEdwzp+BPYVLlUa4OgA4TUu17ifi3hRtaA+aDk52w9YrNrykCNdDG7/rpYj5mlMdrGGVl3hEqNWaHRD88kU5hVtGu0ATdpaoTEdv+eF0za2YvwFd3F4jJUfwi18Do2d5Ljk6OBICH+LuXe4VkP8CjYcvI11xfvp/GGQEE4pvoQ8+jOcLRE+OQxXaZAAruJtycr6O/0asU1cL+EPNwhQA3ewF7it5K72Itao4I42SMBtPFY8pF6M2yM49Q0S0i52a2I7yKf84/Z/GGzidJZl5/6WaJZl53FG8VjddPCtr2Fm0kvGTGj0K+CNqnS9pCRdVxko0vWSsnSdgAYLzhsDBafMQFFwXgbnpyJ9HP8dL1lNZclMDYxbMku2PFj0b/cNYjxZ0R8wauIe9pMd9WK8H7Hx/7aUGM3igaIUdmM8W4f7C7EAm10DmY3dAAAAAElFTkSuQmCC"
+    VARIABLES_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAATJJREFUSIm11L9KA0EQgPHfiYUgRETwEXwAgyRWlhpFK0tr38K3sLLWxlILEe1EjIivIv4pjKRYC+9gE3PJbTwPFo6d2e8bhtkVQpC6sIZHhJLVxz1WsvxA5S/LshauMYe7krQZbKCbWnkLr+hhZ0LuLfop8CZe8IW9odgSjnCAoitX+Ds8j19E/T+MBbMVet7EDeaxH0K4HJHWiP6XByIJle+OyVtFF+dYrNSiqvAx58sFaEfTsj3lXRktqAm+hU/D96Bm+BtatfU8Z2xG8HYIwb/C833NfLOHzpTwTgRfH4p5ziuvHV4IPnJJVje8EJz5eUOOUyRV4IVgAQ8pkqrweIoakeRknKRsWsYKqkpS4QOCSZJp4L8EZZJp4SMFIyTFPUmGlwoiySne8YRmKjyE4Bstyo/fKWXrZwAAAABJRU5ErkJggg=="
     TRACE_TOOL_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAQJJREFUSInt1k9KQzEQBvBfBF2JLlTwAG506doTuKvn6J+TSO1h6gl0607xBopYatGVPBgXLy0VbPoEBcEOzCb5vvmSTGYSOMMjouAv6ESEiIBeHitxHtBKOfg6biy2Q+xjBwnPOcB9gXOMd1ltOF3dV45Bxh1kDwyWcIaItcIKfsRWAv9AIGGMN1wWcCc4wl7mPOEOVwXOKTahg0q5KgPnc3e83wBfoZ0iQkppW12li2wSEaNPW09pF1sFzigiJtMcpAJw0fwyzsx6mh1Rf+6ILhrgK3STuiu++n6Sb3Fd4MySvGp2K4E/LpDUj/eGX3z0Wxlcqsox2nN3vJvHln5bPgBRQOv7+FNLDwAAAABJRU5ErkJggg=="
     DETAILS_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAARCAYAAADHeGwwAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAQBJREFUOI3d1bErxVEUB/DP0U+SZ1U2qwwWozJTBn+CJKX8DWw2yvKysBnFbDSSUvwBL6RYvMnEMbz78sr2fu8tvnW6957hfPue+73nBlZwgBY2MvMZIqKBUf3jOzPb8IgssZ+ZsIqvnny/8VDhvYf1rayvhXiihgK4hXlcYheNzDTIiNKSoWFkqNW7BBGxGBEzwyAIHGFHxzXLmXkVEZNYx3jN+jfw4tdWzXInW+pbNPFR4QLbRcF5YT7D2CAUBCqd13yfma2aBf/gH9g0ImYj4jQi9sqAGygqNLFUzm0cRsQCTtSfRdcVpnoS3f005tRv4WdgDce4w2ZmPjG4/+AH9j6mdZ0DtAwAAAAASUVORK5CYII="
     HELP_24_F = r"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAkxJREFUSImV1cuLzlEYB/DPOxshajLlMoz7pZQNdsoGG8rkmktsLEQuGfkDlI21nXspuYxrSlFslI2SiCKXsHENyWVmHIvf85qfd877vpw6nX6/7/f5fs95zjnPqaSU1GuVSqUd6zAfszACv/AKz3EFF1JKL+uKpJQGdIzDCfQiNem9OIT2rFZGfCU+R/B3nMQqjMdgDMV0rMEp/AjuZyxtaIAdkYKEs+jIzaomZhK6I6YP27MGWB3ifdjWTDhjtDti+8orqYId+BizGCCOebgWnG+4gw11TKrpai8bHK2mJRO0sbSyu7gdJgl7M/xqug5WT2g7evATE2rIbfiCN5hd+j8WD+MEddTETI6N7w2eHeF4OjObpYHtymDbAluWwU4HtrUFCxTtnIHtBnbicAabEuPbDHYxxsXwLNym/seJ2RRpfYxBGXx6aD4SOU4Y+g/Cg3A8+O8wpw5vmP7T5Ot/GBwI7i2Mb8AbEryv8CQ+pjURH64oHfdzacmcpIQXLYrjBnMzm1VubZGiqymlH024Va17LbgeH52NIlJKT7EI+5qIw/IYb8IYxcXoUXPRapbdqigFM5ukZ2JJb3RtqbjUIHB/cO40MTgfvGPlWjQKHwLYUydwCd5jXwPxrtD4pFzsAuzUX26zJk1m3qUoir/Q+ed/DWlLGCRcxsR/EJ6kKA3VB2fzX3gmoLOUrh7Fy7YeM2KjWxWlYC3OKKpwipjlA/TqzGokjuh/bxv1nxo8+pUQzLZKpTIaK7AwVtAW0Ec8UNyh7pTS63oavwGVD2+L019FOgAAAABJRU5ErkJggg=="
@@ -320,6 +322,10 @@ class EditorMainApp:
 
         self.mainwindow.bind("<<SavedProjectSuccessfully>>", Passer.statusbar.show_saved_successfully)
 
+        # Can be called from virtually anywhere in the project
+        # to show the user in the statusbar that the project needs to be saved.
+        self.mainwindow.bind("<<SaveNeeded>>", Passer.statusbar.show_save_dirty)
+
         # Cause the main window to show it self so we can position the sash.
         # Without doing this, setting the position of the sash won't work as expected.
         self.mainwindow.update_idletasks()
@@ -537,7 +543,7 @@ class EditorMainApp:
                 
         
         # So the user knows a save is needed.
-        Passer.statusbar.show_save_dirty()              
+        self.mainwindow.event_generate("<<SaveNeeded>>")              
             
     def _remove_reusable_script_item(self):
         """
@@ -663,7 +669,7 @@ class EditorMainApp:
             Passer.chapter_scenes.reset_script_widgets()
         
         # So the user knows a save is needed.
-        Passer.statusbar.show_save_dirty()        
+        self.mainwindow.event_generate("<<SaveNeeded>>")       
                 
     def on_remove_script_button_clicked(self):
         self._remove_chapter_or_scene_item()
@@ -1882,7 +1888,7 @@ class StatusBar:
     def show_saved_successfully(self, *args):
         self.lbl_status.configure(text=ProjectSnapshot.save_full_path)
 
-    def show_save_dirty(self):
+    def show_save_dirty(self, *args):
         self.lbl_status.configure(text=f"(Unsaved) {ProjectSnapshot.save_full_path}")
 
     def clear_text(self):
@@ -1904,6 +1910,15 @@ class Toolbar:
         self.btn_story_details.image = edit_details_image
         self.btn_story_details.configure(command=self.on_story_details_button_clicked,
                                          image=self.btn_story_details.image)
+        
+        # Variables image
+        variables_image = PhotoImage(data=Icons.VARIABLES_24_F.value)
+        
+        self.btn_variables = editor_object.builder.get_object("btn_variables")
+        self.btn_variables.image = variables_image
+        self.btn_variables.configure(command=self.on_variables_button_clicked,
+                                      image=self.btn_variables.image)
+        
         
         # Trace Tool image
         trace_tool_image = PhotoImage(data=Icons.TRACE_TOOL_24_F.value)
@@ -1960,6 +1975,9 @@ class Toolbar:
 
     def on_trace_tool_button_clicked(self):
         trace_tool_window = TraceToolApp(self.editor_object.mainwindow)
+        
+    def on_variables_button_clicked(self):
+        variables_editor_window = VariableEditorWindow(self.editor_object.mainwindow)
         
     def on_help_button_clicked(self):
         """
@@ -2138,6 +2156,14 @@ class OpenManager:
             
             # Get the story window size (width/height)
             ProjectSnapshot.story_window_size = tuple(self.dict_data["StoryWindowSize"])
+            
+            # Get the variable names and values of the visual novel.
+            ProjectSnapshot.variables = self.dict_data.get("Variables")
+            if ProjectSnapshot.variables is None:
+                ProjectSnapshot.variables = {}
+            else:
+                # Sort the variables dictionary by key.
+                ProjectSnapshot.sort_variables_dictionary()
 
             # The path to the loaded .lvnap file
             ProjectSnapshot.save_full_path = file_path
@@ -2583,6 +2609,7 @@ class SaveManager:
                 "FontSprites": font_sprites,
                 "FontSpriteProperties": FontSprite.get_all_font_properties(),
                 "DialogImages": dialog_images,
+                "Variables": ProjectSnapshot.variables,
                 "Sounds": sounds,
                 "Music": music,
                 "ChaptersAndScenes": chapters_and_scenes,
@@ -2829,7 +2856,7 @@ class FileManager:
                     copy2(src=full_path, dst=str(file_save_path), follow_symlinks=False)
 
                     # If the project doesn't get saved upon the application closing,
-                    # delete the file from the project's images folder.
+                    # delete the file from the project's images or audio folder.
                     copied_path = Path(file_save_path)
                     Passer.editor.add_to_delete_file_upon_close(full_path_to_file=copied_path)
 
@@ -2852,7 +2879,7 @@ class FileManager:
 
                         
             # So the user knows the project changes are not saved yet.
-            Passer.statusbar.show_save_dirty()
+            Passer.editor.mainwindow.event_generate("<<SaveNeeded>>")   
 
     def remove_selected_file(self, section: SectionChosen):
         """
@@ -3066,13 +3093,18 @@ class FileManager:
                                          prefill_folder_name=input_window.user_input)
             return
 
-        treeview_widget.insert(parent=selected_item,
-                               index="end",
-                               tags=("folder_row",),
-                               text=input_window.user_input)
+        item_iid = treeview_widget.insert(parent=selected_item,
+                                          index="end",
+                                          tags=("folder_row",),
+                                          text=input_window.user_input)
+        
+        # Select the newly created item so it's easier for
+        # the user to see it.
+        treeview_widget.selection_set(item_iid)
+        treeview_widget.see(item_iid)
 
         # So the user knows the project changes are not saved yet.
-        Passer.statusbar.show_save_dirty()
+        Passer.editor.mainwindow.event_generate("<<SaveNeeded>>")
 
     @staticmethod
     def _folder_exists(treeview_widget, selected_item, new_folder_name):

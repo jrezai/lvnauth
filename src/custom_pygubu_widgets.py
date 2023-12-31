@@ -17,13 +17,21 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from lvnauth_editor_widget import LVNAuthEditorWidget
+from treeview_edit_widget import TreeviewEdit
 from pygubu.api.v1 import BuilderObject, register_widget
 from pygubu.plugins.tk.tkstdwidgets import TKText
+from pygubu.plugins.ttk.ttkstdwidgets import TTKTreeviewBO
 
 
 class LVNAuthWidgetBuilder(TKText):
     class_ = LVNAuthEditorWidget
+    
+class TreeviewEditBuilder(TTKTreeviewBO):
+    class_ = TreeviewEdit
 
 
 register_widget("lvnauthwidgets.editorwidget", LVNAuthWidgetBuilder,
     "LVNAuthWidget",("ttk", "LVNAuth Widgets"))
+
+register_widget("lvnauthwidgets.treeviewedit", TreeviewEditBuilder,
+    "TreeviewEdit",("ttk", "LVNAuth Widgets"))
