@@ -1,5 +1,5 @@
 """
-Copyright 2023 Jobin Rezai
+Copyright 2023, 2024 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -38,7 +38,7 @@ from typing import Dict
 from shared_components import Passer
 from audio_player import AudioPlayer, AudioChannel
 from rest_handler import RestHandler
-from variable_handler import VariableHandler
+from variable_handler import VariableHandler, VariableValidate
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -62,6 +62,12 @@ class DialogRectangleDefinition(NamedTuple):
     border_color_hex: str
     border_opacity: int
     border_width: int
+
+
+class VariableSet(NamedTuple):
+    variable_name: str
+    variable_value: str
+
 
 class Continue(NamedTuple):
     adjust_y: int
@@ -1162,6 +1168,12 @@ class StoryReader:
             This is used when transitioning between scenes.
             """
             self._scene_with_fade(arguments=arguments)
+            
+        elif command_name == "variable_set":
+            """
+            Create a new variable or update an existing variable.
+            """
+            self._variable_set(arguments=arguments)
 
         elif command_name == "character_show":
             """
@@ -2289,6 +2301,27 @@ class StoryReader:
         # Re-draw the dialog rectangle shape so that any previous text
         # gets blitted over with the new rectangle.
         main_reader.story.dialog_rectangle.clear_text()
+
+    def _variable_set(self, arguments: str):
+        """
+        Create a new variable if it doesn't exist
+        or update an existing variable's value.
+        """
+        
+        variable_set: VariableSet
+        variable_set = self._get_arguments(class_namedtuple=VariableSet,
+                                           given_arguments=arguments)
+        
+        if variable_set:
+            
+            # Is the variable name valid?
+            invalid_char = VariableValidate.validate_variable_name(variable_set.variable_name)
+            if invalid_char:
+                raise ValueError(f"Variable name {variable_set.variable_name} contains invalid letter '{invalid_char}'")
+
+            # Update or create variable.
+            VariableHandler.variables[variable_set.variable_name]\
+                = variable_set.variable_value
 
     def _continue(self, arguments: str):
         """

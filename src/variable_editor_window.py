@@ -1,5 +1,5 @@
 """
-Copyright 2023 Jobin Rezai
+Copyright 2023, 2024 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -104,8 +104,6 @@ class VariableEditorWindow:
         Return True if the validation passes, or False if otherwise.
         """
         
-        new_variable_lcase = variable_name.lower()
-        
         # Is the new variable name the same as the old variable name?
         # Consider it as OK to use.
         
@@ -113,7 +111,7 @@ class VariableEditorWindow:
         # could be a new variable being made)
         if original_name:
             # There is an old name.
-            if new_variable_lcase == original_name.lower():
+            if variable_name == original_name.lower():
                 return True
         
         # Key: internal column name, such as "#0" or "products"
@@ -140,15 +138,15 @@ class VariableEditorWindow:
                     return False
         
         # Does the variable name already exist in the treeview widget?
-        # (do a case insensitive search)
+        # (do a case sensitive search)
         for item_iid in self.treeviewedit1.get_children():
             item_detail = self.treeviewedit1.item(item=item_iid)
             
             # Get the current variable name in the treeview.
-            variable_name_lcase = item_detail.get("values")[0].lower()
+            treeview_variable_name = item_detail.get("values")[0]
             
             # Does the variable name already exist?
-            if variable_name_lcase == new_variable_lcase:
+            if treeview_variable_name == variable_name:
   
                 # Tell the user that the variable already exists.
                 messagebox.showwarning(parent=self.mainwindow,
@@ -164,8 +162,7 @@ class VariableEditorWindow:
         Ask for a new variable name in a pop-up input window
         and add the variable to a new row in the treeview widget.
         """
-        
-        
+
         existing_text = None
         keep_checking = True
         
@@ -186,11 +183,11 @@ class VariableEditorWindow:
             if not user_input_window.user_input:
                 return
 
-            new_variable_lcase = user_input_window.user_input.lower()
+            new_variable_name = user_input_window.user_input
             
             allow_name =\
                 self.validate_variable_name(column_name="variable_name",
-                                            variable_name=new_variable_lcase)                
+                                            variable_name=new_variable_name)                
             
             if allow_name:
                 keep_checking = False

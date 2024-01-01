@@ -1,5 +1,5 @@
 """
-Copyright 2023 Jobin Rezai
+Copyright 2023, 2024 Jobin Rezai
 
 This file is part of LVNAuth.
 

@@ -1,5 +1,5 @@
 """
-Copyright 2023 Jobin Rezai
+Copyright 2023, 2024 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -59,6 +59,7 @@ class Purpose(Enum):
     MUSIC = auto()
     REUSABLE_SCRIPT = auto() # such as <call> or <after>
     SCENE_SCRIPT = auto() # such as <scene>
+    VARIABLE_SET = auto() # such as <variable_set>
 
 
 class TextCreateDialogFrame:
@@ -2410,6 +2411,20 @@ class WizardWindow:
                                           "have finished animating.\n\n"
                                           "This command will only pause the main script, but can\n"
                                           "be called from anywhere (chapters/scenes/reusable scripts).")
+        
+        """
+        Variable
+        """
+        page_variable_set =\
+            VariableSet(parent_frame=self.frame_contents_outer,
+                                    header_label=self.lbl_header,
+                                    purpose_label=self.lbl_purpose,
+                                    treeview_commands=self.treeview_commands,
+                                    parent_display_text="Variable",
+                                    sub_display_text="variable_set",
+                                    command_name="variable_set",
+                                    purpose_line="Create a new variable or update an existing one.\n\n"
+                                    "Variable names are case-sensitive")        
 
         self.pages["Home"] = default_page
 
@@ -2616,6 +2631,14 @@ class WizardWindow:
         self.pages["font_text_delay"] = page_font_text_delay
         self.pages["font_text_delay_punc"] = page_font_text_delay_punc
         self.pages["font_intro_animation"] = page_font_intro_animation
+        
+        
+        """
+        Variable
+        """
+        self.pages["variable_set"] = page_variable_set
+        
+        
 
         self.active_page = default_page
         default_page.show()
@@ -2741,6 +2764,9 @@ class WizardListing:
         elif "dialog" in command_name:
             self.purpose_type = Purpose.DIALOG
             
+        elif "variable" in command_name:
+            self.purpose_type = Purpose.VARIABLE_SET
+            
         elif command_name in ("after", "after_cancel", "call"):
             self.purpose_type = Purpose.REUSABLE_SCRIPT
             
@@ -2819,7 +2845,8 @@ class WizardListing:
                         Purpose.AUDIO: ("sound", "sounds"),
                         Purpose.MUSIC: ("music file", "music"),
                         Purpose.REUSABLE_SCRIPT: ("reusable script name", "reusable script names"),
-                        Purpose.SCENE_SCRIPT: ("scene name", "scene names")}
+                        Purpose.SCENE_SCRIPT: ("scene name", "scene names"),
+                        Purpose.VARIABLE_SET: ("variable", "variables")}
 
         name: str
         name = name_mapping.get(self.purpose_type)
@@ -2861,7 +2888,8 @@ class WizardListing:
                         Purpose.DIALOG: ProjectSnapshot.dialog_images,
                         Purpose.FONT_SPRITE: ProjectSnapshot.font_sprites,
                         Purpose.AUDIO: ProjectSnapshot.sounds,
-                        Purpose.MUSIC: ProjectSnapshot.music}
+                        Purpose.MUSIC: ProjectSnapshot.music,
+                        Purpose.VARIABLE_SET: ProjectSnapshot.variables}
 
         dict_ref = dict_mapping.get(self.purpose_type)
         
@@ -5299,11 +5327,11 @@ class SharedPages:
     
             self.frame_content.grid()
             
-            
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
         """
         <load_character>
         <load_object>
+        <variable_set>
         
         Loading backgrounds doesn't support aliases, which is why
         we have a separate generic class here for commands that support aliases.
@@ -5328,7 +5356,9 @@ class SharedPages:
 
             purpose = self.get_purpose_name()
             
-            if "dialog" in purpose:
+            if "variable" in purpose:
+                message = "Variable name to create or update:"
+            elif "dialog" in purpose:
                 message = f"Which {purpose} would you like to load into memory?"
             else:
                 message = f"Which {purpose} sprite would you like to load into memory?"
@@ -5338,7 +5368,10 @@ class SharedPages:
             self.cb_selections = ttk.Combobox(frame_content)
             
             purpose = self.get_purpose_name()
-            if "dialog" in purpose:
+            
+            if "variable" in purpose:
+                message = "Variable value:"
+            elif "dialog" in purpose:
                 message = f"Enter an alias for this dialog sprite below:\n" + \
                 f"(This alias can later be used to reference this dialog sprite\n" + \
                 "regardless of the image that's being shown for this sprite.)"
@@ -5383,9 +5416,21 @@ class SharedPages:
     
             alias = self.entry_general_alias.get().strip()
             if not alias:
+                
+                # The entry widget is used for variable values and sprite aliases.
+                
+                # Show the appropriate error message to the user depending on the
+                # purpose of the entry widget.
+                if self.purpose_type == Purpose.VARIABLE_SET:
+                    entry_type = "value"
+                    entry_type_preposition = "a"
+                else:
+                    entry_type = "alias"
+                    entry_type_preposition = "an"
+                
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No alias provided",
-                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
+                                       title=f"No {entry_type} provided",
+                                       message=f"Enter {entry_type_preposition} {entry_type} for the {self.get_purpose_name()}.")
                 return
             
             user_input = {"Selection": selection,
@@ -5706,6 +5751,19 @@ class CharacterAfterFadingStop(SharedPages.AfterStop):
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
 
+
+class VariableSet(SharedPages.LoadSpriteWithAlias):
+    """
+    <variable_set>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line)
 
 
 class Character_LoadCharacter(SharedPages.LoadSpriteWithAlias):
