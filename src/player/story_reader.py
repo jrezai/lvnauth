@@ -2317,34 +2317,11 @@ class StoryReader:
             # Is the variable name valid?
             invalid_char = VariableValidate.validate_variable_name(variable_set.variable_name)
             if invalid_char:
-                raise ValueError(f"Variable name {variable_set.variable_name} contains invalid letter 'invalid_char'")
-            
-            # Look for an existing variable using case-insensitive comparison.
-            variable_name_lcase = variable_set.variable_name.lower()
-            
-            # The actual casing of the key that is to be updated, if
-            # we're updating an existing variable.
-            update_key = None
-            
-            # Are we updating an existing variable?
-            for k, v in VariableHandler.variables.items():
-                
-                # Case-insensitive comparison
-                if variable_name_lcase in k.lower():
-                    # Yes, we're updating an existing variable.
-                    
-                    # Record the original casing of the variable
-                    # so we can update it.
-                    update_key = k
-                    break
+                raise ValueError(f"Variable name {variable_set.variable_name} contains invalid letter '{invalid_char}'")
 
-            # Updating an existing variable?
-            if update_key:
-                # Yes, updating an existing variable.
-                VariableHandler.variables[update_key] = variable_set.variable_value
-            else:
-                # Creating a new variable
-                VariableHandler.variables[variable_set.variable_name] = variable_set.variable_value
+            # Update or create variable.
+            VariableHandler.variables[variable_set.variable_name]\
+                = variable_set.variable_value
 
     def _continue(self, arguments: str):
         """
