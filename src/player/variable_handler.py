@@ -20,6 +20,34 @@ import re
 from typing import Tuple, List
 
 
+class VariableValidate:
+    
+    @staticmethod
+    def validate_variable_name(variable_name: str) -> str | None:
+        """
+        Check whether the given variable name is valid or not
+        (no invalid letters).
+        
+        Return value: if not valid, the invalid letter is returned.
+        If valid, the return value is None.
+        
+        Purpose: used with the <variable_set> command.
+        """
+        
+        invalid_letters = r"\/,()$:<> "
+        
+        if not variable_name:
+            # Variable names cannot be blank.
+            return 'Blank name'
+        
+        for letter in invalid_letters:
+            if letter in variable_name:
+                # Invalid latter in variable name.
+                return letter
+            
+        # Valid name
+        return
+
 
 class VariableHandler:
     """
@@ -32,6 +60,12 @@ class VariableHandler:
     variables = {}
     
     def __init__(self):
+        pass
+    
+    def set_variable(self, variable_name: str, variable_value: str):
+        """
+        
+        """
         pass
     
     def find_and_replace_variables(self, line: str) -> str:
@@ -52,6 +86,7 @@ class VariableHandler:
         don't exist, then the variable names will show up as-is (unaltered).
         """
         counter = 0
+        result = True
         
         # We have a loop so we can get values for
         # nested variable names, if there are any.
@@ -97,7 +132,7 @@ class VariableHandler:
                 variable_name = variable_name.replace(" ", "")
                 
                 # Get the variable name without the ($) part.
-                variable_name = variable_name[2:-1].lower()
+                variable_name = variable_name[2:-1]
                 
                 # Example: (32, 41)
                 span: Tuple = match.span("variable_name")
