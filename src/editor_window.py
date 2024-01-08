@@ -67,8 +67,10 @@ class FileType(Enum):
 
 
 # Used for knowing which 'New folder' or 'Add...' buttons are clicked
-# ie: from the images section or audio section.
+# ie: from the images section or audio section, and which treeview is
+# right-clicked for the 'Rename...' menu.
 class SectionChosen(Enum):
+    CHAPTERS_AND_SCENES = auto()
     IMAGES = auto()
     AUDIO = auto()
     REUSABLES = auto()
@@ -110,12 +112,6 @@ class Passer:
     editor = None
     chapter_scenes = None
     file_manager = None
-
-
-# Where the right-click has occurred, so we can
-# run the appropriate rename method.
-class RenameContextMenuType(Enum):
-    ChaptersAndScenes = auto()
 
 
 class EditorMainApp:
@@ -362,11 +358,44 @@ class EditorMainApp:
 
         # Chapters and Scenes context menu
         context_chapters_scenes = \
-            partial(self.show_rename_popup_menu, RenameContextMenuType.ChaptersAndScenes)
+            partial(self.show_rename_popup_menu, SectionChosen.CHAPTERS_AND_SCENES)
+        
+        context_reusables = \
+            partial(self.show_rename_popup_menu, SectionChosen.REUSABLES)
+        
+        context_images = \
+            partial(self.show_rename_popup_menu, SectionChosen.IMAGES)
+        
+        context_audio = \
+            partial(self.show_rename_popup_menu, SectionChosen.AUDIO)
+        
+        # Treeview widgets (will be zipped with context menus)
+        treeview_widgets = (self.treeview_scripts,
+                            self.treeview_reusables,
+                            self.treeview_characters,
+                            self.treeview_backgrounds,
+                            self.treeview_objects,
+                            self.treeview_font_sprites,
+                            self.treeview_dialog_rectangle,
+                            self.treeview_sounds,
+                            self.treeview_music)
+        
+        # Context menus (will be zipped with treeview widgets above)
+        context_menus = (context_chapters_scenes,
+                         context_reusables,
+                         context_images,
+                         context_images,
+                         context_images,
+                         context_images,
+                         context_images,
+                         context_audio,
+                         context_audio)
+        
+        # Bind right-click to a context menu.
+        for treeview_widget, context_menu in zip(treeview_widgets, context_menus):            
+            treeview_widget.bind("<Button-3>", context_menu)
 
-        self.treeview_scripts.bind("<Button-3>", context_chapters_scenes)
-
-    def show_rename_popup_menu(self, rename_type: RenameContextMenuType, event):
+    def show_rename_popup_menu(self, rename_type: SectionChosen, event):
         """
         Show the 'Rename...' context menu.
         """
@@ -384,7 +413,7 @@ class EditorMainApp:
         # Show the 'Rename...' context menu.
         self.mnu_rename.tk_popup(event.x_root, event.y_root)
 
-    def check_rename_menu_state(self, rename_type: RenameContextMenuType):
+    def check_rename_menu_state(self, rename_type: SectionChosen):
         """
         Check whether the 'Rename...' context menu should be enabled
         or disabled, depending on the rename_type.
@@ -393,7 +422,7 @@ class EditorMainApp:
         then don't allow the chapter or scene to be renamed.
         """
 
-        if rename_type == RenameContextMenuType.ChaptersAndScenes:
+        if rename_type == SectionChosen.CHAPTERS_AND_SCENES:
             # Don't allow renaming if:
             # 1. The script has been modified - because the changes will be
             #    lost if we rename the chapter (the chapter's dictionary
@@ -401,6 +430,19 @@ class EditorMainApp:
             # 2. There is no selection.
             if Passer.editor.is_dirty() or not self.treeview_scripts.selection():
                 # Not ready to be renamed.
+                return "disabled"
+            
+        elif rename_type == SectionChosen.REUSABLES:
+            if Passer.editor.is_dirty() or not self.treeview_reusables.selection():
+                # Not ready to be renamed.
+                return "disabled"
+            
+        else:
+            treeview_widget: ttk.Treeview
+            treeview_widget = FileManager.get_active_treeview(section=rename_type)
+            
+            if not treeview_widget.selection():
+                # Not ready to be renamed
                 return "disabled"
 
         # Ready to be renamed.
@@ -413,7 +455,7 @@ class EditorMainApp:
         
         The rename type will be in the variable: self.rename_type
         """
-        if self.rename_type == RenameContextMenuType.ChaptersAndScenes:
+        if self.rename_type == SectionChosen.CHAPTERS_AND_SCENES:
             item_iid = self.get_selected_item_iid(self.treeview_scripts)
             if item_iid:
                 # Is a scene selected?
@@ -425,6 +467,10 @@ class EditorMainApp:
 
                 Passer.chapter_scenes.create_or_rename_chapter_scene(edit_item_iid=item_iid,
                                                                      is_scene=is_scene)
+                
+        else:
+            rename_handler = FileManager()
+            rename_handler.rename_resource(section=self.rename_type)
 
     def get_selected_item_iid(self, treeview_widget: ttk.Treeview) -> str:
         """
@@ -1505,10 +1551,15 @@ class ChapterSceneManager:
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
 
-    def on_reusables_treeview_item_selected(self, event):
+    def on_reusables_treeview_item_selected(self, event=None):
         """
         A script or scene has been selected (or unselected).
         Get the item iid from the treeview.
+        
+        Arguments:
+        
+        - event: provided by a virtual event or None if being called manaually
+        without a virtual event.
         """
 
         if Passer.editor.is_dirty():
@@ -1521,8 +1572,12 @@ class ChapterSceneManager:
         if not selected_item:
             return
         
-        # Same selection as the one that's currently selected? Return
-        elif selected_item == last_selected_item:
+        # Same selection as the one that's currently selected?
+        # if Event is None, it means this method was called manually
+        # so we should refresh it regardless if it's the same selection or not.
+        # However, if event is provided, it means a virtual event called it
+        # and we shouldn't re-select the same item.
+        elif selected_item == last_selected_item and event:
             return
 
         item_details = self.treeview_reusables.item(selected_item)
@@ -1567,8 +1622,14 @@ class ChapterSceneManager:
         self.active_script = selected_item_text
         
         # Change the last-selected item's icon from a pencil/edit icon
-        # to a blue dot.
-        if self.treeview_reusables.last_selected_item_iid:
+        # to a blue dot, if the item being selected isn't the same as 
+        # the last selected item (we could be forcably selecting the
+        # same item to refresh the label after a name change).
+        if self.treeview_reusables.last_selected_item_iid and \
+           self.treeview_reusables.last_selected_item_iid != selected_item:
+            
+            # The selected item is different than the last selection,
+            # so it's OK to change the item's icon to a blue dot.
             self.treeview_reusables.item(item=self.treeview_reusables.last_selected_item_iid,
                                          image=self.blue_dot_image)
             
@@ -2055,6 +2116,7 @@ class ChapterSceneManager:
 
         # Update the status bar to show that the project needs to be saved.
         self.treeview_widget.event_generate("<<SaveNeeded>>")
+        
 
     def show_chapter_script(self, chapter_name: str):
         """
@@ -2130,6 +2192,7 @@ class StatusBar:
 
     def show_text(self, text: str):
         self.lbl_status.configure(text=text)
+
 
 class Toolbar:
     def __init__(self, editor_object: EditorMainApp):
@@ -2902,7 +2965,219 @@ class FileManager:
 
     def __init__(self):
         pass
-
+    
+    def rename_resource(self,
+                        section: SectionChosen,
+                        selected_item_iid: str = None,
+                        prefill_text=None):
+        """
+        Rename a treeview item and its dictionary key.
+        
+        Used for all resources, such as characters, objects, audio,
+        and even reusable scripts, etc.
+        
+        All except for chapters and scenes.
+        Chapter names and scene names are not dealt with here because
+        that treeview does not have folders.
+        
+        Arguments:
+        
+        - section: so we know which treeview and dictionary to rename data in.
+        
+        - selected_item_iid: the treeview item to be updated.
+        
+        - prefill_text: so we can re-show the input window with text
+        that was entered previously, on a failed rename attempt.
+        """
+        
+        # Type-hints
+        dict_ref: Dict
+        treeview_widget: ttk.Treeview
+        
+        # Get widget references
+        dict_ref = self.get_active_dictionary(section=section)
+        treeview_widget = self.get_active_treeview(section=section)
+        
+        selected_text = None
+        
+        # Get the selected name that wants to get renamed.
+        if prefill_text:
+            selected_text = prefill_text
+            selected_item_iid = selected_item_iid
+        else:
+            selected_item_iid = treeview_widget.selection()
+            if not selected_item_iid:
+                return
+            else:
+                # Get the text of the selected item.
+                selected_item_iid = selected_item_iid[0]
+                
+        # Get the original text of the treeview item,
+        # because the text is the dictionary's key.
+        item_details = treeview_widget.item(item=selected_item_iid)
+        original_text = item_details.get("text")
+        
+        # selected_text is what will be shown to the user
+        # when the Rename dialog opens.
+        if not selected_text:
+            selected_text = original_text
+        
+        # Is the item a folder? If so, the folder won't
+        # be in the dictionary, so don't attempt to update folder names
+        # in the dictionary.
+        tags = item_details.get("tags")
+        is_folder = "folder_row" in tags        
+            
+        # Get the rename window title, based on the section that's
+        # being renamed.
+        if is_folder:
+            subject = "Folder"
+        elif section == SectionChosen.REUSABLES:
+            subject = "Reusable Script"
+        elif section == SectionChosen.IMAGES:
+            subject = "Sprite"
+        elif section == SectionChosen.AUDIO:
+            subject = "Audio"
+        else:
+            subject = ""        
+                
+        user_input = InputStringWindow(master=Passer.editor.mainwindow,
+                                       max_character_length=40,
+                                       title=f"Rename {subject}",
+                                       msg="Enter a new name below:",
+                                       prefill_entry_text=selected_text)
+        
+        # No input provided? return
+        if not user_input.user_input:
+            return
+        
+        user_input.user_input = user_input.user_input.strip()
+        if not user_input.user_input:
+            return
+        
+        # Is the new text exactly the same as the current text?
+        # Return.
+        if user_input.user_input == original_text:
+            return
+        
+        # Is the new text the same as the current text, just with
+        # different casing? That's ok, allow it.
+        if user_input.user_input.lower() != original_text.lower():
+            
+            # Make sure there is no folder or item with the same name
+            # in the entire treeview widget.
+            is_in_treeview =\
+                self.is_text_anywhere_in_treeview(parent_item_iid="",
+                                                  treeview_widget=treeview_widget,
+                                                  text_to_check=user_input.user_input)
+            
+            # Text already exists in the treeview item as a folder or item?
+            # Tell the user.
+            if is_in_treeview:
+                messagebox.showwarning(parent=Passer.editor.mainwindow, 
+                                       title="Already Exists",
+                                       message="That name already exists as a folder or item.")
+                self.rename_resource(section=section,
+                                     selected_item_iid=selected_item_iid, 
+                                     prefill_text=user_input.user_input)
+                return
+                
+            # Any invalid characters?
+            invalid_char = FileManager.validate_name(user_input.user_input)
+            if invalid_char:
+                messagebox.showwarning(parent=Passer.editor.mainwindow, 
+                                       title="Invalid Letter",
+                                       message=f"'{invalid_char}' cannot be used in the name.")
+                self.rename_resource(section=section,
+                                     selected_item_iid=selected_item_iid, 
+                                     prefill_text=user_input.user_input)            
+                return
+        
+        
+        # Update the treeview widget with the new text.
+        treeview_widget.item(item=selected_item_iid,
+                             text=user_input.user_input)
+        
+        # Update the dictionary with the new key.
+        if not is_folder:
+            dict_ref[user_input.user_input] = dict_ref[original_text]
+            del dict_ref[original_text]
+        
+        # So the user knows to save the project.
+        treeview_widget.event_generate("<<SaveNeeded>>")
+        
+        # Force-select the reusable treeview item so that the
+        # new name shows up at the top.
+        Passer.chapter_scenes.on_reusables_treeview_item_selected()
+        
+                
+    @staticmethod
+    def validate_name(name: str) -> bool:
+        """
+        Check whether the given name is valid for a treeview item,
+        such as a chapter name, scene name, object name, etc.
+        
+        Treeview item names should not contain both a $ symbol
+        because that might be mistaken as a variable.
+        
+        return: "$" if a "$" is found in the name or None if no "$" is found.
+        """
+        if "$" in name:
+            return "$"
+        else:
+            return
+            
+    def is_text_anywhere_in_treeview(self,
+                                     parent_item_iid: str, 
+                                     treeview_widget: ttk.Treeview,
+                                     text_to_check: str) -> bool:
+        """
+        Return whether the given text exists in the treeview widget.
+        The search is case-insensitive.
+        It does an in-depth check which includes multiple sub-levels.
+        
+        Arguments:
+        
+        - parent_item_iid: the item to check the sub items of.
+        If it's a blank string "", then the root items are checked.
+        
+        - treeview_widget: the treeview widget we are checking.
+        Only the 'text' column of the treeview widget is checked.
+        
+        - text_to_check: the case-insensitive string to check to see
+        if it exists in the treeview widget or not (specifically
+        in the text column).
+        
+        return: True if the text exists or None if the text doesn't exist.
+        Folders and sub-folders are checked the exact same way as
+        non-folders.
+        """
+        
+        # We're going to compare lowercase texts.
+        text_to_check = text_to_check.lower()
+        
+        # Enumerate through the item's sub items.
+        for item_iid in treeview_widget.get_children(item=parent_item_iid):
+            
+            # Get the text of the treeview item
+            item_details = treeview_widget.item(item=item_iid)
+            item_text = item_details.get("text")
+            
+            # Does the text exist on this row?
+            if text_to_check == item_text.lower():
+                # The text already exists in the treeview widget.
+                return True
+            
+            # Check the current item's subitems, if there are any.
+            text_is_in_sub = \
+                self.is_text_anywhere_in_treeview(parent_item_iid=item_iid,
+                                                  treeview_widget=treeview_widget,
+                                                  text_to_check=text_to_check)
+            
+            # Does the text widget exist in one of the sub-items?
+            if text_is_in_sub:
+                return True
+            
     @staticmethod
     def get_active_treeview(section: SectionChosen) -> ttk.Treeview:
         """
@@ -2955,14 +3230,22 @@ class FileManager:
 
         return_dict = None
 
-        if section == SectionChosen.IMAGES:
+        if section == SectionChosen.REUSABLES:
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_editor")
+        elif section == SectionChosen.IMAGES:
             notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_images")
         elif section == SectionChosen.AUDIO:
             notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_audio")
+        
 
         selected_tab_index = notebook_widget.index("current")
 
-        if section == SectionChosen.IMAGES:
+
+        if section == SectionChosen.REUSABLES:
+            if selected_tab_index == 1:
+                return_dict = ProjectSnapshot.reusables
+
+        elif section == SectionChosen.IMAGES:
             if selected_tab_index == 0:
                 return_dict = ProjectSnapshot.character_images
             elif selected_tab_index == 1:
@@ -3331,7 +3614,7 @@ class FileManager:
         if folder_exists:
             messagebox.showwarning(parent=Passer.editor.treeview_scripts.winfo_toplevel(), 
                                    title="Already Exists",
-                                   message="The folder name already exists.")
+                                   message="That name already exists as a file or folder.")
             self.on_create_new_folder_button_clicked(
                                          section_chosen=section_chosen,
                                          create_under_item_iid=selected_item,
