@@ -1252,5 +1252,18 @@
         <property name="label" translatable="yes">Rename...</property>
       </object>
     </child>
+    <child>
+      <object class="tk.Menuitem.Separator" id="separator7" />
+    </child>
+    <child>
+      <object class="tk.Menuitem.Command" id="mnu_command_move_up" named="True">
+        <property name="label" translatable="yes">Move Up</property>
+      </object>
+    </child>
+    <child>
+      <object class="tk.Menuitem.Command" id="mnu_command_move_down" named="True">
+        <property name="label" translatable="yes">Move Down</property>
+      </object>
+    </child>
   </object>
 </interface>

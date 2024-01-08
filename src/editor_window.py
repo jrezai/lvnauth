@@ -337,6 +337,10 @@ class EditorMainApp:
         self.set_initial_sash_position()
         
         self._connect_scrollbars()
+        
+        # Used for knowing which section was right-clicked.
+        self.context_menu_type: SectionChosen
+        self.context_menu_type = None
 
         # Connect bindings for the right-click 'Rename...' menus.
         self.connect_rename_context_menus()
@@ -350,11 +354,25 @@ class EditorMainApp:
         self.mnu_command_rename = self.builder.get_object("mnu_command_rename")
         self.mnu_command_rename.entryconfigure(index=0,
                                                command=self.on_rename_menu_clicked)
+        
+        # Create partial methods with an argument
+        move_up_method = partial(self.on_move_item_menu_clicked, move_up=True)
+        move_down_method = partial(self.on_move_item_menu_clicked, move_up=False)
+        
+        # Binding for the 'Move Up...' menu itself.
+        self.mnu_command_move_up = self.builder.get_object("mnu_command_move_up")
+        self.mnu_command_move_up.entryconfigure(index=2,
+                                                
+                                               command=move_up_method)
+        # Binding for the 'Move Down...' menu itself.
+        self.mnu_command_move_up = self.builder.get_object("mnu_command_move_down")
+        self.mnu_command_move_up.entryconfigure(index=3,
+                                               command=move_down_method)
 
         # Below is to be set before the pop-up menu is displayed,
         # so as soon as the context menu is shown, it knows which
         # method to run when the user clicks 'Rename...'
-        self.rename_type = None
+        self.context_menu_type = None
 
         # Chapters and Scenes context menu
         context_chapters_scenes = \
@@ -395,34 +413,98 @@ class EditorMainApp:
         for treeview_widget, context_menu in zip(treeview_widgets, context_menus):            
             treeview_widget.bind("<Button-3>", context_menu)
 
-    def show_rename_popup_menu(self, rename_type: SectionChosen, event):
+    def on_move_item_menu_clicked(self, move_up: bool):
         """
-        Show the 'Rename...' context menu.
+        Move up or move down the item in the treeview.
+        Which treeview depends on self.context_menu_type
+        """
+        move_handler = FileManager()
+        move_handler.move_item(section=self.context_menu_type,
+                               move_up=move_up)        
+
+    def show_rename_popup_menu(self, section_type: SectionChosen, event):
+        """
+        Show the 'Rename...' context menu, along with 'Move Up' and 'Move Down'.
         """
 
         # Record the type of rename this is, so when the 'Rename...' command
         # menu is clicked, we know which rename method to run.
-        self.rename_type = rename_type
+        self.context_menu_type = section_type
 
         # Enable/disable the 'Rename...' context menu,
         # depending on whether the treeview item is ready to be renamed 
         # at this time or not.
         self.mnu_rename.entryconfigure(index=0,
-                                       state=[self.check_rename_menu_state(rename_type=rename_type)])
+                                       state=[self.check_rename_menu_state(section_type=section_type)])
+        
+        # Enable/disable the 'Move up' context menu
+        # depending on whether there is a selection and whether
+        # the item is already at the top index or not.
+        self.mnu_rename.entryconfigure(index=2,
+                                       state=[self.check_move_up_down_state(context_menu_type=section_type,
+                                                                            move_up=True)])
+        
+        # Enable/disable the 'Move down' context menu
+        # depending on whether there is a selection and whether
+        # the item is already at the end or not.
+        self.mnu_rename.entryconfigure(index=3,
+                                       state=[self.check_move_up_down_state(context_menu_type=section_type,
+                                                                            move_up=False)])
 
         # Show the 'Rename...' context menu.
         self.mnu_rename.tk_popup(event.x_root, event.y_root)
 
-    def check_rename_menu_state(self, rename_type: SectionChosen):
+    def check_move_up_down_state(self,
+                                 context_menu_type: SectionChosen,
+                                 move_up: bool) -> str:
+        """
+        Check whether the 'Move Up' and "Move Down" context menus should be enabled
+        or disabled, depending on the treeview widget.
+        
+        For example: if there is no selection in the treeview, don't
+        allow the move up menu. Or if the item is already at index 0,
+        don't enable the Move Up menu.
+        """
+
+        treeview_widget = \
+            FileManager.get_active_treeview(section=context_menu_type)
+        
+        selection = treeview_widget.selection()
+        if not selection:
+            return "disabled"
+        else:
+            item_iid = selection[0]
+            current_index = treeview_widget.index(item=item_iid)
+            
+            if move_up:
+                # Already at index 0? Disable the Move Up menu
+                if current_index == 0:
+                    return "disabled"
+            else:
+                # Move down
+                
+                # Get the total number of items for the parent.
+                parent_iid = treeview_widget.parent(item=item_iid)
+                total_items = len(treeview_widget.get_children(item=parent_iid))
+                
+                # Already at the end? Disable the 'Move Down' menu
+                if current_index == total_items - 1:
+                    # Already at the end, disable the 'Move Down' menu
+                    return "disabled"
+
+        # Ready to be renamed.
+        return "normal"
+
+    def check_rename_menu_state(self, section_type: SectionChosen):
         """
         Check whether the 'Rename...' context menu should be enabled
-        or disabled, depending on the rename_type.
+        or disabled, depending on the section_type.
         
         For example: if the editor's text widget is dirty (has unsaved text),
         then don't allow the chapter or scene to be renamed.
         """
 
-        if rename_type == SectionChosen.CHAPTERS_AND_SCENES:
+        if section_type == SectionChosen.CHAPTERS_AND_SCENES:
             # Don't allow renaming if:
             # 1. The script has been modified - because the changes will be
             #    lost if we rename the chapter (the chapter's dictionary
@@ -432,14 +514,14 @@ class EditorMainApp:
                 # Not ready to be renamed.
                 return "disabled"
             
-        elif rename_type == SectionChosen.REUSABLES:
+        elif section_type == SectionChosen.REUSABLES:
             if Passer.editor.is_dirty() or not self.treeview_reusables.selection():
                 # Not ready to be renamed.
                 return "disabled"
             
         else:
             treeview_widget: ttk.Treeview
-            treeview_widget = FileManager.get_active_treeview(section=rename_type)
+            treeview_widget = FileManager.get_active_treeview(section=section_type)
             
             if not treeview_widget.selection():
                 # Not ready to be renamed
@@ -453,9 +535,9 @@ class EditorMainApp:
         Run the appropriate rename method, depending on
         which widget was right-clicked.
         
-        The rename type will be in the variable: self.rename_type
+        The rename type will be in the variable: self.context_menu_type
         """
-        if self.rename_type == SectionChosen.CHAPTERS_AND_SCENES:
+        if self.context_menu_type == SectionChosen.CHAPTERS_AND_SCENES:
             item_iid = self.get_selected_item_iid(self.treeview_scripts)
             if item_iid:
                 # Is a scene selected?
@@ -470,7 +552,7 @@ class EditorMainApp:
                 
         else:
             rename_handler = FileManager()
-            rename_handler.rename_resource(section=self.rename_type)
+            rename_handler.rename_resource(section=self.context_menu_type)
 
     def get_selected_item_iid(self, treeview_widget: ttk.Treeview) -> str:
         """
@@ -2966,6 +3048,42 @@ class FileManager:
     def __init__(self):
         pass
     
+    def move_item(self,
+                  section: SectionChosen, 
+                  move_up: bool):
+        """
+        Move the selected item up or down by one.
+        """
+        
+        # Get the treeview widget of where the item is,
+        # based on the given section.
+        treeview_widget = self.get_active_treeview(section=section)
+    
+        # No selection? return
+        selection = treeview_widget.selection()
+        if not selection:
+            return
+    
+        # Get the selected item iid.
+        item_iid = selection[0]
+    
+        # Get the parent of the selected item,
+        # because we need to tell the .move method which parent to move in.
+        # In this method, the parent will always be the same.
+        item_parent_iid = treeview_widget.parent(item_iid)
+    
+        current_index = treeview_widget.index(item=item_iid)
+        if move_up:
+            new_index = current_index - 1
+        else:
+            new_index = current_index + 1
+    
+        treeview_widget.move(item=item_iid,
+                             parent=item_parent_iid,
+                             index=new_index)
+        
+        treeview_widget.see(item=item_iid)
+    
     def rename_resource(self,
                         section: SectionChosen,
                         selected_item_iid: str = None,
@@ -3185,7 +3303,9 @@ class FileManager:
         :return: treeview widget
         """
 
-        if section == SectionChosen.IMAGES:
+        if section == SectionChosen.CHAPTERS_AND_SCENES:
+            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_editor")
+        elif section == SectionChosen.IMAGES:
             notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_images")
         elif section == SectionChosen.AUDIO:
             notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_audio")
@@ -3194,7 +3314,13 @@ class FileManager:
 
         selected_tab_index = notebook_to_check.index("current")
 
-        if section == SectionChosen.IMAGES:
+        if section == SectionChosen.CHAPTERS_AND_SCENES:
+            if selected_tab_index == 0:
+                return Passer.editor.treeview_scripts
+            elif selected_tab_index == 1:
+                return Passer.editor.treeview_reusables
+            
+        elif section == SectionChosen.IMAGES:
             if selected_tab_index == 0:
                 return Passer.editor.treeview_characters
             elif selected_tab_index == 1:
