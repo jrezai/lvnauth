@@ -116,6 +116,8 @@ class LaunchWindow:
         self.poster_file_object = poster_file_object
 
         self.populate_story_info()
+        
+        
 
     def on_window_closing(self):
         """
