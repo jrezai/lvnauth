@@ -1140,7 +1140,8 @@ class EditorMainApp:
                                      startup_scene_name=active_scene_name,
                                      startup_chapter_name=active_chapter_name,
                                      save_file_path=compile_path,
-                                     story_reusables_dict=ProjectSnapshot.reusables)
+                                     story_reusables_dict=ProjectSnapshot.reusables,
+                                     treeview_scripts=self.treeview_scripts)
             success = compiler.compile(compile_mode=CompileMode.DRAFT)
             if not success:
                 return
@@ -1319,7 +1320,8 @@ class EditorMainApp:
                                  startup_scene_name=startup_scene_name,
                                  startup_chapter_name=startup_chapter_name,
                                  save_file_path=lvna_full_path,
-                                 story_reusables_dict=ProjectSnapshot.reusables)
+                                 story_reusables_dict=ProjectSnapshot.reusables,
+                                 treeview_scripts=self.treeview_scripts)
         success = compiler.compile(compile_mode=mode)
         return success
 
