@@ -51,7 +51,15 @@ class StoryDetailsWindow:
         self.entry_license = builder.get_object("entry_license")
         self.entry_genre = builder.get_object("entry_genre")
         self.entry_version = builder.get_object("entry_version")
+        self.entry_episode = builder.get_object("entry_episode")
         self.txt_description = builder.get_object("txt_description")
+        
+        # Connect the description's vertical scrollbar
+        self.sb_vertical_description =\
+            builder.get_object("sb_vertical_description")
+        self.sb_vertical_description.configure(command=self.txt_description.yview)
+        self.txt_description.configure(yscrollcommand=self.sb_vertical_description.set)
+        
 
         self.lbl_poster_image = builder.get_object("lbl_poster_image")
         self.lbl_poster_image.image = None
@@ -91,6 +99,7 @@ class StoryDetailsWindow:
                                 "License": self.entry_license,
                                 "Genre": self.entry_genre,
                                 "Version": self.entry_version,
+                                "Episode": self.entry_episode,
                                 "Description": self.txt_description}
 
         self._get_details()
@@ -154,7 +163,7 @@ class StoryDetailsWindow:
         """
         if self.existing_details:
             for detail_name, widget in self.widget_mappings.items():
-                text_to_show = self.existing_details[detail_name]
+                text_to_show = self.existing_details.get(detail_name, "")
 
                 if widget.winfo_class() == "Text":
                     widget.insert("1.0", text_to_show)
