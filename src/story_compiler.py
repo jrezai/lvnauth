@@ -19,6 +19,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 import json
 import editor_window
 from tkinter import messagebox
+from tkinter import ttk
 
 from project_snapshot import ProjectSnapshot, SubPaths, FontSprite
 from enum import Enum, auto
@@ -74,20 +75,26 @@ class StoryCompiler:
                  save_file_path: Path,
                  startup_chapter_name: str,
                  startup_scene_name: str,
-                 story_reusables_dict: Dict):
+                 story_reusables_dict: Dict,
+                 treeview_scripts: ttk.Treeview):
         """
 
-        :param compile_part: So we know whether to compile all scripts for all scenes
-                             or just for the current scene.
+        Arguments:
+        
+        - compile_part: So we know whether to compile all scripts for all scenes
+       or just for the current scene.
 
-        :param save_file_path: The full Path object to where the final compiled .lvna file
-                               needs to be saved. This path should include the .lvna file name.
+        - save_file_path: The full Path object to where the final compiled
+        .lvna file needs to be saved. This path should include the .lvna file name.
 
-        :param startup_chapter_name: The chapter in which the startup scene exists in.
+        - startup_chapter_name: The chapter in which the startup scene exists in.
 
-        :param startup_scene_name: The scene which which will be read first.
+        - startup_scene_name: The scene which which will be read first.
 
-        :param story_reusables_dict: reusable scripts dictionary (key: function name, value: script (str)).
+        - story_reusables_dict: reusable scripts dictionary (key: function name, value: script (str)).
+        
+        - treeview_scripts: so we can get the display order of the chapter and scene names,
+        for use on the Launch window treeview widget.
         """
 
         self.compile_part = compile_part
@@ -102,6 +109,8 @@ class StoryCompiler:
         self.story_engine_info = ProjectSnapshot.EDITOR_VERSION
 
         self.story_scripts_dict = None
+        
+        self.treeview_scripts = treeview_scripts
 
     @staticmethod
     def _convert_dict_to_bytes(data_dict: Dict) -> bytes:
@@ -292,7 +301,7 @@ class StoryCompiler:
 
             # Get a dictionary of chapter names and scene names
             # (just the names, not the scripts)
-            chapters_scenes = self._get_all_chapters_and_scenes()
+            chapters_scenes = self._get_all_chapters_and_scenes(self.treeview_scripts)
             general_header["StoryChapterAndSceneNames"] = chapters_scenes
 
             # Get the bytes version of the detail and general dictionaries
@@ -344,7 +353,7 @@ class StoryCompiler:
         return text
 
     @staticmethod
-    def _get_all_chapters_and_scenes() -> Dict:
+    def _get_all_chapters_and_scenes(treeview_scripts: ttk.Treeview) -> Dict:
         """
         Get all the chapter names and all scene names.
 
@@ -355,18 +364,38 @@ class StoryCompiler:
         :return: Dict - key: chapter name (str), value: scene names (list of str)
         Example: {"First chapter": ["Scene name1", "Scene name2"],
                   "Second chapter": ["Another scene", "Cool scene"]}
+                  
+        Arguments:
+        
+        - treeview_scripts: we will get the names and display orders from
+        this treeview widget. We don't use the scripts dictionary to get the
+        chapters/names, because we need the right display order.
         """
 
         chapters_scenes = {}
 
-        for chapter_name, sub in ProjectSnapshot.chapters_and_scenes.items():
-            scene_dict = sub[1]
+        # Enumerate through the scripts treeview widget items.
+        # We use the treeview widget instead of the actual dictionary
+        # because we're interested in the display order.
+        for chapter_item_iid in treeview_scripts.get_children():
+            
+            # Get the text (name) of the chapter.
+            item_details = treeview_scripts.item(item=chapter_item_iid)
+            chapter_text = item_details.get("text")
+            
+            # The scenes for the current chapter will be stored here.
+            scene_names = []
+            
+            # Get the scenes in the current chapter
+            for scene_item_iid in treeview_scripts.get_children(item=chapter_item_iid):
+                
+                # Get the scene's text (scene name)
+                item_details = treeview_scripts.item(item=scene_item_iid)
+                scene_text = item_details.get("text")
+                
+                scene_names.append(scene_text)
 
-            scene_list = []
-            for scene_name in scene_dict:
-                scene_list.append(scene_name)
-
-            chapters_scenes[chapter_name] = scene_list.copy()
+            chapters_scenes[chapter_text] = scene_names.copy()
 
         return chapters_scenes
 

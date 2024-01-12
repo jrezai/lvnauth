@@ -72,6 +72,9 @@ class Main:
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
+        
+        # Center the launch window
+        Passer.center_window_active_monitor(self.launch_window.mainwindow)
 
         # Run tkinter's main loop
         self.launch_window.run()

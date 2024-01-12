@@ -109,8 +109,13 @@ class AboutLibrariesWindow:
         text_ionic = self.builder.get_object("text_ionic")
         sb_vertical_ionic = self.builder.get_object("sb_vertical_ionic")
         sb_vertical_ionic.configure(command=text_ionic.yview)
-        text_ionic.configure(yscrollcommand=sb_vertical_ionic.set)   
-
+        text_ionic.configure(yscrollcommand=sb_vertical_ionic.set)
+        
+        # screeninfo
+        text_screeninfo = self.builder.get_object("text_screeninfo")
+        sb_vertical_screeninfo = self.builder.get_object("sb_vertical_screeninfo")
+        sb_vertical_screeninfo.configure(command=text_screeninfo.yview)
+        text_screeninfo.configure(yscrollcommand=sb_vertical_screeninfo.set)
 
 class AboutWindow:
     def __init__(self, master=None):

@@ -75,7 +75,9 @@ class LaunchWindow:
         self.lbl_license = builder.get_object("lbl_license")
         self.lbl_genre = builder.get_object("lbl_genre")
         self.lbl_version = builder.get_object("lbl_version")
+        self.lbl_episode = builder.get_object("lbl_episode")
         self.txt_description = builder.get_object("txt_description")
+        self.sb_vertical_description = builder.get_object("sb_vertical_description")
 
         self.lbl_poster = builder.get_object("lbl_poster")
 
@@ -116,6 +118,8 @@ class LaunchWindow:
         self.poster_file_object = poster_file_object
 
         self.populate_story_info()
+        
+        
 
     def on_window_closing(self):
         """
@@ -231,9 +235,14 @@ class LaunchWindow:
         self.lbl_license.configure(text=self.story_info.get("License"))
         self.lbl_genre.configure(text=self.story_info.get("Genre"))
         self.lbl_version.configure(text=self.story_info.get("Version"))
+        self.lbl_episode.configure(text=self.story_info.get("Episode"))
         
         self.txt_description.insert("end", self.story_info.get("Description", ""))
         self.txt_description.configure(state="disabled")
+        
+        # Connect the vertical scrollbar to the description text widget.
+        self.sb_vertical_description.configure(command=self.txt_description.yview)
+        self.txt_description.configure(yscrollcommand=self.sb_vertical_description.set)
 
         # Show the story's poster image.
         self.show_poster_image()
