@@ -17,9 +17,11 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pygame
+import font_handler
 from shared_components import Passer, ManualUpdate
 from typing import NamedTuple, Tuple, List
 from enum import Enum, auto
+
 
 
 class RotateType(Enum):
@@ -265,6 +267,17 @@ class SpriteObject:
         self.image = image
         self.rect = self.image.get_rect()
 
+        # We need a copy of the image before we apply any text to it, 
+        # so that we don't blit the same text over and over again.
+        # We're going to eventually copy this image to self.original_image
+        # in the drawing loop. We will use the rect self.original_rect below.
+        self.original_image_before_text = image.copy()
+
+        # This will hold the original image, but may contain text.
+        # The actual 100% original is in self.original_image_before_text
+        # but this below is the second original which may or may not contain
+        # text drawn on it. If there is no text drawn on it, then it will be
+        # exactly the same as self.original_image_before_text
         self.original_image = image.copy()
         self.original_rect = self.original_image.get_rect()
 
@@ -362,6 +375,11 @@ class SpriteObject:
         # self.sudden_fade_change = False
         self.sudden_scale_change = False
         self.sudden_rotate_change = False
+        
+        # Deals with showing/hiding sprite text
+        self.active_font_handler =\
+            font_handler.ActiveFontHandler(story=Passer.active_story,
+                                           sprite_object=self)        
 
         self.visible = False
 
@@ -691,12 +709,15 @@ class SpriteObject:
         if all([horizontal, vertical]):
             self.image = pygame.transform.flip(self.image, True, True)
             self.original_image = pygame.transform.flip(self.original_image, True, True)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, True)
         elif horizontal:
             self.image = pygame.transform.flip(self.image, True, False)
             self.original_image = pygame.transform.flip(self.original_image, True, False)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, False)
         elif vertical:
             self.image = pygame.transform.flip(self.image, False, True)
             self.original_image = pygame.transform.flip(self.original_image, False, True)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, False, True)
         else:
             # No flips have occurred, so there is no need to request a screen-update.
             return
@@ -885,6 +906,8 @@ class SpriteObject:
 
         # Note: it's important to do the fading animation last because otherwise
         # the faded image will get overwritten with the original image in the other animations.
+        self.active_font_handler.draw()
+        update_rect_text = self.active_font_handler.get_updated_rects()
         update_rect_scaling = self._animate_scaling()
         update_rect_movement = self._animate_movement()
         update_rect_rotate = self._animate_rotation()
@@ -897,9 +920,19 @@ class SpriteObject:
 
 
         # Only add a rect if it's not None.
-        for rect in (update_rect_scaling, update_rect_movement, update_rect_fade, update_rect_rotate):
+        for rect in (update_rect_scaling,
+                     update_rect_movement,
+                     update_rect_fade,
+                     update_rect_rotate):
             if rect:
                 update_list.append(rect)
+                
+        # Add sprite text rects to update list.
+        # The reason we don't have it in the for-loop above is
+        # becvause update_rect_text will contain a list of rects, rather
+        # than a single rect, so we need to append it to update_list here.
+        if update_list and update_rect_text:
+            update_list += update_rect_text
 
         if not update_list:
             return
@@ -1362,8 +1395,10 @@ class SpriteObject:
         """
         Fade the sprite to the current fade value.
 
-        If the sprite is being scaled (as an animation) or being rotated (as an animation),
-        don't copy the original image, because then the scaling and/or rotation changes won't show.
+        If the sprite is being scaled (as an animation)
+        or being rotated (as an animation),
+        don't copy the original image, because then the scaling
+        and/or rotation changes won't show.
         :return: None
         """
 

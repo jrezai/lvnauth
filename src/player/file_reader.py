@@ -21,10 +21,10 @@ from io import BytesIO
 from pathlib import Path
 from re import search
 from typing import NamedTuple
-from font_handler import FontSprite
+#from font_handler import FontSprite
+import font_handler
 import json
 import pygame
-import active_story
 import sprite_definition as sd
 
 
@@ -306,8 +306,8 @@ class FileReader:
                         return
 
                     new_font = \
-                        FontSprite(font_name=item_name,
-                                   full_font_spritesheet=surface_image,
-                                   font_properties=font_properties)
+                        font_handler.FontSprite(font_name=item_name,
+                                                full_font_spritesheet=surface_image,
+                                                font_properties=font_properties)
                     return new_font
                 

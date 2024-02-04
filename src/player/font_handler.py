@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Copyright 2023, 2024 Jobin Rezai
 
@@ -23,17 +24,18 @@ Nov 29, 2023 (Jobin Rezai) - check for gradual_delay_counter >= instead of
 just '>'. fade_text_delay value of 1 was being represented as 2 before
 this fix.)
 """
-
 import pygame
-import active_story
+# import active_story
 import logging
 import audio_player
-import story_reader
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, TYPE_CHECKING
 from enum import Enum, auto
 from shared_components import Passer
 from datetime import datetime
 
+if TYPE_CHECKING:
+    # Only gets imported for type checking
+    from sprite_definition import SpriteObject
 
 logging.basicConfig(format="%(levelname)s:%(message)s")
 
@@ -111,19 +113,35 @@ class FontAnimation:
     """
     def __init__(self,
                  reset_sudden_text_finished_flag_method,
-                 start_animation_type: FontAnimationShowingType = FontAnimationShowingType.SUDDEN):
+                 start_animation_type: FontAnimationShowingType = FontAnimationShowingType.SUDDEN,
+                 sprite_mode=False):
 
         """
         Arguments:
         
-        - start_animation_type: the type of font/text animation to use when displaying
-        dialog text (ie: gradual letters showing or gradual letter fade-ins)
+        - reset_sudden_text_finished_flag_method: this method resets a bool
+        flag so that blit attempts will continue for dialog letters in
+        ActiveFontHandler's draw method. Reason: <no_clear> has been used,
+        so there might be more text to show. We need to run the method below
+        for sudden-text mode-only. If we don't call this method, any further
+        text after <no_clear> won't show when in sudden-text mode.
+        
+        - start_animation_type: the type of font/text animation to use when
+        displaying dialog text (ie: gradual letters showing or
+        gradual letter fade-ins)
+        
+        - sprite_mode: some things don't apply when in sprite mode.
+        For example: playing text audio only applies to dialogue text, not
+        sprite text. Also, play reusable scripts on halt/unhalt doesn't apply
+        to sprites either. So that's why we have this flag to know
+        whether it's for sprites (True) or the dialog rectangle (False).
         """
         
         self.start_animation_type = start_animation_type
 
         self.reset_sudden_text_finished_flag_method = reset_sudden_text_finished_flag_method
 
+        self.sprite_mode = sprite_mode
 
         # Key: (str) letter
         # Value: (int) number of frames to delay
@@ -278,7 +296,7 @@ class FontAnimation:
         """
 
         # Run the on unhalt reusable script (if any) here
-        if Passer.active_story.dialog_rectangle.reusable_on_unhalt:
+        if not self.sprite_mode and Passer.active_story.dialog_rectangle.reusable_on_unhalt:
             Passer.active_story.reader.spawn_new_background_reader(
                 reusable_script_name=Passer.active_story.dialog_rectangle.reusable_on_unhalt)
 
@@ -301,7 +319,11 @@ class FontAnimation:
                 
                 # Reset the cursor position to zero so the dialog text
                 # starts from the beginning.
-                self.gradual_letter_cursor_position = 0
+                if not self.sprite_mode:
+                    # We only reset the letter cursor position when
+                    # in dialog rectangle-mode, because with sprites, it's
+                    # OK to append text to sprite objects.
+                    self.gradual_letter_cursor_position = 0
 
         self.letters = letters
         
@@ -361,12 +383,16 @@ class FontAnimation:
                 base_start[1] + increment_base_speed_by,
                 base_start[2] + increment_base_speed_by)
 
-    def animate(self):
+    def animate(self) -> bool | None:
         """
         Increase the opacity of the letters in the dialog text (self.letters),
         which makes a fade animation.
         
         Also, re-draw each of the letters with the new fade value.
+        
+        Return: True if an animation took place or None if no animation
+        took place. The return value gets used by sprite object text, to know
+        whether to copy the original_image variable to sprite_object.image.
         """
 
         # Not animating and not in sudden-mode? There is nothing to animate, so return.
@@ -561,7 +587,7 @@ class FontAnimation:
 
                 # Play a sound for this letter, if configured to do so.
                 # Don't play a sound for a space ' ' character.
-                if not is_space:
+                if not is_space and not self.sprite_mode:
                     Passer.active_story.audio_player.play_audio(
                         audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
                         audio_channel=audio_player.AudioChannel.TEXT)
@@ -583,6 +609,8 @@ class FontAnimation:
 
         if stop_intro:
             self.stop_intro_animation()
+            
+        return True
 
     def stop_intro_animation(self):
         """
@@ -600,20 +628,27 @@ class FontAnimation:
         # a <halt> or <halt_auto> command is used.
         self.no_clear_handler.clear_text_check()
 
-        self.gradual_letter_cursor_position = 0
+        # self.gradual_letter_cursor_position = 0
         self.gradual_delay_counter = 0
         self.current_font_fade_value = 255
 
         # Run a reusable script now that the dialog text is finished displaying?
         # (ie: for when <halt> is used)
-        main_reader = active_story.Passer.active_story.reader.get_main_story_reader()
+        if not self.sprite_mode:
+            
+            # The cursor letter position only gets cleared for the dialog
+            # rectangle, because we want to still be able to append text
+            # to a sprite object, even after the animation is finished.
+            self.gradual_letter_cursor_position = 0
+            
+            main_reader = Passer.active_story.reader.get_main_story_reader()
 
-        # Run reusable_on_halt, if we're not in halt_auto mode.
-        # halt_auto should not show on_halt animations, because it will proceed on its own.
-        if active_story.Passer.active_story.dialog_rectangle.reusable_on_halt and \
-                not main_reader.halt_main_script_auto_mode_frames:
-            active_story.Passer.active_story.reader.spawn_new_background_reader(
-                reusable_script_name=active_story.Passer.active_story.dialog_rectangle.reusable_on_halt)
+            # Run reusable_on_halt, if we're not in halt_auto mode.
+            # halt_auto should not show on_halt animations, because it will proceed on its own.
+            if Passer.active_story.dialog_rectangle.reusable_on_halt and \
+                    not main_reader.halt_main_script_auto_mode_frames:
+                Passer.active_story.reader.spawn_new_background_reader(
+                    reusable_script_name=Passer.active_story.dialog_rectangle.reusable_on_halt)
 
 
 class LetterProperties:
@@ -828,11 +863,16 @@ class ActiveFontHandler:
     whether fading-in is enabled, sudden-mode, or regular gradual mode.
     """
 
-    def __init__(self, story):
+    def __init__(self, story, sprite_object: SpriteObject = None):
+
+        # A value in sprite_object means we will draw text on the
+        # given sprite object, which is either an object, dialog sprite, 
+        # or character - not on a dialog rectangle.
+        self.sprite_object = sprite_object
 
         # So we can access the loaded fonts
         # and the active dialog rectangle.
-        self.story: active_story.ActiveStory
+        self.story: Passer.active_story
         self.story = story
 
         # If the intro text is in sudden-mode,
@@ -868,7 +908,8 @@ class ActiveFontHandler:
         # (intro/outro of dialog text)
         self.font_animation = \
             FontAnimation(reset_sudden_text_finished_flag_method=self.reset_sudden_text_finished_flag,
-                          start_animation_type=FontAnimationShowingType.FADE_IN)
+                          start_animation_type=FontAnimationShowingType.FADE_IN,
+                          sprite_mode=self.sprite_object is not None)
 
         # Will contain a list of pygame.rects that needs to be updated.
         # Each single rect will be a single Letter object.
@@ -1096,8 +1137,13 @@ class ActiveFontHandler:
 
         # left, top, width, height
         update_rect = rect.copy()
-        update_rect.x += self.story.dialog_rectangle_rect.x
-        update_rect.y += self.story.dialog_rectangle_rect.y
+        
+        if self.sprite_object:
+            update_rect.x += self.sprite_object.rect.x
+            update_rect.y += self.sprite_object.rect.y
+        else:
+            update_rect.x += self.story.dialog_rectangle_rect.x
+            update_rect.y += self.story.dialog_rectangle_rect.y
 
 
         self.update_rects.append(update_rect)
@@ -1117,6 +1163,105 @@ class ActiveFontHandler:
         # or a bit to the right (positive int)
         # In other words, this is used for nudging the position of the next letter.
         self.next_letter_x_position += right_trim
+        
+    def process_text(self, line_text: str):
+        """
+        Get the letter sprites for the letters in the given string
+        and add them to a list so they can be blitted later,
+        all while following the font kerning rules.
+        
+        Arguments:
+        
+        - line_text: the string to blit
+        """
+        
+        # Make sure a font has been defined; otherwise we can't
+        # show any text.
+        if not self.current_font:
+            if self.sprite_object:
+                subject_name = self.sprite_object.general_alias
+            else:
+                subject_name = "dialog rectangle"
+            raise ValueError(f"No font defined for '{subject_name}'")
+
+        # Used for letter kerning
+        previous_letter = None
+
+        # Read the line we've been given, line by line.
+        for letter in self.read_next_letter(line_text=line_text):
+
+            # print("Read letter:", letter)
+            logging.info(f"Read letter: {letter}")
+
+            # Now get the letter surface (the cropped image of the letter)
+            letter_surface =\
+                self.current_font.get_letter(letter=letter)
+
+            # Get the amount of padding/kerning to use for the letter
+            # that we're going to blit soon, based on the kerning rules
+            # and the previous letter.
+            left_trim, right_trim =\
+                self.current_font.get_letter_trims(letter=letter,
+                                                   previous_letter=previous_letter)
+
+            # Was the letter sprite found?
+            if letter_surface:
+                # Yes, it was found. Add it to the list of letters that
+                # should be displayed in the dialog rectangle.
+                self.add_letter(letter_subsurface=letter_surface,
+                                is_space=(letter == " "),
+                                previous_letter=previous_letter,
+                                left_trim=left_trim,
+                                right_trim=right_trim)
+                
+                # Keep track of the previous letter for kerning purposes.
+                previous_letter = letter                
+                
+        
+        # Keep track of where the end of the line is for the X position.
+        # Used for restoring the X position when <continue> is reached.
+        self.next_letter_x_position_continue = \
+            self.next_letter_x_position
+
+        # We finished reading the entire line, so position the text cursor
+        # on the next line, in case there is more text to read on the next line.
+        self.next_letter_x_position = self.default_x_position
+
+        # Keep track of where the end of the line is for the Y position.
+        # Used for restoring the X position when <continue> is reached.
+        self.next_letter_y_position_continue = self.next_letter_y_position
+
+        # Set the Y 'cursor' to the next line.
+        self.next_letter_y_position += \
+            self.current_font.height + \
+            self.current_font.padding_lines
+        
+        # Is the Y coordinate of the dialog text temporarily adjusted
+        # after using the <continue> command? Reset it back to without its adjustment.
+        if self.adjusted_y:
+            self.next_letter_y_position -= self.adjusted_y
+            self.adjusted_y = 0
+        
+
+    def read_next_letter(self, line_text):
+        """
+        The story doesn't currently contain a command to run, so
+        the read_story() method wants us to show the text now as dialog text.
+                
+        While text is being displayed, the main non-background story reader
+        should not be allowed to progress. Only background story readers
+        should be allowed to progress. But background story readers should
+        not be allowed to display dialog text, because imagine what would
+        happen if 15 background story readers tried to show dialog text.
+        """
+
+        # At this point, we're not reading a command, because the method,
+        # read_story(), called our method here (read_dialog_text()), since
+        # there are no commands (so far) to parse.
+
+        # Loop through each individual letter
+        for letter in line_text:
+            yield letter
 
     def clear_letters(self):
         """
@@ -1150,6 +1295,10 @@ class ActiveFontHandler:
         Blit the letters to the current dialog rectangle's surface.
         """
 
+        # No letters to blit for? return
+        if not self.letters_to_blit:
+            return
+
         # We are either animating the text gradually (fade or gradual letter)
         # or the text-mode is in sudden-mode and the text is ready to be blitted.
 
@@ -1160,24 +1309,44 @@ class ActiveFontHandler:
             # We're animating the text or there is text already
             # waiting to be fully displayed, if it's in sudden-mode.
 
-            # Re-draw the dialog rectangle so the text gets cleared from before
-            # and re-draw the font text again.
-            self.story.dialog_rectangle.redraw_rectangle()
+            # Drawing text sprites in the dialog rectangle?
+            if not self.sprite_object:
+                # Yes, we're drawing text sprites in a dialog rectangle.
 
+                # Re-draw the dialog rectangle so the text gets cleared 
+                # from before and re-draw the font text again.
+                self.story.dialog_rectangle.redraw_rectangle()
+    
+                # Get the dialog surface so we can blit letters onto it.
+                surface_to_draw_on = self.story.dialog_rectangle.surface
+                
+            else:
+                # Not a dialog rectangle.
+                # We're about to draw text on a sprite.
+                
+                # Reset the original image with the 'actual' original image
+                # that doesn't contain any text drawn on it.
+                self.sprite_object.original_image =\
+                    self.sprite_object.original_image_before_text.copy()
+                
+                # We're going to draw text on the sprite's surface.
+                surface_to_draw_on = self.sprite_object.original_image
+                
+                # surface_to_draw_on = self.sprite_object.image
+            
             # Animate any gradual text animations (fade values).
-            self.font_animation.animate()
-
-            # Get the dialog surface so we can blit letters onto it.
-            dialog_surface = self.story.dialog_rectangle.surface
+            # Get a value indicating whether an animation took place or not.
+            animated_this_frame = self.font_animation.animate()            
 
             # Used inside the loop below; meant for sudden-mode
             blitted_a_letter = False
 
-            # Blit letters onto the newly (re)drawn dialog rectangle.
+            # Blit letters onto the newly (re)drawn dialog rectangle
+            # or onto the sprite object.
             letter: Letter
             for letter in self.letters_to_blit:
-                dialog_surface.blit(letter.surface,
-                                    letter.rect)
+                surface_to_draw_on.blit(letter.surface,
+                                        letter.rect)
 
                 # Meant for sudden-mode, used later in this method.
                 blitted_a_letter = True
@@ -1188,9 +1357,38 @@ class ActiveFontHandler:
             # so we don't draw keep re-drawing the dialog rectangle for no reason
             # in the next call to this method.
             if blitted_a_letter:
+                
+                # If we're drawing text on a sprite object, then the text
+                # will have been blitted on sprite_object.original_image
+                # So copy that surface to self.image, so it gets shown
+                # on the screen.
+                if self.sprite_object:
+
+                    # Only copy 'original_image' to 'image' if
+                    # the sprite is not doing any scaling/rotating/fading,
+                    # because those animation methods will copy 'original_image'
+                    # to 'image' themselves, we don't need to do it twice here.
+                    if not self.sprite_object.is_scaling \
+                       and not self.sprite_object.is_rotating \
+                           and not self.sprite_object.is_fading \
+                           and (animated_this_frame \
+                                
+                            # If it's sudden mode, then only copy 'original_image'
+                            # to 'image' if we haven't already blitted the sudden text yet.
+                            or (self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN \
+                                and not self.sudden_text_drawn_already)):
+
+                        # 'original_image' has the image with the blitted text,
+                        # whereas 'image' doesn't yet.
+                        self.sprite_object.image = self.sprite_object.original_image.copy()
+                        # print("Copied", datetime.now())
+                
                 if self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN:
                     # We've blitted sudden-mode text
-                    # So we don't redraw the dialog rectangle again in the next frame.
+                    
+                    # Set the flag below so we don't redraw the dialog 
+                    # rectangle again in the next frame nor attempt to redraw 
+                    # the text on a sprite object.
                     self.sudden_text_drawn_already = True
 
     def set_active_font(self, font_name):

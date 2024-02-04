@@ -217,6 +217,8 @@ class Main:
 
             # Handle drawing
             update_rects = story.on_render()
+            
+            print(update_rects)
 
             # Update portions of the screen or the entire screen, depending on some factors.
             self.refresh_screen(update_rects)
