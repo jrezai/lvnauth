@@ -181,7 +181,6 @@ class FontAnimation:
         
         # Deals with the <no_clear> command
         self.no_clear_handler = NoClearHandler(self)
-        
 
     def set_letter_delay(self, letter: str, delay_frames: int):
         """
@@ -915,6 +914,14 @@ class ActiveFontHandler:
         # Each single rect will be a single Letter object.
         self.update_rects = []
 
+    def is_sudden_mode_text_pending(self) -> bool:
+        """
+        Return whether the text intro animation is in sudden-mode
+        and hasn't blitting the text yet.
+        """
+        return self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN \
+            and not self.sudden_text_drawn_already
+        
     def reset_sudden_text_finished_flag(self):
         """
         Reset flag which indicates that all the text in sudden-mode
@@ -1292,7 +1299,8 @@ class ActiveFontHandler:
 
     def draw(self):
         """
-        Blit the letters to the current dialog rectangle's surface.
+        Blit the letters to the current dialog rectangle's surface
+        or to the sprite's surface, in the case of sprite text.
         """
 
         # No letters to blit for? return
@@ -1304,7 +1312,8 @@ class ActiveFontHandler:
 
         # Redraw the rectangle so all the letters get cleared
         # and then animate the new text animations (fade values).
-        if self.font_animation.is_start_animating or not self.sudden_text_drawn_already:
+        if self.font_animation.is_start_animating \
+                or self.is_sudden_mode_text_pending():
 
             # We're animating the text or there is text already
             # waiting to be fully displayed, if it's in sudden-mode.
@@ -1326,12 +1335,12 @@ class ActiveFontHandler:
                 
                 # Reset the original image with the 'actual' original image
                 # that doesn't contain any text drawn on it.
-                self.sprite_object.original_image =\
-                    self.sprite_object.original_image_before_text.copy()
-                
+                self.sprite_object.original_image = \
+                    self.sprite_object.get_original_image_without_text()
+
                 # We're going to draw text on the sprite's surface.
                 surface_to_draw_on = self.sprite_object.original_image
-                
+
                 # surface_to_draw_on = self.sprite_object.image
             
             # Animate any gradual text animations (fade values).
@@ -1363,26 +1372,14 @@ class ActiveFontHandler:
                 # So copy that surface to self.image, so it gets shown
                 # on the screen.
                 if self.sprite_object:
+                    print("Blitted!")
 
-                    # Only copy 'original_image' to 'image' if
-                    # the sprite is not doing any scaling/rotating/fading,
-                    # because those animation methods will copy 'original_image'
-                    # to 'image' themselves, we don't need to do it twice here.
-                    if not self.sprite_object.is_scaling \
-                       and not self.sprite_object.is_rotating \
-                           and not self.sprite_object.is_fading \
-                           and (animated_this_frame \
-                                
-                            # If it's sudden mode, then only copy 'original_image'
-                            # to 'image' if we haven't already blitted the sudden text yet.
-                            or (self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN \
-                                and not self.sudden_text_drawn_already)):
+                    #if self.sprite_object.is_fade_needed():
+                        #self.sprite_object._fade_sprite(skip_copy_original_image=True)
 
-                        # 'original_image' has the image with the blitted text,
-                        # whereas 'image' doesn't yet.
-                        self.sprite_object.image = self.sprite_object.original_image.copy()
-                        # print("Copied", datetime.now())
-                
+                    # self.sprite_object._apply_still_effects()
+
+
                 if self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN:
                     # We've blitted sudden-mode text
                     

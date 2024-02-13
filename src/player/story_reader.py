@@ -120,6 +120,11 @@ class SpriteText(NamedTuple):
     sprite_type: str
     general_alias: str
     value: str
+    
+    
+class SpriteTextClear(NamedTuple):
+    sprite_type: str
+    general_alias: str
 
 
 class Flip(NamedTuple):
@@ -968,7 +973,10 @@ class StoryReader:
                              audio_channel=audio_player.AudioChannel.MUSIC)
             
         elif command_name == "sprite_text":
-            self._sprite_text(arguments=arguments)        
+            self._sprite_text(arguments=arguments)
+            
+        elif command_name == "sprite_text_clear":
+            self._sprite_text(arguments=arguments)
             
         elif command_name == "sprite_text_font":
             self._sprite_text_font(arguments=arguments)
@@ -2410,7 +2418,7 @@ class StoryReader:
         # Set the rotation value of the sprite (immediate, no gradual animation).
         sprite.rotate_current_value = rotate_current_value
 
-        sprite.sudden_rotate_change = True
+        # sprite.sudden_rotate_change = True
 
     def _sprite_rotate_until(self,
                              sprite_type: file_reader.ContentType,
@@ -2771,8 +2779,9 @@ class StoryReader:
 
         # Set the scale value of the sprite (immediate, no gradual animation).
         sprite.scale_current_value = scale_current_value
+        
 
-        sprite.sudden_scale_change = True
+        # sprite.sudden_scale_change = True
 
     def _sprite_scale_until(self,
                             sprite_type: file_reader.ContentType,
@@ -4473,6 +4482,46 @@ class StoryReader:
         self._font_text_delay_punc(arguments=command_arguments.value,
                                    sprite_object=sprite)
 
+    def _sprite_text_clear(self, arguments: str):
+        """
+        Clear any text that is displayed on a specific sprite.
+        Copy original_image_before_text to original_image.
+        
+        <sprite_text_clear: character, rave>
+        """
+
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteTextClear
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Are we just clearing text?
+        if not command_arguments.value:
+            sprite.clear_text_and_redraw()
+            return
+        
+        # Prepare letter sprites for blitting later.
+        sprite.active_font_handler.process_text(line_text=command_arguments.value)
+        
+        # If sudden-text was already blitted before (from previous text), 
+        # reset the blitted flag so we can append more sudden-text.
+        if sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+           and sprite.active_font_handler.sudden_text_drawn_already:
+            sprite.active_font_handler.reset_sudden_text_finished_flag()
+        
+        # Start showing animation of font text, unless it's set to
+        # sudden-mode.        
+        sprite.active_font_handler.font_animation.\
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+
     def _sprite_text(self, arguments: str):
         """
         Add font sprite sheet text to a sprite (object, dialog sprite, object)
@@ -4494,6 +4543,11 @@ class StoryReader:
         # Split tuple
         sprite, command_arguments = sprite_details
         
+        # Are we just clearing text?
+        if not command_arguments.value:
+            sprite.clear_text_and_redraw()
+            return
+        
         # Prepare letter sprites for blitting later.
         sprite.active_font_handler.process_text(line_text=command_arguments.value)
         
@@ -4505,7 +4559,8 @@ class StoryReader:
         
         # Start showing animation of font text, unless it's set to
         # sudden-mode.        
-        sprite.active_font_handler.font_animation.start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+        sprite.active_font_handler.font_animation.\
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
@@ -4883,6 +4938,8 @@ class StoryReader:
                     # values with the sprite that is being swapped out later in this method.
                     copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
                     copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
+
+                    copied_visible_sprite.reset_applied_effects()
 
                     # Make the new sprite the same as the current sprite
                     # but with the new images, rects, and new name.

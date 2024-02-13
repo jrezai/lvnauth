@@ -218,7 +218,6 @@ class Main:
             # Handle drawing
             update_rects = story.on_render()
             
-            print(update_rects)
 
             # Update portions of the screen or the entire screen, depending on some factors.
             self.refresh_screen(update_rects)
@@ -226,7 +225,7 @@ class Main:
             # print(update_rects)
 
             # For debugging
-            # pygame.display.flip()
+            pygame.display.flip()
 
     def on_key_down(self, key_pressed):
         """
