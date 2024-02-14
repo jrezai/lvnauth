@@ -32,7 +32,7 @@ import json
 import subprocess
 import sys
 import webbrowser
-from shared_components import Story
+# from shared_components import Story
 from story_details_window import StoryDetailsWindow
 from font_sprite_properties_window import FontSpriteWindow
 from project_snapshot import ProjectSnapshot, SubPaths, FontSprite, LetterProperties
@@ -3797,12 +3797,12 @@ mystring = "<character_name-Bob Smith>>"
 result = re.findall(r"^<(\w+)-(.*)>$", mystring)
 
 
-class StoryReader:
-    def __init__(self):
-        pass
+#class StoryReader:
+    #def __init__(self):
+        #pass
 
-    def read_next_line(self):
-        line = Story.story_lines.pop(0)
+    #def read_next_line(self):
+        #line = Story.story_lines.pop(0)
 
 
 if __name__ == "__main__":
