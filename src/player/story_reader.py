@@ -4939,6 +4939,13 @@ class StoryReader:
                     copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
                     copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
 
+                    # The new sprite does not have any scale/rotate/fade effects
+                    # applied to it, but the flags (self.applied..) at this 
+                    # point indicate that effects are applied 
+                    # (those flags are not up-to-date).
+                    # So reset the flags so that we will end up applying
+                    # necessary effects to make it match the effects of 
+                    # the previous sprite.
                     copied_visible_sprite.reset_applied_effects()
 
                     # Make the new sprite the same as the current sprite
