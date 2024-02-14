@@ -166,14 +166,6 @@ class Main:
                             draft_mode=draft_mode)
         Passer.active_story = story
 
-        # The first time the story starts, we need to refresh the whole screen
-        # so that sprites that don't animate will get shown.
-        self.initial_screen_refresh_done = False
-
-        # We need this flag because when we minimize pygame and restore it again,
-        # the window won't update until we refresh the whole screen.
-        self.pygame_window_last_visible = pygame.display.get_active()
-
         # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
 
@@ -216,13 +208,8 @@ class Main:
             story.on_loop()
 
             # Handle drawing
-            update_rects = story.on_render()
+            story.on_render()
             
-
-            # Update portions of the screen or the entire screen, depending on some factors.
-            self.refresh_screen(update_rects)
-
-            # print(update_rects)
 
             # For debugging
             pygame.display.flip()
@@ -304,46 +291,6 @@ class Main:
                 # so that the user knows it's been copied to the clipboard.
                 Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
 
-    def refresh_screen(self, update_rects):
-        """
-        Refresh the screen based on the best decision. Return a list of updated rects, if applicable.
-
-        For example: if the pygame window is active, only update parts of the screen
-                     that have changed. However, if the pygame window is inactive (minimized),
-                     then as soon as the window is restored, refresh the 'whole' screen because
-                     otherwise the window will be blank.
-
-        :param update_rects:
-        :return:
-        """
-
-        # Is the active active? (active means not-minimized)
-        window_active = pygame.display.get_active()
-
-        # If the window is active (not-minimized) but wasn't active before (was minimized before),
-        # then refresh the whole screen.
-        if window_active and not self.pygame_window_last_visible:
-            self.pygame_window_last_visible = True
-            pygame.display.flip()
-            print("Updated the whole screen")
-
-        # Refresh the screen when the story first starts up.
-        # After this refresh, only individual sprite updates will be done.
-        # Without this part, only sprites that animate will show, not sprites that don't animate.
-        elif not self.initial_screen_refresh_done:
-            self.initial_screen_refresh_done = True
-            pygame.display.flip()
-            print("Updated the whole screen")
-
-        # If the window is not active (minimized) but was active before (not minimized before),
-        # then set the flag.
-        elif not window_active and self.pygame_window_last_visible:
-            self.pygame_window_last_visible = False
-
-        # Specific parts that need updating?
-        elif update_rects:
-            pygame.display.update(update_rects)
-            # print("Updated some parts", update_rects, datetime.now())
 
 
 if __name__ == "__main__":

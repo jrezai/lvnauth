@@ -488,11 +488,10 @@ class SpriteObject:
         """
         self.is_rotating = True
 
-    def _show(self) -> pygame.Rect | None:
+    def _show(self):
         """
         Set the visibility flag to True, to indicate to the renderer that
-        this sprite should be drawn on the screen. Return the rect
-        of where this sprite currently is.
+        this sprite should be drawn on the screen.
 
         This method is meant to be run from self.start_show() and not directly.
         """
@@ -507,13 +506,10 @@ class SpriteObject:
 
         self.visible = True
 
-        return self.rect
-
-    def _hide(self) -> pygame.Rect | None:
+    def _hide(self):
         """
         Set the visibility flag to False, to indicate to the renderer that
-        this sprite should no longer be drawn on the screen. Return the rect
-        of where this sprite currently is.
+        this sprite should no longer be drawn on the screen.
 
         This method is meant to be run from self.start_hide() and not directly.
         """
@@ -527,8 +523,6 @@ class SpriteObject:
             return
 
         self.visible = False
-
-        return self.rect
 
     def start_hide(self):
         """
@@ -921,32 +915,18 @@ class SpriteObject:
     def update(self):
         """
         Animate/move the sprite here.
-        :return: updated rect or None if no changes occurred to this sprite.
+        Return: None
         """
 
-        # The list of update rects for all the animation updates.
-        update_list = []
-
-        # Should we show or hide this sprite? If so,
-        # get the rect so we can update the screen
-        # with its rect.
-
+        # Should we show or hide this sprite?
         if self.pending_show:
             # We're going to start showing this sprite.
-
-            # Get the rect of where this sprite should show
-            # so we can update the screen to make the sprite appear.
-            show_rect = self._show()
-            if show_rect:
-                update_list.append(show_rect)
+            self._show()
 
         elif self.pending_hide:
             # We're going to hide this sprite.
-
-            # Return the rect of where this sprite is
-            # so we can update the screen so the sprite no longer appears.
-            return self._hide()
-
+            self._hide()
+            return
 
         # If this sprite is not visible, there is no point
         # in animating it.
@@ -956,48 +936,17 @@ class SpriteObject:
         # Note: it's important to do the fading animation last because otherwise
         # the faded image will get overwritten with the original image in the other animations.
         self.active_font_handler.draw()
-        update_rect_text = self.active_font_handler.get_updated_rects()
-        update_rect_scaling = self._animate_scaling()
-        update_rect_movement = self._animate_movement()
-        update_rect_rotate = self._animate_rotation()
-        update_rect_fade = self._animate_fading()
+        self._animate_scaling()
+        self._animate_movement()
+        self._animate_rotation()
+        self._animate_fading()
 
         self._apply_still_effects()
-        
-
-        # if isinstance(self, DialogSprite):
-        # print("It's a dialog")
-        # update_rect_movement = self.get_screen_coordinates(
-        # update_rect_movement)
-
-
-        # Only add a rect if it's not None.
-        for rect in (update_rect_scaling,
-                     update_rect_movement,
-                     update_rect_fade,
-                     update_rect_rotate):
-            if rect:
-                update_list.append(rect)
-                
-        # Add sprite text rects to update list.
-        # The reason we don't have it in the for-loop above is
-        # becvause update_rect_text will contain a list of rects, rather
-        # than a single rect, so we need to append it to update_list here.
-        if update_list and update_rect_text:
-            update_list += update_rect_text
-
-        if not update_list:
-            return
-
-        # Create one rect from all the updated rects in this sprite.
-        one_rect = update_list[0].unionall(update_list)
-
-        return one_rect
 
     def _animate_rotation(self):
         """
         Rotate the sprite (if required).
-        :return: updated rect or None if no rotation occurs.
+        Return: None
         """
 
         ## Did the rotation value change without an animation?
@@ -1108,23 +1057,20 @@ class SpriteObject:
 
                 return
 
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_rotate:
-            if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
-                # Don't apply this animation in this frame,
-                # because it's the only animation and it's currently
-                # on a delayed pause.
-                return
-
-        # rect = self._scale_or_rotate_sprite()
-        return self.rect # rect
+        ## Skipping the animation in this frame due to a delay?
+        ## Don't apply the current value of the animation effect
+        ## if it's the *only* active animation.
+        #if skip_rotate:
+            #if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
+                ## Don't apply this animation in this frame,
+                ## because it's the only animation and it's currently
+                ## on a delayed pause.
+                #return
 
     def _animate_scaling(self):
         """
         Scale the sprite (if required).
-        :return: updated rect or None if no scaling occurs.
+        Return: None
         """
 
         ## Did the scale value change without an animation?
@@ -1214,29 +1160,24 @@ class SpriteObject:
 
                 return
 
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_scale:
-            if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
-                # Don't apply this animation in this frame,
-                # because it's the only animation and it's currently
-                # on a delayed pause.
-                return
+        ## Skipping the animation in this frame due to a delay?
+        ## Don't apply the current value of the animation effect
+        ## if it's the *only* active animation.
+        #if skip_scale:
+            #if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
+                ## Don't apply this animation in this frame,
+                ## because it's the only animation and it's currently
+                ## on a delayed pause.
+                #return
 
-        # rect = self._scale_or_rotate_sprite()
+        ## rect = self._scale_or_rotate_sprite()
 
-        return self.rect # rect
-
-    def _scale_or_rotate_sprite(self) -> pygame.Rect:
+    def _scale_or_rotate_sprite(self):
         """
         Scale and/or rotate the sprite and then return a rect
         that covers the old rect and the new rect combined into one rect.
-        :return: rect
+        Return: None
         """
-
-        # So we can combine the old rect with the new rect
-        old_rect = self.rect.copy()
 
         if self.scale_current_value:
             current_scale = self.scale_current_value.scale_current_value
@@ -1263,45 +1204,6 @@ class SpriteObject:
 
         # Get the new rect of the rotated or scaled image
         self.rect = self.image.get_rect(center=self.rect.center)
-
-        combined_rect = old_rect.union(self.rect)
-
-        return combined_rect
-
-    def _is_only_active_animation(self, animation_type: SpriteAnimationType):
-        """
-        Check if the supplied animation-type is the only active animation
-        for this sprite or not.
-
-        Example: if a rotation animation is the *only* active animation for this
-        sprite, and the animation_type (argument) is SpriteAnimationType.ROTATE,
-        then this method will return True.
-
-        Purpose of this method: when a delay is used on an animation (such as
-        rotation or scale), we ideally shouldn't update the sprite on
-        the screen when no animation is occuring during the delays/pauses.
-        However, it's only safe to skip updating a sprite animation if there
-        is one animation. If there are multiple animations enabled for this
-        sprite, we need to constantly update the sprite on each frame.
-        We use this method to know whether the sprite has only one kind of
-        animation or not.
-
-        Return: bool (True if there is only one animation for the given type
-        or False if there are multiple animations on this sprite.)
-        """
-        animations = {animation_type.ROTATE: self.is_rotating,
-                      animation_type.SCALE: self.is_scaling,
-                      animation_type.FADE: self.is_fading}
-
-        # Only keep active animations in the dictionary
-        animations = {k: v for (k, v) in animations.items()
-                      if v}
-
-        if len(animations) == 1:
-            is_enabled = animations.get(animation_type, False)
-            return is_enabled
-
-        return False
 
     def _apply_still_effects(self):
         """
@@ -1368,7 +1270,7 @@ class SpriteObject:
     def _animate_fading(self):
         """
         Fade the sprite (if required), but only if we know how far to fade the sprite.
-        :return: updated rect or None if no fading occurs.
+        Return: None
         """
 
         ## Did a sudden fade value change occur without an animation? (direct command)
@@ -1507,12 +1409,6 @@ class SpriteObject:
 
                 return
 
-
-        # We're haven't skipped fading in this frame, so apply
-        # the fade and return the updated rect.
-        # self._fade_sprite()
-        return self.rect
-
     def _fade_sprite(self, skip_copy_original_image: bool = False):
         """
         Fade the sprite to the current fade value.
@@ -1531,6 +1427,10 @@ class SpriteObject:
         Under normal use-cases (without clear_text_and_redraw()) this variable
         will be False.
         """
+
+        # Fade not applied to the sprite? return
+        if not self.current_fade_value:
+            return
 
         replaced_image = False
 
@@ -1609,7 +1509,7 @@ class SpriteObject:
         """
         Move the sprite (if required) and obey any delay rules for the movement.
 
-        :return: updated rect or None if no movement occurs.
+        Return: None
         """
 
         # Not moving the sprite or no instructions on speed? Return.
@@ -1765,33 +1665,18 @@ class SpriteObject:
                     # At this point, we will proceed with moving y.
                     self.delay_frame_counter_y = 0
 
-        # Keep track of where the sprite is before we move it
-        # so that we can create an update rect later on.
-        old_rect = self.rect.copy()
-
-        # Initialize
-        moved = False
-
         if proceed_move_x:
+            # Move the X position
             self.rect.move_ip(self.movement_speed.x, 0)
-            moved = True
 
         if proceed_move_y:
+            # Move the Y position
             self.rect.move_ip(0, self.movement_speed.y)
-            moved = True
-
-        # Have we moved the sprite?
-        if moved:
-            # Create a union rect that combines the old rect position and the new position.
-            update_rect = old_rect.union(self.rect)
-            return update_rect
 
 
 class SpriteGroup:
 
     def __init__(self):
-        self.update_rects = []
-
         # Key: sprite name (str)
         # Value: sprite object (SpriteObject)
         self.sprites = {}
@@ -1804,9 +1689,6 @@ class SpriteGroup:
         sprite = self.sprites.get(name)
         if not sprite:
             return
-
-        update_rect = sprite.rect
-        self.update_rects.append(update_rect)
 
         del self.sprites[name]
 
@@ -1843,27 +1725,7 @@ class SpriteGroup:
 
             # Get a regular animation update rect
             # This will be one rect for multiple animations (fade,scale, etc.)
-            new_rect = sprite.update()
-
-            if new_rect:
-                self.update_rects.append(new_rect)
-
-    def get_updated_rects(self) -> List[pygame.Rect]:
-        """
-        # Get all the rects for update sprites.
-
-        # The caller of this method will use the list of update rects
-        # to update the screen for just rects that have been changed.
-        :return: List[pygame.Rect]
-        """
-
-        # Get a copy of all the updated rects in this group.
-        updated_rects = self.update_rects.copy()
-
-        # Clear for the next animation loop.
-        self.update_rects.clear()
-
-        return updated_rects
+            sprite.update()
 
     def draw(self, surface: pygame.Surface):
 

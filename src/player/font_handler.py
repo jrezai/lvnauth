@@ -910,10 +910,6 @@ class ActiveFontHandler:
                           start_animation_type=FontAnimationShowingType.FADE_IN,
                           sprite_mode=self.sprite_object is not None)
 
-        # Will contain a list of pygame.rects that needs to be updated.
-        # Each single rect will be a single Letter object.
-        self.update_rects = []
-
     def is_sudden_mode_text_pending(self) -> bool:
         """
         Return whether the text intro animation is in sudden-mode
@@ -930,24 +926,6 @@ class ActiveFontHandler:
         """
         self.sudden_text_drawn_already = False
 
-    def get_updated_rects(self):
-        """
-        Return a list of pygame.rects that need to be updated.
-        """
-        if self.update_rects:
-
-            # If a dialog text intro animation is currently happening,
-            # return the updated rects without clearing it. We don't clear it
-            # yet because the animation of the letters (fading-in) is still ongoing.
-            if self.font_animation.is_start_animating:
-                return self.update_rects
-
-            else:
-                # There are no animations occuring with the dialog text.
-                # Return the updated rects (the letter rects) and clear the updates.
-                update_copy = self.update_rects.copy()
-                self.update_rects.clear()
-                return update_copy
 
     def _get_letter_right_edge(self,
                               letter_surface: pygame.Surface,
@@ -1130,30 +1108,6 @@ class ActiveFontHandler:
                         previous_letter=previous_letter)
         
         self.letters_to_blit.append(letter)
-
-        # The update rect's X and Y will be different than the letter's X and Y.
-        # The letter's drawing X and Y will be based on the dialog rectangle,
-        # so in other words, it'll be (0,0) if the text is being drawn on the
-        # top-left of the dialog rectangle. However, when updating the letters,
-        # we need to use overall pygame window size (main surface size),
-        # not based on just the dialog rectangle.
-
-        # Get the update rect based on the overall pygame window size,
-        # so we're going to add the dialog rectangle's X to the letter's X
-        # and we're going to add the dialog rectangle's Y to the letter's Y.
-
-        # left, top, width, height
-        update_rect = rect.copy()
-        
-        if self.sprite_object:
-            update_rect.x += self.sprite_object.rect.x
-            update_rect.y += self.sprite_object.rect.y
-        else:
-            update_rect.x += self.story.dialog_rectangle_rect.x
-            update_rect.y += self.story.dialog_rectangle_rect.y
-
-
-        self.update_rects.append(update_rect)
 
         # Calculate where the next letter should be positioned.
         if not self.current_font.detect_letter_edges:

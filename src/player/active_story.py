@@ -112,11 +112,6 @@ class ActiveStory:
         # The audio channels will be initialized automatically as needed.
         self.audio_player = AudioPlayer()
 
-        # If the background surface has just been changed, this variable
-        # will contain the rect of the new background surface, then after the background
-        # has been updated, this variable will be set to None again. So it works as a flag indicator too.
-        self._update_rect_of_background = None
-
         ## Key: item name, Value: pygame image (converted and ready for use)
         ## The dictionaries below will only be populated as-requested by the story script(s).
         #self.dialog_images = {}
@@ -217,10 +212,6 @@ class ActiveStory:
     def change_background(self, background_surface: pygame.Surface):
         self.background_surface = background_surface
 
-        # We get the rect of the main surface, so we update everything
-        # because the new background might be smaller than the old background.
-        self._update_rect_of_background = self.main_surface.get_rect()
-
     def on_event(self, event):
         """
         Handle events like left button click to unhalt story or to speed up
@@ -276,7 +267,7 @@ class ActiveStory:
             # Dialog sprites should only animate if the dialog is visible.
             sd.Groups.dialog_group.update()
 
-    def on_render(self) -> List[pygame.Rect]:
+    def on_render(self):
         """
         Handle drawing
         :return:
@@ -289,22 +280,15 @@ class ActiveStory:
         sd.Groups.object_group.draw(self.main_surface)
         sd.Groups.character_group.draw(self.main_surface)
 
-        dialog_rect = None
-        letter_rects = None
 
         if self.dialog_rectangle and self.dialog_rectangle.visible:
 
             # Note: The sequence is important here.
             # We need to draw the text *before* drawing the dialog box.
             self.reader.active_font_handler.draw()
-            letter_rects = self.reader.active_font_handler.get_updated_rects()
 
             # Draw the dialog rectangle on the main surface.
             self.dialog_rectangle.draw()
-
-            # Get the updated rect (if there were any animations)
-            dialog_rect = self.dialog_rectangle.get_updated_rect()
-
 
             # Note: again, the sequence is important here.
             # We need to draw any dialog sprites *before* drawing the dialog box.
@@ -327,60 +311,3 @@ class ActiveStory:
 
         self.cover_screen_handler.update()
         self.cover_screen_handler.draw()
-        cover_color_rect = self.cover_screen_handler.get_updated_rect()
-
-        update_rects1 = sd.Groups.background_group.get_updated_rects() + \
-                        sd.Groups.object_group.get_updated_rects() + \
-                        sd.Groups.character_group.get_updated_rects() + \
-                        sd.Groups.dialog_group.get_updated_rects() + \
-                        cover_color_rect
-
-        
-        # Update both Dialog rect and update_rects1
-        if dialog_rect and update_rects1:
-            update_rects1 += dialog_rect
-
-        # Only update dialog_rect
-        elif dialog_rect:
-            update_rects1 = dialog_rect
-
-        # Update both Letter rects and other dialog related rects
-        if letter_rects and update_rects1:
-            update_rects1 += letter_rects
-
-        # Only updating letter rects
-        elif letter_rects:
-            update_rects1 = letter_rects
-
-        # Draft rectangle (to show x/y coordinates of the mouse pointer)
-        if self.draft_mode:
-            draft_rect = self.get_draft_rectangle_update_rect()
-            if draft_rect:
-                update_rects1 += draft_rect
-
-        # Get manual rects that need updating
-        # (usually from character_set_position_x, etc.)
-        # Basically commands that don't automatically automate.
-        update_rects1 += ManualUpdate.get_updated_rects(update_rects1)
-
-        return update_rects1
-
-    def get_draft_rectangle_update_rect(self):
-        """
-        Draw draft rectangle text and return the update rect of the draft rectangle,
-        if it's set to be visible.
-        """
-
-        # Is there temporary text to show? Such as 'Copied sprite locations!'
-        draft_text = self.draft_rectangle.get_temporary_text()
-        if not draft_text:
-            # No temporary text, so show the usual mouse co-ordinates.
-            draft_text = self.mouse_coordinates
-
-        # Draw the rectangle on the screen.
-        self.draft_rectangle.draw(draft_text)
-
-        # Get the update rect list, if the draft rectangle is set to be visible.
-        # Otherwise, None will be returned.
-        draft_rect = self.draft_rectangle.update()
-        return draft_rect

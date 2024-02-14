@@ -254,12 +254,3 @@ class CoverScreenHandler:
         # Draw the cover surface on pygame's main surface.
         self.main_surface.blit(self.cover_surface, self.main_surface_rect)
 
-    def get_updated_rect(self) -> List[pygame.Rect]:
-        """
-        Return a list with the rect of the main surface, but only if the cover
-        surface is animating. If not animating, return an empty list.
-        """
-        if self.is_cover_animating:
-            return [self.main_surface_rect]
-        else:
-            return []
