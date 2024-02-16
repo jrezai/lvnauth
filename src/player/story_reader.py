@@ -978,22 +978,22 @@ class StoryReader:
         elif command_name == "sprite_text_clear":
             self._sprite_text(arguments=arguments)
             
-        elif command_name == "sprite_text_font":
+        elif command_name == "sprite_font":
             self._sprite_text_font(arguments=arguments)
             
-        elif command_name == "sprite_text_font_x":
+        elif command_name == "sprite_font_x":
             self._sprite_text_start_position(True, arguments)
             
-        elif command_name == "sprite_text_font_y":
+        elif command_name == "sprite_font_y":
             self._sprite_text_start_position(False, arguments)
             
-        elif command_name == "sprite_text_font_delay":
+        elif command_name == "sprite_font_delay":
             self._sprite_text_font_delay(arguments=arguments)
             
-        elif command_name == "sprite_text_font_delay_punc":
+        elif command_name == "sprite_font_delay_punc":
             self._sprite_text_font_delay_punc(arguments=arguments)
             
-        elif command_name == "sprite_text_font_fade_speed":
+        elif command_name == "sprite_font_fade_speed":
             self._sprite_text_font_fade_speed(arguments=arguments)
         
         elif command_name == "sprite_text_font_intro_animation":
