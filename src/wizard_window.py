@@ -2322,7 +2322,7 @@ class WizardWindow:
                             parent_display_text="Font",
                             sub_display_text="sprite_font",
                             command_name="sprite_font",
-                            purpose_line="Sets the font to use for the next letter.")  
+                            purpose_line="Sets the font to use for a sprite's text.")  
 
         page_sprite_font_x =\
             Font_SpriteFontPosition(parent_frame=self.frame_contents_outer,
@@ -2354,14 +2354,14 @@ class WizardWindow:
                                     amount_usage_info="Set the vertical position (y):",
                                     amount_name="vertical position")
 
-        page_sprite_font_text_delay =\
+        page_sprite_font_delay =\
             Font_SpriteTextDelay(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
                                  parent_display_text="Font",
-                                 sub_display_text="sprite_font_text_delay",
-                                 command_name="sprite_font_text_delay",
+                                 sub_display_text="sprite_font_delay",
+                                 command_name="sprite_font_delay",
                                  purpose_line="Sets the number of frames to skip when applying\n"
                                  "gradual sprite text animation (letter-by-letter).\n"
                                  "Does not apply to letter fade-ins",
@@ -2372,14 +2372,14 @@ class WizardWindow:
                                  "every 2 frames. A value of 0 means apply the animation at every frame.",
                                  scale_default_value=2)
         
-        page_sprite_font_text_delay_punc =\
+        page_sprite_font_delay_punc =\
             Font_SpriteTextDelayPunc(parent_frame=self.frame_contents_outer,
                                      header_label=self.lbl_header,
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
                                      parent_display_text="Font",
-                                     sub_display_text="sprite_font_text_delay_punc",
-                                     command_name="sprite_font_text_delay_punc",
+                                     sub_display_text="sprite_font_delay_punc",
+                                     command_name="sprite_font_delay_punc",
                                      purpose_line="Sets the number of frames to skip *after* a specific letter is shown.\n"
                                      "Only applies to gradual letter-by-letter text (not fade-ins).\n\n"
                                      "This command can be used to cause a short delay\n"
@@ -2390,14 +2390,14 @@ class WizardWindow:
                                      scale_instructions="The number of frames to skip (0 to 120):",
                                      scale_default_value=2)
 
-        page_sprite_font_text_fade_speed =\
+        page_sprite_font_fade_speed =\
             Font_SpriteTextFadeSpeed(parent_frame=self.frame_contents_outer,
                                      header_label=self.lbl_header,
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
                                      parent_display_text="Font",
-                                     sub_display_text="sprite_font_text_fade_speed",
-                                     command_name="sprite_font_text_fade_speed",
+                                     sub_display_text="sprite_font_fade_speed",
+                                     command_name="sprite_font_fade_speed",
                                      purpose_line="Sets the fade speed of gradually-shown sprite text\n" +
                                      "(letter-by-letter fade speed) and also the overall fade-in speed\n" +
                                      "(non letter-by-letter)",
@@ -2418,6 +2418,18 @@ class WizardWindow:
                                 purpose_line="Set the animation type when sprite text is being displayed.",
                                 instructions="Sprite text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
+        
+        page_sprite_text =\
+            Font_SpriteText(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Font",
+                            sub_display_text="sprite_text",
+                            command_name="sprite_text",
+                            purpose_line="Set the text to show on a sprite.\n\n"
+                            "You can run this command multiple times to append text.\n"
+                            "To clear the text, use <sprite_text_clear>")
 
         page_general_scene_with_fade = \
             SceneWithFade(parent_frame=self.frame_contents_outer,
@@ -2742,10 +2754,11 @@ class WizardWindow:
         self.pages["sprite_font"] = page_sprite_font
         self.pages["sprite_font_x"] = page_sprite_font_x        
         self.pages["sprite_font_y"] = page_sprite_font_y       
-        self.pages["sprite_font_text_delay"] = page_sprite_font_text_delay
-        self.pages["sprite_font_text_delay_punc"] = page_sprite_font_text_delay_punc
-        self.pages["sprite_font_text_fade_speed"] = page_sprite_font_text_fade_speed
+        self.pages["sprite_font_delay"] = page_sprite_font_delay
+        self.pages["sprite_font_delay_punc"] = page_sprite_font_delay_punc
+        self.pages["sprite_font_fade_speed"] = page_sprite_font_fade_speed
         self.pages["sprite_font_intro_animation"] = page_sprite_font_intro_animation
+        self.pages["sprite_text"] = page_sprite_text
         
         """
         Variable
@@ -3039,14 +3052,52 @@ class SharedPages:
         Label: sprite alias
         Entry: sprite alias
         """
-        def __init__(self, parent_frame: ttk.Frame):
+        def __init__(self,
+                     parent_frame: ttk.Frame,
+                     add_sprite_text_widgets: bool = False):
+            """
+            Arguments:
+            
+            - parent_frame: the frame that will contain this extension
+            
+            - add_sprite_text_widgets: when set to True, it will add
+            a label widget and entry widget for typing the sprite text.
+            This is used with the <sprite_text> command.
+            """
             
             self.parent_frame = parent_frame
+            
+            # Include a 'Sprite text' label and entry?
+            # (used with the <sprite_text> command)
+            self.frame_sprite_text: ttk.Frame
+            self.frame_sprite_text = None
+            if add_sprite_text_widgets:
+                self.frame_sprite_text = self.get_frame_sprite_text()
+                self.frame_sprite_text.grid(sticky="w")
             
             # Combobox: sprite type
             # Entry: sprite alias
             self.sprite_frame = self.get_sprite_template()
-            self.sprite_frame.grid(pady=(15, 0), sticky=tk.W, columnspan=2)        
+            self.sprite_frame.grid(pady=(15, 0), sticky=tk.W, columnspan=2)   
+
+            
+        def get_frame_sprite_text(self) -> ttk.Frame:
+            """
+            Create a frame that includes a sprite text label and entry widget
+            and then return the frame.
+            
+            1 Sprite text (label)
+            1 Entry (to type sprite text)
+            """
+            frame_text = ttk.Frame(self.parent_frame)
+            
+            lbl_sprite_text = ttk.Label(frame_text, text="Sprite text:")
+            self.entry_sprite_text = ttk.Entry(frame_text, width=25)
+            
+            lbl_sprite_text.pack(anchor=tk.W)
+            self.entry_sprite_text.pack()
+            
+            return frame_text
             
         def get_sprite_template(self) -> ttk.Frame:
             """
@@ -3085,6 +3136,19 @@ class SharedPages:
             
             sprite_text_inputs = {}
             
+            
+            # Do we have sprite text widgets?
+            # (used with the <sprite_text> command)
+            if self.frame_sprite_text:
+                sprite_text = self.entry_sprite_text.get().strip()
+                if not sprite_text:
+                    messagebox.showinfo(parent=self.parent_frame.winfo_toplevel(), 
+                                        title="Sprite text",
+                                        message="The sprite text is blank.")
+                    return
+                else:
+                    sprite_text_inputs["SpriteText"] = sprite_text            
+            
             sprite_type = self.cb_sprite_type.get()
             if not sprite_type:
                 messagebox.showinfo(parent=self.parent_frame.winfo_toplevel(), 
@@ -3098,12 +3162,41 @@ class SharedPages:
                                     title="Sprite alias",
                                     message="Enter a sprite alias.")
                 return
+
             
             sprite_text_inputs["SpriteType"] = sprite_type
             sprite_text_inputs["SpriteAlias"] = sprite_alias
             
             return sprite_text_inputs
         
+        def custom_generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            Specific to a couple of sprite_text commands:
+            <sprite_text> and <sprite_text_clear>
+            """
+    
+            # The user input will be a dictionary like this:
+            # {SpriteType": "character",
+            # "SpriteAlias": "theo",
+            # "SpriteText", "some text"}
+            user_inputs = self.check_inputs_sprite_text()
+    
+            if not user_inputs:
+                return
+    
+            sprite_type = user_inputs.get("SpriteType")
+            sprite_alias = user_inputs.get("SpriteAlias")
+            sprite_text = user_inputs.get("SpriteText")
+            
+            # Sprite text won't be available for <sprite_text_clear>
+            if sprite_text:
+                # <sprite_text: character, rave, some text>
+                return f"<{self.command_name}: {sprite_type}, {sprite_alias}, {sprite_text}>"
+            else:
+                # <sprite_text_clear: character, rave>
+                return f"<{self.command_name}: {sprite_type}, {sprite_alias}>"
+    
 
     class DropDownReadOnly(WizardListing):
         """
@@ -6406,6 +6499,36 @@ class Font_SpriteFont(Font_Font, SharedPages.SpriteTextExtension):
         # additional sprite_text related widgets.
         self.has_sprite_text_extension = True
 
+
+class Font_SpriteText(WizardListing, SharedPages.SpriteTextExtension):
+    """
+    <sprite_text: sprite type, sprite alias, text>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line):
+
+        WizardListing.__init__(self, parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line)
+        
+        self.frame_content = ttk.Frame(self.parent_frame)
+        #self.scene_frame = SceneWithFadeFrame(self.frame_content)
+        #self.scene_frame.mainframe.pack()        
+        
+        SharedPages.SpriteTextExtension.__init__(self,
+                                                 parent_frame=self.frame_content,
+                                                 add_sprite_text_widgets=True)
+        
+        
+        # So check_inputs() and generate_command() will check for
+        # additional sprite_text related widgets.
+        self.has_sprite_text_extension = True
+        
+        # Use a sprite_text specific generate_command method.
+        self.generate_command = self.custom_generate_command
+        
 
 class Font_SpriteFontPosition(Font_Position, SharedPages.SpriteTextExtension):
     """
