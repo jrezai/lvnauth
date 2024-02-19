@@ -410,6 +410,9 @@ class FontAnimation:
         # Needed if <halt> is used multiple times in a row, with no letters to show.
         if not self.letters:
             return
+        
+        if self.sprite_mode:
+            print("Animating Sprite Text -", datetime.now())
 
         stop_intro = False
 
@@ -593,7 +596,10 @@ class FontAnimation:
 
                 self.gradual_letter_cursor_position += 1
 
-                if self.gradual_letter_cursor_position >= len(self.letters):
+                # We need to have len(self.letters) - 1 for sprite text
+                # to show properly when swapping out a sprite with 
+                # gradual text that already finished animating the gradual text.
+                if self.gradual_letter_cursor_position > len(self.letters) - 1:
                     stop_intro = True
                     
             else:
@@ -1325,8 +1331,8 @@ class ActiveFontHandler:
                 # will have been blitted on sprite_object.original_image
                 # So copy that surface to self.image, so it gets shown
                 # on the screen.
-                if self.sprite_object:
-                    print("Blitted!")
+                #if self.sprite_object:
+                    #print("Blitted!", datetime.now())
 
                     #if self.sprite_object.is_fade_needed():
                         #self.sprite_object._fade_sprite(skip_copy_original_image=True)

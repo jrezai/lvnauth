@@ -996,7 +996,7 @@ class StoryReader:
         elif command_name == "sprite_font_fade_speed":
             self._sprite_text_font_fade_speed(arguments=arguments)
         
-        elif command_name == "sprite_text_font_intro_animation":
+        elif command_name == "sprite_font_intro_animation":
             self._sprite_text_font_intro(arguments=arguments)
             
         elif command_name == "font":
@@ -4900,78 +4900,121 @@ class StoryReader:
 
             # Find the sprite that we're swapping 'out'
             visible_sprite: sd.SpriteObject
-            for visible_sprite in sprite_group.sprites.values():
-                if visible_sprite.visible and \
-                   visible_sprite.general_alias == new_sprite.general_alias:
-
-                    # Copy the currently visible sprite
-                    # so that we can turn this copy into a new sprite later.
-                    copied_visible_sprite = copy.copy(visible_sprite)
-
-                    # Keep track of the center of the current sprite
-                    # so we can restore the center when the new
-                    # sprite is shown. If we don't do this, the new sprite
-                    # will show up in a different position.
-                    current_center = visible_sprite.rect.center
-
-                    # Get the new image that we want to show
-                    copied_visible_sprite.original_image = new_sprite.original_image
-                    copied_visible_sprite.original_image_before_text = new_sprite.original_image_before_text
-                    copied_visible_sprite.original_rect = new_sprite.original_rect
-                    copied_visible_sprite.image = new_sprite.image
-                    copied_visible_sprite.rect = new_sprite.rect
-                    copied_visible_sprite.name = new_sprite.name
+            visible_sprite = None
+            
+            current_visible_sprite: sd.SpriteObject
+            for current_visible_sprite in sprite_group.sprites.values():
+                
+                # Did we find a fully visible sprite with the same alias?
+                # If so, we'll swap that sprite out.
+                if current_visible_sprite.visible and \
+                   current_visible_sprite.general_alias == new_sprite.general_alias:
                     
-                    # Update the active font handler's sprite reference
-                    # (if there is one) to the new sprite that has 
-                    # the new images. If we don't do this, the active font
-                    # handler will have a reference to the swapped-out sprite
-                    # rather than the new swapped-in sprite, and then text
-                    # won't display on the new sprite.
-                    if copied_visible_sprite.active_font_handler \
-                       and copied_visible_sprite.active_font_handler.sprite_object:
-                        copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite                      
-
-
-                    # Record whether the new sprite has been flipped in any way
-                    # at any time in the past, because we'll need to compare the flip
-                    # values with the sprite that is being swapped out later in this method.
-                    copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
-                    copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
-
-                    # The new sprite does not have any scale/rotate/fade effects
-                    # applied to it, but the flags (self.applied..) at this 
-                    # point indicate that effects are applied 
-                    # (those flags are not up-to-date).
-                    # So reset the flags so that we will end up applying
-                    # necessary effects to make it match the effects of 
-                    # the previous sprite.
-                    copied_visible_sprite.reset_applied_effects()
-
-                    # Make the new sprite the same as the current sprite
-                    # but with the new images, rects, and new name.
-                    new_sprite = copied_visible_sprite
-                    
-
-                    # Restore the center position so the new sprite
-                    # will be positioned exactly where the old sprite is.
-                    new_sprite.rect.center = current_center
-
-                    # Hide the old sprite (that we're swapping out)
-                    visible_sprite.start_hide()
-
-                    # If the sprite that is being swapped out was flipped horizontally and/or vertically,
-                    # then make sure the new sprite is flipped horizontally and/or vertically too.
-                    new_sprite.flip_match_with(visible_sprite)
-
-                    # Show the new sprite (that we're swapping in)
-                    new_sprite.start_show()
-
-                    # Update the new sprite in the main character sprites dictionary
-                    sprite_group.sprites[new_sprite.name] = new_sprite
-
-                    # We found a single category character that we were looking for.
+                    # We found a visible sprite with the same alias.
+                    visible_sprite = current_visible_sprite                    
                     break
+                
+                # Did we find a pending visible sprite with the same alias?
+                # Keep a reference to it in case we don't find a fully visible
+                # sprite with the same alias, but don't stop checking for
+                # visible sprites yet.
+                elif current_visible_sprite.pending_show and \
+                   current_visible_sprite.general_alias == new_sprite.general_alias:
+                    
+                    # We found a visible sprite with the same alias,
+                    # but don't break out of the loop yet because this sprite
+                    # is only pending to be visible, it's not fully visible yet.
+                    # Keep looping to see if there is a fully visible sprite
+                    # with the same alias, and if not, we'll end up swapping 
+                    # out this sprite.
+                    visible_sprite = current_visible_sprite                    
+
+
+            # Did we end up finding a visible sprite with the same alias?
+            if visible_sprite:
+    
+                # Copy the currently visible sprite
+                # so that we can turn this copy into a new sprite later.
+                copied_visible_sprite = copy.copy(visible_sprite)
+    
+                # Keep track of the center of the current sprite
+                # so we can restore the center when the new
+                # sprite is shown. If we don't do this, the new sprite
+                # will show up in a different position.
+                current_center = visible_sprite.rect.center
+    
+                # Get the new image that we want to show
+                copied_visible_sprite.original_image = new_sprite.original_image
+                copied_visible_sprite.original_image_before_text = new_sprite.original_image_before_text
+                copied_visible_sprite.original_rect = new_sprite.original_rect
+                copied_visible_sprite.image = new_sprite.image
+                copied_visible_sprite.rect = new_sprite.rect
+                copied_visible_sprite.name = new_sprite.name
+                
+                # Update the active font handler's sprite reference
+                # (if there is one) to the new sprite that has 
+                # the new images. If we don't do this, the active font
+                # handler will have a reference to the swapped-out sprite
+                # rather than the newly swapped-in sprite, and then text
+                # won't display on the new sprite.
+                if copied_visible_sprite.active_font_handler \
+                   and copied_visible_sprite.active_font_handler.sprite_object:
+                    copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
+                    
+                    ## Prepare letter sprites for blitting later.
+                    #copied_visible_sprite.active_font_handler.process_text(line_text="")
+                    
+                    # If sudden-text was already blitted before (from previous text), 
+                    # reset the blitted flag so we can append more sudden-text.
+                    # We need this block for sudden text to show after the swap.
+                    if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+                       and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
+                        copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
+                    
+                    # Start showing animation of font text, unless it's set to
+                    # sudden-mode.        
+                    copied_visible_sprite.active_font_handler.font_animation.\
+                        start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
+    
+    
+                # Record whether the new sprite has been flipped in any way
+                # at any time in the past, because we'll need to compare the flip
+                # values with the sprite that is being swapped out later in this method.
+                copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
+                copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
+    
+                # The new sprite does not have any scale/rotate/fade effects
+                # applied to it, but the flags (self.applied..) at this 
+                # point indicate that effects are applied 
+                # (those flags are not up-to-date).
+                # So reset the flags so that we will end up applying
+                # necessary effects to make it match the effects of 
+                # the previous sprite.
+                copied_visible_sprite.reset_applied_effects()
+    
+                # Make the new sprite the same as the current sprite
+                # but with the new images, rects, and new name.
+                new_sprite = copied_visible_sprite
+                
+    
+                # Restore the center position so the new sprite
+                # will be positioned exactly where the old sprite is.
+                new_sprite.rect.center = current_center
+    
+                # Hide the old sprite (that we're swapping out)
+                visible_sprite.start_hide()
+    
+                # If the sprite that is being swapped out was flipped horizontally and/or vertically,
+                # then make sure the new sprite is flipped horizontally and/or vertically too.
+                new_sprite.flip_match_with(visible_sprite)
+    
+                # Show the new sprite (that we're swapping in)
+                new_sprite.start_show()
+    
+                # Update the new sprite in the main character sprites dictionary
+                sprite_group.sprites[new_sprite.name] = new_sprite
+
+
 
         # If the sprite is not already visible, start to make it visible.
         if not new_sprite.visible:

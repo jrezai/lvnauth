@@ -22,6 +22,7 @@ from shared_components import Passer, ManualUpdate
 from typing import NamedTuple, Tuple, List
 from enum import Enum, auto
 from datetime import datetime
+from time import perf_counter
 
 
 
@@ -263,6 +264,9 @@ class SpriteObject:
                  name: str,
                  image: pygame.Surface,
                  general_alias: str):
+        
+        self.debug_timer = 0
+        
         self.name = name
         self.general_alias = general_alias
         self.image = image
@@ -438,6 +442,7 @@ class SpriteObject:
         :return:
         """
         self.is_fading = True
+        self.debug_timer = perf_counter()
 
     def stop_fading(self):
         """
@@ -445,6 +450,8 @@ class SpriteObject:
         :return:
         """
         self.is_fading = False
+        
+        print("---------Fade finished; it took", perf_counter() - self.debug_timer)
 
     def start_moving(self):
         """
@@ -974,6 +981,9 @@ class SpriteObject:
                 self.rotate_delay_main.frames_skipped_so_far += 1
                 skip_rotate = True
 
+        if skip_rotate:
+            return
+
         if not skip_rotate:
 
             # Are we rotating clockwise (negative value) or counter-clockwise? (positive value)
@@ -1097,6 +1107,9 @@ class SpriteObject:
                 # Don't scale in this frame and increment skipped counter
                 self.scale_delay_main.frames_skipped_so_far += 1
                 skip_scale = True
+                
+        if skip_scale:
+            return
 
         if not skip_scale:
 
@@ -1218,7 +1231,9 @@ class SpriteObject:
         if scale_or_rotation_needed or fade_needed:
             self._scale_or_rotate_sprite()
             self._fade_sprite(skip_copy_original_image=True)
-            print(f"Applying scale/fade in {self.name} at: {datetime.now()} ")
+            # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
+        #else:
+            #print("Animation not needed")
 
     def is_fade_needed(self) -> bool:
         """
@@ -1269,7 +1284,8 @@ class SpriteObject:
 
     def _animate_fading(self):
         """
-        Fade the sprite (if required), but only if we know how far to fade the sprite.
+        Fade the sprite (if required), but only if we know how far
+        to fade the sprite.
         Return: None
         """
 
