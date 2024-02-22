@@ -265,8 +265,7 @@ class SpriteObject:
                  image: pygame.Surface,
                  general_alias: str):
         
-        self.debug_timer = 0
-        
+
         self.name = name
         self.general_alias = general_alias
         self.image = image
@@ -442,7 +441,6 @@ class SpriteObject:
         :return:
         """
         self.is_fading = True
-        self.debug_timer = perf_counter()
 
     def stop_fading(self):
         """
@@ -450,8 +448,6 @@ class SpriteObject:
         :return:
         """
         self.is_fading = False
-        
-        print("---------Fade finished; it took", perf_counter() - self.debug_timer)
 
     def start_moving(self):
         """

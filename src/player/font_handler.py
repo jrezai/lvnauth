@@ -411,8 +411,9 @@ class FontAnimation:
         if not self.letters:
             return
         
-        if self.sprite_mode:
-            print("Animating Sprite Text -", datetime.now())
+        ## For debugging
+        #if self.sprite_mode:
+            #print("Animating Sprite Text -", datetime.now())
 
         stop_intro = False
 
