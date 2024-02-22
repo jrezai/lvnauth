@@ -130,10 +130,6 @@ class Main:
 
         pygame.init()
 
-        # Used for copying text to the clipboard.
-        scrap.init()
-        scrap.set_mode(pygame.SCRAP_CLIPBOARD)
-
         clock = pygame.time.Clock()
 
         pygame.display.set_caption("LVNAuth Player")
