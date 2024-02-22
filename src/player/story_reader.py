@@ -976,7 +976,12 @@ class StoryReader:
             self._sprite_text(arguments=arguments)
             
         elif command_name == "sprite_text_clear":
-            self._sprite_text(arguments=arguments)
+            # This command is just like <sprite_text> except we're going
+            # to pass in an empty string, which causes the text to get cleared.
+            if arguments:
+                # For passing an empty string
+                arguments += ","
+                self._sprite_text(arguments=arguments)
             
         elif command_name == "sprite_font":
             self._sprite_text_font(arguments=arguments)
@@ -4294,7 +4299,7 @@ class StoryReader:
         Get the basic variables that are shared amongst all the
         <sprite_text...> commands.
         
-        Return: a tuple (the sprite, sprite_text (argument info))
+        Return: a tuple (the sprite, sprite type, sprite_text (argument info))
         """
         
         sprite_text: SpriteText

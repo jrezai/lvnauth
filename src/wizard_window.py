@@ -2430,6 +2430,16 @@ class WizardWindow:
                             purpose_line="Set the text to show on a sprite.\n\n"
                             "You can run this command multiple times to append text.\n"
                             "To clear the text, use <sprite_text_clear>")
+        
+        page_sprite_text_clear =\
+            Font_SpriteTextClear(parent_frame=self.frame_contents_outer,
+                                 header_label=self.lbl_header,
+                                 purpose_label=self.lbl_purpose,
+                                 treeview_commands=self.treeview_commands,
+                                 parent_display_text="Font",
+                                 sub_display_text="sprite_text_clear",
+                                 command_name="sprite_text_clear",
+                                 purpose_line="Clear text on a sprite where <sprite_text> was used.")
 
         page_general_scene_with_fade = \
             SceneWithFade(parent_frame=self.frame_contents_outer,
@@ -2759,6 +2769,8 @@ class WizardWindow:
         self.pages["sprite_font_fade_speed"] = page_sprite_font_fade_speed
         self.pages["sprite_font_intro_animation"] = page_sprite_font_intro_animation
         self.pages["sprite_text"] = page_sprite_text
+        self.pages["sprite_text_clear"] = page_sprite_text_clear
+        
         
         """
         Variable
@@ -6520,6 +6532,33 @@ class Font_SpriteText(WizardListing, SharedPages.SpriteTextExtension):
         SharedPages.SpriteTextExtension.__init__(self,
                                                  parent_frame=self.frame_content,
                                                  add_sprite_text_widgets=True)
+        
+        
+        # So check_inputs() and generate_command() will check for
+        # additional sprite_text related widgets.
+        self.has_sprite_text_extension = True
+        
+        # Use a sprite_text specific generate_command method.
+        self.generate_command = self.custom_generate_command
+        
+class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
+    """
+    <sprite_text_clear: sprite type, sprite alias>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line):
+
+        WizardListing.__init__(self, parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line)
+        
+        self.frame_content = ttk.Frame(self.parent_frame)       
+        
+        SharedPages.SpriteTextExtension.__init__(self,
+                                                 parent_frame=self.frame_content,
+                                                 add_sprite_text_widgets=False)
         
         
         # So check_inputs() and generate_command() will check for
