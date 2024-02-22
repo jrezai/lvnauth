@@ -212,6 +212,20 @@ class ActiveStory:
     def change_background(self, background_surface: pygame.Surface):
         self.background_surface = background_surface
 
+    def draw_draft_rectangle(self):
+        """
+        Draw draft rectangle text, if it's set to be visible.
+        """
+
+        # Is there temporary text to show? Such as 'Copied sprite locations!'
+        draft_text = self.draft_rectangle.get_temporary_text()
+        if not draft_text:
+            # No temporary text, so show the usual mouse co-ordinates.
+            draft_text = self.mouse_coordinates
+
+        # Draw the rectangle on the screen.
+        self.draft_rectangle.draw(draft_text)
+
     def on_event(self, event):
         """
         Handle events like left button click to unhalt story or to speed up
@@ -311,3 +325,9 @@ class ActiveStory:
 
         self.cover_screen_handler.update()
         self.cover_screen_handler.draw()
+
+        # Draft rectangle (to show x/y coordinates of the mouse pointer)
+        if self.draft_mode:
+            self.draw_draft_rectangle()
+            
+            

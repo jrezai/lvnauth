@@ -134,5 +134,3 @@ class DraftRectangle:
         # to the main surface.
         self.main_surface.blit(self.rect_surface, rect_main_location)
 
-        # The rect area that will be used for updating the main surface.
-        self.update()
