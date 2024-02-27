@@ -440,6 +440,29 @@ class SpriteObject:
         Set the flag to indicate that fading animations should occur for this sprite.
         :return:
         """
+        
+        # If there is no fade-until value, assume fade-until to 255 or 0,
+        # depending on the fade direction.
+        if self.fade_until is None:
+            
+            # Fading in? Assume the destination fade value to be 255.
+            if self.fade_speed is not None and \
+               self.fade_speed.fade_direction == "fade in":
+                
+                self.fade_until = FadeUntilValue(sprite_name=self.name,
+                                                 fade_value=255)
+            
+            # Fading out? Assume the destination fade value to be 0.
+            elif self.fade_speed is not None and \
+               self.fade_speed.fade_direction == "fade out":
+                
+                self.fade_until = FadeUntilValue(sprite_name=self.name,
+                                                 fade_value=0)
+                
+            else:
+                # No fade speed or no valid fade direction.
+                return
+                
         self.is_fading = True
 
     def stop_fading(self):
@@ -1259,14 +1282,15 @@ class SpriteObject:
             # Scale already at normal scale and no scale effect applied?
             # No need to apply a scale-effect
             if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
-                return False
+                # No scale animation needed
+                pass
             else:
                 # The applied scale value is different than
                 # the expected scale value.
                 return True
 
 
-        elif self.rotate_current_value \
+        if self.rotate_current_value \
                 and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
             
             # Rotation already at 0 degrees and no rotation effect applied?
@@ -1353,15 +1377,8 @@ class SpriteObject:
             if fade_type == FadeType.FADE_IN:
                 if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
 
-                    # Stop the fade, only if the opacity is full at 255
-                    if self.current_fade_value.current_fade_value >= 255:
-                        self.stop_fading()
-
-                    # If the final fade value is less than 255, then
-                    # we won't stop the fade (even though the fade has
-                    # reached its destination value), because if we stop
-                    # the fade animation, then in the next frame,
-                    # the sprite will have full opacity.
+                    # We've reached the destination fade value, so stop fading.
+                    self.stop_fading()
 
                     reached_destination_fade = True
                 else:
