@@ -438,7 +438,9 @@ class SpriteObject:
     def start_fading(self):
         """
         Set the flag to indicate that fading animations should occur for this sprite.
-        :return:
+        
+        If there no fade_until value, assume the destination fade-until value
+        based on the fade-direction.
         """
         
         # If there is no fade-until value, assume fade-until to 255 or 0,
