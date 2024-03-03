@@ -50,7 +50,7 @@ from wizard_window import WizardWindow
 from play_error_window import PlayErrorWindow
 from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
-from snap_handler import SnapHandler
+from container_handler import ContainerHandler
 from custom_pygubu_widgets import LVNAuthEditorWidget
 from edit_colors_window import EditColorsWindow
 from variable_editor_window import VariableEditorWindow
@@ -1133,7 +1133,7 @@ class EditorMainApp:
             #active_script = {active_chapter_name: ProjectSnapshot.chapters_and_scenes[active_chapter_name]}
 
             # For playing/testing the story
-            draft_path = SnapHandler.get_draft_path()
+            draft_path = ContainerHandler.get_draft_path()
             compile_path = Path(draft_path)              
 
             compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
@@ -1184,7 +1184,7 @@ class EditorMainApp:
 
         player_script_file: Path
         # Get the path to main.py (the player Python script file.)
-        player_script_file = SnapHandler.get_lvnauth_player_python_file()
+        player_script_file = ContainerHandler.get_lvnauth_player_python_file()
         
         # Get the path to the Python interpreter that's being used now.
         # This is the recommended way when using subprocess.run()
@@ -1250,7 +1250,7 @@ class EditorMainApp:
         """
 
         # For playing/testing the story
-        draft_path = SnapHandler.get_draft_path()
+        draft_path = ContainerHandler.get_draft_path()
         compile_path = Path(draft_path)     
 
         compile_result = self.compile(lvna_full_path=compile_path,

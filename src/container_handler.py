@@ -19,13 +19,15 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 Changes:
 - Nov 23, 2023 (Jobin Rezai) - Added get_snap_user_data_folder()
+- February 24, 2024 (Jobin Rezai) - Renamed to container_handler.py,
+to begin Flatpak recognition.
 """
 
 import os
 from pathlib import Path
 
 
-class SnapHandler:
+class ContainerHandler:
     @staticmethod
     def is_in_snap_package() -> bool:
         """
@@ -39,6 +41,52 @@ class SnapHandler:
             return True
         else:
             return False
+        
+    @staticmethod
+    def is_in_flatpak_package() -> bool:
+        """
+        Check whether LVNAuth is inside a Linux Flatpak package or not.
+        
+        return: True if running inside a Flatpak or False if otherwise.
+        """
+        container = os.environ.get("container")
+        if container and container == "flatpak":
+            return True
+        else:
+            return False
+        
+    @staticmethod
+    def get_flatpak_app_directory() -> Path | None:
+        """
+        Return the path to the /app/bin folder of the flatpak.
+        This is where the main Python scripts are.
+        """
+        if ContainerHandler.is_in_flatpak_package():
+            app_folder = os.environ.get("FLATPAK_DEST")
+            if not app_folder:
+                return
+            
+            app_folder = Path(app_folder) / "bin"
+            
+            return app_folder
+        
+    @staticmethod
+    def get_flatpak_config_directory() -> Path | None:
+        """
+        Return the path to the config folder of the flatpak,
+        which is something like:
+        /home/username/.var/app/org.lvnauth.LVNAuth/config
+        
+        This is where the non-edited default version of lvnauth.config is.
+        """
+        if ContainerHandler.is_in_flatpak_package():
+            config_folder = os.environ.get("XDG_CONFIG_HOME")
+            if not config_folder:
+                return
+            
+            config_folder = Path(config_folder)
+            
+            return config_folder
     
     @staticmethod
     def get_snap_user_common_folder() -> Path | None:
@@ -52,7 +100,7 @@ class SnapHandler:
         was not found.
         """
 
-        if SnapHandler.is_in_snap_package():
+        if ContainerHandler.is_in_snap_package():
             snap_user_common_folder = os.environ.get("SNAP_USER_COMMON")
 
             if not snap_user_common_folder:
@@ -76,7 +124,7 @@ class SnapHandler:
         was not found.
         """
 
-        if SnapHandler.is_in_snap_package():
+        if ContainerHandler.is_in_snap_package():
             snap_user_data_folder = os.environ.get("SNAP_USER_DATA")
 
             if not snap_user_data_folder:
@@ -94,10 +142,16 @@ class SnapHandler:
         """
         full_path = None
         
-        if SnapHandler.is_in_snap_package():
-            snap_common = SnapHandler.get_snap_user_common_folder()
+        if ContainerHandler.is_in_snap_package():
+            snap_common = ContainerHandler.get_snap_user_common_folder()
             if snap_common:
-                full_path = snap_common / "draft" / "draft.lvna"                  
+                full_path = snap_common / "draft" / "draft.lvna"
+                
+        elif ContainerHandler.is_in_flatpak_package():
+            app_directory = ContainerHandler.get_flatpak_app_directory()
+            if app_directory:
+                full_path = app_directory / "draft" / "draft.lvna"
+                
         else:
             full_path = Path(r"draft/draft.lvna")
             
@@ -114,14 +168,15 @@ class SnapHandler:
     @staticmethod
     def get_lvnauth_player_python_file() -> Path | None:
         """
-        Return a snap path to LVNAuth's main.py player Python file.
+        Return a snap or flatpak path to LVNAuth's main.py player Python file.
         If we're not in a snap, return the regular path to main.py
         
-        Example: /snap/lvnauth/x1/lvnauth/src/player/main.py
+        Example for snap: /snap/lvnauth/x1/lvnauth/src/player/main.py
+        Example for flatpak: /app/bin/player/main.py
         """
         
         # /snap/lvnauth/x1
-        if SnapHandler.is_in_snap_package():
+        if ContainerHandler.is_in_snap_package():
             snap_directory = os.environ.get("SNAP")
 
             snap_directory = Path(snap_directory)
@@ -130,6 +185,15 @@ class SnapHandler:
             full_path = snap_directory / "src" / "player" / "main.py"
 
             return full_path
+        
+        # /app/bin
+        elif ContainerHandler.is_in_flatpak_package():
+            app_directory = ContainerHandler.get_flatpak_app_directory()
+            
+            full_path: Path
+            full_path = app_directory / "player" / "main.py"
+
+            return full_path            
         else:
             # Not in a Snap package; return a regular path.
             return Path("player") / "main.py"
@@ -137,12 +201,13 @@ class SnapHandler:
     @staticmethod
     def get_lvnauth_editor_icon_path() -> Path | None:
         """
-        Return a snap path to LVNAuth editor's icon png file.
+        Return a snap path or flatpak path to LVNAuth editor's icon png file.
 
-        Example: /snap/lvnauth/x1/lvnauth/src/app_icon.png
+        Example for snap: /snap/lvnauth/x1/lvnauth/src/app_icon.png
+        Example for flatpak: /app/bin/app_icon.png
         """
 
-        if SnapHandler.is_in_snap_package():
+        if ContainerHandler.is_in_snap_package():
             # /snap/lvnauth/x1
             snap_directory = os.environ.get("SNAP")
 
@@ -155,27 +220,53 @@ class SnapHandler:
             full_path = snap_directory / "src" / "app_icon.png"
 
             return full_path
+        
+        elif ContainerHandler.is_in_flatpak_package():
+            # /app/bin/
+            flatpak_directory = ContainerHandler.get_flatpak_app_directory()
+            if not flatpak_directory:
+                return
+            
+            full_path: Path
+            full_path = flatpak_directory / "app_icon.png"
+
+            return full_path            
 
     @staticmethod
     def get_lvnauth_editor_icon_path_small() -> Path | None:
         """
-        Return a snap path to LVNAuth player's small icon png file.
+        Return a snap or flatpak path to LVNAuth player's small icon png file.
 
-        Example: /snap/lvnauth/x1/lvnauth/src/player/app_icon_small.png
+        Example for snap: /snap/lvnauth/x1/lvnauth/src/player/app_icon_small.png
+        Example for flatpak: /app/bin/player/app_icon_small.png
         """
+        
+        if ContainerHandler.is_in_snap_package():
 
-        # /snap/lvnauth/x1
-        snap_directory = os.environ.get("SNAP")
-
-        if not snap_directory:
-            return
-
-        snap_directory = Path(snap_directory)
-
-        full_path: Path
-        full_path = snap_directory / "src" / "player" / "app_icon_small.png"
-
-        return full_path
+            # /snap/lvnauth/x1
+            snap_directory = os.environ.get("SNAP")
+    
+            if not snap_directory:
+                return
+    
+            snap_directory = Path(snap_directory)
+    
+            full_path: Path
+            full_path = snap_directory / "src" / "player" / "app_icon_small.png"
+    
+            return full_path
+        
+        elif ContainerHandler.is_in_flatpak_package():
+            
+            # /app/bin
+            app_directory = ContainerHandler.get_flatpak_app_directory()
+            if not app_directory:
+                return
+            
+            full_path: Path
+            full_path = app_directory / "player" / "app_icon_small.png"
+    
+            return full_path            
 
     @staticmethod
     def get_lvnauth_src_folder() -> Path | None:

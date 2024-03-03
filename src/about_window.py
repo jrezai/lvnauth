@@ -22,7 +22,7 @@ import pygubu
 from PIL import Image, ImageTk
 from project_snapshot import ProjectSnapshot
 from linklabel_widget import LinkLabel
-from snap_handler import SnapHandler
+from container_handler import ContainerHandler
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "about_window.ui"
 PROJECT_LVN_LICENSE_UI =  PROJECT_PATH / "ui" / "lvnauth_license_window.ui"
@@ -127,11 +127,15 @@ class AboutWindow:
         builder.connect_callbacks(self)
         
         # LVNAuth logo image
-        if SnapHandler.is_in_snap_package():
-            lvnauth_snap_directory = SnapHandler.get_lvnauth_src_folder()
+        if ContainerHandler.is_in_snap_package():
+            lvnauth_snap_directory = ContainerHandler.get_lvnauth_src_folder()
             lvnauth_logo_path = lvnauth_snap_directory / "lvnauth_logo.png"
+        
+        elif ContainerHandler.is_in_flatpak_package():
+            lvnauth_flatpak_directory = ContainerHandler.get_flatpak_app_directory()
+            lvnauth_logo_path = lvnauth_flatpak_directory / "lvnauth_logo.png"
         else:
-            # Not a Snap package; get the regular path (same folder as this script.)
+            # Not a Snap or Flatpak package; get the regular path (same folder as this script.)
             lvnauth_logo_path = "lvnauth_logo.png"
 
         self.lvnauth_image = Image.open(lvnauth_logo_path)
