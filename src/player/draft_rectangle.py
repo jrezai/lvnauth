@@ -81,18 +81,6 @@ class DraftRectangle:
         self.pending_hide = False
         self.pending_show = True
 
-    def update(self) -> List[pygame.Rect]:
-        """
-        Return the update rect as a list, unless the draft rectangle is not visible.
-        """
-        update_rect = []
-        if any([self.pending_show, self.pending_hide, self.visible]):
-            update_rect.append(pygame.Rect(self.rect_main_dimensions))
-            self.pending_show = False
-            self.pending_hide = False
-
-        return update_rect
-
     def draw(self, display_text: str):
         """
         Draw a small rectangle at the top center of the main surface.
@@ -146,5 +134,3 @@ class DraftRectangle:
         # to the main surface.
         self.main_surface.blit(self.rect_surface, rect_main_location)
 
-        # The rect area that will be used for updating the main surface.
-        self.update()

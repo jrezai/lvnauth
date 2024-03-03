@@ -610,65 +610,17 @@ class DialogRectangle:
         # to call for the animation.
         self.animating_intro = True
         self.animating_outro = False        
-
-    def get_updated_rect(self):
-        """
-        Get the updated rect as a list (because the caller expects a list)
-        even though we're only returning one rect here.
-        
-        Return None if there is nothing to update.
-        """
-        new_rect = None
-        rect_list = []
-        
-        if self.updated_rect:
-            new_rect = self.updated_rect.copy()
-            
-            # Clear this variable so we're ready for the
-            # next rect update in the next frame, if any.
-            self.updated_rect = None
-
-            # The caller of this method expects a list.
-            rect_list.append(new_rect)
-
-        return rect_list
-    
-    def queue_for_update(self):
-        """
-        Queue the entire rectangle for an update.
-        
-        Purpose: when dialog text needs to get cleared,
-        the entire dialog rectangle shape needs to be redrawn and updated
-        on the screen so the old text gets cleared.
-        
-        Add the dialog's rect to self.update_rect, which will eventually
-        be read and updated on the screen.
-        """
-        self.updated_rect = self.rect.copy()
         
     def update(self) -> pygame.Rect | None:
         """
         Animate the dialog rectangle if needed and save the updated rect.
         """
-        
-        update_rect = None
 
         if self.animating_intro:
-            update_rect = self._animate_intro()
+            self._animate_intro()
 
         elif self.animating_outro:
-            update_rect = self._animate_outro()
-
-
-        # Set self.update_rect only if there is a rect to update.
-        # If we don't have this check, then we will clear any updates
-        # that other methods have requested for this rectangle shape,
-        #
-        # In other words, if there are no updates here in this method,
-        # the update_rect variable will be None, so any existing updates
-        # in self.update_rect will get overwritten with None.
-        if update_rect:
-            self.updated_rect = update_rect.copy()
+            self._animate_outro()
 
     def draw(self):
         """
@@ -684,10 +636,6 @@ class DialogRectangle:
         dialog text to get cleared.
         """
         self.redraw_rectangle()
-        
-        # Update the entire rectangle shape for an update so any
-        # previous texts gets cleared away.
-        self.queue_for_update()
 
     def _prepare_outro_animation(self):
         """
@@ -780,7 +728,7 @@ class DialogRectangle:
             # Restore the center it had before (for ScaleDown type animations)
             self.rect_destination.center = center_before            
 
-    def _animate_outro(self) -> pygame.Rect | None:
+    def _animate_outro(self):
         """
         Animate the outro animation, if it has one.
         """
@@ -791,9 +739,6 @@ class DialogRectangle:
         # Clear the surface because we're going to draw a new rectangle.
         # The fourth zero is the alpha (opacity).
         self.surface.fill((0, 0, 0, 0))        
-        
-        # Get the rect before the animation has been calculated
-        before_rect = self.rect.copy()
 
         if not self.outro_complete:
         
@@ -1028,42 +973,30 @@ class DialogRectangle:
                 
                 #pygame.display.flip()
         
-        if before_rect:
 
-            # Combine the old position of the rectangle (before the animation), 
-            # and the new position of the rectangle (after the animation)
-            # into one rectangle, so we can update it.
-            combined_rect = before_rect.union(self.rect)
+        # Are we done animating? If so, reset the animating flag
+        if self.outro_complete:
 
-            # Add rectangle to update-list if it's not already
-            # inside one of the rectangles that's pending an update
-            #set_update_rect(combined_rect)
+            # Indicate to the loop update part that this is the last
+            # outro animation frame and after this outro dialog animation,
+            # set the visibility of the dialog rectangle to False. If we
+            # attempt to set the visibility of the dialog rectangle to
+            # False here, the very last outro animation won't refresh/update
+            # on the screen, which is why we use this flag so the update
+            # gets done, even though the outro dialog animation is done.
+            self.next_rect_update_hide_dialog = True
 
-            # Are we done animating? If so, reset the animating flag
-            if self.outro_complete:
+            # Run a specific reusable script?
+            if self.reusable_on_outro_finished:
+                reusable_on_outro_finished = self.reusable_on_outro_finished
+            else:
+                reusable_on_outro_finished = None
 
-                # Indicate to the loop update part that this is the last
-                # outro animation frame and after this outro dialog animation,
-                # set the visibility of the dialog rectangle to False. If we
-                # attempt to set the visibility of the dialog rectangle to
-                # False here, the very last outro animation won't refresh/update
-                # on the screen, which is why we use this flag so the update
-                # gets done, even though the outro dialog animation is done.
-                self.next_rect_update_hide_dialog = True
-
-                # Run a specific reusable script?
-                if self.reusable_on_outro_finished:
-                    reusable_on_outro_finished = self.reusable_on_outro_finished
-                else:
-                    reusable_on_outro_finished = None
-
-                # Run the method that resets a 'busy' flag so that the
-                # main script reader can resume reading the main script
-                # now that this dialog rect's animation is complete.
-                self.animation_finished_method(final_dest_rect=self.rect,
-                                               run_reusable_script_name=reusable_on_outro_finished)
-                
-            return combined_rect
+            # Run the method that resets a 'busy' flag so that the
+            # main script reader can resume reading the main script
+            # now that this dialog rect's animation is complete.
+            self.animation_finished_method(final_dest_rect=self.rect,
+                                           run_reusable_script_name=reusable_on_outro_finished)
         
     def _animate_intro(self) -> pygame.Rect | None:
         """
@@ -1076,9 +1009,6 @@ class DialogRectangle:
 
         # Clear the surface. The fourth zero is the alpha (opacity).
         self.surface.fill((0, 0, 0, 0))
-
-        # Get the rect before the animation has been calculated
-        before_rect = self.rect.copy()
 
         if self.intro_animation == RectangleIntroAnimation.NO_ANIMATION:
             # No animation, just show the dialog rectangle right away.
@@ -1262,31 +1192,21 @@ class DialogRectangle:
 
         # pygame.display.flip()
     
-        if before_rect:
-    
-            # Combine the old position of the rectangle (before the animation),
-            # and the new position of the rectangle (after the animation)
-            # into one rectangle, so we can update it.
-            combined_rect = before_rect.union(self.rect)
-    
-            # Are we done animating? If so, reset the animating flag
-            if self.intro_complete:
-                
-                # Run a specific reusable script?
-                if self.reusable_on_intro_finished:
-                    reusable_on_intro_finished = self.reusable_on_intro_finished
-                else:
-                    reusable_on_intro_finished = None
+        # Are we done animating? If so, reset the animating flag
+        if self.intro_complete:
+            
+            # Run a specific reusable script?
+            if self.reusable_on_intro_finished:
+                reusable_on_intro_finished = self.reusable_on_intro_finished
+            else:
+                reusable_on_intro_finished = None
 
-                # Run the method that resets a 'busy' flag so that the
-                # main script reader can resume reading the main script
-                # now that this dialog rect's animation is complete.
-                self.animation_finished_method(final_dest_rect=self.rect_destination,
-                                               run_reusable_script_name=reusable_on_intro_finished)
-    
-            # Add rectangle to update-list if it's not already
-            # inside one of the rectangles that's pending an update
-            return combined_rect
+            # Run the method that resets a 'busy' flag so that the
+            # main script reader can resume reading the main script
+            # now that this dialog rect's animation is complete.
+            self.animation_finished_method(final_dest_rect=self.rect_destination,
+                                           run_reusable_script_name=reusable_on_intro_finished)
+
 
     def redraw_rectangle(self):
         """

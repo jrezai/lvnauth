@@ -50,7 +50,7 @@ class VariableEditorWindow:
         
         # Connect the vertical scrollbar to the treeview widget.
         self.sb_vertical.configure(command=self.treeviewedit1.yview)
-        self.treeviewedit1.configure(yscrollcommand=self.sb_vertical.set)
+        self.treeviewedit1.configure(yscrollcommand=self.vertical_scroll_handler)
         
         # The method that the treeview widget will use to validate
         # new values being edited when a cell is double-clicked.
@@ -80,6 +80,21 @@ class VariableEditorWindow:
         self.mainwindow.grab_set()
 
         self.mainwindow.wait_window(self.mainwindow)
+        
+    def vertical_scroll_handler(self, y, y1):
+        """
+        The vertical scroll bar is scrolling, so make sure
+        edit-mode is exited (if we're in edit-mode).
+        
+        Purpose: without this, if the scroll bar is scrolled
+        without the mouse wheel, the entry edit widget will still
+        float on the treeview widget, without being scrolled.
+        So we have this here to hide the entry widget if the
+        scroll bar is being scrolled without a mouse wheel,
+        although this method runs with a mouse wheel as well.
+        """
+        self.treeviewedit1._destroy_entry_widget()
+        self.sb_vertical.set(y, y1)
         
     def validate_variable_name(self,
                                column_name: str,

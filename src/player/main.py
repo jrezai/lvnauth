@@ -31,11 +31,11 @@ from pathlib import Path
 from pygame import scrap
 
 # We need to add the parent directory so
-# the snap_handler module will be seen.
+# the container_handler module will be seen.
 this_module_path = Path(__file__)
 one_level_up_directory = str(Path(*this_module_path.parts[0:-2]))
 sys.path.append(one_level_up_directory)
-from snap_handler import SnapHandler
+from container_handler import ContainerHandler
 
 
 class Main:
@@ -130,10 +130,6 @@ class Main:
 
         pygame.init()
 
-        # Used for copying text to the clipboard.
-        scrap.init()
-        scrap.set_mode(pygame.SCRAP_CLIPBOARD)
-
         clock = pygame.time.Clock()
 
         pygame.display.set_caption("LVNAuth Player")
@@ -141,8 +137,8 @@ class Main:
         # The app's icon file will be either in the current directory
         # or in the 'player' directory. It depends whether the visual novel
         # is being played from the editor, or directly.
-        if SnapHandler.is_in_snap_package():
-            app_icon_path = SnapHandler.get_lvnauth_editor_icon_path_small()
+        if ContainerHandler.is_in_snap_package() or ContainerHandler.is_in_flatpak_package():
+            app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path_small()
         else:
             # Not in a Snap package.
             app_icon_path = Path(r"app_icon_small.png")
@@ -165,14 +161,6 @@ class Main:
                             background_surface=background_surface,
                             draft_mode=draft_mode)
         Passer.active_story = story
-
-        # The first time the story starts, we need to refresh the whole screen
-        # so that sprites that don't animate will get shown.
-        self.initial_screen_refresh_done = False
-
-        # We need this flag because when we minimize pygame and restore it again,
-        # the window won't update until we refresh the whole screen.
-        self.pygame_window_last_visible = pygame.display.get_active()
 
         # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
@@ -216,15 +204,11 @@ class Main:
             story.on_loop()
 
             # Handle drawing
-            update_rects = story.on_render()
-
-            # Update portions of the screen or the entire screen, depending on some factors.
-            self.refresh_screen(update_rects)
-
-            # print(update_rects)
+            story.on_render()
+            
 
             # For debugging
-            # pygame.display.flip()
+            pygame.display.flip()
 
     def on_key_down(self, key_pressed):
         """
@@ -303,46 +287,6 @@ class Main:
                 # so that the user knows it's been copied to the clipboard.
                 Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
 
-    def refresh_screen(self, update_rects):
-        """
-        Refresh the screen based on the best decision. Return a list of updated rects, if applicable.
-
-        For example: if the pygame window is active, only update parts of the screen
-                     that have changed. However, if the pygame window is inactive (minimized),
-                     then as soon as the window is restored, refresh the 'whole' screen because
-                     otherwise the window will be blank.
-
-        :param update_rects:
-        :return:
-        """
-
-        # Is the active active? (active means not-minimized)
-        window_active = pygame.display.get_active()
-
-        # If the window is active (not-minimized) but wasn't active before (was minimized before),
-        # then refresh the whole screen.
-        if window_active and not self.pygame_window_last_visible:
-            self.pygame_window_last_visible = True
-            pygame.display.flip()
-            print("Updated the whole screen")
-
-        # Refresh the screen when the story first starts up.
-        # After this refresh, only individual sprite updates will be done.
-        # Without this part, only sprites that animate will show, not sprites that don't animate.
-        elif not self.initial_screen_refresh_done:
-            self.initial_screen_refresh_done = True
-            pygame.display.flip()
-            print("Updated the whole screen")
-
-        # If the window is not active (minimized) but was active before (not minimized before),
-        # then set the flag.
-        elif not window_active and self.pygame_window_last_visible:
-            self.pygame_window_last_visible = False
-
-        # Specific parts that need updating?
-        elif update_rects:
-            pygame.display.update(update_rects)
-            # print("Updated some parts", update_rects, datetime.now())
 
 
 if __name__ == "__main__":
@@ -361,10 +305,12 @@ if __name__ == "__main__":
     # Debug for playing in the player
     if not args.file:
 
-        if SnapHandler.is_in_snap_package():
-            draft_path = SnapHandler.get_draft_path()
+        if ContainerHandler.is_in_snap_package() \
+           or ContainerHandler.is_in_flatpak_package():
+            draft_path = ContainerHandler.get_draft_path()
             args.file = str(draft_path)
         else:
+            # Not inside a Snap or Flatpak
             args.file = r"../draft/draft.lvna"
         args.show_launch = "True"
 

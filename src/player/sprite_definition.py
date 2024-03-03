@@ -17,9 +17,13 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pygame
+import font_handler
 from shared_components import Passer, ManualUpdate
 from typing import NamedTuple, Tuple, List
 from enum import Enum, auto
+from datetime import datetime
+from time import perf_counter
+
 
 
 class RotateType(Enum):
@@ -260,11 +264,24 @@ class SpriteObject:
                  name: str,
                  image: pygame.Surface,
                  general_alias: str):
+        
+
         self.name = name
         self.general_alias = general_alias
         self.image = image
         self.rect = self.image.get_rect()
 
+        # We need a copy of the image before we apply any text to it, 
+        # so that we don't blit the same text over and over again.
+        # We're going to eventually copy this image to self.original_image
+        # in the drawing loop. We will use the rect self.original_rect below.
+        self.original_image_before_text = image.copy()
+
+        # This will hold the original image, but may contain text.
+        # The actual 100% original is in self.original_image_before_text
+        # but this below is the second original which may or may not contain
+        # text drawn on it. If there is no text drawn on it, then it will be
+        # exactly the same as self.original_image_before_text
         self.original_image = image.copy()
         self.original_rect = self.original_image.get_rect()
 
@@ -314,6 +331,13 @@ class SpriteObject:
         self.is_scaling = False
         self.is_rotating = False
 
+        # The effect amounts that are applied.
+        # We use these to determine if we need to apply the effects
+        # when there is no gradual animation (sudden effect changes).
+        self.applied_fade_value = None
+        self.applied_scale_value = None
+        self.applied_rotate_value = None
+
         # If any object has this flag set, the story script will not
         # continue to be read until the flag below has been set to False (for *all* sprite objects).
         self.wait_for_movement = False
@@ -360,16 +384,87 @@ class SpriteObject:
         self.rotate_stop_run_script = None
 
         # self.sudden_fade_change = False
-        self.sudden_scale_change = False
-        self.sudden_rotate_change = False
+        # self.sudden_scale_change = False
+        # self.sudden_rotate_change = False
+        
+        # Deals with showing/hiding sprite text
+        self.active_font_handler =\
+            font_handler.ActiveFontHandler(story=Passer.active_story,
+                                           sprite_object=self)        
 
         self.visible = False
+
+    def clear_text_and_redraw(self):
+        """
+        Copy the image that doesn't have any text on it
+        (self.original_image_before_text) to self.original_image.
+        
+        Then, update self.image and apply any scale/rotation/fade that it needs,
+        because once we copy self.original_image to self.image, it won't
+        have any alterations (no rotation,scale,fade), so we need to re-apply
+        those to the new image that has no text, if the previous image with
+        text had those things applied to it.
+        """
+
+        # This sprite has no text? return
+        if not self.active_font_handler:
+            return
+        elif not self.active_font_handler.letters_to_blit:
+            return
+
+        # Clear the list that's used for blitting letters.
+        self.active_font_handler.clear_letters()
+
+        # Clear the cursor position in case text was shown gradually.
+        self.active_font_handler.font_animation.gradual_letter_cursor_position = 0
+
+        # Get the original image that has no text blitted on it.
+        # We might need to apply a scale/rotation/fade to it later.
+        self.original_image = self.get_original_image_without_text()
+
+        
+
+        ## If self.image wasn't replaced by any of the scale/rotation/fade
+        ## method calls here, then replace self.image with the original image now.
+        ## This will cause the sprite's display image to change to the version
+        ## that doesn't contain text.
+        ## if not replaced_display_image:
+        #self.image = self.get_original_image_with_text()
+        
+        self._apply_still_effects()
+
+        ManualUpdate.queue_for_update(self.rect)
 
     def start_fading(self):
         """
         Set the flag to indicate that fading animations should occur for this sprite.
-        :return:
+        
+        If there no fade_until value, assume the destination fade-until value
+        based on the fade-direction.
         """
+        
+        # If there is no fade-until value, assume fade-until to 255 or 0,
+        # depending on the fade direction.
+        if self.fade_until is None:
+            
+            # Fading in? Assume the destination fade value to be 255.
+            if self.fade_speed is not None and \
+               self.fade_speed.fade_direction == "fade in":
+                
+                self.fade_until = FadeUntilValue(sprite_name=self.name,
+                                                 fade_value=255)
+            
+            # Fading out? Assume the destination fade value to be 0.
+            elif self.fade_speed is not None and \
+               self.fade_speed.fade_direction == "fade out":
+                
+                self.fade_until = FadeUntilValue(sprite_name=self.name,
+                                                 fade_value=0)
+                
+            else:
+                # No fade speed or no valid fade direction.
+                return
+                
         self.is_fading = True
 
     def stop_fading(self):
@@ -421,11 +516,10 @@ class SpriteObject:
         """
         self.is_rotating = True
 
-    def _show(self) -> pygame.Rect | None:
+    def _show(self):
         """
         Set the visibility flag to True, to indicate to the renderer that
-        this sprite should be drawn on the screen. Return the rect
-        of where this sprite currently is.
+        this sprite should be drawn on the screen.
 
         This method is meant to be run from self.start_show() and not directly.
         """
@@ -440,13 +534,10 @@ class SpriteObject:
 
         self.visible = True
 
-        return self.rect
-
-    def _hide(self) -> pygame.Rect | None:
+    def _hide(self):
         """
         Set the visibility flag to False, to indicate to the renderer that
-        this sprite should no longer be drawn on the screen. Return the rect
-        of where this sprite currently is.
+        this sprite should no longer be drawn on the screen.
 
         This method is meant to be run from self.start_hide() and not directly.
         """
@@ -460,8 +551,6 @@ class SpriteObject:
             return
 
         self.visible = False
-
-        return self.rect
 
     def start_hide(self):
         """
@@ -691,12 +780,15 @@ class SpriteObject:
         if all([horizontal, vertical]):
             self.image = pygame.transform.flip(self.image, True, True)
             self.original_image = pygame.transform.flip(self.original_image, True, True)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, True)
         elif horizontal:
             self.image = pygame.transform.flip(self.image, True, False)
             self.original_image = pygame.transform.flip(self.original_image, True, False)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, False)
         elif vertical:
             self.image = pygame.transform.flip(self.image, False, True)
             self.original_image = pygame.transform.flip(self.original_image, False, True)
+            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, False, True)
         else:
             # No flips have occurred, so there is no need to request a screen-update.
             return
@@ -851,32 +943,18 @@ class SpriteObject:
     def update(self):
         """
         Animate/move the sprite here.
-        :return: updated rect or None if no changes occurred to this sprite.
+        Return: None
         """
 
-        # The list of update rects for all the animation updates.
-        update_list = []
-
-        # Should we show or hide this sprite? If so,
-        # get the rect so we can update the screen
-        # with its rect.
-
+        # Should we show or hide this sprite?
         if self.pending_show:
             # We're going to start showing this sprite.
-
-            # Get the rect of where this sprite should show
-            # so we can update the screen to make the sprite appear.
-            show_rect = self._show()
-            if show_rect:
-                update_list.append(show_rect)
+            self._show()
 
         elif self.pending_hide:
             # We're going to hide this sprite.
-
-            # Return the rect of where this sprite is
-            # so we can update the screen so the sprite no longer appears.
-            return self._hide()
-
+            self._hide()
+            return
 
         # If this sprite is not visible, there is no point
         # in animating it.
@@ -885,41 +963,25 @@ class SpriteObject:
 
         # Note: it's important to do the fading animation last because otherwise
         # the faded image will get overwritten with the original image in the other animations.
-        update_rect_scaling = self._animate_scaling()
-        update_rect_movement = self._animate_movement()
-        update_rect_rotate = self._animate_rotation()
-        update_rect_fade = self._animate_fading()
+        self.active_font_handler.draw()
+        self._animate_scaling()
+        self._animate_movement()
+        self._animate_rotation()
+        self._animate_fading()
 
-        # if isinstance(self, DialogSprite):
-        # print("It's a dialog")
-        # update_rect_movement = self.get_screen_coordinates(
-        # update_rect_movement)
-
-
-        # Only add a rect if it's not None.
-        for rect in (update_rect_scaling, update_rect_movement, update_rect_fade, update_rect_rotate):
-            if rect:
-                update_list.append(rect)
-
-        if not update_list:
-            return
-
-        # Create one rect from all the updated rects in this sprite.
-        one_rect = update_list[0].unionall(update_list)
-
-        return one_rect
+        self._apply_still_effects()
 
     def _animate_rotation(self):
         """
         Rotate the sprite (if required).
-        :return: updated rect or None if no rotation occurs.
+        Return: None
         """
 
-        # Did the rotation value change without an animation?
-        # If so, rotate the sprite and return the new rect.
-        if self.sudden_rotate_change:
-            self.sudden_rotate_change = False
-            return self._scale_or_rotate_sprite()
+        ## Did the rotation value change without an animation?
+        ## If so, rotate the sprite and return the new rect.
+        # if self.sudden_rotate_change:
+        # self.sudden_rotate_change = False
+        # return self._scale_or_rotate_sprite()
 
         # Not rotating the sprite or no rotation speed set? Return.
         if not self.is_rotating or not self.rotate_speed:
@@ -939,6 +1001,9 @@ class SpriteObject:
                 # Don't rotate in this frame and increment skipped counter
                 self.rotate_delay_main.frames_skipped_so_far += 1
                 skip_rotate = True
+
+        if skip_rotate:
+            return
 
         if not skip_rotate:
 
@@ -1023,30 +1088,27 @@ class SpriteObject:
 
                 return
 
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_rotate:
-            if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
-                # Don't apply this animation in this frame,
-                # because it's the only animation and it's currently
-                # on a delayed pause.
-                return
-
-        rect = self._scale_or_rotate_sprite()
-        return rect
+        ## Skipping the animation in this frame due to a delay?
+        ## Don't apply the current value of the animation effect
+        ## if it's the *only* active animation.
+        #if skip_rotate:
+            #if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
+                ## Don't apply this animation in this frame,
+                ## because it's the only animation and it's currently
+                ## on a delayed pause.
+                #return
 
     def _animate_scaling(self):
         """
         Scale the sprite (if required).
-        :return: updated rect or None if no scaling occurs.
+        Return: None
         """
 
-        # Did the scale value change without an animation?
-        # If so, scale the sprite and return the new rect.
-        if self.sudden_scale_change:
-            self.sudden_scale_change = False
-            return self._scale_or_rotate_sprite()
+        ## Did the scale value change without an animation?
+        ## If so, scale the sprite and return the new rect.
+        # if self.sudden_scale_change:
+        # self.sudden_scale_change = False
+        #return self._scale_or_rotate_sprite()
 
         # Not scaling the sprite or no scale speed set
         # or no scale_until set? Return.
@@ -1066,6 +1128,9 @@ class SpriteObject:
                 # Don't scale in this frame and increment skipped counter
                 self.scale_delay_main.frames_skipped_so_far += 1
                 skip_scale = True
+                
+        if skip_scale:
+            return
 
         if not skip_scale:
 
@@ -1129,29 +1194,24 @@ class SpriteObject:
 
                 return
 
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_scale:
-            if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
-                # Don't apply this animation in this frame,
-                # because it's the only animation and it's currently
-                # on a delayed pause.
-                return
+        ## Skipping the animation in this frame due to a delay?
+        ## Don't apply the current value of the animation effect
+        ## if it's the *only* active animation.
+        #if skip_scale:
+            #if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
+                ## Don't apply this animation in this frame,
+                ## because it's the only animation and it's currently
+                ## on a delayed pause.
+                #return
 
-        rect = self._scale_or_rotate_sprite()
+        ## rect = self._scale_or_rotate_sprite()
 
-        return rect
-
-    def _scale_or_rotate_sprite(self) -> pygame.Rect:
+    def _scale_or_rotate_sprite(self):
         """
         Scale and/or rotate the sprite and then return a rect
         that covers the old rect and the new rect combined into one rect.
-        :return: rect
+        Return: None
         """
-
-        # So we can combine the old rect with the new rect
-        old_rect = self.rect.copy()
 
         if self.scale_current_value:
             current_scale = self.scale_current_value.scale_current_value
@@ -1165,76 +1225,110 @@ class SpriteObject:
             # Original angle
             current_rotate = 0
 
-
         # Scale and/or rotate the image, which is based on the original image.
-        self.image = pygame.transform.rotozoom(self.original_image, current_rotate, current_scale)
+        self.image = pygame.transform.rotozoom(self.get_original_image_with_text(),
+                                               current_rotate,
+                                               current_scale)
+        
+        # Record how much rotate/scale we've applied so we don't keep applying
+        # the rotate/scale unnecessarily during a non-animation sudden rotate 
+        # or scale change.
+        self.applied_rotate_value = current_rotate
+        self.applied_scale_value = current_scale
 
         # Get the new rect of the rotated or scaled image
         self.rect = self.image.get_rect(center=self.rect.center)
 
-        combined_rect = old_rect.union(self.rect)
-
-        return combined_rect
-
-    def _is_only_active_animation(self, animation_type: SpriteAnimationType):
+    def _apply_still_effects(self):
         """
-        Check if the supplied animation-type is the only active animation
-        for this sprite or not.
-
-        Example: if a rotation animation is the *only* active animation for this
-        sprite, and the animation_type (argument) is SpriteAnimationType.ROTATE,
-        then this method will return True.
-
-        Purpose of this method: when a delay is used on an animation (such as
-        rotation or scale), we ideally shouldn't update the sprite on
-        the screen when no animation is occuring during the delays/pauses.
-        However, it's only safe to skip updating a sprite animation if there
-        is one animation. If there are multiple animations enabled for this
-        sprite, we need to constantly update the sprite on each frame.
-        We use this method to know whether the sprite has only one kind of
-        animation or not.
-
-        Return: bool (True if there is only one animation for the given type
-        or False if there are multiple animations on this sprite.)
+        Apply scale/rotation/fade effects to the sprite if
+        the amount of effects applied to the sprite is different than
+        the expected amounts.
         """
-        animations = {animation_type.ROTATE: self.is_rotating,
-                      animation_type.SCALE: self.is_scaling,
-                      animation_type.FADE: self.is_fading}
+        
+        fade_needed = self.is_fade_needed()
+        scale_or_rotation_needed = self.is_scale_or_rotate_needed()
 
-        # Only keep active animations in the dictionary
-        animations = {k: v for (k, v) in animations.items()
-                      if v}
+        if scale_or_rotation_needed or fade_needed:
+            self._scale_or_rotate_sprite()
+            self._fade_sprite(skip_copy_original_image=True)
+            # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
+        #else:
+            #print("Animation not needed")
 
-        if len(animations) == 1:
-            is_enabled = animations.get(animation_type, False)
-            return is_enabled
+    def is_fade_needed(self) -> bool:
+        """
+        Return whether the applied fade amount is the same
+        as the expected fade amount.
+        """
+        # Is fade enabled on this sprite?
+        if self.current_fade_value is not None:
+            if self.current_fade_value.current_fade_value:
+                
+                # Is the applied fade amount the same
+                # as the expected fade amount?
+                if self.current_fade_value.current_fade_value != self.applied_fade_value:
+                    # The applied fade amount is different than
+                    # the expected fade amount.
+                    return True
 
-        return False
+    def is_scale_or_rotate_needed(self) -> bool:
+        """
+        Return whether the applied scale or rotation value is the same
+        as the expected scale or rotation value.
+        """        
+        
+        if self.scale_current_value \
+                and self.scale_current_value.scale_current_value != self.applied_scale_value:
+            
+            # Scale already at normal scale and no scale effect applied?
+            # No need to apply a scale-effect
+            if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
+                # No scale animation needed
+                pass
+            else:
+                # The applied scale value is different than
+                # the expected scale value.
+                return True
+
+
+        if self.rotate_current_value \
+                and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
+            
+            # Rotation already at 0 degrees and no rotation effect applied?
+            # No need to apply a rotation-effect
+            if self.rotate_current_value.rotate_current_value == 0 and self.applied_rotate_value is None:
+                return False            
+            
+            # The applied rotation value is different than
+            # the expected rotation value.
+            return True
 
     def _animate_fading(self):
         """
-        Fade the sprite (if required), but only if we know how far to fade the sprite.
-        :return: updated rect or None if no fading occurs.
+        Fade the sprite (if required), but only if we know how far
+        to fade the sprite.
+        Return: None
         """
 
         ## Did a sudden fade value change occur without an animation? (direct command)
-        ## Then fade the sprite and return the rect of the sprite so it can be updated on the screen.
+        ## Then fade the sprite and return.
         # if self.sudden_fade_change:
         # self.sudden_fade_change = False
         # self._fade_sprite()
-        # return self.rect
+        #return
 
         # Not fading the sprite? Return.
         if not self.is_fading:
             return
 
-        # If there is no fade_until value, but the fade
-        # value is not fully opaque, then apply the fade,
-        # even though we're not fading to a fade-destination.
-        if not self.fade_until and self.current_fade_value is not None:
-            if self.current_fade_value.current_fade_value < 255:
-                self._fade_sprite()
-                return
+        ## If there is no fade_until value, but the fade
+        ## value is not fully opaque, then apply the fade,
+        ## even though we're not fading to a fade-destination.
+        #if not self.fade_until and self.current_fade_value is not None:
+            #if self.current_fade_value.current_fade_value < 255:
+                #self._fade_sprite()
+                #return
 
         # At this point, we need to know whether to fade out or fade in.
         # If that hasn't been decided (fade_speed), return
@@ -1254,6 +1348,18 @@ class SpriteObject:
                 # Don't fade in this frame and increment skipped counter
                 self.fade_delay_main.frames_skipped_so_far += 1
                 skip_fade = True
+                
+        # Skipping the animation in this frame due to a delay?
+        # Don't apply the current value of the animation effect
+        # if it's the *only* active animation.
+        if skip_fade:
+            return
+            #if self._is_only_active_animation(animation_type=SpriteAnimationType.FADE):
+                ## Don't apply this animation in this frame,
+                ## because it's the only animation and it's currently
+                ## on a delayed pause.
+                #return
+
 
         if not skip_fade:
 
@@ -1273,15 +1379,8 @@ class SpriteObject:
             if fade_type == FadeType.FADE_IN:
                 if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
 
-                    # Stop the fade, only if the opacity is full at 255
-                    if self.current_fade_value.current_fade_value >= 255:
-                        self.stop_fading()
-
-                    # If the final fade value is less than 255, then
-                    # we won't stop the fade (even though the fade has
-                    # reached its destination value), because if we stop
-                    # the fade animation, then in the next frame,
-                    # the sprite will have full opacity.
+                    # We've reached the destination fade value, so stop fading.
+                    self.stop_fading()
 
                     reached_destination_fade = True
                 else:
@@ -1299,10 +1398,9 @@ class SpriteObject:
                     # Set a flag so we can check if a reusable script needs to run
                     reached_destination_fade = True
 
-                    # We're not going to stop the fade, even though the fade
-                    # has reached its fade-value destination,
-                    # because if we stop the fade animation, then in the next frame,
-                    # the sprite will have full opacity.
+                    # The sprite has reached its fade-value destination,
+                    # so stop the fade-out animation.
+                    self.stop_fading()
 
                 else:
                     # Decrease fade
@@ -1315,7 +1413,7 @@ class SpriteObject:
             # Have we reached a destination fade which caused the fade to stop?
             if reached_destination_fade:
                 # Yes, the fade has now stopped because we've reached a specific fade value.
-
+                
                 # Reset the fade_until value
                 self.fade_until = None
 
@@ -1338,45 +1436,111 @@ class SpriteObject:
                 # Apply the fade effect one last time for the destination fade amount
                 # that we're in. Without this, the destination fade amount
                 # won't get blitted.
-                self._fade_sprite()
+                # self._fade_sprite()
 
                 return
 
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_fade:
-            if self._is_only_active_animation(animation_type=SpriteAnimationType.FADE):
-                # Don't apply this animation in this frame,
-                # because it's the only animation and it's currently
-                # on a delayed pause.
-                return
-
-        # We're haven't skipped fading in this frame, so apply
-        # the fade and return the updated rect.
-        self._fade_sprite()
-        return self.rect
-
-
-    def _fade_sprite(self):
+    def _fade_sprite(self, skip_copy_original_image: bool = False):
         """
         Fade the sprite to the current fade value.
 
-        If the sprite is being scaled (as an animation) or being rotated (as an animation),
-        don't copy the original image, because then the scaling and/or rotation changes won't show.
-        :return: None
+        If the sprite is being scaled (as an animation)
+        or being rotated (as an animation),
+        don't copy the original image, because then the scaling
+        and/or rotation changes won't show.
+        
+        Arguments:
+        
+        - skip_copy_original_image: used by a sprite's clear_text_and_redraw()
+        method. Sometimes we shouldn't attempt to copy self.original_image
+        to self.image, because it has already been done and all we want to do
+        is fade the image. In a case like that, this variable will be set to True.
+        Under normal use-cases (without clear_text_and_redraw()) this variable
+        will be False.
         """
 
-        if not self.is_scaling and not self.is_rotating:
-            self.image = self.original_image.copy()
+        # Fade not applied to the sprite? return
+        if not self.current_fade_value:
+            return
 
+        replaced_image = False
+
+        # Should we consider copying the original image to self.image?
+        # The caller of this method may have already done this, which is
+        # why we check here.
+        if not skip_copy_original_image:
+
+            # Yes, we should consider copying the original image to self.image
+
+            #if not self.is_scaling and not self.is_rotating \
+               #and self.applied_scale_value is not None \
+               #and self.applied_rotate_value is not None:
+            self.image = self.get_original_image_with_text()
+                
+            replaced_image = True
+                
         self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
+
+        # Record how much fade we've applied so we don't keep applying
+        # the fade unnecessarily during a non-animation sudden fade change.
+        self.applied_fade_value = self.current_fade_value.current_fade_value
+
+        return replaced_image
+
+    def get_original_image_with_text(self) -> pygame.Surface:
+        """
+        Return a copy of the original image (that has no rotation,
+        no scale, no fade) but might have text on it. This copy
+        will eventually be copied to self.image
+        
+        Also, reset the variables that keep track of the amount of
+        rotation, scale, and fade, because eventually once the original image
+        has been copied to self.image, then self.image won't have those
+        effects applied anymore.
+        """
+
+        self.reset_applied_effects()
+        
+        return self.original_image.copy()
+
+    def get_original_image_without_text(self) -> pygame.Surface:
+        """
+        Return a copy of the original image (that has no rotation,
+        no scale, no fade) and has no text on it. This copy
+        will eventually be copied to self.original_image
+        
+        Also, reset the variables that keep track of the amount of
+        rotation, scale, and fade, because once the original image has
+        been copied to self.image, self.image won't have those effects
+        applied anymore.
+        
+        Eventually 'original_image' will want to be copied to self.image,
+        so that's why we need to reset the effect flags so that we can
+        re-apply them to self.image
+        """
+
+        self.reset_applied_effects()
+        
+
+        return self.original_image_before_text.copy()
+
+    def reset_applied_effects(self):
+        """
+        Also, reset the variables that keep track of the amount of
+        rotation, scale, and fade.
+        
+        Purpose: once the original image of a sprite has been copied to
+        self.image, the self.image won't have effects applied anymore.
+        """
+        self.applied_fade_value = None
+        self.applied_rotate_value = None
+        self.applied_scale_value = None        
 
     def _animate_movement(self):
         """
         Move the sprite (if required) and obey any delay rules for the movement.
 
-        :return: updated rect or None if no movement occurs.
+        Return: None
         """
 
         # Not moving the sprite or no instructions on speed? Return.
@@ -1532,33 +1696,18 @@ class SpriteObject:
                     # At this point, we will proceed with moving y.
                     self.delay_frame_counter_y = 0
 
-        # Keep track of where the sprite is before we move it
-        # so that we can create an update rect later on.
-        old_rect = self.rect.copy()
-
-        # Initialize
-        moved = False
-
         if proceed_move_x:
+            # Move the X position
             self.rect.move_ip(self.movement_speed.x, 0)
-            moved = True
 
         if proceed_move_y:
+            # Move the Y position
             self.rect.move_ip(0, self.movement_speed.y)
-            moved = True
-
-        # Have we moved the sprite?
-        if moved:
-            # Create a union rect that combines the old rect position and the new position.
-            update_rect = old_rect.union(self.rect)
-            return update_rect
 
 
 class SpriteGroup:
 
     def __init__(self):
-        self.update_rects = []
-
         # Key: sprite name (str)
         # Value: sprite object (SpriteObject)
         self.sprites = {}
@@ -1571,9 +1720,6 @@ class SpriteGroup:
         sprite = self.sprites.get(name)
         if not sprite:
             return
-
-        update_rect = sprite.rect
-        self.update_rects.append(update_rect)
 
         del self.sprites[name]
 
@@ -1610,27 +1756,7 @@ class SpriteGroup:
 
             # Get a regular animation update rect
             # This will be one rect for multiple animations (fade,scale, etc.)
-            new_rect = sprite.update()
-
-            if new_rect:
-                self.update_rects.append(new_rect)
-
-    def get_updated_rects(self) -> List[pygame.Rect]:
-        """
-        # Get all the rects for update sprites.
-
-        # The caller of this method will use the list of update rects
-        # to update the screen for just rects that have been changed.
-        :return: List[pygame.Rect]
-        """
-
-        # Get a copy of all the updated rects in this group.
-        updated_rects = self.update_rects.copy()
-
-        # Clear for the next animation loop.
-        self.update_rects.clear()
-
-        return updated_rects
+            sprite.update()
 
     def draw(self, surface: pygame.Surface):
 

@@ -27,7 +27,7 @@ editor.foreground, editor.commands, editor.select.background
 import configparser
 from typing import Dict
 from pathlib import Path
-from snap_handler import SnapHandler
+from container_handler import ContainerHandler
 
 
 class ConfigHandler:
@@ -54,11 +54,17 @@ class ConfigHandler:
         
         # Get the path to the config file if we're running in a snap package.
         
-        self.config_file_path = SnapHandler.get_snap_user_data_folder()
+        self.config_file_path = ContainerHandler.get_snap_user_data_folder()
         if self.config_file_path:
             self.config_file_path = self.config_file_path / "lvnauth.config"
+            
+        elif ContainerHandler.is_in_flatpak_package():
+            # /home/username/.var/app/org.lvnauth.LVNAuth/config
+            self.config_file_path = ContainerHandler.get_flatpak_config_directory()
+            self.config_file_path = self.config_file_path / "lvnauth.config"
+            
         else:
-            # Not a snap package? 
+            # Not a snap or flatpak package? 
             # Set a default config file path (current directory).
             self.config_file_path = Path("lvnauth.config")
         

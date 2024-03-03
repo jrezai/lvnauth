@@ -24,6 +24,8 @@ fade animations.
 
 import copy
 import pygame
+#import subprocess
+#import sys
 import active_story
 import file_reader
 import dialog_rectangle
@@ -31,12 +33,14 @@ import font_handler
 import logging
 import sprite_definition as sd
 import cover_screen_handler
+import font_handler
+import audio_player
 from re import search, findall
 from typing import Tuple, NamedTuple
-from font_handler import ActiveFontHandler
+# from font_handler import ActiveFontHandler
 from typing import Dict
 from shared_components import Passer
-from audio_player import AudioPlayer, AudioChannel
+# from audio_player import AudioChannel
 from rest_handler import RestHandler
 from variable_handler import VariableHandler, VariableValidate
 
@@ -110,6 +114,17 @@ class DialogTextSound(NamedTuple):
 
 class Volume(NamedTuple):
     volume: int
+
+
+class SpriteText(NamedTuple):
+    sprite_type: str
+    general_alias: str
+    value: str
+    
+    
+class SpriteTextClear(NamedTuple):
+    sprite_type: str
+    general_alias: str
 
 
 class Flip(NamedTuple):
@@ -413,7 +428,8 @@ class StoryReader:
             self.clear_all_sprite_groups()
 
             # Deals with showing/hiding dialog text
-            self.active_font_handler = ActiveFontHandler(story=self.story)
+            self.active_font_handler =\
+                font_handler.ActiveFontHandler(story=self.story)
             
             # When <text_dialog_show> is used, it might show an animation.
             # While the dialog rectangle is animating, we don't want to proceed
@@ -852,66 +868,8 @@ class StoryReader:
             self.read_story()
             return
         
-        # Used for letter kerning
-        previous_letter = None
-
-        # Read the line we've been given, line by line.
-        for letter in self.read_next_letter(line_text=line_text):
-
-            # print("Read letter:", letter)
-            logging.info(f"Read letter: {letter}")
-
-            # Now get the letter surface (the cropped image of the letter)
-            letter_surface =\
-                self.active_font_handler.current_font.get_letter(letter=letter)
-
-            # Get the amount of padding/kerning to use for the letter
-            # that we're going to blit soon, based on the kerning rules
-            # and the previous letter.
-            left_trim, right_trim =\
-                self.active_font_handler.current_font.get_letter_trims(letter=letter,
-                                                                       previous_letter=previous_letter)
-
-            # Was the letter sprite found?
-            if letter_surface:
-                # Yes, it was found. Add it to the list of letters that
-                # should be displayed in the dialog rectangle.
-                self.active_font_handler.add_letter(letter_subsurface=letter_surface,
-                                                   is_space=(letter == " "),
-                                                   previous_letter=previous_letter,
-                                                   left_trim=left_trim,
-                                                   right_trim=right_trim)
-                
-                # Keep track of the previous letter for kerning purposes.
-                previous_letter = letter                
-                
-        
-        # Keep track of where the end of the line is for the X position.
-        # Used for restoring the X position when <continue> is reached.
-        self.active_font_handler.next_letter_x_position_continue = \
-            self.active_font_handler.next_letter_x_position
-
-        # We finished reading the entire line, so position the text cursor
-        # on the next line, in case there is more text to read on the next line.
-        self.active_font_handler.next_letter_x_position =\
-            self.active_font_handler.default_x_position
-
-        # Keep track of where the end of the line is for the Y position.
-        # Used for restoring the X position when <continue> is reached.
-        self.active_font_handler.next_letter_y_position_continue = \
-            self.active_font_handler.next_letter_y_position
-
-        # Set the Y 'cursor' to the next line.
-        self.active_font_handler.next_letter_y_position += \
-            self.active_font_handler.current_font.height + \
-            self.active_font_handler.current_font.padding_lines
-        
-        # Is the Y coordinate of the dialog text temporarily adjusted
-        # after using the <continue> command? Reset it back to without its adjustment.
-        if self.active_font_handler.adjusted_y:
-            self.active_font_handler.next_letter_y_position -= self.active_font_handler.adjusted_y
-            self.active_font_handler.adjusted_y = 0
-
+        # Prepare to show the line of text
+        self.active_font_handler.process_text(line_text=line_text)
 
         print("Finished reading.")
         
@@ -929,28 +887,6 @@ class StoryReader:
         ## will run again.
         self.read_story()
 
-    def read_next_letter(self, line_text):
-        """
-        The story doesn't currently contain a command to run, so
-        the read_story() method wants us to show the text now as dialog text.
-        
-        But while we're reading the dialog text, we should look for commands
-        and run read_story() once we find any.
-        
-        While text is being displayed, the main non-background story reader
-        should not be allowed to progress. Only background story readers
-        should be allowed to progress. But background story readers should
-        not be allowed to display dialog text, because imagine what would
-        happen if 15 background story readers tried to show dialog text.
-        """
-
-        # At this point, we're not reading a command, because the method,
-        # read_story(), called our method here (read_dialog_text()), since
-        # there are no commands (so far) to parse.
-
-        # Loop through each individual letter
-        for letter in line_text:
-            yield letter
 
     @staticmethod
     def _split_arguments_to_tuple(arguments: str) -> Tuple | None:
@@ -1026,15 +962,47 @@ class StoryReader:
 
         elif command_name == "play_sound":
             self._play_audio(arguments=arguments,
-                             audio_channel=AudioChannel.FX)
+                             audio_channel=audio_player.AudioChannel.FX)
             
         elif command_name == "play_voice":
             self._play_audio(arguments=arguments,
-                             audio_channel=AudioChannel.VOICE)
+                             audio_channel=audio_player.AudioChannel.VOICE)
             
         elif command_name == "play_music":
             self._play_audio(arguments=arguments,
-                             audio_channel=AudioChannel.MUSIC)            
+                             audio_channel=audio_player.AudioChannel.MUSIC)
+            
+        elif command_name == "sprite_text":
+            self._sprite_text(arguments=arguments)
+            
+        elif command_name == "sprite_text_clear":
+            # This command is just like <sprite_text> except we're going
+            # to pass in an empty string, which causes the text to get cleared.
+            if arguments:
+                # For passing an empty string
+                arguments += ","
+                self._sprite_text(arguments=arguments)
+            
+        elif command_name == "sprite_font":
+            self._sprite_text_font(arguments=arguments)
+            
+        elif command_name == "sprite_font_x":
+            self._sprite_text_start_position(True, arguments)
+            
+        elif command_name == "sprite_font_y":
+            self._sprite_text_start_position(False, arguments)
+            
+        elif command_name == "sprite_font_delay":
+            self._sprite_text_font_delay(arguments=arguments)
+            
+        elif command_name == "sprite_font_delay_punc":
+            self._sprite_text_font_delay_punc(arguments=arguments)
+            
+        elif command_name == "sprite_font_fade_speed":
+            self._sprite_text_font_fade_speed(arguments=arguments)
+        
+        elif command_name == "sprite_font_intro_animation":
+            self._sprite_text_font_intro(arguments=arguments)
             
         elif command_name == "font":
             # Set the font to use in the main story reader, for the next letter.
@@ -1839,23 +1807,23 @@ class StoryReader:
         # not accept a string.
         float_volume = float(float_volume)
 
-        channel_mapping = {"volume_text": AudioChannel.TEXT,
-                           "volume_music": AudioChannel.MUSIC,
-                           "volume_voice": AudioChannel.VOICE,
-                           "volume_fx": AudioChannel.FX}
+        channel_mapping = {"volume_text": audio_player.AudioChannel.TEXT,
+                           "volume_music": audio_player.AudioChannel.MUSIC,
+                           "volume_voice": audio_player.AudioChannel.VOICE,
+                           "volume_fx": audio_player.AudioChannel.FX}
 
         audio_channel = channel_mapping.get(command_name)
 
-        if audio_channel == AudioChannel.TEXT:
+        if audio_channel == audio_player.AudioChannel.TEXT:
             self.story.audio_player.volume_text = float_volume
             
-        elif audio_channel == AudioChannel.FX:
+        elif audio_channel == audio_player.AudioChannel.FX:
             self.story.audio_player.volume_sound = float_volume
 
-        elif audio_channel == AudioChannel.VOICE:
+        elif audio_channel == audio_player.AudioChannel.VOICE:
             self.story.audio_player.volume_voice = float_volume
 
-        elif audio_channel == AudioChannel.MUSIC:
+        elif audio_channel == audio_player.AudioChannel.MUSIC:
             self.story.audio_player.volume_music = float_volume
 
     def _stop_audio(self, command_name: str):
@@ -1868,10 +1836,10 @@ class StoryReader:
         just immediately play again on the next letter.
         """
         
-        channel_mapping = {"stop_fx": AudioChannel.FX,
-                           "stop_voice": AudioChannel.VOICE,
-                           "stop_music": AudioChannel.MUSIC,
-                           "stop_all_audio": AudioChannel.ALL}
+        channel_mapping = {"stop_fx": audio_player.AudioChannel.FX,
+                           "stop_voice": audio_player.AudioChannel.VOICE,
+                           "stop_music": audio_player.AudioChannel.MUSIC,
+                           "stop_all_audio": audio_player.AudioChannel.ALL}
         
         audio_channel = channel_mapping.get(command_name)
         
@@ -2380,10 +2348,21 @@ class StoryReader:
             # We're done adjusting the Y coordinate to its new position.
             self.active_font_handler.next_letter_y_position_continue = None
 
-    def _font_intro_animation(self, arguments):
+    def _font_intro_animation(self,
+                              arguments,
+                              sprite_object: sd.SpriteObject = None):
         """
         Set the intro animation of the current active font sprite sheet.
         This will be the animation style to use when showing dialog text.
+        
+        Arguments:
+        
+        - arguments: the value given by the visual novel's command line.
+        
+        - sprite_object: this will be a SpriteObject instance if the font text
+        option is being applied to a sprite object such as a character, object
+        or dialog sprite. If it's None, then it's being applied to a dialog
+        rectangle.
         """
         animation_type: FontIntroAnimation
         animation_type =\
@@ -2392,9 +2371,22 @@ class StoryReader:
 
         if not animation_type:
             return
+        
+        subject_font_handler: font_handler.ActiveFontHandler
+        
+        # Applying a font intro to a sprite object?
+        if sprite_object:
+            # Applying font intro to a sprite object.
+            
+            # Sprite font handler (character, object, dialog sprite)
+            subject_font_handler = sprite_object.active_font_handler
+        else:
+            # Applying font intro to the dialog rectangle.
+            subject_font_handler =\
+                self.get_main_story_reader().active_font_handler
 
         # This will always been initialized to something, it won't be None.
-        self.get_main_story_reader().active_font_handler.font_animation.start_animation_type =\
+        subject_font_handler.font_animation.start_animation_type =\
             dialog_rectangle.to_enum(cls=font_handler.FontAnimationShowingType,
                                      string_representation=animation_type.animation_type)
 
@@ -2431,7 +2423,7 @@ class StoryReader:
         # Set the rotation value of the sprite (immediate, no gradual animation).
         sprite.rotate_current_value = rotate_current_value
 
-        sprite.sudden_rotate_change = True
+        # sprite.sudden_rotate_change = True
 
     def _sprite_rotate_until(self,
                              sprite_type: file_reader.ContentType,
@@ -2792,8 +2784,9 @@ class StoryReader:
 
         # Set the scale value of the sprite (immediate, no gradual animation).
         sprite.scale_current_value = scale_current_value
+        
 
-        sprite.sudden_scale_change = True
+        # sprite.sudden_scale_change = True
 
     def _sprite_scale_until(self,
                             sprite_type: file_reader.ContentType,
@@ -4087,7 +4080,9 @@ class StoryReader:
 
         return generate_class
 
-    def _font_text_fade_speed(self, arguments):
+    def _font_text_fade_speed(self,
+                              arguments,
+                              sprite_object: sd.SpriteObject = None):
         """
         Set the gradual text fade speed of the dialog text.
         It applies to both letter by letter fade-in and overall fade-in.
@@ -4096,6 +4091,11 @@ class StoryReader:
         
         - arguments: an int between 1 and 10.
         1 is the slowest speed, 10 is the fastest speed.
+        
+        - sprite_object: this will be a SpriteObject instance if the font text
+        option is being applied to a sprite object such as a character, object
+        or dialog sprite. If it's None, then it's being applied to a dialog
+        rectangle.
         """
 
         fade_speed: FontTextFadeSpeed
@@ -4110,11 +4110,23 @@ class StoryReader:
             fade_speed = 10
         elif fade_speed < 1:
             fade_speed = 1
+            
+        # Type-hint
+        subject_font_handler: font_handler.ActiveFontHandler
+            
+        if sprite_object:
+            # Sprite font handler (character, object, dialog sprite)
+            subject_font_handler = sprite_object.active_font_handler
+        else:
+            # Dialog rectangle font handler
+            subject_font_handler =\
+                self.get_main_story_reader().active_font_handler
         
-        self.get_main_story_reader().\
-            active_font_handler.font_animation.font_text_fade_speed = fade_speed
+        subject_font_handler.font_animation.font_text_fade_speed = fade_speed
 
-    def _font_text_delay_punc(self, arguments):
+    def _font_text_delay_punc(self,
+                              arguments,
+                              sprite_object: sd.SpriteObject = None):
         """
         Set the number of frames to skip *after* a specific letter has
         finished being blitted.
@@ -4124,6 +4136,11 @@ class StoryReader:
         - arguments: an int between 0 and 150.
         For example: a value of 2 means: apply the letter by letter animation
         every 2 frames. A value of 0 means apply the animation at every frame.
+        
+        - sprite_object: this will be a SpriteObject instance if the font text
+        option is being applied to a sprite object such as a character, object
+        or dialog sprite. If it's None, then it's being applied to a dialog
+        rectangle.
         """
 
         delay_punc: FontTextDelayPunc
@@ -4140,10 +4157,17 @@ class StoryReader:
         elif delay_frame_count < 0:
             delay_frame_count = 0
             
+        # Get the font handler of either the sprite object (dialog sprite, object, character)
+        # or the dialog rectangle.
+        if sprite_object:
+            # Sprite object font handler
+            subject_font_handler = sprite_object.active_font_handler
+        else:
+            # Dialog rectangle font handler
+            subject_font_handler = self.get_main_story_reader().active_font_handler
+            
         # Add the after-previous-letter delay setting.
-        self.get_main_story_reader().\
-            active_font_handler.font_animation.\
-            set_letter_delay(previous_letter, delay_frame_count)
+        subject_font_handler.font_animation.set_letter_delay(previous_letter, delay_frame_count)
 
     def get_main_story_reader(self):
         """
@@ -4165,7 +4189,9 @@ class StoryReader:
 
         return reader
 
-    def _font_text_delay(self, arguments):
+    def _font_text_delay(self,
+                         arguments,
+                         sprite_object: sd.SpriteObject = None):
         """
         Set the number of frames to skip when animating letter-by-letter dialog text.
         Does not apply to letter fade-ins.
@@ -4175,6 +4201,11 @@ class StoryReader:
         - arguments: an int between 0 and 600.
         For example: a value of 2 means: apply the letter by letter animation
         every 2 frames. A value of 0 means apply the animation at every frame.
+        
+        - sprite_object: this will be a SpriteObject instance if the font text
+        option is being applied to a sprite object such as a character, object
+        or dialog sprite. If it's None, then it's being applied to a dialog
+        rectangle.
 
         Changes:
         Nov 4, 2023 (Jobin Rezai) - Fix <font_text_delay> trying to access the
@@ -4194,19 +4225,30 @@ class StoryReader:
             text_speed_delay = 600
         elif text_speed_delay < 0:
             text_speed_delay = 0
+            
+        # Type-hint
+        subject_font_handler: font_handler.ActiveFontHandler
+            
+        if sprite_object:
+            # Get the given sprite's font handler (object, dialog sprite, or character)
+            subject_font_handler = sprite_object.active_font_handler
+        else:
+            # The active font handler is only available in the main reader, not in reusable scripts.
+            subject_font_handler = self.get_main_story_reader().active_font_handler
 
-        # The active font handler is only available in the main reader, not in reusable scripts.
-        main_reader = self.get_main_story_reader()
 
         # Record the delay value
-        main_reader.active_font_handler.font_animation.font_text_delay = text_speed_delay
+        subject_font_handler.font_animation.font_text_delay = text_speed_delay
         
         # For the initial text frame, consider the text delay limit having been reached,
         # so that the delay doesn't occur before the first letter has been shown.
         # Without this, the text delay will apply before the first letter has been shown.
-        main_reader.active_font_handler.font_animation.gradual_delay_counter = text_speed_delay
+        subject_font_handler.font_animation.gradual_delay_counter = text_speed_delay
 
-    def _font_start_position(self, x: bool, arguments: str):
+    def _font_start_position(self,
+                             x: bool,
+                             arguments: str,
+                             sprite_object: sd.SpriteObject = None):
         """
         Set the X or Y starting position of the active font, relative
         to the dialog rectangle. The default is 0.
@@ -4219,6 +4261,11 @@ class StoryReader:
         - arguments: this is expected to contain a numeric string value
         for the starting position of either X or Y, relative to the active
         dialog rectangle.
+        
+        - sprite_object: this will be a SpriteObject instance if the font text
+        option is being applied to a sprite object such as a character, object
+        or dialog sprite. If it's None, then it's being applied to a dialog
+        rectangle.
         """
         
         start_position: FontStartPosition
@@ -4227,16 +4274,300 @@ class StoryReader:
 
         if not start_position:
             return
+        
+        # Type-hint
+        subject_font_handler: font_handler.ActiveFontHandler
+        
+        if sprite_object:
+            # Sprite font handler (character, object, or dialog sprite)
+            subject_font_handler = sprite_object.active_font_handler
+        else:
+            # Dialog rectangle font handler
+            subject_font_handler =\
+                self.get_main_story_reader().active_font_handler
 
         # Should we set the text start position for X or Y?
         if x:
-            self.get_main_story_reader().active_font_handler.default_x_position =\
+            subject_font_handler.default_x_position =\
                 start_position.start_position
         else:
-            self.get_main_story_reader().active_font_handler.default_y_position =\
+            subject_font_handler.default_y_position =\
                 start_position.start_position
 
-    def _play_audio(self, arguments: str, audio_channel: AudioChannel):
+    def _sprite_text_get_basic_values(self, arguments: str) -> Tuple | None:
+        """
+        Get the basic variables that are shared amongst all the
+        <sprite_text...> commands.
+        
+        Return: a tuple (the sprite, sprite type, sprite_text (argument info))
+        """
+        
+        sprite_text: SpriteText
+        sprite_text = self._get_arguments(class_namedtuple=SpriteText,
+                                          given_arguments=arguments)
+
+        if not sprite_text:
+            return
+        
+        # Get the type of sprite (ie: object, dialog sprite, character)
+        sprite_type: file_reader.ContentType
+        sprite_type =\
+            dialog_rectangle.to_enum(cls=file_reader.ContentType,
+                                     string_representation=sprite_text.sprite_type)         
+        
+        # Make sure we have a ContentType Enum
+        if not isinstance(sprite_type, file_reader.ContentType):
+            return
+        
+        # Get the visible sprite
+        sprite: sd.SpriteObject
+        sprite =\
+            self.story.get_visible_sprite(content_type=sprite_type,
+                                          general_alias=sprite_text.general_alias)
+
+        if not sprite:
+            return
+        
+        return (sprite, sprite_text)
+
+    def _sprite_text_start_position(self, x: bool, arguments: str):
+        """
+        Set the X or Y starting position of the active font, relative
+        to the object itself (character, object, or dialog sprite).
+        The default is 0.
+        
+        Arguments:
+        
+        - x: (bool) True if setting the text position for X
+        False if setting the text position for Y
+        
+        - arguments: a numeric string value
+        """
+        
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Set the font's starting position relative to the sprite object.
+        self._font_start_position(x=x,
+                                  arguments=command_arguments.value,
+                                  sprite_object=sprite)
+
+    def _sprite_text_font(self, arguments: str):
+        """
+        Specify a font to use for a sprite (object, dialog sprite, object)
+        <sprite_text_font: character, rave, Some Font Name Here>
+        """
+        
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Set the font to use for the given sprite.
+        sprite.active_font_handler.set_active_font(font_name=command_arguments.value)
+
+    def _sprite_text_font_intro(self, arguments: str):
+        """
+        Set the intro type of a sprite font's animation
+        (object, dialog sprite, object)
+        <sprite_text_font_intro: character, rave, animation type here>
+        
+        Possible values for animation types:
+        sudden
+        fade in
+        gradual letter
+        gradual letter fade in
+        """
+    
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # active_font_handler will always been initialized to something, 
+        # it won't be None.
+        self._font_intro_animation(arguments=command_arguments.value,
+                                   sprite_object=sprite)     
+
+    def _sprite_text_font_fade_speed(self, arguments: str):
+        """
+        Set the gradual text fade speed of the dialog text.
+        It applies to both letter by letter fade-in and overall fade-in.
+        """
+    
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Set the gradual text fade speed of the dialog text.
+        # It applies to both letter by letter fade-in and overall fade-in.     
+        self._font_text_fade_speed(arguments=command_arguments.value,
+                                   sprite_object=sprite)
+
+    def _sprite_text_font_delay(self, arguments: str):
+        """
+        Set the number of frames to skip when animating letter-by-letter dialog text.
+        Does not apply to letter fade-ins.
+        """
+    
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Set the number of frames to skip when animating letter-by-letter dialog text.
+        # Does not apply to letter fade-ins.        
+        self._font_text_delay(arguments=command_arguments.value,
+                              sprite_object=sprite)
+        
+    def _sprite_text_font_delay_punc(self, arguments: str):
+        """
+        Set the number of frames to skip *after* a specific letter has
+        finished being blitted.
+        """
+    
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Set the number of frames to skip *after* a specific letter has
+        # finished being blitted.      
+        self._font_text_delay_punc(arguments=command_arguments.value,
+                                   sprite_object=sprite)
+
+    def _sprite_text_clear(self, arguments: str):
+        """
+        Clear any text that is displayed on a specific sprite.
+        Copy original_image_before_text to original_image.
+        
+        <sprite_text_clear: character, rave>
+        """
+
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteTextClear
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Are we just clearing text?
+        if not command_arguments.value:
+            sprite.clear_text_and_redraw()
+            return
+        
+        # Prepare letter sprites for blitting later.
+        sprite.active_font_handler.process_text(line_text=command_arguments.value)
+        
+        # If sudden-text was already blitted before (from previous text), 
+        # reset the blitted flag so we can append more sudden-text.
+        if sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+           and sprite.active_font_handler.sudden_text_drawn_already:
+            sprite.active_font_handler.reset_sudden_text_finished_flag()
+        
+        # Start showing animation of font text, unless it's set to
+        # sudden-mode.        
+        sprite.active_font_handler.font_animation.\
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+
+    def _sprite_text(self, arguments: str):
+        """
+        Add font sprite sheet text to a sprite (object, dialog sprite, object)
+        <sprite_text: character, rave, Some Text Here>
+        
+        Purpose: to allow the visual novel author to create buttons.
+        """
+
+        # Type-hints
+        sprite: sd.SpriteObject
+        command_arguments: SpriteText
+        
+        # Get the sprite we want to deal with
+        # and the command arguments we want to apply.
+        sprite_details = self._sprite_text_get_basic_values(arguments=arguments)
+        if not sprite_details:
+            return
+        
+        # Split tuple
+        sprite, command_arguments = sprite_details
+        
+        # Are we just clearing text?
+        if not command_arguments.value:
+            sprite.clear_text_and_redraw()
+            return
+        
+        # Prepare letter sprites for blitting later.
+        sprite.active_font_handler.process_text(line_text=command_arguments.value)
+        
+        # If sudden-text was already blitted before (from previous text), 
+        # reset the blitted flag so we can append more sudden-text.
+        if sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+           and sprite.active_font_handler.sudden_text_drawn_already:
+            sprite.active_font_handler.reset_sudden_text_finished_flag()
+        
+        # Start showing animation of font text, unless it's set to
+        # sudden-mode.        
+        sprite.active_font_handler.font_animation.\
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+
+    def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
         Play an audio file through the appropriate channel.
         
@@ -4250,7 +4581,7 @@ class StoryReader:
         # check if the song needs to be looped.
         
         # <play_music: name, loop>
-        if audio_channel == AudioChannel.MUSIC and arguments.count(",") == 1:
+        if audio_channel == audio_player.AudioChannel.MUSIC and arguments.count(",") == 1:
             
             # <play_music: name, loop>
             audio_name, loop_music = self._split_arguments_to_tuple(arguments=arguments)
@@ -4520,7 +4851,7 @@ class StoryReader:
                      arguments: str,
                      sprite_type: file_reader.ContentType):
         """
-        Show a sprite (any sprite, such as character, name)
+        Show a sprite (any sprite, such as character, object, dialog sprite)
         by setting its visibility to True.
 
         Changes:
@@ -4537,7 +4868,7 @@ class StoryReader:
         new_sprite: sd.SpriteObject
 
         # Get the new sprite from its name, not its alias.
-        
+
         # When we're showing a sprite, we must use its name, because if
         # we try and use an alias, multiple sprites might have the same alias.
         new_sprite = self.data_requester.get_sprite(content_type=sprite_type,
@@ -4568,74 +4899,139 @@ class StoryReader:
 
             elif sprite_type == file_reader.ContentType.OBJECT:
                 sprite_group = sd.Groups.object_group
-                
+
             elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
                 sprite_group = sd.Groups.dialog_group
 
             # Find the sprite that we're swapping 'out'
             visible_sprite: sd.SpriteObject
-            for visible_sprite in sprite_group.sprites.values():
-                if visible_sprite.visible and \
-                   visible_sprite.general_alias == new_sprite.general_alias:
-
-                    # Copy the currently visible sprite
-                    # so that we can turn this copy into a new sprite later.
-                    copied_sprite = copy.copy(visible_sprite)
-
-                    # Keep track of the center of the current sprite
-                    # so we can restore the center when the new
-                    # sprite is shown. If we don't do this, the new sprite
-                    # will show up in a different position.
-                    current_center = visible_sprite.rect.center
-
-                    # Get the new image that we want to show
-                    copied_sprite.original_image = new_sprite.original_image
-                    copied_sprite.original_rect = new_sprite.original_rect
-                    copied_sprite.image = new_sprite.image
-                    copied_sprite.rect = new_sprite.rect
-                    copied_sprite.name = new_sprite.name
-
-                    # Record whether the new sprite has been flipped in any way
-                    # at any time in the past, because we'll need to compare the flip
-                    # values with the sprite that is being swapped out later in this method.
-                    copied_sprite.flipped_horizontally = new_sprite.flipped_horizontally
-                    copied_sprite.flipped_vertically = new_sprite.flipped_vertically
-
-                    # Make the new sprite the same as the current sprite
-                    # but with the new images, rects, and new name.
-                    new_sprite = copied_sprite
-
-                    # Restore the center position so the new sprite
-                    # will be positioned exactly where the old sprite is.
-                    new_sprite.rect.center = current_center
-
-                    # Hide the old sprite (that we're swapping out)
-                    visible_sprite.start_hide()
-
-                    # If the sprite that is being swapped out was flipped horizontally and/or vertically,
-                    # then make sure the new sprite is flipped horizontally and/or vertically too.
-                    new_sprite.flip_match_with(visible_sprite)
-
-                    # Show the new sprite (that we're swapping in)
-                    new_sprite.start_show()
-
-                    # Update the new sprite in the main character sprites dictionary
-                    sprite_group.sprites[new_sprite.name] = new_sprite
-
-                    # We found a single category character that we were looking for.
+            visible_sprite = None
+            
+            current_visible_sprite: sd.SpriteObject
+            for current_visible_sprite in sprite_group.sprites.values():
+                
+                # Did we find a fully visible sprite with the same alias?
+                # If so, we'll swap that sprite out.
+                if current_visible_sprite.visible and \
+                   current_visible_sprite.general_alias == new_sprite.general_alias:
+                    
+                    # We found a visible sprite with the same alias.
+                    visible_sprite = current_visible_sprite                    
                     break
+                
+                # Did we find a pending visible sprite with the same alias?
+                # Keep a reference to it in case we don't find a fully visible
+                # sprite with the same alias, but don't stop checking for
+                # visible sprites yet.
+                elif current_visible_sprite.pending_show and \
+                   current_visible_sprite.general_alias == new_sprite.general_alias:
+                    
+                    # We found a visible sprite with the same alias,
+                    # but don't break out of the loop yet because this sprite
+                    # is only pending to be visible, it's not fully visible yet.
+                    # Keep looping to see if there is a fully visible sprite
+                    # with the same alias, and if not, we'll end up swapping 
+                    # out this sprite.
+                    visible_sprite = current_visible_sprite                    
+
+
+            # Did we end up finding a visible sprite with the same alias?
+            if visible_sprite:
+    
+                # Copy the currently visible sprite
+                # so that we can turn this copy into a new sprite later.
+                copied_visible_sprite = copy.copy(visible_sprite)
+    
+                # Keep track of the center of the current sprite
+                # so we can restore the center when the new
+                # sprite is shown. If we don't do this, the new sprite
+                # will show up in a different position.
+                current_center = visible_sprite.rect.center
+    
+                # Get the new image that we want to show
+                copied_visible_sprite.original_image = new_sprite.original_image
+                copied_visible_sprite.original_image_before_text = new_sprite.original_image_before_text
+                copied_visible_sprite.original_rect = new_sprite.original_rect
+                copied_visible_sprite.image = new_sprite.image
+                copied_visible_sprite.rect = new_sprite.rect
+                copied_visible_sprite.name = new_sprite.name
+                
+                # Update the active font handler's sprite reference
+                # (if there is one) to the new sprite that has 
+                # the new images. If we don't do this, the active font
+                # handler will have a reference to the swapped-out sprite
+                # rather than the newly swapped-in sprite, and then text
+                # won't display on the new sprite.
+                if copied_visible_sprite.active_font_handler \
+                   and copied_visible_sprite.active_font_handler.sprite_object:
+                    copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
+                    
+                    ## Prepare letter sprites for blitting later.
+                    #copied_visible_sprite.active_font_handler.process_text(line_text="")
+                    
+                    # If sudden-text was already blitted before (from previous text), 
+                    # reset the blitted flag so we can append more sudden-text.
+                    # We need this block for sudden text to show after the swap.
+                    if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+                       and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
+                        copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
+                    
+                    # Start showing animation of font text, unless it's set to
+                    # sudden-mode.        
+                    copied_visible_sprite.active_font_handler.font_animation.\
+                        start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
+    
+    
+                # Record whether the new sprite has been flipped in any way
+                # at any time in the past, because we'll need to compare the flip
+                # values with the sprite that is being swapped out later in this method.
+                copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
+                copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
+    
+                # The new sprite does not have any scale/rotate/fade effects
+                # applied to it, but the flags (self.applied..) at this 
+                # point indicate that effects are applied 
+                # (those flags are not up-to-date).
+                # So reset the flags so that we will end up applying
+                # necessary effects to make it match the effects of 
+                # the previous sprite.
+                copied_visible_sprite.reset_applied_effects()
+    
+                # Make the new sprite the same as the current sprite
+                # but with the new images, rects, and new name.
+                new_sprite = copied_visible_sprite
+                
+    
+                # Restore the center position so the new sprite
+                # will be positioned exactly where the old sprite is.
+                new_sprite.rect.center = current_center
+    
+                # Hide the old sprite (that we're swapping out)
+                visible_sprite.start_hide()
+    
+                # If the sprite that is being swapped out was flipped horizontally and/or vertically,
+                # then make sure the new sprite is flipped horizontally and/or vertically too.
+                new_sprite.flip_match_with(visible_sprite)
+    
+                # Show the new sprite (that we're swapping in)
+                new_sprite.start_show()
+    
+                # Update the new sprite in the main character sprites dictionary
+                sprite_group.sprites[new_sprite.name] = new_sprite
+
+
 
         # If the sprite is not already visible, start to make it visible.
         if not new_sprite.visible:
 
             # If the sprite is a background, hide all backgrounds
             # before showing the new background.
-            
+
             # Reason: only 1 background at a time should be allowed
             # to be displayed.
             if sprite_type == file_reader.ContentType.BACKGROUND:
                 sd.Groups.background_group.hide_all()
-                
+
             new_sprite.start_show()
 
     def _text_dialog_close(self):
