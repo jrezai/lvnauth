@@ -65,7 +65,7 @@ parts:
     plugin: dump
     source: https://github.com/jrezai/lvnauth.git
     source-type: git
-    source-branch: snapdetection
+    source-branch: main
 
   # https://forum.snapcraft.io/t/the-tcltk-launch-stage-snap/11740
   tcltk-launch:
