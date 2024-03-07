@@ -62,11 +62,8 @@ class ContainerHandler:
         This is where the main Python scripts are.
         """
         if ContainerHandler.is_in_flatpak_package():
-            app_folder = os.environ.get("FLATPAK_DEST")
-            if not app_folder:
-                return
-            
-            app_folder = Path(app_folder) / "bin"
+
+            app_folder = Path("/app/bin")
             
             return app_folder
         
