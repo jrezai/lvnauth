@@ -145,9 +145,9 @@ class ContainerHandler:
                 full_path = snap_common / "draft" / "draft.lvna"
                 
         elif ContainerHandler.is_in_flatpak_package():
-            app_directory = ContainerHandler.get_flatpak_app_directory()
-            if app_directory:
-                full_path = app_directory / "draft" / "draft.lvna"
+            draft_directory = os.environ.get("XDG_CACHE_HOME")
+            if draft_directory:
+                full_path = draft_directory / "draft" / "draft.lvna"
                 
         else:
             full_path = Path(r"draft/draft.lvna")
