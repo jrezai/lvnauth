@@ -147,7 +147,7 @@ class ContainerHandler:
         elif ContainerHandler.is_in_flatpak_package():
             draft_directory = os.environ.get("XDG_CACHE_HOME")
             if draft_directory:
-                full_path = draft_directory / "draft" / "draft.lvna"
+                full_path = Path(draft_directory) / "draft" / "draft.lvna"
                 
         else:
             full_path = Path(r"draft/draft.lvna")
