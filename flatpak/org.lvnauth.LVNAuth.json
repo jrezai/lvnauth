@@ -19,14 +19,20 @@
             "build-commands": [
 		"install -D startup.sh ${FLATPAK_DEST}/bin/startup.sh",
                 "chmod +w ${FLATPAK_DEST}/bin/startup.sh",
-                "cp -r src/* ${FLATPAK_DEST}/bin"
+                "cp -r src/* ${FLATPAK_DEST}/bin",
+                "cp flatpak/org.lvnauth.LVNAuth.desktop /app/share/applications/${FLATPAK_ID}.desktop",
+                "cp flatpak/lvnauth_16x16.png /app/share/icons/hicolor/16x16/apps/${FLATPAK_ID}.png",
+                "cp flatpak/lvnauth_32x32.png /app/share/icons/hicolor/32x32/apps/${FLATPAK_ID}.png",
+                "cp flatpak/lvnauth_64x64.png /app/share/icons/hicolor/64x64/apps/${FLATPAK_ID}.png",
+                "cp flatpak/lvnauth_128x128.png /app/share/icons/hicolor/128x128/apps/${FLATPAK_ID}.png",
+                "cp flatpak/lvnauth_256x256.png /app/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png",
 	    ],
 	    "buildsystem": "simple",
             "sources": [
                 {
                     "type": "git",
                     "url": "https://github.com/jrezai/lvnauth.git",
-                    "branch": "main"
+                    "branch": "flatpak-new"
                 },
                 {
                     "type": "file",
