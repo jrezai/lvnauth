@@ -1,9 +1,8 @@
 [Desktop Entry]
-Version=0.5
 Name=LVNAuth
 Comment=Create and play visual novels
 Exec=/app/bin/startup.sh
 Icon=org.lvnauth.LVNAuth
 Terminal=false
 Type=Application
-Categories=Multimedia
+Categories=Multimedia;AudioVideo;
