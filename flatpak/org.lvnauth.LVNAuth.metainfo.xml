@@ -16,9 +16,7 @@
   <description>
     <p>
       LVNAuth is a desktop application that lets you create and view visual novels.
-    </p>
-    <p>
-      Built-in Editor: Manage your visual novel, from beginning to end, using LVNAuth&apos;s GUI editor. A command system: You can start or stop actions in your visual novel by using some simple commands. A built-in Wizard window will guide you with using commands so you don&apos;t have to memorize the commands. No programming experience required. LVNAuth is made for story writers. Chapters and Scenes: You can have multiple scenes within a chapter. Simple Animations: Ability to apply character and object animations, such as fade, movement, rotate, and scale.
+      Manage your visual novel, from beginning to end, using LVNAuth&apos;s GUI editor. A command system: You can start or stop actions in your visual novel by using some simple commands. A built-in Wizard window will guide you with using commands so you don&apos;t have to memorize the commands. No programming experience required. LVNAuth is made for story writers. Chapters and Scenes: You can have multiple scenes within a chapter. Simple Animations: Ability to apply character and object animations, such as fade, movement, rotate, and scale.
     </p>
     <p>
       Support for backgrounds, characters, including the ability to change a character&apos;s image to show a different facial expression, and object images. Images in .png format are recommended.
@@ -69,11 +67,9 @@
             <li>The screen for a visual novel is now updated all at once on each frame instead of multiple rectangular areas. This should help improve performance and make it easier to maintain the code.</li>
             <li>Added Flatpak support.</li>
             <li>Fixed bug: when a non-animating scale or rotate was applied to a sprite and then a gradual fade was applied, it lost the scale/rotate values.</li>
-            <li>Fixed bug with commands such as `<character_show>` not swapping out a sprite that is queued to become visible. In some cases, this caused two sprites with the same alias to appear on the screen.</li>
+            <li>Fixed bug with commands such as character_show not swapping out a sprite that is queued to become visible. In some cases, this caused two sprites with the same alias to appear on the screen.</li>
           </ul>
       </description>
-    </release>
-
-
-
+     </release>
+   </releases>
 </component>
