@@ -68,6 +68,7 @@
             <li>Added Flatpak support.</li>
             <li>Fixed bug: when a non-animating scale or rotate was applied to a sprite and then a gradual fade was applied, it lost the scale/rotate values.</li>
             <li>Fixed bug with commands such as character_show not swapping out a sprite that is queued to become visible. In some cases, this caused two sprites with the same alias to appear on the screen.</li>
+            <li>Fixed bug with the new project window not showing a proper error message box when a new project can't be created in the specified directory.</li>
           </ul>
       </description>
      </release>
