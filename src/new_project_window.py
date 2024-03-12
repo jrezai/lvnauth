@@ -130,7 +130,7 @@ class ProjectFolderWindow:
             if not project_path.exists():
                 messagebox.showerror(parent=self.project_folder_window,
                                      title="Could Not Create Folder",
-                                     messagebox="Could not create the project folder.")
+                                     message="Could not create the project folder.")
                 return
 
             # Loop through enum paths (the .value has the Path object)
@@ -149,7 +149,7 @@ class ProjectFolderWindow:
         except OSError as e:
             messagebox.showerror(parent=self.project_folder_window,
                                  title="Create Folder Error",
-                                 messagebox="Could not create the project folder.\n"
+                                 message="Could not create the project folder.\n\n"
                                  f"Details: {e}")
             return
 
