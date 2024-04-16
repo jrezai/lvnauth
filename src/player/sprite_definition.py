@@ -1248,7 +1248,7 @@ class SpriteObject:
         
         fade_needed = self.is_fade_needed()
         scale_or_rotation_needed = self.is_scale_or_rotate_needed()
-
+        
         if scale_or_rotation_needed or fade_needed:
             self._scale_or_rotate_sprite()
             self._fade_sprite(skip_copy_original_image=True)

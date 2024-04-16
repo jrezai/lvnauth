@@ -1546,7 +1546,7 @@ class StoryReader:
                                                arguments=arguments,
                                                start_or_stop=sd.StartOrStop.START)
 
-        elif command_name == "dialog_start_scaling":
+        elif command_name == "dialog_sprite_start_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                arguments=arguments,
                                                start_or_stop=sd.StartOrStop.START)
@@ -2282,14 +2282,10 @@ class StoryReader:
         
         if variable_set:
             
-            # Is the variable name valid?
-            invalid_char = VariableValidate.validate_variable_name(variable_set.variable_name)
-            if invalid_char:
-                raise ValueError(f"Variable name {variable_set.variable_name} contains invalid letter '{invalid_char}'")
-
             # Update or create variable.
-            VariableHandler.variables[variable_set.variable_name]\
-                = variable_set.variable_value
+            # The method will also check for invalid variable name characters.
+            VariableHandler.set_variable(variable_name=variable_set.variable_name,
+                                         variable_value=variable_set.variable_value)
 
     def _continue(self, arguments: str):
         """
@@ -2776,6 +2772,7 @@ class StoryReader:
             return
 
         # Get the active/visible sprite
+        sprite: sd.SpriteObject
         sprite = self.story.get_visible_sprite(content_type=sprite_type,
                                                general_alias=scale_current_value.sprite_name)
 
@@ -2784,7 +2781,6 @@ class StoryReader:
 
         # Set the scale value of the sprite (immediate, no gradual animation).
         sprite.scale_current_value = scale_current_value
-        
 
         # sprite.sudden_scale_change = True
 

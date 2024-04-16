@@ -910,7 +910,7 @@ class WizardWindow:
                                 command_name="character_scale_until",
                                 purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                 "Note: the character sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
                                 scale_default_value=2)
@@ -1509,7 +1509,7 @@ class WizardWindow:
                                     command_name="dialog_sprite_scale_until",
                                     purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                     "Note: the dialog sprite must already be visible.",
-                                    scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                    scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                     scale_from_value=0,
                                     scale_to_value=100,
                                     scale_default_value=2)
@@ -1523,7 +1523,7 @@ class WizardWindow:
                                       sub_display_text="dialog_sprite_start_scaling",
                                       command_name="dialog_sprite_start_scaling",
                                       purpose_line="Starts an dialog sprite scaling animation.\n\n"
-                                      "Note: the dialog sprite must already be visible."
+                                      "Note: the dialog sprite must already be visible.\n"
                                       "Also, <dialog_sprite_scale_until> should be used prior.")
     
         page_dialog_stop_scaling =\
@@ -2029,7 +2029,7 @@ class WizardWindow:
                                 command_name="object_scale_until",
                                 purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                 "Note: the object sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
                                 scale_default_value=2)

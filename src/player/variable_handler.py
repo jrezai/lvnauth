@@ -62,11 +62,42 @@ class VariableHandler:
     def __init__(self):
         pass
     
-    def set_variable(self, variable_name: str, variable_value: str):
+    @staticmethod
+    def get_variable(variable_name: str) -> str | None:
         """
+        Get the value of an existing variable.
         
+        Arguments:
+        
+        - variable_name: the variable name to get the value of.
+        The variable name is case-sensitive.
+        
+        Return: string value of the variable or None if the variable is not found.
         """
-        pass
+        return VariableHandler.variables.get(variable_name)
+    
+    @staticmethod
+    def set_variable(variable_name: str, variable_value: str):
+        """
+        Update an existing variable or create a new variable with the
+        given value.
+        
+        Arguments:
+        
+        - variable_name: a variable name to create or update.
+        The name cannot contain characters that are invalid for a variable name.
+        This method will automatically check for invalid characters.
+        The variable name is case-sensitive.
+        
+        - variable_value: the variable's value to set
+        """
+        # Is the variable name valid?
+        invalid_char = VariableValidate.validate_variable_name(variable_name)
+        if invalid_char:
+            raise ValueError(f"Variable name {variable_name} contains invalid letter '{invalid_char}'")
+
+        # Update or create variable.
+        VariableHandler.variables[variable_name] = variable_value
     
     def find_and_replace_variables(self, line: str) -> str:
         """
