@@ -42,7 +42,9 @@ from typing import Dict
 from shared_components import Passer
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
-from variable_handler import VariableHandler, VariableValidate
+from variable_handler import VariableHandler
+from condition_handler import Condition
+
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -102,6 +104,13 @@ class SceneWithFade(NamedTuple):
     fade_hold_for_frame_count: int
     chapter_name: str
     scene_name: str
+
+
+class ConditionDefinition:
+    value1: str
+    operator: str
+    value2: str
+    condition_name: str
 
 
 class PlayAudio(NamedTuple):
@@ -372,6 +381,12 @@ class StoryReader:
 
         # The story is read line by line
         self.script_lines = []
+        
+        # The lastest condition name that evaluated to False.
+        # The name is case-sensitive. If there is a value here,
+        # the current reader will skip all script lines except for:
+        # <condition_end> and <or_condition>.
+        self.condition_name_false = None
 
         # For reading variables and replacing them with values.
         # Both the main scripts and reusable scripts can use variables.
@@ -774,6 +789,15 @@ class StoryReader:
             if not line or line.startswith("#"):
                 continue
             
+            # Should we skip reading this line because an earlier
+            # condition evaluated to False?
+            if not Condition.evaluate_line_check(script_line=line,
+                            false_condition_name=self.condition_name_false):
+                # An earlier condition evaluated to False, 
+                # and the current line is not <condition_end> or <or_condition>
+                # so ignore this line.
+                continue
+            
             # This is a special command, which gets replaced 
             # with a blank string, because real blank strings are ignored
             # if this command is not used.
@@ -959,6 +983,9 @@ class StoryReader:
             self.story: active_story.ActiveStory
             self.story.add_font(font_name=arguments,
                                 font_sprite=font_full_sprite_sheet_sprite)
+
+        elif command_name == "condition":
+            self._condition_read(arguments=arguments)
 
         elif command_name == "play_sound":
             self._play_audio(arguments=arguments,
@@ -4562,6 +4589,40 @@ class StoryReader:
         # sudden-mode.        
         sprite.active_font_handler.font_animation.\
             start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+
+    def _condition_read(self, arguments: str):
+        """
+        Check if a condition evaluates to True or False.
+        If it's False, set a flag for the current reader to ignore
+        all upcoming script lines unless it reaches an
+        <or_condition> command or <condition_end> command.
+        
+        Example of a condition:
+        <condition: 10, more than, 5, number check>`
+        """
+        condition: ConditionDefinition
+        condition = self._get_arguments(class_namedtuple=ConditionDefinition,
+                                        given_arguments=arguments)
+        
+        condition_checker = Condition(value1=condition.value1,
+                                      value2=condition.value2,
+                                      operator=condition.operator)
+        
+        if condition_checker.evaluate():
+            # Evaluation passed
+            
+            # Treat it as if nothing happened.
+            # It's only when it evaluates to False that we need to keep
+            # track of condition names.
+            pass
+            
+        else:
+            # Evaluated to False
+            
+            # Keep track of the latest condition that evaluated to False
+            # so we can end it using <condition_end> or give it another chance
+            # with <or_condition>.
+            self.condition_name_false = condition.condition_name
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
