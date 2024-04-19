@@ -106,7 +106,7 @@ class SceneWithFade(NamedTuple):
     scene_name: str
 
 
-class ConditionDefinition:
+class ConditionDefinition(NamedTuple):
     value1: str
     operator: str
     value2: str
@@ -822,12 +822,14 @@ class StoryReader:
 
                     self.run_command(command_name, arguments)
 
-                    # <scene> and <scene_with_fade> will cause the current story reader
-                    # to finish (to make way for a new scene - new main reader), so those
-                    # two commands will set story_finished to True
+                    # <scene>, <scene_with_fade>, <exit> will cause the current 
+                    # story reader to finish (<scene> and <scene_with_fade> 
+                    # make way for a new scene - new main reader), so those
+                    # two commands will set story_finished to True, 
+                    # and so will <exit>.
                     if self.story_finished:
-                        # Either <scene> or <scene_with_fade> was used, so don't continue
-                        # with this reader anymore.
+                        # Either <scene>, <scene_with_fade>, or <exit> was used, 
+                        # so don't continue with this reader anymore.
                         command_line = False
                         self.script_lines.clear()
 
@@ -984,8 +986,17 @@ class StoryReader:
             self.story.add_font(font_name=arguments,
                                 font_sprite=font_full_sprite_sheet_sprite)
 
-        elif command_name == "condition":
-            self._condition_read(arguments=arguments)
+        elif command_name in ("condition", "or_condition"):
+            self._condition_read(command_name=command_name, arguments=arguments)
+
+        elif command_name == "condition_else":
+            self._condition_else()
+
+        elif command_name == "condition_end":
+            self._condition_end()
+            
+        elif command_name == "exit":
+            self._exit()
 
         elif command_name == "play_sound":
             self._play_audio(arguments=arguments,
@@ -4588,9 +4599,58 @@ class StoryReader:
         # Start showing animation of font text, unless it's set to
         # sudden-mode.        
         sprite.active_font_handler.font_animation.\
-            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)       
 
-    def _condition_read(self, arguments: str):
+    def _condition_else(self):
+        """
+        If the last condition evaluated to True (the story reader
+        is not bound to a condition name in self.condition_name_false),
+        then make the story reader enter skip-mode so the script below
+        <condition_else> doesn't run.
+        <condition_end> will be needed eventually to make the reader
+        get out of skip-mode.
+        
+        If the last condition evaluated to False (the story reader
+        is bound to a condition name in self.condition_name_false), then
+        the story reader is already in skip-mode so get it out of skip-mode
+        so that the script below <condition_else> will run.
+        <condition_end> is not technically needed in this situation because
+        it's no longer in skip-mode, but having <condition_end> is ok too.
+        """
+        
+        # Did the last condition evaluate to True?
+        if not self.condition_name_false:
+            
+            # Enter skip-mode so the script below 'condition_else' won't run.
+            self.condition_name_false = "!else-condition!"
+        
+        else:
+            # The last condition evaluated to False.
+            
+            # Get the story reader out of skip-mode so that the script
+            # below 'condition_else' will run.
+            self.condition_name_false = None
+
+    def _exit(self):
+        """
+        Finish the current script automatically without reaching the end.
+        
+        Purpose: used for exiting any type of script (chapter, scene,
+        reusable script) before it reaches the end of the script. One example
+        use case is not having sufficient 'credits' or 'score' to buy an item,
+        so the store owner character no longer has anything to say.
+        """
+        self.story_finished = True
+
+    def _condition_end(self):
+        """
+        Get the story reader out of 'skip-mode' so it doesn't keep
+        skipping script lines due to a condition in the past being
+        evaluated to False.
+        """
+        self.condition_name_false = None
+
+    def _condition_read(self, command_name: str, arguments: str):
         """
         Check if a condition evaluates to True or False.
         If it's False, set a flag for the current reader to ignore
@@ -4608,13 +4668,32 @@ class StoryReader:
                                       value2=condition.value2,
                                       operator=condition.operator)
         
+        
+        # If <or_condition> is used, make sure the story reader is in
+        # skip-mode (in other words, a condition evaluated to False before).
+        if command_name == "or_condition":
+            if self.condition_name_false:
+                
+                # Is the condition name that evaluated to False before the
+                # same condition name in the <or_condition> command?
+                if self.condition_name_false != condition.condition_name:
+                    # The <or_command> has a different name than the
+                    # last condition that evaluated to False, so we shouldn't
+                    # process this <or_condition> command.
+                    return
+            else:
+                # This story reader is not in skip-mode, so the <or_condition>
+                # doesn't need to be evaluated.
+                return
+        
         if condition_checker.evaluate():
             # Evaluation passed
             
-            # Treat it as if nothing happened.
-            # It's only when it evaluates to False that we need to keep
-            # track of condition names.
-            pass
+            # Clear the variable that holds the condition name that
+            # evaluated to False. This variable might be set to something if
+            # the <or_condition> command was used here, so we clear it here
+            # to make sure the story reader is not in skip-mode.
+            self.condition_name_false = None
             
         else:
             # Evaluated to False
