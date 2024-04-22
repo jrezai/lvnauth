@@ -64,7 +64,7 @@ class Condition:
         a condition (sometime before) evaluated to False and
         now it's skipping the script's lines.
         
-        When a line such as <condition_end>, <or_condition>, <condition_end>
+        When a line such as <case_end>, <or_case>
         is reached, however, those should be evaluated when the reader is in
         skip-mode.
         That's what this method checks for.
@@ -84,9 +84,9 @@ class Condition:
             return True
         
         script_line = script_line.strip()
-        if script_line.startswith("<condition_end>") or \
-           script_line.startswith("<or_condition>") or \
-           script_line.startswith("<condition_else>"):
+        if script_line.startswith("<case_end>") or \
+           script_line.startswith("<or_case>") or \
+           script_line.startswith("<case_else>"):
             return True
         else:
             return False

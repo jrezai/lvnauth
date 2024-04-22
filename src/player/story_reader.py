@@ -385,7 +385,7 @@ class StoryReader:
         # The lastest condition name that evaluated to False.
         # The name is case-sensitive. If there is a value here,
         # the current reader will skip all script lines except for:
-        # <condition_end> and <or_condition>.
+        # <case_end> and <or_case>.
         self.condition_name_false = None
 
         # For reading variables and replacing them with values.
@@ -794,7 +794,7 @@ class StoryReader:
             if not Condition.evaluate_line_check(script_line=line,
                             false_condition_name=self.condition_name_false):
                 # An earlier condition evaluated to False, 
-                # and the current line is not <condition_end> or <or_condition>
+                # and the current line is not <case_end> or <or_case>
                 # so ignore this line.
                 continue
             
@@ -986,13 +986,13 @@ class StoryReader:
             self.story.add_font(font_name=arguments,
                                 font_sprite=font_full_sprite_sheet_sprite)
 
-        elif command_name in ("condition", "or_condition"):
+        elif command_name in ("case", "or_case"):
             self._condition_read(command_name=command_name, arguments=arguments)
 
-        elif command_name == "condition_else":
+        elif command_name == "case_else":
             self._condition_else()
 
-        elif command_name == "condition_end":
+        elif command_name == "case_end":
             self._condition_end()
             
         elif command_name == "exit":
@@ -4606,29 +4606,29 @@ class StoryReader:
         If the last condition evaluated to True (the story reader
         is not bound to a condition name in self.condition_name_false),
         then make the story reader enter skip-mode so the script below
-        <condition_else> doesn't run.
-        <condition_end> will be needed eventually to make the reader
+        <case_else> doesn't run.
+        <case_end> will be needed eventually to make the reader
         get out of skip-mode.
         
         If the last condition evaluated to False (the story reader
         is bound to a condition name in self.condition_name_false), then
         the story reader is already in skip-mode so get it out of skip-mode
-        so that the script below <condition_else> will run.
-        <condition_end> is not technically needed in this situation because
-        it's no longer in skip-mode, but having <condition_end> is ok too.
+        so that the script below <case_else> will run.
+        <case_end> is not technically needed in this situation because
+        it's no longer in skip-mode, but having <case_end> is ok too.
         """
         
         # Did the last condition evaluate to True?
         if not self.condition_name_false:
             
-            # Enter skip-mode so the script below 'condition_else' won't run.
+            # Enter skip-mode so the script below 'case_else' won't run.
             self.condition_name_false = "!else-condition!"
         
         else:
             # The last condition evaluated to False.
             
             # Get the story reader out of skip-mode so that the script
-            # below 'condition_else' will run.
+            # below 'case_else' will run.
             self.condition_name_false = None
 
     def _exit(self):
@@ -4655,10 +4655,10 @@ class StoryReader:
         Check if a condition evaluates to True or False.
         If it's False, set a flag for the current reader to ignore
         all upcoming script lines unless it reaches an
-        <or_condition> command or <condition_end> command.
+        <or_case> command or <case_end> command.
         
         Example of a condition:
-        <condition: 10, more than, 5, number check>`
+        <case: 10, more than, 5, number check>`
         """
         condition: ConditionDefinition
         condition = self._get_arguments(class_namedtuple=ConditionDefinition,
@@ -4669,20 +4669,20 @@ class StoryReader:
                                       operator=condition.operator)
         
         
-        # If <or_condition> is used, make sure the story reader is in
+        # If <or_case> is used, make sure the story reader is in
         # skip-mode (in other words, a condition evaluated to False before).
-        if command_name == "or_condition":
+        if command_name == "or_case":
             if self.condition_name_false:
                 
                 # Is the condition name that evaluated to False before the
-                # same condition name in the <or_condition> command?
+                # same condition name in the <or_case> command?
                 if self.condition_name_false != condition.condition_name:
-                    # The <or_command> has a different name than the
+                    # The <or_case> has a different name than the
                     # last condition that evaluated to False, so we shouldn't
-                    # process this <or_condition> command.
+                    # process this <or_case> command.
                     return
             else:
-                # This story reader is not in skip-mode, so the <or_condition>
+                # This story reader is not in skip-mode, so the <or_case>
                 # doesn't need to be evaluated.
                 return
         
@@ -4691,7 +4691,7 @@ class StoryReader:
             
             # Clear the variable that holds the condition name that
             # evaluated to False. This variable might be set to something if
-            # the <or_condition> command was used here, so we clear it here
+            # the <or_case> command was used here, so we clear it here
             # to make sure the story reader is not in skip-mode.
             self.condition_name_false = None
             
@@ -4699,8 +4699,8 @@ class StoryReader:
             # Evaluated to False
             
             # Keep track of the latest condition that evaluated to False
-            # so we can end it using <condition_end> or give it another chance
-            # with <or_condition>.
+            # so we can end it using <case_end> or give it another chance
+            # with <or_case>.
             self.condition_name_false = condition.condition_name
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
