@@ -136,6 +136,11 @@ class SpriteTextClear(NamedTuple):
     general_alias: str
 
 
+class MouseEventRunScript(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+
+
 class Flip(NamedTuple):
     general_alias: str
 
@@ -1132,6 +1137,18 @@ class StoryReader:
                               "dialog_sprite_flip_vertical"):
 
             self._flip(command_name=command_name, arguments=arguments)
+            
+        elif command_name in ("dialog_sprite_on_mouse_enter",
+                              "object_on_mouse_enter",
+                              "character_on_mouse_enter",
+                              "dialog_sprite_on_mouse_leave",
+                              "object_on_mouse_leave",
+                              "character_on_mouse_leave",
+                              "dialog_sprite_on_mouse_click", 
+                              "object_on_mouse_click", 
+                              "character_on_mouse_click"):
+            self._mouse_event_reusable_script(command_name=command_name,
+                                              arguments=arguments)
 
         elif command_name == "no_clear":
             self._no_clear()
@@ -1933,12 +1950,8 @@ class StoryReader:
         if not flip:
             return
 
-        if "character" in command_name:
-            sprite_type = active_story.ContentType.CHARACTER
-        elif "object" in command_name:
-            sprite_type = active_story.ContentType.OBJECT
-        elif "dialog" in command_name:
-            sprite_type = active_story.ContentType.DIALOG_SPRITE
+        # Determine the sprite type based on the command name.
+        sprite_type = self.get_sprite_type_from_command(command_name=command_name)
             
         vertical = False
         horizontal = False
@@ -2087,16 +2100,16 @@ class StoryReader:
         if not sprite_to_move:
             return
 
-        before_move_rect = sprite_to_move.rect.copy()
+        # before_move_rect = sprite_to_move.rect.copy()
         sprite_to_move.rect.centerx = sprite_to_center_with.rect.centerx
-        after_move_rect = sprite_to_move.rect.copy()
+        # after_move_rect = sprite_to_move.rect.copy()
         
-        # Queue the rects for a manual screen update.
-        # Regular animations (such as <character_start_moving: rave>)
-        # are updated automatically, but since this is a manual animation,
-        # we need to queue it for updating here.
-        active_story.ManualUpdate.queue_for_update(before_move_rect)        
-        active_story.ManualUpdate.queue_for_update(after_move_rect) 
+        ## Queue the rects for a manual screen update.
+        ## Regular animations (such as <character_start_moving: rave>)
+        ## are updated automatically, but since this is a manual animation,
+        ## we need to queue it for updating here.
+        #active_story.ManualUpdate.queue_for_update(before_move_rect)        
+        #active_story.ManualUpdate.queue_for_update(after_move_rect) 
 
     def on_dialog_rectangle_animation_completed(self,
                                                 final_dest_rect: pygame.Rect,
@@ -4821,6 +4834,60 @@ class StoryReader:
         main_reader = self.get_main_story_reader()
 
         main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+
+    def get_sprite_type_from_command(self, command_name: str) -> file_reader.ContentType:
+        """
+        Return the type of sprite the command is for based
+        on the command name.
+        """
+        if "character" in command_name:
+            return file_reader.ContentType.CHARACTER
+        elif "object" in command_name:
+            return file_reader.ContentType.OBJECT
+        elif "dialog" in command_name:
+            return file_reader.ContentType.DIALOG_SPRITE
+
+    def _mouse_event_reusable_script(self, command_name, arguments: str):
+        """
+        When a mouse action occurs, run a specific reusable script.
+        """
+        
+        mouse_run_script: MouseEventRunScript
+        mouse_run_script =\
+            self._get_arguments(class_namedtuple=MouseEventRunScript,
+                                given_arguments=arguments)
+        
+        if not mouse_run_script:
+            return
+        
+        # Determine the sprite type that the command will be applied to
+        # based on the command name.
+        sprite_type =\
+            self.get_sprite_type_from_command(command_name=command_name)
+        
+        # Get the visible sprite based on the general alias
+        # Used for setting a reusable script to run when specific
+        # mouse events occur on the sprite.
+        existing_sprite: sd.SpriteObject =\
+            self.story.get_visible_sprite(content_type=sprite_type,
+                                    general_alias=mouse_run_script.sprite_name)
+
+        if not existing_sprite:
+            return
+        
+        # Set the name of the reusable script to run when a specific 
+        # mouse event occurs.
+        if "_mouse_enter" in command_name:
+            existing_sprite.on_mouse_enter_run_script =\
+                mouse_run_script.reusable_script_name
+            
+        elif "_mouse_leave" in command_name:
+            existing_sprite.on_mouse_leave_run_script =\
+                mouse_run_script.reusable_script_name
+            
+        elif "_mouse_click" in command_name:
+            existing_sprite.on_mouse_click_run_script =\
+                mouse_run_script.reusable_script_name
 
     def _wait_for_animation(self, arguments: str):
         """

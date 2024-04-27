@@ -18,7 +18,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import pygame
 import font_handler
-from shared_components import Passer, ManualUpdate
+from shared_components import Passer, ManualUpdate, MouseActionsAndCoordinates
 from typing import NamedTuple, Tuple, List
 from enum import Enum, auto
 from datetime import datetime
@@ -257,6 +257,15 @@ def rect_section_to_type(rect_section: str) -> MovementStops:
     return section
 
 
+# Used for knowing whether a sprite has entered over a sprite
+# and if it has, the sprite's mouse flag gets set to HOVERING_OVER_SPRITE
+# until it moves away from the sprite. We use this enum to prevent a reusable
+# script from running multiple times when the mouse is over a sprite.
+class SpriteMouseStatus(Enum):
+    AWAY_FROM_SPRITE = auto()
+    HOVERING_OVER_SPRITE = auto()
+
+
 
 class SpriteObject:
 
@@ -304,7 +313,7 @@ class SpriteObject:
         self.movement_stop_run_script = None
 
         # Will be based on the MovementSpeed class.
-        self.movement_speed: story_reader.MovementSpeed
+        self.movement_speed: MovementSpeed
         self.movement_speed = None
 
         # Will be based on the MovementDelay class.
@@ -386,6 +395,17 @@ class SpriteObject:
         # self.sudden_fade_change = False
         # self.sudden_scale_change = False
         # self.sudden_rotate_change = False
+        
+        # Used for making sure the mouse event reusable scripts
+        # are executed only once for each mouse event change.
+        # If we didn't have this, a mouse hover event could have run
+        # a reusable script each time the mouse moved on a sprite.
+        self.mouse_status: SpriteMouseStatus = SpriteMouseStatus.AWAY_FROM_SPRITE
+        
+        # Names of reusable scripts to run after specific mouse events.
+        self.on_mouse_enter_run_script: str = None
+        self.on_mouse_leave_run_script: str = None
+        self.on_mouse_click_run_script: str = None
         
         # Deals with showing/hiding sprite text
         self.active_font_handler =\
@@ -968,8 +988,60 @@ class SpriteObject:
         self._animate_movement()
         self._animate_rotation()
         self._animate_fading()
-
+        
         self._apply_still_effects()
+        
+        
+        self._handle_mouse_events()
+        
+    def _handle_mouse_events(self):
+        """
+        Check the following mouse events and if any of the events are
+        occurring, check if the current sprite should run a reusable script
+        for a specific mouse event.
+        
+        The events are: on_mouse_enter, on_mouse_leave, on_mouse_click
+        """
+        
+        # Is the mouse pointer inside the current sprite?
+        if MouseActionsAndCoordinates.MOUSE_POS:
+            if self.rect.collidepoint(MouseActionsAndCoordinates.MOUSE_POS):
+                # The mouse pointer is inside the current sprite.
+                
+                
+                # Make the sprite aware that the mouse pointer is on top
+                # of the current sprite, if it doesn't already know.
+                if self.mouse_status != SpriteMouseStatus.HOVERING_OVER_SPRITE:
+                    self.mouse_status = SpriteMouseStatus.HOVERING_OVER_SPRITE
+                    
+                    # Run on_enter reusable script here
+                    # --
+                    
+                # Was a mouse button clicked? Check if we should
+                # run a specific reusable script.
+                if MouseActionsAndCoordinates.MOUSE_UP:
+                    
+                    if self.on_mouse_click_run_script:
+                    
+                        # Run the script that is supposed to run now that this 
+                        # sprite has been clicked.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader(
+                                reusable_script_name=self.on_mouse_click_run_script)
+                        
+                    
+            else:
+                # The mouse pointer is not on top of the current sprite.
+                
+                # Make sure the sprite aware that the mouse pointer is not
+                # on top of the current sprite, if it doesn't already know.
+                if self.mouse_status != SpriteMouseStatus.AWAY_FROM_SPRITE:
+                    self.mouse_status = SpriteMouseStatus.AWAY_FROM_SPRITE
+                    
+                    # Run on_leave reusable script here
+                    # ..
+        
+        
 
     def _animate_rotation(self):
         """
