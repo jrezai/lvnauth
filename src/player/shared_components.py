@@ -106,7 +106,7 @@ class ManualUpdate:
 
 # Used for sprite mouse clicks and mouse hovers
 class MouseActionsAndCoordinates:
-    MOUSE_POS = tuple()
+    MOUSE_POS = (0, 0)
     MOUSE_DOWN = False
     MOUSE_UP = False
 

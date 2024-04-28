@@ -136,9 +136,15 @@ class SpriteTextClear(NamedTuple):
     general_alias: str
 
 
-class MouseEventRunScript(NamedTuple):
+class MouseEventRunScriptNoArguments(NamedTuple):
     sprite_name: str
     reusable_script_name: str
+    
+    
+class MouseEventRunScriptWithArguments(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+    arguments: str
 
 
 class Flip(NamedTuple):
@@ -3757,6 +3763,34 @@ class StoryReader:
             after_manager_method = self.after_manager
             
         return after_manager_method
+    
+    def spawn_new_background_reader_auto_arguments(
+        self, reusable_script_name_maybe_with_arguments: str):
+        """
+        Create a new background reader for playing a reusable script.
+        This is the same as the other method, spawn_new_background_reader(),
+        with one difference: the given argument can contain arguments
+        and the arguments will be passed to the reusable script automatically.
+        
+        This is a wrapper method that runs spawn_new_background_reader().
+        It basically looks for a comma and uses that determine if there are
+        arguments to pass or not.
+        
+        Arguments:
+        
+        - reusable_script_name_maybe_with_arguments: either the reusable
+        script name alone, or the reusable script name, followed by arguments
+        to pass to the reusable script.
+        
+        Example: 'my second script'
+        or
+        'my second script, name=theo, sky=blue'
+        """
+        with_arguments = "," in reusable_script_name_maybe_with_arguments
+        
+        self.spawn_new_background_reader(
+            reusable_script_name=reusable_script_name_maybe_with_arguments,
+        with_arguments=with_arguments)
 
     def spawn_new_background_reader(self,
                                     reusable_script_name: str,
@@ -4852,9 +4886,12 @@ class StoryReader:
         When a mouse action occurs, run a specific reusable script.
         """
         
-        mouse_run_script: MouseEventRunScript
+        class_name = MouseEventRunScriptWithArguments if "," in arguments \
+            else MouseEventRunScriptNoArguments
+        
+        mouse_run_script: MouseEventRunScriptWithArguments
         mouse_run_script =\
-            self._get_arguments(class_namedtuple=MouseEventRunScript,
+            self._get_arguments(class_namedtuple=class_name,
                                 given_arguments=arguments)
         
         if not mouse_run_script:
@@ -4875,19 +4912,23 @@ class StoryReader:
         if not existing_sprite:
             return
         
+        if class_name == MouseEventRunScriptWithArguments:
+            reusable_script_name = mouse_run_script.reusable_script_name + \
+                ", " + mouse_run_script.arguments
+            
+        elif class_name == MouseEventRunScriptNoArguments:
+            reusable_script_name = mouse_run_script.reusable_script_name
+        
         # Set the name of the reusable script to run when a specific 
         # mouse event occurs.
         if "_mouse_enter" in command_name:
-            existing_sprite.on_mouse_enter_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_enter_run_script = reusable_script_name
             
         elif "_mouse_leave" in command_name:
-            existing_sprite.on_mouse_leave_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_leave_run_script = reusable_script_name
             
         elif "_mouse_click" in command_name:
-            existing_sprite.on_mouse_click_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_click_run_script = reusable_script_name
 
     def _wait_for_animation(self, arguments: str):
         """

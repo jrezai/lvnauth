@@ -1026,8 +1026,9 @@ class SpriteObject:
                         # Run the script that is supposed to run now that this 
                         # sprite has been clicked.
                         Passer.active_story.reader.\
-                            spawn_new_background_reader(
-                                reusable_script_name=self.on_mouse_click_run_script)
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_click_run_script)
                         
                     
             else:
