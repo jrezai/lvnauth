@@ -23,6 +23,7 @@ fade animations.
 """
 
 import copy
+import re
 import pygame
 #import subprocess
 #import sys
@@ -3581,11 +3582,51 @@ class StoryReader:
         # is working, it'll read this variable value and delay the fade effect.
         sprite.fade_delay_main = fade_delay_main
 
-    def _sprite_load(self, arguments, sprite_type: file_reader.ContentType):
+    def _sprite_load(self, arguments: str, sprite_type: file_reader.ContentType):
         """
         Load a sprite image/sprite into memory and give it a general alias
         so it's ready to be displayed whenever it's needed.
         """
+        
+        def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
+            """
+            Return the preferred name and the original name of a sprite
+            when using 'Load As' in the name section.
+            If 'Load As' is not used, then None is returned.
+            
+            For example:
+            'Theo Load As Th' will return {"LoadAsName": "Th", "OriginalName": "Theo"}
+            The 'Load As' keyword part is not case-sensitive
+            
+            If there is no 'Load As', None is returned.
+            For example:
+            'Theo' will return None.
+            """
+        
+            result = re.search(pattern=r"^(?P<OriginalName>.*)[\s](load as)[\s](?P<LoadAsName>.*)",
+                               string=sprite_name_argument,
+                               flags=re.IGNORECASE)
+            
+            # Was there a search match?
+            if not result:
+                # No match was found, which means 'Load As' is not being used.
+                
+                return
+            
+            else:
+            
+                result = result.groupdict()
+                load_as_name = result.get("LoadAsName")
+                original_name = result.get("OriginalName")
+                
+                # Remove leading and trailing spaces.
+                if load_as_name and original_name:
+                    load_as_name = load_as_name.strip()
+                    original_name = original_name.strip()
+                    
+                    return {"LoadAsName": load_as_name,
+                            "OriginalName": original_name}
+        
 
         sprite_name_and_alias: sd.SpriteLoad
         sprite_name_and_alias = \
@@ -3595,9 +3636,34 @@ class StoryReader:
         if not sprite_name_and_alias:
             return
         
-        loaded_sprite = self.data_requester.get_sprite(content_type=sprite_type,
-                                                       item_name=sprite_name_and_alias.sprite_name,
-                                                       general_alias=sprite_name_and_alias.sprite_general_alias)
+        # Is there 'Load As' in the sprite name? That means there is a
+        # a different preferred name, so we should load the sprite As the
+        # new name.
+        # For example: <load_character: theo Load As th>
+        original_and_preferred_name =\
+            get_preferred_sprite_name(
+                sprite_name_argument=sprite_name_and_alias.sprite_name)
+        
+        # Separate the original name and preferred load-as name,
+        # if a preferred name was provided.
+        if original_and_preferred_name:
+            # A preferred name was provided.
+            
+            original_sprite_name = original_and_preferred_name.get("OriginalName")
+            preferred_sprite_name = original_and_preferred_name.get("LoadAsName")
+  
+        else:
+            # There is no preferred name; use the original name.
+            original_sprite_name = sprite_name_and_alias.sprite_name
+            preferred_sprite_name = None
+        
+        # Get the sprite from the .lvna file.
+        loaded_sprite =\
+            self.data_requester.get_sprite(
+                content_type=sprite_type,
+                item_name=original_sprite_name,
+                general_alias=sprite_name_and_alias.sprite_general_alias,
+                load_item_as_name=preferred_sprite_name)
         
         if not loaded_sprite:
             return            
@@ -3616,9 +3682,11 @@ class StoryReader:
 
         else:
             return
-            
-        sprite_group.add(sprite_name_and_alias.sprite_name,
-                         loaded_sprite)
+        
+        # Use the preferred sprite name when adding the sprite to the dictionary
+        # if it's there; otherwise use the sprite's original sname.
+        sprite_group.add(
+            preferred_sprite_name or original_sprite_name, loaded_sprite)
 
     def _sprite_after_fading_stop(self,
                                   sprite_type: file_reader.ContentType,
@@ -5108,24 +5176,6 @@ class StoryReader:
         if not name:
             return
 
-        # Get the sprite
-        new_sprite: sd.SpriteObject
-
-        # Get the new sprite from its name, not its alias.
-
-        # When we're showing a sprite, we must use its name, because if
-        # we try and use an alias, multiple sprites might have the same alias.
-        new_sprite = self.data_requester.get_sprite(content_type=sprite_type,
-                                                    item_name=name.sprite_name)
-
-        if not new_sprite:
-            return
-
-        # Is the sprite already visible and not waiting to hide? return
-        # because the sprite is already fully visible.
-        elif new_sprite.visible and not new_sprite.pending_hide:
-            return
-
         # Set the visibility to True and also
         # set a flag to indicate in the next sprite update that we should
         # update the screen rect of this sprite.
@@ -5134,139 +5184,157 @@ class StoryReader:
         # what we want to show? If so, replace that sprite with
         # the new sprite that we have now.
 
-        if sprite_type in (file_reader.ContentType.CHARACTER,
+        if sprite_type not in (file_reader.ContentType.CHARACTER,
                            file_reader.ContentType.OBJECT,
-                           file_reader.ContentType.DIALOG_SPRITE):
+                           file_reader.ContentType.DIALOG_SPRITE,
+                           file_reader.ContentType.BACKGROUND):
+            return
 
-            if sprite_type == file_reader.ContentType.CHARACTER:
-                sprite_group = sd.Groups.character_group
+        if sprite_type == file_reader.ContentType.CHARACTER:
+            sprite_group = sd.Groups.character_group
 
-            elif sprite_type == file_reader.ContentType.OBJECT:
-                sprite_group = sd.Groups.object_group
+        elif sprite_type == file_reader.ContentType.OBJECT:
+            sprite_group = sd.Groups.object_group
 
-            elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
-                sprite_group = sd.Groups.dialog_group
-
-            # Find the sprite that we're swapping 'out'
-            visible_sprite: sd.SpriteObject
-            visible_sprite = None
+        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+            sprite_group = sd.Groups.dialog_group
             
-            current_visible_sprite: sd.SpriteObject
-            for current_visible_sprite in sprite_group.sprites.values():
+        elif sprite_type == file_reader.ContentType.BACKGROUND:
+            sprite_group = sd.Groups.background_group
+            
+        loaded_sprite: sd.SpriteObject
+        loaded_sprite = sprite_group.sprites.get(name.sprite_name)
+        
+        if not loaded_sprite:
+            return
+        
+        # Is the sprite already visible and not waiting to hide? return
+        # because the sprite is already fully visible.
+        elif loaded_sprite.visible and not loaded_sprite.pending_hide:
+            return            
+
+        # Find the sprite that we're swapping 'out'
+        visible_sprite: sd.SpriteObject
+        visible_sprite = None
+        
+        current_visible_sprite: sd.SpriteObject
+        for current_visible_sprite in sprite_group.sprites.values():
+            
+            # Did we find a fully visible sprite with the same alias?
+            # If so, we'll swap that sprite out.
+            if current_visible_sprite.visible and \
+                       current_visible_sprite.general_alias == loaded_sprite.general_alias:
                 
-                # Did we find a fully visible sprite with the same alias?
-                # If so, we'll swap that sprite out.
-                if current_visible_sprite.visible and \
-                   current_visible_sprite.general_alias == new_sprite.general_alias:
-                    
-                    # We found a visible sprite with the same alias.
-                    visible_sprite = current_visible_sprite                    
-                    break
+                # We found a visible sprite with the same alias.
+                # and it's not the same sprite that we're swapping in, 
+                # because the sprite names are different.
+                visible_sprite = current_visible_sprite                    
+                break
+            
+            # Did we find a pending visible sprite with the same alias?
+            # Keep a reference to it in case we don't find a fully visible
+            # sprite with the same alias, but don't stop checking for
+            # visible sprites yet.
+            elif current_visible_sprite.pending_show and \
+               current_visible_sprite.general_alias == loaded_sprite.general_alias:
                 
-                # Did we find a pending visible sprite with the same alias?
-                # Keep a reference to it in case we don't find a fully visible
-                # sprite with the same alias, but don't stop checking for
-                # visible sprites yet.
-                elif current_visible_sprite.pending_show and \
-                   current_visible_sprite.general_alias == new_sprite.general_alias:
-                    
-                    # We found a visible sprite with the same alias,
-                    # but don't break out of the loop yet because this sprite
-                    # is only pending to be visible, it's not fully visible yet.
-                    # Keep looping to see if there is a fully visible sprite
-                    # with the same alias, and if not, we'll end up swapping 
-                    # out this sprite.
-                    visible_sprite = current_visible_sprite                    
+                # We found a visible sprite with the same alias,
+                # but don't break out of the loop yet because this sprite
+                # is only pending to be visible, it's not fully visible yet.
+                # Keep looping to see if there is a fully visible sprite
+                # with the same alias, and if not, we'll end up swapping 
+                # out this sprite.
+                visible_sprite = current_visible_sprite                    
 
 
-            # Did we end up finding a visible sprite with the same alias?
-            if visible_sprite:
-    
-                # Copy the currently visible sprite
-                # so that we can turn this copy into a new sprite later.
-                copied_visible_sprite = copy.copy(visible_sprite)
-    
-                # Keep track of the center of the current sprite
-                # so we can restore the center when the new
-                # sprite is shown. If we don't do this, the new sprite
-                # will show up in a different position.
-                current_center = visible_sprite.rect.center
-    
-                # Get the new image that we want to show
-                copied_visible_sprite.original_image = new_sprite.original_image
-                copied_visible_sprite.original_image_before_text = new_sprite.original_image_before_text
-                copied_visible_sprite.original_rect = new_sprite.original_rect
-                copied_visible_sprite.image = new_sprite.image
-                copied_visible_sprite.rect = new_sprite.rect
-                copied_visible_sprite.name = new_sprite.name
+        # Did we end up finding a visible sprite with the same alias?
+        if visible_sprite:
+
+            # Copy the currently visible sprite
+            # so that we can turn this copy into a new sprite later.
+            copied_visible_sprite = copy.copy(visible_sprite)
+
+            # Keep track of the center of the current sprite
+            # so we can restore the center when the new
+            # sprite is shown. If we don't do this, the new sprite
+            # will show up in a different position.
+            current_center = visible_sprite.rect.center
+
+            # Get the new image that we want to show
+            copied_visible_sprite.original_image = loaded_sprite.original_image
+            copied_visible_sprite.original_image_before_text = loaded_sprite.original_image_before_text
+            copied_visible_sprite.original_rect = loaded_sprite.original_rect
+            copied_visible_sprite.image = loaded_sprite.image
+            copied_visible_sprite.rect = loaded_sprite.rect
+            copied_visible_sprite.name = loaded_sprite.name
+            
+            # Update the active font handler's sprite reference
+            # (if there is one) to the new sprite that has 
+            # the new images. If we don't do this, the active font
+            # handler will have a reference to the swapped-out sprite
+            # rather than the newly swapped-in sprite, and then text
+            # won't display on the new sprite.
+            if copied_visible_sprite.active_font_handler \
+               and copied_visible_sprite.active_font_handler.sprite_object:
+                copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
                 
-                # Update the active font handler's sprite reference
-                # (if there is one) to the new sprite that has 
-                # the new images. If we don't do this, the active font
-                # handler will have a reference to the swapped-out sprite
-                # rather than the newly swapped-in sprite, and then text
-                # won't display on the new sprite.
-                if copied_visible_sprite.active_font_handler \
-                   and copied_visible_sprite.active_font_handler.sprite_object:
-                    copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
-                    
-                    ## Prepare letter sprites for blitting later.
-                    #copied_visible_sprite.active_font_handler.process_text(line_text="")
-                    
-                    # If sudden-text was already blitted before (from previous text), 
-                    # reset the blitted flag so we can append more sudden-text.
-                    # We need this block for sudden text to show after the swap.
-                    if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
-                       and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
-                        copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
-                    
-                    # Start showing animation of font text, unless it's set to
-                    # sudden-mode.        
-                    copied_visible_sprite.active_font_handler.font_animation.\
-                        start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
-    
-    
-                # Record whether the new sprite has been flipped in any way
-                # at any time in the past, because we'll need to compare the flip
-                # values with the sprite that is being swapped out later in this method.
-                copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
-                copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
-    
-                # The new sprite does not have any scale/rotate/fade effects
-                # applied to it, but the flags (self.applied..) at this 
-                # point indicate that effects are applied 
-                # (those flags are not up-to-date).
-                # So reset the flags so that we will end up applying
-                # necessary effects to make it match the effects of 
-                # the previous sprite.
-                copied_visible_sprite.reset_applied_effects()
-    
-                # Make the new sprite the same as the current sprite
-                # but with the new images, rects, and new name.
-                new_sprite = copied_visible_sprite
+                ## Prepare letter sprites for blitting later.
+                #copied_visible_sprite.active_font_handler.process_text(line_text="")
                 
-    
-                # Restore the center position so the new sprite
-                # will be positioned exactly where the old sprite is.
-                new_sprite.rect.center = current_center
-    
-                # Hide the old sprite (that we're swapping out)
-                visible_sprite.start_hide()
-    
-                # If the sprite that is being swapped out was flipped horizontally and/or vertically,
-                # then make sure the new sprite is flipped horizontally and/or vertically too.
-                new_sprite.flip_match_with(visible_sprite)
-    
-                # Show the new sprite (that we're swapping in)
-                new_sprite.start_show()
-    
-                # Update the new sprite in the main character sprites dictionary
-                sprite_group.sprites[new_sprite.name] = new_sprite
+                # If sudden-text was already blitted before (from previous text), 
+                # reset the blitted flag so we can append more sudden-text.
+                # We need this block for sudden text to show after the swap.
+                if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+                   and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
+                    copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
+                
+                # Start showing animation of font text, unless it's set to
+                # sudden-mode.        
+                copied_visible_sprite.active_font_handler.font_animation.\
+                    start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
+
+
+            # Record whether the new sprite has been flipped in any way
+            # at any time in the past, because we'll need to compare the flip
+            # values with the sprite that is being swapped out later in this method.
+            copied_visible_sprite.flipped_horizontally = loaded_sprite.flipped_horizontally
+            copied_visible_sprite.flipped_vertically = loaded_sprite.flipped_vertically
+
+            # The new sprite does not have any scale/rotate/fade effects
+            # applied to it, but the flags (self.applied..) at this 
+            # point indicate that effects are applied 
+            # (those flags are not up-to-date).
+            # So reset the flags so that we will end up applying
+            # necessary effects to make it match the effects of 
+            # the previous sprite.
+            copied_visible_sprite.reset_applied_effects()
+
+            # Make the new sprite the same as the current sprite
+            # but with the new images, rects, and new name.
+            loaded_sprite = copied_visible_sprite
+            
+
+            # Restore the center position so the new sprite
+            # will be positioned exactly where the old sprite is.
+            loaded_sprite.rect.center = current_center
+
+            # Hide the old sprite (that we're swapping out)
+            visible_sprite.start_hide()
+
+            # If the sprite that is being swapped out was flipped horizontally and/or vertically,
+            # then make sure the new sprite is flipped horizontally and/or vertically too.
+            loaded_sprite.flip_match_with(visible_sprite)
+
+            # Show the new sprite (that we're swapping in)
+            loaded_sprite.start_show()
+
+            # Update the new sprite in the main character sprites dictionary
+            sprite_group.sprites[loaded_sprite.name] = loaded_sprite
 
 
 
         # If the sprite is not already visible, start to make it visible.
-        if not new_sprite.visible:
+        if not loaded_sprite.visible:
 
             # If the sprite is a background, hide all backgrounds
             # before showing the new background.
@@ -5276,7 +5344,10 @@ class StoryReader:
             if sprite_type == file_reader.ContentType.BACKGROUND:
                 sd.Groups.background_group.hide_all()
 
-            new_sprite.start_show()
+            loaded_sprite.start_show()
+            
+            ## Update the newly set-visible sprite in the sprites dictionary
+            #sprite_group.sprites[loaded_sprite.name] = loaded_sprite            
 
     def _text_dialog_close(self):
         """

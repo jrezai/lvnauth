@@ -182,7 +182,8 @@ class FileReader:
     def get_sprite(self,
                    content_type: ContentType,
                    item_name: str,
-                   general_alias: str = None):
+                   general_alias: str = None,
+                   load_item_as_name: str = None):
         """
         Return a sprite object (which is meant to be eventually added to a sprite group)
         or a font sprite (FontSprite object)
@@ -193,6 +194,9 @@ class FileReader:
          - general_alias: the category name to give to the newly spawned sprite.
          this only gets used for character sprite objects, not background sprites
          and not font sprites.
+         - load_item_as_name: the name to load the sprite as. This is used if we
+         want to load multiple copies of the same sprite but with different
+         sprite names (for example: when wanting to show multiple button sprites).
          
         Return: sprite object (SpriteObject) or font sprite (FontSprite object) or None
         """
@@ -254,21 +258,25 @@ class FileReader:
                 if sprite_group:
                     existing_sprite: sd.SpriteObject
                     existing_sprite = None
-                    
-                    #i_sprite: active_story.SpriteObject
 
-                    ## Find a sprite that is currently visible and has the same
-                    ## general alias as the sprite we're trying to get.
-                    #for i_sprite in active_story.Groups.character_group.sprites.values():
-                        #if i_sprite.general_alias == item_name:
-                            #if i_sprite.visible and not i_sprite.pending_hide:
-                                #existing_sprite = i_sprite
-                                #break
-                    #else:
+                    # If the sprite is already loaded, return
+                    # the sprite from the sprite's group instead of the 
+                    # .lvna file.
                     
-                    existing_sprite = sprite_group.sprites.get(item_name)
-                    if existing_sprite:
-                        return existing_sprite
+                    # If we're loading the sprite with a new name (not using
+                    # the sprite's original name), then don't return an
+                    # already-loaded sprite - load the sprite from the .lvna.
+                    # There's no technical reason for this aside from being
+                    # able to start from scratch, that way the new sprite's
+                    # settings are reset and original.
+                    if not load_item_as_name:
+                        # We're loading the sprite using the original name,
+                        # so look for a cached/already-loaded sprite
+                        # that has the same name as the one we're trying to load.
+                        
+                        existing_sprite = sprite_group.sprites.get(item_name)
+                        if existing_sprite:
+                            return existing_sprite
 
                     # The sprite hasn't been instantiated yet.
                     # Instantiate it here. The returned sprite
@@ -276,6 +284,12 @@ class FileReader:
                     new_sprite = create_sprite_method(name=item_name,
                                                       image=surface_image,
                                                       general_alias=general_alias)
+                    
+                    # Loading the sprite as a new/different name?
+                    # Set the new name here.
+                    if load_item_as_name:
+                        new_sprite.name = load_item_as_name
+                    
                     return new_sprite
 
                 elif content_type == ContentType.BACKGROUND:
