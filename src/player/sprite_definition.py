@@ -1322,12 +1322,80 @@ class SpriteObject:
         fade_needed = self.is_fade_needed()
         scale_or_rotation_needed = self.is_scale_or_rotate_needed()
         
+        # If there is a fade and/or scale animation needed,
+        # apply those effects now.
         if scale_or_rotation_needed or fade_needed:
+            
+            # Apply effects
+            
             self._scale_or_rotate_sprite()
             self._fade_sprite(skip_copy_original_image=True)
             # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
-        #else:
+        else:
+            """
+            No effects needed to be applied in this frame.
+            Either the sprite has had its effect animations finished
+            or has no effects at all.
+            """
+
+            """
+            If no effects are currently applied to the sprite,
+            and the displayed image is different from the original sprite
+            with text, then that means there is some text on the sprite
+            that we're currently not showing and that we need to show.
+            OR there was text before (and we're showing the sprite with text)
+            but now the sprite's text has been cleared, but we're still showing
+            the sprite with text. We need to copy the original image with text
+            to self.image, which gets shown to the viewer.
+            This gets handled automatically when effects have been
+            applied or animations are ongoing. But if the sprite hasn't had
+            any animations or effects applied to it, we need to handle this
+            here.
+            For details, read the comment in the method 'any_effects_applied'            
+            """
+
+            # Update the displayed image with the sprite with text. 
+            # If the two sprites are different, use the sprite with text.
+            if not self.any_effects_applied() and \
+               self.image != self.original_image:
+                
+                # The displayed image is different from the image with text,
+                # so get the image with text on it (self.original_image)
+                self.image = self.original_image
+                
+                print("Copied sprite with text")
+                
             #print("Animation not needed")
+            
+    def any_effects_applied(self) -> bool:
+        """
+        Return whether the sprite has had any type of effect
+        applied to it, such as fade, rotate, scale.
+        
+        Return: True if at least one of the effects has been applied
+        to the sprite (fade, rotate, scale)
+        
+        Return: False if the sprite does not have any effects applied to it.
+        
+        Purpose: if the sprite does not have any effects applied to it,
+        then the caller needs to check if the sprite has any text and get
+        a copy of the sprite image with text; otherwise the visible sprite
+        won't have text on it. Effects will automatically take care of a
+        sprite's text by making the sprite's text show up during animations.
+        But if a sprite has had no animations or is not going through an
+        animation now, then we need to deal with showing the sprite's text
+        a different way, and this method is used as part of this.
+        """
+        if self.applied_fade_value is None \
+           and self.applied_rotate_value is None \
+           and self.applied_scale_value is None:
+            
+            # This sprite currently does not have any effects applied to it.
+            return False
+        else:
+            # This sprite has at least one type of effect applied to it.
+            # Fade and/or scale and/or animation.
+            return True     
 
     def is_fade_needed(self) -> bool:
         """
@@ -1607,7 +1675,7 @@ class SpriteObject:
         """
         self.applied_fade_value = None
         self.applied_rotate_value = None
-        self.applied_scale_value = None        
+        self.applied_scale_value = None
 
     def _animate_movement(self):
         """
