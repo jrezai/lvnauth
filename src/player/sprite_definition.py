@@ -1015,7 +1015,14 @@ class SpriteObject:
                     self.mouse_status = SpriteMouseStatus.HOVERING_OVER_SPRITE
                     
                     # Run on_enter reusable script here
-                    # --
+                    if self.on_mouse_enter_run_script:
+                    
+                        # Run the script that is supposed to run now that the
+                        # mouse pointer is over the sprite.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_enter_run_script)
                     
                 # Was a mouse button clicked? Check if we should
                 # run a specific reusable script.
@@ -1040,7 +1047,14 @@ class SpriteObject:
                     self.mouse_status = SpriteMouseStatus.AWAY_FROM_SPRITE
                     
                     # Run on_leave reusable script here
-                    # ..
+                    if self.on_mouse_leave_run_script:
+                    
+                        # Run the script that is supposed to run now that the
+                        # mouse pointer is no longer over the sprite.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_leave_run_script)
         
         
 

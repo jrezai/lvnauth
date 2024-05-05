@@ -433,7 +433,14 @@ class StoryReader:
             # It forces the main story reader to pause until there are
             # no more sprites animating that were in the wait list.
             self.wait_for_animation_handler = WaitForAnimationHandler()
-    
+            
+            # This is used for manually pausing the reading of the 
+            # main script until <unpause_main_script> is used.
+            # Purpose: to prevent the main reader from advancing until
+            # the viewer clicks on a sprite (button) which then manually
+            # unpauses the main reader.
+            self.pause_main_script = False
+            
             # When halted in auto-mode, a mouse click or keyboard press won't
             # advance the story. Instead, the story will be advanced automatically
             # after X number of frames have elapsed.
@@ -499,7 +506,7 @@ class StoryReader:
     def main_script_should_pause(self):
         """
         Check if there are any animations occurring
-        or pauses (halt, rest) that should cause
+        or pauses (halt, rest, manual pause) that should cause
         the main story script to not continue reading.
         
         This does not apply to background scripts.
@@ -509,7 +516,8 @@ class StoryReader:
         return any((main_reader.animating_dialog_rectangle,
                     main_reader.halt_main_script,
                     main_reader.rest_handler.pause_required(),
-                    main_reader.wait_for_animation_handler.check_wait()))
+                    main_reader.wait_for_animation_handler.check_wait(),
+                    main_reader.pause_main_script))
 
     def clear_all_sprite_groups(self):
         """
@@ -1190,6 +1198,48 @@ class StoryReader:
             Pause the main story reader until a specific animation has finished.
             """
             self._wait_for_animation(arguments=arguments)
+            
+        elif command_name == "halt_and_pause_main_script":
+            """
+            Pause the main story reader until the command <unpause_main_script>
+            is used.
+            
+            This is the same as using <halt> and pausing the story
+            by setting the 'pause_main_script' flag.
+            
+            The reason this command was made: to prevent the main reader
+            from advancing until a sprite (button) has been clicked, and the
+            button would run the command: <unhalt_and_unpause_main_script>.
+            
+            If we didn't have this, then clicking anywhere in the story
+            would cause the story to advance, so we have this command
+            to make the dialog text appear (halt) and to prevent the story
+            from advancing if the viewer clicks anywhere on the story, until
+            the command <unhalt_and_unpause_main_script> is used.
+            """
+            main_reader = self.get_main_story_reader()
+            
+            # Is the main reader already paused? return.
+            if main_reader.pause_main_script:
+                return
+            
+            main_reader.pause_main_script = True
+            main_reader.halt()
+            
+        elif command_name == "unhalt_and_unpause_main_script":
+            """
+            Unpause the main story reader that was manually paused with
+            <pause_main_script>.
+            """
+            main_reader = self.get_main_story_reader()
+            
+            # Is the main reader not paused? Return, to avoid
+            # unhalting unnecessarily because the main reader is not paused.
+            if not main_reader.pause_main_script:
+                return
+            
+            main_reader.pause_main_script = False
+            main_reader.unhalt()
 
         elif command_name == "scene_with_fade":
             """
@@ -2307,6 +2357,13 @@ class StoryReader:
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
+
+        # If the main story reader is paused due to a manual pause
+        # with the <pause_main_script> command, then don't unhalt yet
+        # until the main story reader is unpaused manually with the
+        # <unpause_main_script> command.
+        if main_reader.pause_main_script:
+            return
 
         main_reader.halt_main_script = False
 
@@ -4954,7 +5011,8 @@ class StoryReader:
         When a mouse action occurs, run a specific reusable script.
         """
         
-        class_name = MouseEventRunScriptWithArguments if "," in arguments \
+        class_name = MouseEventRunScriptWithArguments \
+            if arguments.count(",") >=2 \
             else MouseEventRunScriptNoArguments
         
         mouse_run_script: MouseEventRunScriptWithArguments
