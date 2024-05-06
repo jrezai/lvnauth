@@ -394,7 +394,8 @@ class FontAnimation:
         whether to copy the original_image variable to sprite_object.image.
         """
 
-        # Not animating and not in sudden-mode? There is nothing to animate, so return.
+        # Not animating and not in sudden-mode?
+        # There is nothing to animate, so return.
 
         # However, if we are in sudden-mode, we must run this method until the end, because
         # the end of this method will run stop_intro_animation(), which needs to happen for

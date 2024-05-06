@@ -5326,6 +5326,10 @@ class StoryReader:
             copied_visible_sprite.rect = loaded_sprite.rect
             copied_visible_sprite.name = loaded_sprite.name
             
+            # Experimental (may not be needed)
+            if visible_sprite.active_font_handler:
+                copied_visible_sprite.active_font_handler = visible_sprite.active_font_handler
+            
             # Update the active font handler's sprite reference
             # (if there is one) to the new sprite that has 
             # the new images. If we don't do this, the active font
@@ -5346,10 +5350,86 @@ class StoryReader:
                    and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
                     copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
                 
+                
+                """
+                There is no need to re-run an animation if the sprite's text
+                has already finished animating. Only animate the sprite's text
+                if the previous sprite was in the middle of animating the
+                sprite's text and this new sprite that's being swapped-in needs
+                to continue the previous sprite's animation. However, if the
+                previous sprite had already finished showing the sprite's text,
+                prevent the newly swapped-in sprite from restarting the font
+                animation. But each time a sprite is swapped-in, it technically
+                has to re-draw the sprite's text. So what we need to do is
+                temporarily set the font's text to 'sudden' mode and after the
+                newly swapped-in sprite's text has been shown, set it back to
+                whatever animation type the 'old' sprite's text had, just in
+                case more text gets appended to the sprite's text later on
+                or if the sprite's text gets changed.
+                """
+
+                """
+                'copied_visible_sprite' is the 'new' sprite that's
+                being swapped-in, but it also has attributes from
+                the old sprite that is being swapped-out, such as
+                the sprite text font intro animation type 
+                and animation status.
+                """
+                
+                restore_sprite_intro_animation_type = False
+
+                # If the old sprite's animation type is not sudden-mode
+                # and has already finished animating the intro font animation
+                # we'll need to temporarily set the new sprite's font intro
+                # animation to sudden, so that the sprite text's animation
+                # doesn't re-run.
+                if copied_visible_sprite.active_font_handler\
+                   .font_animation.start_animation_type != font_handler.FontAnimationShowingType.SUDDEN \
+                   and not copied_visible_sprite.active_font_handler.font_animation.is_start_animating:
+                    
+                    # The sprite's text intro animation is not sudden-mode
+                    # and the sprite's text has finished animating.
+                    
+                    # Get the animation-type of the sprite that's being
+                    # swapped-out.
+                    old_sprite_animation_type =\
+                        copied_visible_sprite.active_font_handler\
+                        .font_animation.start_animation_type                    
+                    
+                    # temporarily set the newly-swapped in's font intro
+                    # animation to sudden-mode so that the
+                    # new sprite's text animation doesn't run again.
+                    copied_visible_sprite.active_font_handler\
+                        .font_animation.start_animation_type\
+                        = font_handler.FontAnimationShowingType.SUDDEN
+                    
+                    # Flag to indicate that we should change the
+                    # sprite's intro animation type back after
+                    # temporarily changing it here.
+                    restore_sprite_intro_animation_type = True
+
                 # Start showing animation of font text, unless it's set to
-                # sudden-mode.        
+                # sudden-mode.
                 copied_visible_sprite.active_font_handler.font_animation.\
-                    start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
+                    start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)
+                
+                
+                # Should we restore the newly-swapped font intro animation type?
+                if restore_sprite_intro_animation_type:
+                    # Restore the sprite's font-intro animation type.
+                    
+                    # It was changed earlier, temporarily. So here we're
+                    # restoring it.
+                    copied_visible_sprite.\
+                        active_font_handler.font_animation.start_animation_type\
+                        = old_sprite_animation_type
+
+                    # We need to set this flag so the font animation
+                    # will blit the newly-swapped sprite's text.
+                    # Without this, the newly-swapped-in's sprite text
+                    # will not appear.
+                    copied_visible_sprite.active_font_handler.font_animation.\
+                        is_start_animating = True
 
 
             # Record whether the new sprite has been flipped in any way
