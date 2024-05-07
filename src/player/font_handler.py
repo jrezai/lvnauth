@@ -602,6 +602,14 @@ class FontAnimation:
                 # to show properly when swapping out a sprite with 
                 # gradual text that already finished animating the gradual text.
                 if self.gradual_letter_cursor_position > len(self.letters) - 1:
+                    
+                    # We're done showing the letters.
+
+                    # Set the cursor position to prepare for more sprite text
+                    # in case the sprite text gets changed later.
+                    self.gradual_letter_cursor_position = len(self.letters) - 1
+
+                    # We're done showing the letters.
                     stop_intro = True
                     
             else:

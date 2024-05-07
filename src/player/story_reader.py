@@ -5326,10 +5326,7 @@ class StoryReader:
             copied_visible_sprite.rect = loaded_sprite.rect
             copied_visible_sprite.name = loaded_sprite.name
             
-            # Experimental (may not be needed)
-            if visible_sprite.active_font_handler:
-                copied_visible_sprite.active_font_handler = visible_sprite.active_font_handler
-            
+
             # Update the active font handler's sprite reference
             # (if there is one) to the new sprite that has 
             # the new images. If we don't do this, the active font
