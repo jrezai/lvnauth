@@ -2322,7 +2322,8 @@ class WizardWindow:
                             parent_display_text="Font",
                             sub_display_text="sprite_font",
                             command_name="sprite_font",
-                            purpose_line="Sets the font to use for a sprite's text.")  
+                            purpose_line="Sets the font to use for a sprite's text.\n"
+                            "Note: the sprite must already be visible.")  
 
         page_sprite_font_x =\
             Font_SpriteFontPosition(parent_frame=self.frame_contents_outer,
@@ -2333,7 +2334,8 @@ class WizardWindow:
                                     sub_display_text="sprite_font_x",
                                     command_name="sprite_font_x",
                                     purpose_line="Sets the horizontal position of where the sprite text should start,\n"
-                                    "relative to the sprite.\nThe left-most edge of the sprite is 0 (zero).",
+                                    "relative to the sprite.\nThe left-most edge of the sprite is 0 (zero).\n\n"
+                                    "Note: the sprite must already be visible.",
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the horizontal position (x):",
@@ -2348,7 +2350,8 @@ class WizardWindow:
                                     sub_display_text="sprite_font_y",
                                     command_name="sprite_font_y",
                                     purpose_line="Sets the vertical position of where the sprite text should start,\n"
-                                    "relative to the sprite. The top of the sprite is 0 (zero).",
+                                    "relative to the sprite. The top of the sprite is 0 (zero).\n\n"
+                                    "Note: the sprite must already be visible.",
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the vertical position (y):",
@@ -2364,7 +2367,8 @@ class WizardWindow:
                                  command_name="sprite_font_delay",
                                  purpose_line="Sets the number of frames to skip when applying\n"
                                  "gradual sprite text animation (letter-by-letter).\n"
-                                 "Does not apply to letter fade-ins",
+                                 "Does not apply to letter fade-ins\n\n"
+                                 "Note: the sprite must already be visible.",
                                  scale_from_value=0,
                                  scale_to_value=600,
                                  scale_instructions="Delay (frames) (0-600):\n\n"
@@ -2384,7 +2388,8 @@ class WizardWindow:
                                      "Only applies to gradual letter-by-letter text (not fade-ins).\n\n"
                                      "This command can be used to cause a short delay\n"
                                      "after punctuation marks, such as periods.\n\n"
-                                     "Note: this command only works with letters on the same line.",
+                                     "Note: this command only works with letters on the same line.\n\n"
+                                     "Note: the sprite must already be visible.",
                                      scale_from_value=0,
                                      scale_to_value=120,
                                      scale_instructions="The number of frames to skip (0 to 120):",
@@ -2400,7 +2405,8 @@ class WizardWindow:
                                      command_name="sprite_font_fade_speed",
                                      purpose_line="Sets the fade speed of gradually-shown sprite text\n" +
                                      "(letter-by-letter fade speed) and also the overall fade-in speed\n" +
-                                     "(non letter-by-letter)",
+                                     "(non letter-by-letter)\n\n"
+                                     "Note: the sprite must already be visible.",
                                      scale_from_value=1,
                                      scale_to_value=10,
                                      scale_instructions="Set the fade speed (1-10):\n"
@@ -2415,7 +2421,8 @@ class WizardWindow:
                                 parent_display_text="Font",
                                 sub_display_text="sprite_font_intro_animation",
                                 command_name="sprite_font_intro_animation",
-                                purpose_line="Set the animation type when sprite text is being displayed.",
+                                purpose_line="Set the animation type when sprite text is being displayed.\n"
+                                "Note: the sprite must already be visible.",
                                 instructions="Sprite text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
         
@@ -2429,7 +2436,8 @@ class WizardWindow:
                             command_name="sprite_text",
                             purpose_line="Set the text to show on a sprite.\n\n"
                             "You can run this command multiple times to append text.\n"
-                            "To clear the text, use <sprite_text_clear>")
+                            "To clear the text, use <sprite_text_clear>\n\n"
+                            "Note: the sprite must already be visible.")
         
         page_sprite_text_clear =\
             Font_SpriteTextClear(parent_frame=self.frame_contents_outer,
@@ -2439,7 +2447,8 @@ class WizardWindow:
                                  parent_display_text="Font",
                                  sub_display_text="sprite_text_clear",
                                  command_name="sprite_text_clear",
-                                 purpose_line="Clear text on a sprite where <sprite_text> was used.")
+                                 purpose_line="Clear text on a sprite where <sprite_text> was used.\n"
+                                 "Note: the sprite must already be visible.")
 
         page_general_scene_with_fade = \
             SceneWithFade(parent_frame=self.frame_contents_outer,
