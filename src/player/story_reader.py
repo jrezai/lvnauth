@@ -796,6 +796,14 @@ class StoryReader:
             
             line = self.script_lines.pop(0)
             
+            # Remove leading and trailing spaces temporarily.
+            # Commands with leading or trailing spaces won't be read as
+            # commands. If it appears to be a command, record the line
+            # without the leading/trailing spaces so the command will run later.
+            line_strip = line.strip()
+            if line_strip.startswith("<") and line_strip.endswith(">"):
+                line = line_strip
+            
             # Replace variable names with variable values, if possible.
             line = self.variable_handler.find_and_replace_variables(line=line)
 
@@ -814,7 +822,7 @@ class StoryReader:
             if not Condition.evaluate_line_check(script_line=line,
                             false_condition_name=self.condition_name_false):
                 # An earlier condition evaluated to False, 
-                # and the current line is not <case_end> or <or_case>
+                # and the current line is not <case_end> or <or_case..
                 # so ignore this line.
                 continue
             

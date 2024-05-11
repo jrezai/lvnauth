@@ -85,7 +85,7 @@ class Condition:
         
         script_line = script_line.strip()
         if script_line.startswith("<case_end>") or \
-           script_line.startswith("<or_case>") or \
+           script_line.startswith("<or_case") or \
            script_line.startswith("<case_else>"):
             return True
         else:
