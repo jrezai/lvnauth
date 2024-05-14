@@ -17,6 +17,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from enum import Enum
+from typing import Tuple
 
 
 class ConditionOperator(Enum):
@@ -28,6 +29,23 @@ class ConditionOperator(Enum):
     SAME_OR_LESS_THAN = "same or less than"
     BETWEEN = "between"
     NOT_BETWEEN = "not between"
+    
+    @classmethod
+    def get_values(cls) -> Tuple[str]:
+        """
+        Return a tuple of enum values.
+        
+        This is used when populating the operators combobox
+        in the Wizard window.
+        """
+        return (cls.EQUALS.value,
+                cls.DOES_NOT_EQUAL.value,
+                cls.MORE_THAN.value,
+                cls.SAME_OR_MORE_THAN.value,
+                cls.LESS_THAN.value,
+                cls.SAME_OR_LESS_THAN.value,
+                cls.BETWEEN.value,
+                cls.NOT_BETWEEN.value)
     
 
 class Condition:

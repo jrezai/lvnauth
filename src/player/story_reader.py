@@ -25,8 +25,8 @@ fade animations.
 import copy
 import re
 import pygame
-#import subprocess
-#import sys
+import string
+import secrets
 import active_story
 import file_reader
 import dialog_rectangle
@@ -4840,6 +4840,21 @@ class StoryReader:
         Example of a condition:
         <case: 10, more than, 5, number check>`
         """
+        
+        # In the case of a <case> command, if no condition name was provided,
+        # then generate a random name. Reason: the <case> command's condition
+        # name is optional, and is used only if the visual novel writer
+        # plans on using an <or_case> later.
+        if arguments.count(",") == 2:
+            
+            # No condition name was provided. Generate a random string.
+            random_condition_name = string.ascii_letters + string.digits
+            random_condition_name =\
+                "".join(secrets.choice(random_condition_name) in range(8))
+            
+            # Add the random condition name to the arguments.
+            arguments += f", {random_condition_name}"
+        
         condition: ConditionDefinition
         condition = self._get_arguments(class_namedtuple=ConditionDefinition,
                                         given_arguments=arguments)

@@ -31,6 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
+import condition_handler
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import colorchooser
@@ -2562,7 +2563,17 @@ class WizardWindow:
                                     sub_display_text="variable_set",
                                     command_name="variable_set",
                                     purpose_line="Create a new variable or update an existing one.\n\n"
-                                    "Variable names are case-sensitive")        
+                                    "Variable names are case-sensitive")
+        
+        page_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Variable",
+                          sub_display_text="case",
+                          command_name="case",
+                          purpose_line="Create a new condition.")        
 
         self.pages["Home"] = default_page
 
@@ -2785,7 +2796,7 @@ class WizardWindow:
         Variable
         """
         self.pages["variable_set"] = page_variable_set
-        
+        self.pages["case"] = page_case_condition
         
 
         self.active_page = default_page
@@ -2918,7 +2929,7 @@ class WizardListing:
         elif "dialog" in command_name:
             self.purpose_type = Purpose.DIALOG
             
-        elif "variable" in command_name:
+        elif "variable" in command_name or "case" in command_name:
             self.purpose_type = Purpose.VARIABLE_SET
             
         elif command_name in ("after", "after_cancel", "call"):
@@ -2926,7 +2937,7 @@ class WizardListing:
             
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
-
+            
         else:
             self.purpose_type = Purpose.ACTION
 
@@ -5459,6 +5470,148 @@ class SharedPages:
                              purpose_line, **kwargs)
 
 
+    class Case(WizardListing):
+        """
+        <case: variable name, operator, value, case name>
+        <or_case: case name to check against, variable name, operator, value>
+        """
+
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line):
+
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name, purpose_line)
+
+            self.frame_content = self.create_content_frame()
+
+        def create_content_frame(self) -> ttk.Frame:
+            """
+            Create the widgets needed for this command
+            and return a frame that contains the widgets.
+            """
+
+            frame_content = ttk.Frame(self.parent_frame)
+        
+            # Variable names
+            dict_variables = self.get_population_dictionary()
+        
+            # Vertical pad spacing
+            pady_spacing = 15
+        
+            variable_names = []
+            if dict_variables:
+                variable_names = dict_variables.values()
+
+            lbl_variable_name = ttk.Label(frame_content,
+                                          text=f"Variable name:")
+            self.cb_variable_names = ttk.Combobox(frame_content,
+                                                 width=25, 
+                                                 values=variable_names)
+            
+            lbl_operator = ttk.Label(frame_content,
+                                     text="Comparison operator:")
+            
+            # Get a tuple of condition operators (is, is not, etc.)
+            operators = condition_handler.ConditionOperator.get_values()
+            self.cb_operators = ttk.Combobox(frame_content,
+                                             width=25, 
+                                             values=operators)
+            
+            lbl_value_compare_with =\
+                ttk.Label(frame_content,
+                          text="Variable or value to check against:")
+            
+            # Variable names (or manually typed value) to check against.
+            self.cb_variable_names_check_against =\
+                ttk.Combobox(frame_content,
+                             width=25, 
+                             values=variable_names)
+            
+            # Set the instructions for the condition name
+            # depending on whether it's a <case> command or <or_case> command.
+            if self.command_name == "case":
+                    
+                condition_name_text = "Condition name:\n" \
+                    "(mandatory if you want to use <or_case..> later, otherwise it's optional.)"
+                
+            elif self.command_name == "or_case":
+                condition_name_text = "Condition name to compare with:"
+            
+            lbl_case_name = ttk.Label(frame_content,
+                                      text=condition_name_text)
+            self.entry_condition_name = ttk.Entry(frame_content,
+                                                  width=25)
+            
+            lbl_variable_name.grid(row=0, column=0, sticky=tk.W)
+            self.cb_variable_names.grid(row=1, column=0, sticky=tk.W)
+            
+            lbl_operator.grid(row=2, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.cb_operators.grid(row=3, column=0, sticky=tk.W)
+            
+            lbl_value_compare_with.grid(row=4, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.cb_variable_names_check_against.grid(row=5, column=0, sticky=tk.W)
+            
+            lbl_case_name.grid(row=6, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.entry_condition_name.grid(row=7, column=0, sticky=tk.W)
+            
+            return frame_content
+
+
+        def check_inputs(self) -> Dict | None:
+            """
+            Check whether the user has inputted sufficient information
+            to use this command.
+            
+            Return: a dict with the character general alias and reusable script name.
+            Example:
+            {"Alias": "Rave",
+             "ReusableScript": "rotate_script"}
+            or None if insufficient information was provided by the user.
+            """
+
+            user_input = {}
+
+            # Get the selected value in the combobox.
+            selection = self.cb_reusable_script.get()
+            if not selection:
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No reusable script specified",
+                                       message="Choose a reusable script from the drop-down menu.")
+                return
+
+            alias = self.entry_general_alias.get().strip()
+            if not alias:
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No alias provided",
+                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
+                return
+
+            user_input = {"Alias": alias,
+                          "ReusableScript": selection}
+
+            return user_input
+
+        def generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            """
+
+            # The user input will be a dictionary like this:
+            # {"Alias": "Rave",
+            # "ReusableScript": "rave_normal"}
+            user_inputs = self.check_inputs()
+
+            if not user_inputs:
+                return
+
+            reusable_script_name = user_inputs.get("ReusableScript")
+            alias = user_inputs.get("Alias")
+
+            return f"<{self.command_name}: {alias}, {reusable_script_name}>"
+        
+
     class AfterStop(WizardListing):
         """
         <character_after_fading_stop: general alias, reusable script name to run>
@@ -6132,6 +6285,16 @@ class VariableSet(SharedPages.LoadSpriteWithAlias):
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
 
+
+class CaseCondition(SharedPages.Case):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line):
+    
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line)
+        
 
 class Character_LoadCharacter(SharedPages.LoadSpriteWithAlias):
     """
