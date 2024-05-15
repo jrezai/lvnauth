@@ -5502,7 +5502,7 @@ class SharedPages:
         
             variable_names = []
             if dict_variables:
-                variable_names = dict_variables.values()
+                variable_names = tuple(dict_variables.keys())
 
             lbl_variable_name = ttk.Label(frame_content,
                                           text=f"Variable name:")
@@ -5564,32 +5564,53 @@ class SharedPages:
             Check whether the user has inputted sufficient information
             to use this command.
             
-            Return: a dict with the character general alias and reusable script name.
+            Return: a dict
             Example:
-            {"Alias": "Rave",
-             "ReusableScript": "rotate_script"}
+            {"VariableName": "some name",
+             "Operator": ConditionOperator.EQUALS,
+             "CheckAgainst": "some variable name here",
+             "ConditionName": "some name here" or None}
             or None if insufficient information was provided by the user.
             """
 
             user_input = {}
 
-            # Get the selected value in the combobox.
-            selection = self.cb_reusable_script.get()
-            if not selection:
+            # Get the entered variable name value in the combobox.
+            variable_name = self.cb_variable_names.get()
+            if not variable_name:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No reusable script specified",
-                                       message="Choose a reusable script from the drop-down menu.")
+                                       title="No variable name specified",
+                                       message="Choose a variable from the drop-down menu or type a variable's name")
                 return
 
-            alias = self.entry_general_alias.get().strip()
-            if not alias:
+            # Get the operator value
+            operator = self.cb_operators.get()
+            
+            # Try to get the operator enum value.
+            # This is done to ensure the operator is one that really exists.
+            try:
+                operator = condition_handler.ConditionOperator(value=operator)
+            except ValueError:            
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No alias provided",
-                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
+                                       title="No operator selected",
+                                       message=f"Select an operator from the drop-down menu.")
                 return
+            
+            # Get the variable that is going to be checked against.
+            compare_variable = self.cb_variable_names_check_against.get()
+            if not compare_variable:
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No variable name specified",
+                                       message="Choose a variable or enter a value to check against.")
+                return
+            
+            # Condition name (optional field)
+            condition_name = self.entry_condition_name.get()
 
-            user_input = {"Alias": alias,
-                          "ReusableScript": selection}
+            user_input = {"VariableName": variable_name,
+                          "Operator": operator,
+                          "CheckAgainst": compare_variable,
+                          "ConditionName": condition_name}
 
             return user_input
 
@@ -5599,17 +5620,30 @@ class SharedPages:
             """
 
             # The user input will be a dictionary like this:
-            # {"Alias": "Rave",
-            # "ReusableScript": "rave_normal"}
+            # {"VariableName": "some name",
+            # "Operator": ConditionOperator.EQUALS,
+            # "CheckAgainst": "some variable name here",
+            # "ConditionName": "some name here" or None}
             user_inputs = self.check_inputs()
 
             if not user_inputs:
                 return
-
-            reusable_script_name = user_inputs.get("ReusableScript")
-            alias = user_inputs.get("Alias")
-
-            return f"<{self.command_name}: {alias}, {reusable_script_name}>"
+            
+            variable_name = user_inputs.get("VariableName")
+            operator = user_inputs.get("Operator").value
+            check_against = user_inputs.get("CheckAgainst")
+            condition_name = user_inputs.get("ConditionName")
+            
+            # If what we're checking against is a variable name that exists,
+            # then assume that it needs to be checked against a variable.
+            if check_against in ProjectSnapshot.variables:
+                check_against = rf"(${variable_name})"
+                
+            if condition_name:
+                return f"<{self.command_name}: {variable_name}, {operator}, {check_against}, {condition_name}>"
+            else:
+                # No condition name
+                return f"<{self.command_name}: {variable_name}, {operator}, {check_against}>"
         
 
     class AfterStop(WizardListing):
