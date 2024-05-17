@@ -2551,6 +2551,19 @@ class WizardWindow:
                                           "This command will only pause the main script, but can\n"
                                           "be called from anywhere (chapters/scenes/reusable scripts).")
         
+        page_exit = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="General",
+                        sub_display_text="exit",
+                        command_name="exit",
+                        purpose_line="Stops a script from running.",
+                        when_to_use="When you want to prevent the rest of a script from running.\n\n"
+                        "It can be used in any script, such as: chapters, scenes, reusable scripts.\n"
+                        "The script that uses <exit> will be the script that will be stopped.")
+        
         """
         Variable
         """
@@ -2570,10 +2583,41 @@ class WizardWindow:
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
-                          parent_display_text="Variable",
+                          parent_display_text="Condition",
                           sub_display_text="case",
                           command_name="case",
-                          purpose_line="Create a new condition.")        
+                          purpose_line="Create a new condition.")
+        
+        page_or_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Condition",
+                          sub_display_text="or_case",
+                          command_name="or_case",
+                          purpose_line="Create a new 'or' condition.")
+        
+        page_case_else = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_else",
+                        command_name="case_else",
+                        purpose_line="Fall through if <case>, <or_case> are not satisfied.",
+                        when_to_use="When the commands <case> <or_case> do not go through.")
+        
+        page_case_end = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_end",
+                        command_name="case_end",
+                        purpose_line="Ends a case command block.")
 
         self.pages["Home"] = default_page
 
@@ -2660,6 +2704,8 @@ class WizardWindow:
         self.pages["scene"] = page_scene
 
         self.pages["wait_for_animation"] = page_wait_for_animation
+        
+        self.pages["exit"] = page_exit
 
         self.pages["scene_with_fade"] = page_general_scene_with_fade
         
@@ -2797,6 +2843,9 @@ class WizardWindow:
         """
         self.pages["variable_set"] = page_variable_set
         self.pages["case"] = page_case_condition
+        self.pages["or_case"] = page_or_case_condition
+        self.pages["case_else"] = page_case_else
+        self.pages["case_end"] = page_case_end
         
 
         self.active_page = default_page
@@ -5566,9 +5615,9 @@ class SharedPages:
             
             Return: a dict
             Example:
-            {"VariableName": "some name",
+            {"FirstValue": "some name",
              "Operator": ConditionOperator.EQUALS,
-             "CheckAgainst": "some variable name here",
+             "SecondValue": "some variable name here",
              "ConditionName": "some name here" or None}
             or None if insufficient information was provided by the user.
             """
@@ -5604,12 +5653,20 @@ class SharedPages:
                                        message="Choose a variable or enter a value to check against.")
                 return
             
-            # Condition name (optional field)
+            # Condition name (optional field for <case> but mandatory
+            # for <or_case>)
             condition_name = self.entry_condition_name.get()
+            
+            if self.command_name == "or_case":
+                if not condition_name:
+                    messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                           title="No condition name specified",
+                                           message="Enter a name for the condition.")
+                    return                    
 
-            user_input = {"VariableName": variable_name,
+            user_input = {"FirstValue": variable_name,
                           "Operator": operator,
-                          "CheckAgainst": compare_variable,
+                          "SecondValue": compare_variable,
                           "ConditionName": condition_name}
 
             return user_input
@@ -5620,30 +5677,35 @@ class SharedPages:
             """
 
             # The user input will be a dictionary like this:
-            # {"VariableName": "some name",
+            # {"FirstValue": "some name",
             # "Operator": ConditionOperator.EQUALS,
-            # "CheckAgainst": "some variable name here",
+            # "SecondValue": "some variable name here",
             # "ConditionName": "some name here" or None}
             user_inputs = self.check_inputs()
 
             if not user_inputs:
                 return
             
-            variable_name = user_inputs.get("VariableName")
+            first_value = user_inputs.get("FirstValue")
             operator = user_inputs.get("Operator").value
-            check_against = user_inputs.get("CheckAgainst")
+            second_value = user_inputs.get("SecondValue")
             condition_name = user_inputs.get("ConditionName")
+            
+            # If the first value is a variable name that exists,
+            # then assume that it needs to be checked against a variable.
+            if first_value in ProjectSnapshot.variables:
+                first_value = rf"(${first_value})"                   
             
             # If what we're checking against is a variable name that exists,
             # then assume that it needs to be checked against a variable.
-            if check_against in ProjectSnapshot.variables:
-                check_against = rf"(${variable_name})"
+            if second_value in ProjectSnapshot.variables:
+                second_value = rf"(${second_value})"
                 
             if condition_name:
-                return f"<{self.command_name}: {variable_name}, {operator}, {check_against}, {condition_name}>"
+                return f"<{self.command_name}: {first_value}, {operator}, {second_value}, {condition_name}>"
             else:
                 # No condition name
-                return f"<{self.command_name}: {variable_name}, {operator}, {check_against}>"
+                return f"<{self.command_name}: {first_value}, {operator}, {second_value}>"
         
 
     class AfterStop(WizardListing):
