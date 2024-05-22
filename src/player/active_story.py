@@ -25,7 +25,7 @@ import sprite_definition as sd
 from file_reader import ContentType
 from audio_player import AudioPlayer
 from typing import Tuple, List
-from shared_components import Passer, ManualUpdate
+from shared_components import MouseActionsAndCoordinates
 from enum import Enum, auto
 from dialog_rectangle import DialogRectangle, \
      RectangleIntroAnimation, \
@@ -51,8 +51,11 @@ class ActiveStory:
         self.screen_size = screen_size
         self.background_surface = background_surface
         
-        self.mouse_coordinates = ""
-
+        # Keeps track of the current pygame Event in
+        # the current frame so any part of the project can read it if needed.
+        # This was added for sprite mouse events.
+        self.current_event = None
+        
         # FileReader object
         self.data_requester = data_requester
 
@@ -221,7 +224,8 @@ class ActiveStory:
         draft_text = self.draft_rectangle.get_temporary_text()
         if not draft_text:
             # No temporary text, so show the usual mouse co-ordinates.
-            draft_text = self.mouse_coordinates
+            mouse_x, mouse_y = MouseActionsAndCoordinates.MOUSE_POS
+            draft_text = f"x:{mouse_x}   y:{mouse_y}"
 
         # Draw the rectangle on the screen.
         self.draft_rectangle.draw(draft_text)
@@ -232,8 +236,23 @@ class ActiveStory:
         gradual text display.
         """
 
+        # Record mouse position and mouse clicks (if any) for
+        # sprite mouse interactions (hovers, clicks)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            MouseActionsAndCoordinates.MOUSE_DOWN = True
+            
+        if event.type == pygame.MOUSEBUTTONUP:
+            MouseActionsAndCoordinates.MOUSE_UP = True
+            
+        if event.type == pygame.MOUSEMOTION:
+            MouseActionsAndCoordinates.MOUSE_POS = pygame.mouse.get_pos()
+            
+        
         # In non-automated halt-mode? Look for a mouse click to advance the story.
-        if self.reader.halt_main_script and not self.reader.halt_main_script_auto_mode_frames:
+        if self.reader.halt_main_script \
+           and not self.reader.halt_main_script_auto_mode_frames:
+            
+            # Advance the story if a mouse button was clicked.
             if event.type == pygame.MOUSEBUTTONDOWN:
 
                 
@@ -258,16 +277,10 @@ class ActiveStory:
                 # # gets blitted over with the new rectangle.
                 # self.reader.story.dialog_rectangle.clear_text()
                 
-        if event.type == pygame.MOUSEMOTION:
-            # Record the mouse coordinates (used for draft-mode)
-            x, y = pygame.mouse.get_pos()
-            
-            self.mouse_coordinates = f"x:{x}   y:{y}"
 
     def on_loop(self):
         """
         Handle movements
-        :return:
         """
         self.reader.read_all_scripts()
 
@@ -280,6 +293,12 @@ class ActiveStory:
 
             # Dialog sprites should only animate if the dialog is visible.
             sd.Groups.dialog_group.update()
+            
+        # Consider the mouse not clicked anymore, just in case if it was
+        # seen as clicked in the current frame. All the sprite group update()
+        # methods above have now already dealt with the mouse click, if any,
+        # so we'll reset it here until the next time the mouse is clicked again.
+        MouseActionsAndCoordinates.MOUSE_UP = False
 
     def on_render(self):
         """

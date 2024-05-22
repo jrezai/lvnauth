@@ -104,6 +104,13 @@ class ManualUpdate:
         return updated_rects
 
 
+# Used for sprite mouse clicks and mouse hovers
+class MouseActionsAndCoordinates:
+    MOUSE_POS = (0, 0)
+    MOUSE_DOWN = False
+    MOUSE_UP = False
+
+
 class Passer:
     active_story = None
     
@@ -116,6 +123,7 @@ class Passer:
     # we set this flag to indicate to the ActiveStory object
     # that the application should close (because the user clicked the 'X')
     close_after_launch_window = False
+    
 
     @staticmethod
     def center_window_active_monitor(window) -> bool:

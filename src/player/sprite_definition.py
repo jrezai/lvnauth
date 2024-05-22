@@ -18,7 +18,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import pygame
 import font_handler
-from shared_components import Passer, ManualUpdate
+from shared_components import Passer, ManualUpdate, MouseActionsAndCoordinates
 from typing import NamedTuple, Tuple, List
 from enum import Enum, auto
 from datetime import datetime
@@ -257,6 +257,15 @@ def rect_section_to_type(rect_section: str) -> MovementStops:
     return section
 
 
+# Used for knowing whether a sprite has entered over a sprite
+# and if it has, the sprite's mouse flag gets set to HOVERING_OVER_SPRITE
+# until it moves away from the sprite. We use this enum to prevent a reusable
+# script from running multiple times when the mouse is over a sprite.
+class SpriteMouseStatus(Enum):
+    AWAY_FROM_SPRITE = auto()
+    HOVERING_OVER_SPRITE = auto()
+
+
 
 class SpriteObject:
 
@@ -304,7 +313,7 @@ class SpriteObject:
         self.movement_stop_run_script = None
 
         # Will be based on the MovementSpeed class.
-        self.movement_speed: story_reader.MovementSpeed
+        self.movement_speed: MovementSpeed
         self.movement_speed = None
 
         # Will be based on the MovementDelay class.
@@ -386,6 +395,17 @@ class SpriteObject:
         # self.sudden_fade_change = False
         # self.sudden_scale_change = False
         # self.sudden_rotate_change = False
+        
+        # Used for making sure the mouse event reusable scripts
+        # are executed only once for each mouse event change.
+        # If we didn't have this, a mouse hover event could have run
+        # a reusable script each time the mouse moved on a sprite.
+        self.mouse_status: SpriteMouseStatus = SpriteMouseStatus.AWAY_FROM_SPRITE
+        
+        # Names of reusable scripts to run after specific mouse events.
+        self.on_mouse_enter_run_script: str = None
+        self.on_mouse_leave_run_script: str = None
+        self.on_mouse_click_run_script: str = None
         
         # Deals with showing/hiding sprite text
         self.active_font_handler =\
@@ -968,8 +988,75 @@ class SpriteObject:
         self._animate_movement()
         self._animate_rotation()
         self._animate_fading()
-
+        
         self._apply_still_effects()
+        
+        
+        self._handle_mouse_events()
+        
+    def _handle_mouse_events(self):
+        """
+        Check the following mouse events and if any of the events are
+        occurring, check if the current sprite should run a reusable script
+        for a specific mouse event.
+        
+        The events are: on_mouse_enter, on_mouse_leave, on_mouse_click
+        """
+        
+        # Is the mouse pointer inside the current sprite?
+        if MouseActionsAndCoordinates.MOUSE_POS:
+            if self.rect.collidepoint(MouseActionsAndCoordinates.MOUSE_POS):
+                # The mouse pointer is inside the current sprite.
+                
+                
+                # Make the sprite aware that the mouse pointer is on top
+                # of the current sprite, if it doesn't already know.
+                if self.mouse_status != SpriteMouseStatus.HOVERING_OVER_SPRITE:
+                    self.mouse_status = SpriteMouseStatus.HOVERING_OVER_SPRITE
+                    
+                    # Run on_enter reusable script here
+                    if self.on_mouse_enter_run_script:
+                    
+                        # Run the script that is supposed to run now that the
+                        # mouse pointer is over the sprite.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_enter_run_script)
+                    
+                # Was a mouse button clicked? Check if we should
+                # run a specific reusable script.
+                if MouseActionsAndCoordinates.MOUSE_UP:
+                    
+                    if self.on_mouse_click_run_script:
+                    
+                        # Run the script that is supposed to run now that this 
+                        # sprite has been clicked.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_click_run_script)
+                        
+                    
+            else:
+                # The mouse pointer is not on top of the current sprite.
+                
+                # Make sure the sprite aware that the mouse pointer is not
+                # on top of the current sprite, if it doesn't already know.
+                if self.mouse_status != SpriteMouseStatus.AWAY_FROM_SPRITE:
+                    self.mouse_status = SpriteMouseStatus.AWAY_FROM_SPRITE
+                    
+                    # Run on_leave reusable script here
+                    if self.on_mouse_leave_run_script:
+                    
+                        # Run the script that is supposed to run now that the
+                        # mouse pointer is no longer over the sprite.
+                        Passer.active_story.reader.\
+                            spawn_new_background_reader_auto_arguments(
+                                reusable_script_name_maybe_with_arguments=\
+                                self.on_mouse_leave_run_script)
+        
+        
 
     def _animate_rotation(self):
         """
@@ -1248,13 +1335,81 @@ class SpriteObject:
         
         fade_needed = self.is_fade_needed()
         scale_or_rotation_needed = self.is_scale_or_rotate_needed()
-
+        
+        # If there is a fade and/or scale animation needed,
+        # apply those effects now.
         if scale_or_rotation_needed or fade_needed:
+            
+            # Apply effects
+            
             self._scale_or_rotate_sprite()
             self._fade_sprite(skip_copy_original_image=True)
             # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
-        #else:
+        else:
+            """
+            No effects needed to be applied in this frame.
+            Either the sprite has had its effect animations finished
+            or has no effects at all.
+            """
+
+            """
+            If no effects are currently applied to the sprite,
+            and the displayed image is different from the original sprite
+            with text, then that means there is some text on the sprite
+            that we're currently not showing and that we need to show.
+            OR there was text before (and we're showing the sprite with text)
+            but now the sprite's text has been cleared, but we're still showing
+            the sprite with text. We need to copy the original image with text
+            to self.image, which gets shown to the viewer.
+            This gets handled automatically when effects have been
+            applied or animations are ongoing. But if the sprite hasn't had
+            any animations or effects applied to it, we need to handle this
+            here.
+            For details, read the comment in the method 'any_effects_applied'            
+            """
+
+            # Update the displayed image with the sprite with text. 
+            # If the two sprites are different, use the sprite with text.
+            if not self.any_effects_applied() and \
+               self.image != self.original_image:
+                
+                # The displayed image is different from the image with text,
+                # so get the image with text on it (self.original_image)
+                self.image = self.original_image
+                
+                print("Copied sprite with text")
+                
             #print("Animation not needed")
+            
+    def any_effects_applied(self) -> bool:
+        """
+        Return whether the sprite has had any type of effect
+        applied to it, such as fade, rotate, scale.
+        
+        Return: True if at least one of the effects has been applied
+        to the sprite (fade, rotate, scale)
+        
+        Return: False if the sprite does not have any effects applied to it.
+        
+        Purpose: if the sprite does not have any effects applied to it,
+        then the caller needs to check if the sprite has any text and get
+        a copy of the sprite image with text; otherwise the visible sprite
+        won't have text on it. Effects will automatically take care of a
+        sprite's text by making the sprite's text show up during animations.
+        But if a sprite has had no animations or is not going through an
+        animation now, then we need to deal with showing the sprite's text
+        a different way, and this method is used as part of this.
+        """
+        if self.applied_fade_value is None \
+           and self.applied_rotate_value is None \
+           and self.applied_scale_value is None:
+            
+            # This sprite currently does not have any effects applied to it.
+            return False
+        else:
+            # This sprite has at least one type of effect applied to it.
+            # Fade and/or scale and/or animation.
+            return True     
 
     def is_fade_needed(self) -> bool:
         """
@@ -1534,7 +1689,7 @@ class SpriteObject:
         """
         self.applied_fade_value = None
         self.applied_rotate_value = None
-        self.applied_scale_value = None        
+        self.applied_scale_value = None
 
     def _animate_movement(self):
         """

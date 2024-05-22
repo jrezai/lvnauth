@@ -31,6 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
+import condition_handler
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import colorchooser
@@ -910,7 +911,7 @@ class WizardWindow:
                                 command_name="character_scale_until",
                                 purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                 "Note: the character sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
                                 scale_default_value=2)
@@ -1509,7 +1510,7 @@ class WizardWindow:
                                     command_name="dialog_sprite_scale_until",
                                     purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                     "Note: the dialog sprite must already be visible.",
-                                    scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                    scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                     scale_from_value=0,
                                     scale_to_value=100,
                                     scale_default_value=2)
@@ -1523,7 +1524,7 @@ class WizardWindow:
                                       sub_display_text="dialog_sprite_start_scaling",
                                       command_name="dialog_sprite_start_scaling",
                                       purpose_line="Starts an dialog sprite scaling animation.\n\n"
-                                      "Note: the dialog sprite must already be visible."
+                                      "Note: the dialog sprite must already be visible.\n"
                                       "Also, <dialog_sprite_scale_until> should be used prior.")
     
         page_dialog_stop_scaling =\
@@ -2029,7 +2030,7 @@ class WizardWindow:
                                 command_name="object_scale_until",
                                 purpose_line="Indicate at what scale a scaling animation should stop.\n"
                                 "Note: the object sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)",
+                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
                                 scale_default_value=2)
@@ -2322,7 +2323,8 @@ class WizardWindow:
                             parent_display_text="Font",
                             sub_display_text="sprite_font",
                             command_name="sprite_font",
-                            purpose_line="Sets the font to use for a sprite's text.")  
+                            purpose_line="Sets the font to use for a sprite's text.\n"
+                            "Note: the sprite must already be visible.")  
 
         page_sprite_font_x =\
             Font_SpriteFontPosition(parent_frame=self.frame_contents_outer,
@@ -2333,7 +2335,8 @@ class WizardWindow:
                                     sub_display_text="sprite_font_x",
                                     command_name="sprite_font_x",
                                     purpose_line="Sets the horizontal position of where the sprite text should start,\n"
-                                    "relative to the sprite.\nThe left-most edge of the sprite is 0 (zero).",
+                                    "relative to the sprite.\nThe left-most edge of the sprite is 0 (zero).\n\n"
+                                    "Note: the sprite must already be visible.",
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the horizontal position (x):",
@@ -2348,7 +2351,8 @@ class WizardWindow:
                                     sub_display_text="sprite_font_y",
                                     command_name="sprite_font_y",
                                     purpose_line="Sets the vertical position of where the sprite text should start,\n"
-                                    "relative to the sprite. The top of the sprite is 0 (zero).",
+                                    "relative to the sprite. The top of the sprite is 0 (zero).\n\n"
+                                    "Note: the sprite must already be visible.",
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the vertical position (y):",
@@ -2364,7 +2368,8 @@ class WizardWindow:
                                  command_name="sprite_font_delay",
                                  purpose_line="Sets the number of frames to skip when applying\n"
                                  "gradual sprite text animation (letter-by-letter).\n"
-                                 "Does not apply to letter fade-ins",
+                                 "Does not apply to letter fade-ins\n\n"
+                                 "Note: the sprite must already be visible.",
                                  scale_from_value=0,
                                  scale_to_value=600,
                                  scale_instructions="Delay (frames) (0-600):\n\n"
@@ -2384,7 +2389,8 @@ class WizardWindow:
                                      "Only applies to gradual letter-by-letter text (not fade-ins).\n\n"
                                      "This command can be used to cause a short delay\n"
                                      "after punctuation marks, such as periods.\n\n"
-                                     "Note: this command only works with letters on the same line.",
+                                     "Note: this command only works with letters on the same line.\n\n"
+                                     "Note: the sprite must already be visible.",
                                      scale_from_value=0,
                                      scale_to_value=120,
                                      scale_instructions="The number of frames to skip (0 to 120):",
@@ -2400,7 +2406,8 @@ class WizardWindow:
                                      command_name="sprite_font_fade_speed",
                                      purpose_line="Sets the fade speed of gradually-shown sprite text\n" +
                                      "(letter-by-letter fade speed) and also the overall fade-in speed\n" +
-                                     "(non letter-by-letter)",
+                                     "(non letter-by-letter)\n\n"
+                                     "Note: the sprite must already be visible.",
                                      scale_from_value=1,
                                      scale_to_value=10,
                                      scale_instructions="Set the fade speed (1-10):\n"
@@ -2415,7 +2422,8 @@ class WizardWindow:
                                 parent_display_text="Font",
                                 sub_display_text="sprite_font_intro_animation",
                                 command_name="sprite_font_intro_animation",
-                                purpose_line="Set the animation type when sprite text is being displayed.",
+                                purpose_line="Set the animation type when sprite text is being displayed.\n"
+                                "Note: the sprite must already be visible.",
                                 instructions="Sprite text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
         
@@ -2429,7 +2437,8 @@ class WizardWindow:
                             command_name="sprite_text",
                             purpose_line="Set the text to show on a sprite.\n\n"
                             "You can run this command multiple times to append text.\n"
-                            "To clear the text, use <sprite_text_clear>")
+                            "To clear the text, use <sprite_text_clear>\n\n"
+                            "Note: the sprite must already be visible.")
         
         page_sprite_text_clear =\
             Font_SpriteTextClear(parent_frame=self.frame_contents_outer,
@@ -2439,7 +2448,8 @@ class WizardWindow:
                                  parent_display_text="Font",
                                  sub_display_text="sprite_text_clear",
                                  command_name="sprite_text_clear",
-                                 purpose_line="Clear text on a sprite where <sprite_text> was used.")
+                                 purpose_line="Clear text on a sprite where <sprite_text> was used.\n"
+                                 "Note: the sprite must already be visible.")
 
         page_general_scene_with_fade = \
             SceneWithFade(parent_frame=self.frame_contents_outer,
@@ -2541,6 +2551,19 @@ class WizardWindow:
                                           "This command will only pause the main script, but can\n"
                                           "be called from anywhere (chapters/scenes/reusable scripts).")
         
+        page_exit = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="General",
+                        sub_display_text="exit",
+                        command_name="exit",
+                        purpose_line="Stops a script from running.",
+                        when_to_use="When you want to prevent the rest of a script from running.\n\n"
+                        "It can be used in any script, such as: chapters, scenes, reusable scripts.\n"
+                        "The script that uses <exit> will be the script that will be stopped.")
+        
         """
         Variable
         """
@@ -2553,7 +2576,48 @@ class WizardWindow:
                                     sub_display_text="variable_set",
                                     command_name="variable_set",
                                     purpose_line="Create a new variable or update an existing one.\n\n"
-                                    "Variable names are case-sensitive")        
+                                    "Variable names are case-sensitive")
+        
+        page_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Condition",
+                          sub_display_text="case",
+                          command_name="case",
+                          purpose_line="Create a new condition.")
+        
+        page_or_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Condition",
+                          sub_display_text="or_case",
+                          command_name="or_case",
+                          purpose_line="Create a new 'or' condition.")
+        
+        page_case_else = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_else",
+                        command_name="case_else",
+                        purpose_line="Fall through if <case>, <or_case> are not satisfied.",
+                        when_to_use="When the commands <case> <or_case> do not go through.")
+        
+        page_case_end = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_end",
+                        command_name="case_end",
+                        purpose_line="Ends a case command block.")
 
         self.pages["Home"] = default_page
 
@@ -2640,6 +2704,8 @@ class WizardWindow:
         self.pages["scene"] = page_scene
 
         self.pages["wait_for_animation"] = page_wait_for_animation
+        
+        self.pages["exit"] = page_exit
 
         self.pages["scene_with_fade"] = page_general_scene_with_fade
         
@@ -2776,7 +2842,10 @@ class WizardWindow:
         Variable
         """
         self.pages["variable_set"] = page_variable_set
-        
+        self.pages["case"] = page_case_condition
+        self.pages["or_case"] = page_or_case_condition
+        self.pages["case_else"] = page_case_else
+        self.pages["case_end"] = page_case_end
         
 
         self.active_page = default_page
@@ -2909,7 +2978,7 @@ class WizardListing:
         elif "dialog" in command_name:
             self.purpose_type = Purpose.DIALOG
             
-        elif "variable" in command_name:
+        elif "variable" in command_name or "case" in command_name:
             self.purpose_type = Purpose.VARIABLE_SET
             
         elif command_name in ("after", "after_cancel", "call"):
@@ -2917,7 +2986,7 @@ class WizardListing:
             
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
-
+            
         else:
             self.purpose_type = Purpose.ACTION
 
@@ -5450,6 +5519,195 @@ class SharedPages:
                              purpose_line, **kwargs)
 
 
+    class Case(WizardListing):
+        """
+        <case: variable name, operator, value, case name>
+        <or_case: case name to check against, variable name, operator, value>
+        """
+
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line):
+
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name, purpose_line)
+
+            self.frame_content = self.create_content_frame()
+
+        def create_content_frame(self) -> ttk.Frame:
+            """
+            Create the widgets needed for this command
+            and return a frame that contains the widgets.
+            """
+
+            frame_content = ttk.Frame(self.parent_frame)
+        
+            # Variable names
+            dict_variables = self.get_population_dictionary()
+        
+            # Vertical pad spacing
+            pady_spacing = 15
+        
+            variable_names = []
+            if dict_variables:
+                variable_names = tuple(dict_variables.keys())
+
+            lbl_variable_name = ttk.Label(frame_content,
+                                          text=f"Variable name:")
+            self.cb_variable_names = ttk.Combobox(frame_content,
+                                                 width=25, 
+                                                 values=variable_names)
+            
+            lbl_operator = ttk.Label(frame_content,
+                                     text="Comparison operator:")
+            
+            # Get a tuple of condition operators (is, is not, etc.)
+            operators = condition_handler.ConditionOperator.get_values()
+            self.cb_operators = ttk.Combobox(frame_content,
+                                             width=25, 
+                                             values=operators)
+            
+            lbl_value_compare_with =\
+                ttk.Label(frame_content,
+                          text="Variable or value to check against:")
+            
+            # Variable names (or manually typed value) to check against.
+            self.cb_variable_names_check_against =\
+                ttk.Combobox(frame_content,
+                             width=25, 
+                             values=variable_names)
+            
+            # Set the instructions for the condition name
+            # depending on whether it's a <case> command or <or_case> command.
+            if self.command_name == "case":
+                    
+                condition_name_text = "Condition name:\n" \
+                    "(mandatory if you want to use <or_case..> later, otherwise it's optional.)"
+                
+            elif self.command_name == "or_case":
+                condition_name_text = "Condition name to compare with:"
+            
+            lbl_case_name = ttk.Label(frame_content,
+                                      text=condition_name_text)
+            self.entry_condition_name = ttk.Entry(frame_content,
+                                                  width=25)
+            
+            lbl_variable_name.grid(row=0, column=0, sticky=tk.W)
+            self.cb_variable_names.grid(row=1, column=0, sticky=tk.W)
+            
+            lbl_operator.grid(row=2, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.cb_operators.grid(row=3, column=0, sticky=tk.W)
+            
+            lbl_value_compare_with.grid(row=4, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.cb_variable_names_check_against.grid(row=5, column=0, sticky=tk.W)
+            
+            lbl_case_name.grid(row=6, column=0, sticky=tk.W, pady=(pady_spacing, 0))
+            self.entry_condition_name.grid(row=7, column=0, sticky=tk.W)
+            
+            return frame_content
+
+
+        def check_inputs(self) -> Dict | None:
+            """
+            Check whether the user has inputted sufficient information
+            to use this command.
+            
+            Return: a dict
+            Example:
+            {"FirstValue": "some name",
+             "Operator": ConditionOperator.EQUALS,
+             "SecondValue": "some variable name here",
+             "ConditionName": "some name here" or None}
+            or None if insufficient information was provided by the user.
+            """
+
+            user_input = {}
+
+            # Get the entered variable name value in the combobox.
+            variable_name = self.cb_variable_names.get()
+            if not variable_name:
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No variable name specified",
+                                       message="Choose a variable from the drop-down menu or type a variable's name")
+                return
+
+            # Get the operator value
+            operator = self.cb_operators.get()
+            
+            # Try to get the operator enum value.
+            # This is done to ensure the operator is one that really exists.
+            try:
+                operator = condition_handler.ConditionOperator(value=operator)
+            except ValueError:            
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No operator selected",
+                                       message=f"Select an operator from the drop-down menu.")
+                return
+            
+            # Get the variable that is going to be checked against.
+            compare_variable = self.cb_variable_names_check_against.get()
+            if not compare_variable:
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No variable name specified",
+                                       message="Choose a variable or enter a value to check against.")
+                return
+            
+            # Condition name (optional field for <case> but mandatory
+            # for <or_case>)
+            condition_name = self.entry_condition_name.get()
+            
+            if self.command_name == "or_case":
+                if not condition_name:
+                    messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                           title="No condition name specified",
+                                           message="Enter a name for the condition.")
+                    return                    
+
+            user_input = {"FirstValue": variable_name,
+                          "Operator": operator,
+                          "SecondValue": compare_variable,
+                          "ConditionName": condition_name}
+
+            return user_input
+
+        def generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            """
+
+            # The user input will be a dictionary like this:
+            # {"FirstValue": "some name",
+            # "Operator": ConditionOperator.EQUALS,
+            # "SecondValue": "some variable name here",
+            # "ConditionName": "some name here" or None}
+            user_inputs = self.check_inputs()
+
+            if not user_inputs:
+                return
+            
+            first_value = user_inputs.get("FirstValue")
+            operator = user_inputs.get("Operator").value
+            second_value = user_inputs.get("SecondValue")
+            condition_name = user_inputs.get("ConditionName")
+            
+            # If the first value is a variable name that exists,
+            # then assume that it needs to be checked against a variable.
+            if first_value in ProjectSnapshot.variables:
+                first_value = rf"(${first_value})"                   
+            
+            # If what we're checking against is a variable name that exists,
+            # then assume that it needs to be checked against a variable.
+            if second_value in ProjectSnapshot.variables:
+                second_value = rf"(${second_value})"
+                
+            if condition_name:
+                return f"<{self.command_name}: {first_value}, {operator}, {second_value}, {condition_name}>"
+            else:
+                # No condition name
+                return f"<{self.command_name}: {first_value}, {operator}, {second_value}>"
+        
+
     class AfterStop(WizardListing):
         """
         <character_after_fading_stop: general alias, reusable script name to run>
@@ -6123,6 +6381,16 @@ class VariableSet(SharedPages.LoadSpriteWithAlias):
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
 
+
+class CaseCondition(SharedPages.Case):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line):
+    
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line)
+        
 
 class Character_LoadCharacter(SharedPages.LoadSpriteWithAlias):
     """

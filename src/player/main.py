@@ -172,6 +172,7 @@ class Main:
 
             main_surface.fill((0, 0, 0))
 
+            # Handle pygame events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     story.story_running = False
@@ -182,23 +183,12 @@ class Main:
                     pygame.display.quit()
                     sys.exit(0)
                     return
-
+    
                 elif event.type == pygame.KEYDOWN:
                     self.on_key_down(event.key)
-
+    
                 else:
                     story.on_event(event)
-
-                    # print("Mouse:", pygame.mouse.get_pos())
-
-                    # left_clicked = False
-                    # list_test = []
-                    #
-                    # if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                    #     left_clicked = True
-                    #     manual_update = pygame.Rect(15, 352, 45, 47)
-                    #
-                    #     list_test.append(manual_update)
 
             # Handle movements
             story.on_loop()
@@ -208,7 +198,7 @@ class Main:
             
 
             # For debugging
-            pygame.display.flip()
+            pygame.display.flip()      
 
     def on_key_down(self, key_pressed):
         """

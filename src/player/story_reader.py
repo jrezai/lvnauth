@@ -23,9 +23,10 @@ fade animations.
 """
 
 import copy
+import re
 import pygame
-#import subprocess
-#import sys
+import string
+import secrets
 import active_story
 import file_reader
 import dialog_rectangle
@@ -42,7 +43,9 @@ from typing import Dict
 from shared_components import Passer
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
-from variable_handler import VariableHandler, VariableValidate
+from variable_handler import VariableHandler
+from condition_handler import Condition
+
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -104,6 +107,13 @@ class SceneWithFade(NamedTuple):
     scene_name: str
 
 
+class ConditionDefinition(NamedTuple):
+    value1: str
+    operator: str
+    value2: str
+    condition_name: str
+
+
 class PlayAudio(NamedTuple):
     audio_name: str
 
@@ -125,6 +135,17 @@ class SpriteText(NamedTuple):
 class SpriteTextClear(NamedTuple):
     sprite_type: str
     general_alias: str
+
+
+class MouseEventRunScriptNoArguments(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+    
+    
+class MouseEventRunScriptWithArguments(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+    arguments: str
 
 
 class Flip(NamedTuple):
@@ -372,6 +393,12 @@ class StoryReader:
 
         # The story is read line by line
         self.script_lines = []
+        
+        # The lastest condition name that evaluated to False.
+        # The name is case-sensitive. If there is a value here,
+        # the current reader will skip all script lines except for:
+        # <case_end> and <or_case>.
+        self.condition_name_false = None
 
         # For reading variables and replacing them with values.
         # Both the main scripts and reusable scripts can use variables.
@@ -406,7 +433,14 @@ class StoryReader:
             # It forces the main story reader to pause until there are
             # no more sprites animating that were in the wait list.
             self.wait_for_animation_handler = WaitForAnimationHandler()
-    
+            
+            # This is used for manually pausing the reading of the 
+            # main script until <unpause_main_script> is used.
+            # Purpose: to prevent the main reader from advancing until
+            # the viewer clicks on a sprite (button) which then manually
+            # unpauses the main reader.
+            self.pause_main_script = False
+            
             # When halted in auto-mode, a mouse click or keyboard press won't
             # advance the story. Instead, the story will be advanced automatically
             # after X number of frames have elapsed.
@@ -472,7 +506,7 @@ class StoryReader:
     def main_script_should_pause(self):
         """
         Check if there are any animations occurring
-        or pauses (halt, rest) that should cause
+        or pauses (halt, rest, manual pause) that should cause
         the main story script to not continue reading.
         
         This does not apply to background scripts.
@@ -482,7 +516,8 @@ class StoryReader:
         return any((main_reader.animating_dialog_rectangle,
                     main_reader.halt_main_script,
                     main_reader.rest_handler.pause_required(),
-                    main_reader.wait_for_animation_handler.check_wait()))
+                    main_reader.wait_for_animation_handler.check_wait(),
+                    main_reader.pause_main_script))
 
     def clear_all_sprite_groups(self):
         """
@@ -761,6 +796,14 @@ class StoryReader:
             
             line = self.script_lines.pop(0)
             
+            # Remove leading and trailing spaces temporarily.
+            # Commands with leading or trailing spaces won't be read as
+            # commands. If it appears to be a command, record the line
+            # without the leading/trailing spaces so the command will run later.
+            line_strip = line.strip()
+            if line_strip.startswith("<") and line_strip.endswith(">"):
+                line = line_strip
+            
             # Replace variable names with variable values, if possible.
             line = self.variable_handler.find_and_replace_variables(line=line)
 
@@ -772,6 +815,15 @@ class StoryReader:
                 
             # A blank line or a comment line? Ignore the line completely.
             if not line or line.startswith("#"):
+                continue
+            
+            # Should we skip reading this line because an earlier
+            # condition evaluated to False?
+            if not Condition.evaluate_line_check(script_line=line,
+                            false_condition_name=self.condition_name_false):
+                # An earlier condition evaluated to False, 
+                # and the current line is not <case_end> or <or_case..
+                # so ignore this line.
                 continue
             
             # This is a special command, which gets replaced 
@@ -798,12 +850,14 @@ class StoryReader:
 
                     self.run_command(command_name, arguments)
 
-                    # <scene> and <scene_with_fade> will cause the current story reader
-                    # to finish (to make way for a new scene - new main reader), so those
-                    # two commands will set story_finished to True
+                    # <scene>, <scene_with_fade>, <exit> will cause the current 
+                    # story reader to finish (<scene> and <scene_with_fade> 
+                    # make way for a new scene - new main reader), so those
+                    # two commands will set story_finished to True, 
+                    # and so will <exit>.
                     if self.story_finished:
-                        # Either <scene> or <scene_with_fade> was used, so don't continue
-                        # with this reader anymore.
+                        # Either <scene>, <scene_with_fade>, or <exit> was used, 
+                        # so don't continue with this reader anymore.
                         command_line = False
                         self.script_lines.clear()
 
@@ -960,6 +1014,18 @@ class StoryReader:
             self.story.add_font(font_name=arguments,
                                 font_sprite=font_full_sprite_sheet_sprite)
 
+        elif command_name in ("case", "or_case"):
+            self._condition_read(command_name=command_name, arguments=arguments)
+
+        elif command_name == "case_else":
+            self._condition_else()
+
+        elif command_name == "case_end":
+            self._condition_end()
+            
+        elif command_name == "exit":
+            self._exit()
+
         elif command_name == "play_sound":
             self._play_audio(arguments=arguments,
                              audio_channel=audio_player.AudioChannel.FX)
@@ -1094,6 +1160,18 @@ class StoryReader:
                               "dialog_sprite_flip_vertical"):
 
             self._flip(command_name=command_name, arguments=arguments)
+            
+        elif command_name in ("dialog_sprite_on_mouse_enter",
+                              "object_on_mouse_enter",
+                              "character_on_mouse_enter",
+                              "dialog_sprite_on_mouse_leave",
+                              "object_on_mouse_leave",
+                              "character_on_mouse_leave",
+                              "dialog_sprite_on_mouse_click", 
+                              "object_on_mouse_click", 
+                              "character_on_mouse_click"):
+            self._mouse_event_reusable_script(command_name=command_name,
+                                              arguments=arguments)
 
         elif command_name == "no_clear":
             self._no_clear()
@@ -1128,6 +1206,48 @@ class StoryReader:
             Pause the main story reader until a specific animation has finished.
             """
             self._wait_for_animation(arguments=arguments)
+            
+        elif command_name == "halt_and_pause_main_script":
+            """
+            Pause the main story reader until the command <unpause_main_script>
+            is used.
+            
+            This is the same as using <halt> and pausing the story
+            by setting the 'pause_main_script' flag.
+            
+            The reason this command was made: to prevent the main reader
+            from advancing until a sprite (button) has been clicked, and the
+            button would run the command: <unhalt_and_unpause_main_script>.
+            
+            If we didn't have this, then clicking anywhere in the story
+            would cause the story to advance, so we have this command
+            to make the dialog text appear (halt) and to prevent the story
+            from advancing if the viewer clicks anywhere on the story, until
+            the command <unhalt_and_unpause_main_script> is used.
+            """
+            main_reader = self.get_main_story_reader()
+            
+            # Is the main reader already paused? return.
+            if main_reader.pause_main_script:
+                return
+            
+            main_reader.pause_main_script = True
+            main_reader.halt()
+            
+        elif command_name == "unhalt_and_unpause_main_script":
+            """
+            Unpause the main story reader that was manually paused with
+            <pause_main_script>.
+            """
+            main_reader = self.get_main_story_reader()
+            
+            # Is the main reader not paused? Return, to avoid
+            # unhalting unnecessarily because the main reader is not paused.
+            if not main_reader.pause_main_script:
+                return
+            
+            main_reader.pause_main_script = False
+            main_reader.unhalt()
 
         elif command_name == "scene_with_fade":
             """
@@ -1546,7 +1666,7 @@ class StoryReader:
                                                arguments=arguments,
                                                start_or_stop=sd.StartOrStop.START)
 
-        elif command_name == "dialog_start_scaling":
+        elif command_name == "dialog_sprite_start_scaling":
             self._sprite_start_or_stop_scaling(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                                                arguments=arguments,
                                                start_or_stop=sd.StartOrStop.START)
@@ -1895,12 +2015,8 @@ class StoryReader:
         if not flip:
             return
 
-        if "character" in command_name:
-            sprite_type = active_story.ContentType.CHARACTER
-        elif "object" in command_name:
-            sprite_type = active_story.ContentType.OBJECT
-        elif "dialog" in command_name:
-            sprite_type = active_story.ContentType.DIALOG_SPRITE
+        # Determine the sprite type based on the command name.
+        sprite_type = self.get_sprite_type_from_command(command_name=command_name)
             
         vertical = False
         horizontal = False
@@ -2049,16 +2165,16 @@ class StoryReader:
         if not sprite_to_move:
             return
 
-        before_move_rect = sprite_to_move.rect.copy()
+        # before_move_rect = sprite_to_move.rect.copy()
         sprite_to_move.rect.centerx = sprite_to_center_with.rect.centerx
-        after_move_rect = sprite_to_move.rect.copy()
+        # after_move_rect = sprite_to_move.rect.copy()
         
-        # Queue the rects for a manual screen update.
-        # Regular animations (such as <character_start_moving: rave>)
-        # are updated automatically, but since this is a manual animation,
-        # we need to queue it for updating here.
-        active_story.ManualUpdate.queue_for_update(before_move_rect)        
-        active_story.ManualUpdate.queue_for_update(after_move_rect) 
+        ## Queue the rects for a manual screen update.
+        ## Regular animations (such as <character_start_moving: rave>)
+        ## are updated automatically, but since this is a manual animation,
+        ## we need to queue it for updating here.
+        #active_story.ManualUpdate.queue_for_update(before_move_rect)        
+        #active_story.ManualUpdate.queue_for_update(after_move_rect) 
 
     def on_dialog_rectangle_animation_completed(self,
                                                 final_dest_rect: pygame.Rect,
@@ -2250,6 +2366,13 @@ class StoryReader:
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
+        # If the main story reader is paused due to a manual pause
+        # with the <pause_main_script> command, then don't unhalt yet
+        # until the main story reader is unpaused manually with the
+        # <unpause_main_script> command.
+        if main_reader.pause_main_script:
+            return
+
         main_reader.halt_main_script = False
 
         # Clear the fade-in intro animation, if any.
@@ -2282,14 +2405,10 @@ class StoryReader:
         
         if variable_set:
             
-            # Is the variable name valid?
-            invalid_char = VariableValidate.validate_variable_name(variable_set.variable_name)
-            if invalid_char:
-                raise ValueError(f"Variable name {variable_set.variable_name} contains invalid letter '{invalid_char}'")
-
             # Update or create variable.
-            VariableHandler.variables[variable_set.variable_name]\
-                = variable_set.variable_value
+            # The method will also check for invalid variable name characters.
+            VariableHandler.set_variable(variable_name=variable_set.variable_name,
+                                         variable_value=variable_set.variable_value)
 
     def _continue(self, arguments: str):
         """
@@ -2776,6 +2895,7 @@ class StoryReader:
             return
 
         # Get the active/visible sprite
+        sprite: sd.SpriteObject
         sprite = self.story.get_visible_sprite(content_type=sprite_type,
                                                general_alias=scale_current_value.sprite_name)
 
@@ -2784,7 +2904,6 @@ class StoryReader:
 
         # Set the scale value of the sprite (immediate, no gradual animation).
         sprite.scale_current_value = scale_current_value
-        
 
         # sprite.sudden_scale_change = True
 
@@ -3528,11 +3647,51 @@ class StoryReader:
         # is working, it'll read this variable value and delay the fade effect.
         sprite.fade_delay_main = fade_delay_main
 
-    def _sprite_load(self, arguments, sprite_type: file_reader.ContentType):
+    def _sprite_load(self, arguments: str, sprite_type: file_reader.ContentType):
         """
         Load a sprite image/sprite into memory and give it a general alias
         so it's ready to be displayed whenever it's needed.
         """
+        
+        def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
+            """
+            Return the preferred name and the original name of a sprite
+            when using 'Load As' in the name section.
+            If 'Load As' is not used, then None is returned.
+            
+            For example:
+            'Theo Load As Th' will return {"LoadAsName": "Th", "OriginalName": "Theo"}
+            The 'Load As' keyword part is not case-sensitive
+            
+            If there is no 'Load As', None is returned.
+            For example:
+            'Theo' will return None.
+            """
+        
+            result = re.search(pattern=r"^(?P<OriginalName>.*)[\s](load as)[\s](?P<LoadAsName>.*)",
+                               string=sprite_name_argument,
+                               flags=re.IGNORECASE)
+            
+            # Was there a search match?
+            if not result:
+                # No match was found, which means 'Load As' is not being used.
+                
+                return
+            
+            else:
+            
+                result = result.groupdict()
+                load_as_name = result.get("LoadAsName")
+                original_name = result.get("OriginalName")
+                
+                # Remove leading and trailing spaces.
+                if load_as_name and original_name:
+                    load_as_name = load_as_name.strip()
+                    original_name = original_name.strip()
+                    
+                    return {"LoadAsName": load_as_name,
+                            "OriginalName": original_name}
+        
 
         sprite_name_and_alias: sd.SpriteLoad
         sprite_name_and_alias = \
@@ -3542,9 +3701,34 @@ class StoryReader:
         if not sprite_name_and_alias:
             return
         
-        loaded_sprite = self.data_requester.get_sprite(content_type=sprite_type,
-                                                       item_name=sprite_name_and_alias.sprite_name,
-                                                       general_alias=sprite_name_and_alias.sprite_general_alias)
+        # Is there 'Load As' in the sprite name? That means there is a
+        # a different preferred name, so we should load the sprite As the
+        # new name.
+        # For example: <load_character: theo Load As th>
+        original_and_preferred_name =\
+            get_preferred_sprite_name(
+                sprite_name_argument=sprite_name_and_alias.sprite_name)
+        
+        # Separate the original name and preferred load-as name,
+        # if a preferred name was provided.
+        if original_and_preferred_name:
+            # A preferred name was provided.
+            
+            original_sprite_name = original_and_preferred_name.get("OriginalName")
+            preferred_sprite_name = original_and_preferred_name.get("LoadAsName")
+  
+        else:
+            # There is no preferred name; use the original name.
+            original_sprite_name = sprite_name_and_alias.sprite_name
+            preferred_sprite_name = None
+        
+        # Get the sprite from the .lvna file.
+        loaded_sprite =\
+            self.data_requester.get_sprite(
+                content_type=sprite_type,
+                item_name=original_sprite_name,
+                general_alias=sprite_name_and_alias.sprite_general_alias,
+                load_item_as_name=preferred_sprite_name)
         
         if not loaded_sprite:
             return            
@@ -3563,9 +3747,11 @@ class StoryReader:
 
         else:
             return
-            
-        sprite_group.add(sprite_name_and_alias.sprite_name,
-                         loaded_sprite)
+        
+        # Use the preferred sprite name when adding the sprite to the dictionary
+        # if it's there; otherwise use the sprite's original sname.
+        sprite_group.add(
+            preferred_sprite_name or original_sprite_name, loaded_sprite)
 
     def _sprite_after_fading_stop(self,
                                   sprite_type: file_reader.ContentType,
@@ -3710,6 +3896,34 @@ class StoryReader:
             after_manager_method = self.after_manager
             
         return after_manager_method
+    
+    def spawn_new_background_reader_auto_arguments(
+        self, reusable_script_name_maybe_with_arguments: str):
+        """
+        Create a new background reader for playing a reusable script.
+        This is the same as the other method, spawn_new_background_reader(),
+        with one difference: the given argument can contain arguments
+        and the arguments will be passed to the reusable script automatically.
+        
+        This is a wrapper method that runs spawn_new_background_reader().
+        It basically looks for a comma and uses that determine if there are
+        arguments to pass or not.
+        
+        Arguments:
+        
+        - reusable_script_name_maybe_with_arguments: either the reusable
+        script name alone, or the reusable script name, followed by arguments
+        to pass to the reusable script.
+        
+        Example: 'my second script'
+        or
+        'my second script, name=theo, sky=blue'
+        """
+        with_arguments = "," in reusable_script_name_maybe_with_arguments
+        
+        self.spawn_new_background_reader(
+            reusable_script_name=reusable_script_name_maybe_with_arguments,
+        with_arguments=with_arguments)
 
     def spawn_new_background_reader(self,
                                     reusable_script_name: str,
@@ -4565,7 +4779,124 @@ class StoryReader:
         # Start showing animation of font text, unless it's set to
         # sudden-mode.        
         sprite.active_font_handler.font_animation.\
-            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)
+            start_show_animation(letters=sprite.active_font_handler.letters_to_blit)       
+
+    def _condition_else(self):
+        """
+        If the last condition evaluated to True (the story reader
+        is not bound to a condition name in self.condition_name_false),
+        then make the story reader enter skip-mode so the script below
+        <case_else> doesn't run.
+        <case_end> will be needed eventually to make the reader
+        get out of skip-mode.
+        
+        If the last condition evaluated to False (the story reader
+        is bound to a condition name in self.condition_name_false), then
+        the story reader is already in skip-mode so get it out of skip-mode
+        so that the script below <case_else> will run.
+        <case_end> is not technically needed in this situation because
+        it's no longer in skip-mode, but having <case_end> is ok too.
+        """
+        
+        # Did the last condition evaluate to True?
+        if not self.condition_name_false:
+            
+            # Enter skip-mode so the script below 'case_else' won't run.
+            self.condition_name_false = "!else-condition!"
+        
+        else:
+            # The last condition evaluated to False.
+            
+            # Get the story reader out of skip-mode so that the script
+            # below 'case_else' will run.
+            self.condition_name_false = None
+
+    def _exit(self):
+        """
+        Finish the current script automatically without reaching the end.
+        
+        Purpose: used for exiting any type of script (chapter, scene,
+        reusable script) before it reaches the end of the script. One example
+        use case is not having sufficient 'credits' or 'score' to buy an item,
+        so the store owner character no longer has anything to say.
+        """
+        self.story_finished = True
+
+    def _condition_end(self):
+        """
+        Get the story reader out of 'skip-mode' so it doesn't keep
+        skipping script lines due to a condition in the past being
+        evaluated to False.
+        """
+        self.condition_name_false = None
+
+    def _condition_read(self, command_name: str, arguments: str):
+        """
+        Check if a condition evaluates to True or False.
+        If it's False, set a flag for the current reader to ignore
+        all upcoming script lines unless it reaches an
+        <or_case> command or <case_end> command.
+        
+        Example of a condition:
+        <case: 10, more than, 5, number check>`
+        """
+        
+        # In the case of a <case> command, if no condition name was provided,
+        # then generate a random name. Reason: the <case> command's condition
+        # name is optional, and is used only if the visual novel writer
+        # plans on using an <or_case> later.
+        if arguments.count(",") == 2:
+            
+            # No condition name was provided. Generate a random string.
+            random_condition_name = string.ascii_letters + string.digits
+            random_condition_name =\
+                "".join(secrets.choice(random_condition_name) in range(8))
+            
+            # Add the random condition name to the arguments.
+            arguments += f", {random_condition_name}"
+        
+        condition: ConditionDefinition
+        condition = self._get_arguments(class_namedtuple=ConditionDefinition,
+                                        given_arguments=arguments)
+        
+        condition_checker = Condition(value1=condition.value1,
+                                      value2=condition.value2,
+                                      operator=condition.operator)
+        
+        
+        # If <or_case> is used, make sure the story reader is in
+        # skip-mode (in other words, a condition evaluated to False before).
+        if command_name == "or_case":
+            if self.condition_name_false:
+                
+                # Is the condition name that evaluated to False before the
+                # same condition name in the <or_case> command?
+                if self.condition_name_false != condition.condition_name:
+                    # The <or_case> has a different name than the
+                    # last condition that evaluated to False, so we shouldn't
+                    # process this <or_case> command.
+                    return
+            else:
+                # This story reader is not in skip-mode, so the <or_case>
+                # doesn't need to be evaluated.
+                return
+        
+        if condition_checker.evaluate():
+            # Evaluation passed
+            
+            # Clear the variable that holds the condition name that
+            # evaluated to False. This variable might be set to something if
+            # the <or_case> command was used here, so we clear it here
+            # to make sure the story reader is not in skip-mode.
+            self.condition_name_false = None
+            
+        else:
+            # Evaluated to False
+            
+            # Keep track of the latest condition that evaluated to False
+            # so we can end it using <case_end> or give it another chance
+            # with <or_case>.
+            self.condition_name_false = condition.condition_name
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
@@ -4685,6 +5016,68 @@ class StoryReader:
         main_reader = self.get_main_story_reader()
 
         main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+
+    def get_sprite_type_from_command(self, command_name: str) -> file_reader.ContentType:
+        """
+        Return the type of sprite the command is for based
+        on the command name.
+        """
+        if "character" in command_name:
+            return file_reader.ContentType.CHARACTER
+        elif "object" in command_name:
+            return file_reader.ContentType.OBJECT
+        elif "dialog" in command_name:
+            return file_reader.ContentType.DIALOG_SPRITE
+
+    def _mouse_event_reusable_script(self, command_name, arguments: str):
+        """
+        When a mouse action occurs, run a specific reusable script.
+        """
+        
+        class_name = MouseEventRunScriptWithArguments \
+            if arguments.count(",") >=2 \
+            else MouseEventRunScriptNoArguments
+        
+        mouse_run_script: MouseEventRunScriptWithArguments
+        mouse_run_script =\
+            self._get_arguments(class_namedtuple=class_name,
+                                given_arguments=arguments)
+        
+        if not mouse_run_script:
+            return
+        
+        # Determine the sprite type that the command will be applied to
+        # based on the command name.
+        sprite_type =\
+            self.get_sprite_type_from_command(command_name=command_name)
+        
+        # Get the visible sprite based on the general alias
+        # Used for setting a reusable script to run when specific
+        # mouse events occur on the sprite.
+        existing_sprite: sd.SpriteObject =\
+            self.story.get_visible_sprite(content_type=sprite_type,
+                                    general_alias=mouse_run_script.sprite_name)
+
+        if not existing_sprite:
+            return
+        
+        if class_name == MouseEventRunScriptWithArguments:
+            reusable_script_name = mouse_run_script.reusable_script_name + \
+                ", " + mouse_run_script.arguments
+            
+        elif class_name == MouseEventRunScriptNoArguments:
+            reusable_script_name = mouse_run_script.reusable_script_name
+        
+        # Set the name of the reusable script to run when a specific 
+        # mouse event occurs.
+        if "_mouse_enter" in command_name:
+            existing_sprite.on_mouse_enter_run_script = reusable_script_name
+            
+        elif "_mouse_leave" in command_name:
+            existing_sprite.on_mouse_leave_run_script = reusable_script_name
+            
+        elif "_mouse_click" in command_name:
+            existing_sprite.on_mouse_click_run_script = reusable_script_name
 
     def _wait_for_animation(self, arguments: str):
         """
@@ -4864,24 +5257,6 @@ class StoryReader:
         if not name:
             return
 
-        # Get the sprite
-        new_sprite: sd.SpriteObject
-
-        # Get the new sprite from its name, not its alias.
-
-        # When we're showing a sprite, we must use its name, because if
-        # we try and use an alias, multiple sprites might have the same alias.
-        new_sprite = self.data_requester.get_sprite(content_type=sprite_type,
-                                                    item_name=name.sprite_name)
-
-        if not new_sprite:
-            return
-
-        # Is the sprite already visible and not waiting to hide? return
-        # because the sprite is already fully visible.
-        elif new_sprite.visible and not new_sprite.pending_hide:
-            return
-
         # Set the visibility to True and also
         # set a flag to indicate in the next sprite update that we should
         # update the screen rect of this sprite.
@@ -4890,139 +5265,234 @@ class StoryReader:
         # what we want to show? If so, replace that sprite with
         # the new sprite that we have now.
 
-        if sprite_type in (file_reader.ContentType.CHARACTER,
+        if sprite_type not in (file_reader.ContentType.CHARACTER,
                            file_reader.ContentType.OBJECT,
-                           file_reader.ContentType.DIALOG_SPRITE):
+                           file_reader.ContentType.DIALOG_SPRITE,
+                           file_reader.ContentType.BACKGROUND):
+            return
 
-            if sprite_type == file_reader.ContentType.CHARACTER:
-                sprite_group = sd.Groups.character_group
+        if sprite_type == file_reader.ContentType.CHARACTER:
+            sprite_group = sd.Groups.character_group
 
-            elif sprite_type == file_reader.ContentType.OBJECT:
-                sprite_group = sd.Groups.object_group
+        elif sprite_type == file_reader.ContentType.OBJECT:
+            sprite_group = sd.Groups.object_group
 
-            elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
-                sprite_group = sd.Groups.dialog_group
-
-            # Find the sprite that we're swapping 'out'
-            visible_sprite: sd.SpriteObject
-            visible_sprite = None
+        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+            sprite_group = sd.Groups.dialog_group
             
-            current_visible_sprite: sd.SpriteObject
-            for current_visible_sprite in sprite_group.sprites.values():
+        elif sprite_type == file_reader.ContentType.BACKGROUND:
+            sprite_group = sd.Groups.background_group
+            
+        loaded_sprite: sd.SpriteObject
+        loaded_sprite = sprite_group.sprites.get(name.sprite_name)
+        
+        if not loaded_sprite:
+            return
+        
+        # Is the sprite already visible and not waiting to hide? return
+        # because the sprite is already fully visible.
+        elif loaded_sprite.visible and not loaded_sprite.pending_hide:
+            return            
+
+        # Find the sprite that we're swapping 'out'
+        visible_sprite: sd.SpriteObject
+        visible_sprite = None
+        
+        current_visible_sprite: sd.SpriteObject
+        for current_visible_sprite in sprite_group.sprites.values():
+            
+            # Did we find a fully visible sprite with the same alias?
+            # If so, we'll swap that sprite out.
+            if current_visible_sprite.visible and \
+                       current_visible_sprite.general_alias == loaded_sprite.general_alias:
                 
-                # Did we find a fully visible sprite with the same alias?
-                # If so, we'll swap that sprite out.
-                if current_visible_sprite.visible and \
-                   current_visible_sprite.general_alias == new_sprite.general_alias:
-                    
-                    # We found a visible sprite with the same alias.
-                    visible_sprite = current_visible_sprite                    
-                    break
+                # We found a visible sprite with the same alias.
+                # and it's not the same sprite that we're swapping in, 
+                # because the sprite names are different.
+                visible_sprite = current_visible_sprite                    
+                break
+            
+            # Did we find a pending visible sprite with the same alias?
+            # Keep a reference to it in case we don't find a fully visible
+            # sprite with the same alias, but don't stop checking for
+            # visible sprites yet.
+            elif current_visible_sprite.pending_show and \
+               current_visible_sprite.general_alias == loaded_sprite.general_alias:
                 
-                # Did we find a pending visible sprite with the same alias?
-                # Keep a reference to it in case we don't find a fully visible
-                # sprite with the same alias, but don't stop checking for
-                # visible sprites yet.
-                elif current_visible_sprite.pending_show and \
-                   current_visible_sprite.general_alias == new_sprite.general_alias:
-                    
-                    # We found a visible sprite with the same alias,
-                    # but don't break out of the loop yet because this sprite
-                    # is only pending to be visible, it's not fully visible yet.
-                    # Keep looping to see if there is a fully visible sprite
-                    # with the same alias, and if not, we'll end up swapping 
-                    # out this sprite.
-                    visible_sprite = current_visible_sprite                    
+                # We found a visible sprite with the same alias,
+                # but don't break out of the loop yet because this sprite
+                # is only pending to be visible, it's not fully visible yet.
+                # Keep looping to see if there is a fully visible sprite
+                # with the same alias, and if not, we'll end up swapping 
+                # out this sprite.
+                visible_sprite = current_visible_sprite                    
 
 
-            # Did we end up finding a visible sprite with the same alias?
-            if visible_sprite:
-    
-                # Copy the currently visible sprite
-                # so that we can turn this copy into a new sprite later.
-                copied_visible_sprite = copy.copy(visible_sprite)
-    
-                # Keep track of the center of the current sprite
-                # so we can restore the center when the new
-                # sprite is shown. If we don't do this, the new sprite
-                # will show up in a different position.
-                current_center = visible_sprite.rect.center
-    
-                # Get the new image that we want to show
-                copied_visible_sprite.original_image = new_sprite.original_image
-                copied_visible_sprite.original_image_before_text = new_sprite.original_image_before_text
-                copied_visible_sprite.original_rect = new_sprite.original_rect
-                copied_visible_sprite.image = new_sprite.image
-                copied_visible_sprite.rect = new_sprite.rect
-                copied_visible_sprite.name = new_sprite.name
+        # Did we end up finding a visible sprite with the same alias?
+        if visible_sprite:
+
+            # Copy the currently visible sprite
+            # so that we can turn this copy into a new sprite later.
+            copied_visible_sprite = copy.copy(visible_sprite)
+
+            # Keep track of the center of the current sprite
+            # so we can restore the center when the new
+            # sprite is shown. If we don't do this, the new sprite
+            # will show up in a different position.
+            current_center = visible_sprite.rect.center
+
+            # Get the new image that we want to show
+            copied_visible_sprite.original_image = loaded_sprite.original_image
+            copied_visible_sprite.original_image_before_text = loaded_sprite.original_image_before_text
+            copied_visible_sprite.original_rect = loaded_sprite.original_rect
+            copied_visible_sprite.image = loaded_sprite.image
+            copied_visible_sprite.rect = loaded_sprite.rect
+            copied_visible_sprite.name = loaded_sprite.name
+            
+
+            # Update the active font handler's sprite reference
+            # (if there is one) to the new sprite that has 
+            # the new images. If we don't do this, the active font
+            # handler will have a reference to the swapped-out sprite
+            # rather than the newly swapped-in sprite, and then text
+            # won't display on the new sprite.
+            if copied_visible_sprite.active_font_handler \
+               and copied_visible_sprite.active_font_handler.sprite_object:
+                copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
                 
-                # Update the active font handler's sprite reference
-                # (if there is one) to the new sprite that has 
-                # the new images. If we don't do this, the active font
-                # handler will have a reference to the swapped-out sprite
-                # rather than the newly swapped-in sprite, and then text
-                # won't display on the new sprite.
-                if copied_visible_sprite.active_font_handler \
-                   and copied_visible_sprite.active_font_handler.sprite_object:
-                    copied_visible_sprite.active_font_handler.sprite_object = copied_visible_sprite
+                ## Prepare letter sprites for blitting later.
+                #copied_visible_sprite.active_font_handler.process_text(line_text="")
+                
+                # If sudden-text was already blitted before (from previous text), 
+                # reset the blitted flag so we can append more sudden-text.
+                # We need this block for sudden text to show after the swap.
+                if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
+                   and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
+                    copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
+                
+                
+                """
+                There is no need to re-run an animation if the sprite's text
+                has already finished animating. Only animate the sprite's text
+                if the previous sprite was in the middle of animating the
+                sprite's text and this new sprite that's being swapped-in needs
+                to continue the previous sprite's animation. However, if the
+                previous sprite had already finished showing the sprite's text,
+                prevent the newly swapped-in sprite from restarting the font
+                animation. But each time a sprite is swapped-in, it technically
+                has to re-draw the sprite's text. So what we need to do is
+                temporarily set the font's text to 'sudden' mode and after the
+                newly swapped-in sprite's text has been shown, set it back to
+                whatever animation type the 'old' sprite's text had, just in
+                case more text gets appended to the sprite's text later on
+                or if the sprite's text gets changed.
+                """
+
+                """
+                'copied_visible_sprite' is the 'new' sprite that's
+                being swapped-in, but it also has attributes from
+                the old sprite that is being swapped-out, such as
+                the sprite text font intro animation type 
+                and animation status.
+                """
+                
+                restore_sprite_intro_animation_type = False
+
+                # If the old sprite's animation type is not sudden-mode
+                # and has already finished animating the intro font animation
+                # we'll need to temporarily set the new sprite's font intro
+                # animation to sudden, so that the sprite text's animation
+                # doesn't re-run.
+                if copied_visible_sprite.active_font_handler\
+                   .font_animation.start_animation_type != font_handler.FontAnimationShowingType.SUDDEN \
+                   and not copied_visible_sprite.active_font_handler.font_animation.is_start_animating:
                     
-                    ## Prepare letter sprites for blitting later.
-                    #copied_visible_sprite.active_font_handler.process_text(line_text="")
+                    # The sprite's text intro animation is not sudden-mode
+                    # and the sprite's text has finished animating.
                     
-                    # If sudden-text was already blitted before (from previous text), 
-                    # reset the blitted flag so we can append more sudden-text.
-                    # We need this block for sudden text to show after the swap.
-                    if copied_visible_sprite.active_font_handler.font_animation.start_animation_type == font_handler.FontAnimationShowingType.SUDDEN \
-                       and copied_visible_sprite.active_font_handler.sudden_text_drawn_already:
-                        copied_visible_sprite.active_font_handler.reset_sudden_text_finished_flag()
+                    # Get the animation-type of the sprite that's being
+                    # swapped-out.
+                    old_sprite_animation_type =\
+                        copied_visible_sprite.active_font_handler\
+                        .font_animation.start_animation_type                    
                     
-                    # Start showing animation of font text, unless it's set to
-                    # sudden-mode.        
+                    # temporarily set the newly-swapped in's font intro
+                    # animation to sudden-mode so that the
+                    # new sprite's text animation doesn't run again.
+                    copied_visible_sprite.active_font_handler\
+                        .font_animation.start_animation_type\
+                        = font_handler.FontAnimationShowingType.SUDDEN
+                    
+                    # Flag to indicate that we should change the
+                    # sprite's intro animation type back after
+                    # temporarily changing it here.
+                    restore_sprite_intro_animation_type = True
+
+                # Start showing animation of font text, unless it's set to
+                # sudden-mode.
+                copied_visible_sprite.active_font_handler.font_animation.\
+                    start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)
+                
+                
+                # Should we restore the newly-swapped font intro animation type?
+                if restore_sprite_intro_animation_type:
+                    # Restore the sprite's font-intro animation type.
+                    
+                    # It was changed earlier, temporarily. So here we're
+                    # restoring it.
+                    copied_visible_sprite.\
+                        active_font_handler.font_animation.start_animation_type\
+                        = old_sprite_animation_type
+
+                    # We need to set this flag so the font animation
+                    # will blit the newly-swapped sprite's text.
+                    # Without this, the newly-swapped-in's sprite text
+                    # will not appear.
                     copied_visible_sprite.active_font_handler.font_animation.\
-                        start_show_animation(letters=copied_visible_sprite.active_font_handler.letters_to_blit)                    
-    
-    
-                # Record whether the new sprite has been flipped in any way
-                # at any time in the past, because we'll need to compare the flip
-                # values with the sprite that is being swapped out later in this method.
-                copied_visible_sprite.flipped_horizontally = new_sprite.flipped_horizontally
-                copied_visible_sprite.flipped_vertically = new_sprite.flipped_vertically
-    
-                # The new sprite does not have any scale/rotate/fade effects
-                # applied to it, but the flags (self.applied..) at this 
-                # point indicate that effects are applied 
-                # (those flags are not up-to-date).
-                # So reset the flags so that we will end up applying
-                # necessary effects to make it match the effects of 
-                # the previous sprite.
-                copied_visible_sprite.reset_applied_effects()
-    
-                # Make the new sprite the same as the current sprite
-                # but with the new images, rects, and new name.
-                new_sprite = copied_visible_sprite
-                
-    
-                # Restore the center position so the new sprite
-                # will be positioned exactly where the old sprite is.
-                new_sprite.rect.center = current_center
-    
-                # Hide the old sprite (that we're swapping out)
-                visible_sprite.start_hide()
-    
-                # If the sprite that is being swapped out was flipped horizontally and/or vertically,
-                # then make sure the new sprite is flipped horizontally and/or vertically too.
-                new_sprite.flip_match_with(visible_sprite)
-    
-                # Show the new sprite (that we're swapping in)
-                new_sprite.start_show()
-    
-                # Update the new sprite in the main character sprites dictionary
-                sprite_group.sprites[new_sprite.name] = new_sprite
+                        is_start_animating = True
+
+
+            # Record whether the new sprite has been flipped in any way
+            # at any time in the past, because we'll need to compare the flip
+            # values with the sprite that is being swapped out later in this method.
+            copied_visible_sprite.flipped_horizontally = loaded_sprite.flipped_horizontally
+            copied_visible_sprite.flipped_vertically = loaded_sprite.flipped_vertically
+
+            # The new sprite does not have any scale/rotate/fade effects
+            # applied to it, but the flags (self.applied..) at this 
+            # point indicate that effects are applied 
+            # (those flags are not up-to-date).
+            # So reset the flags so that we will end up applying
+            # necessary effects to make it match the effects of 
+            # the previous sprite.
+            copied_visible_sprite.reset_applied_effects()
+
+            # Make the new sprite the same as the current sprite
+            # but with the new images, rects, and new name.
+            loaded_sprite = copied_visible_sprite
+            
+
+            # Restore the center position so the new sprite
+            # will be positioned exactly where the old sprite is.
+            loaded_sprite.rect.center = current_center
+
+            # Hide the old sprite (that we're swapping out)
+            visible_sprite.start_hide()
+
+            # If the sprite that is being swapped out was flipped horizontally and/or vertically,
+            # then make sure the new sprite is flipped horizontally and/or vertically too.
+            loaded_sprite.flip_match_with(visible_sprite)
+
+            # Show the new sprite (that we're swapping in)
+            loaded_sprite.start_show()
+
+            # Update the new sprite in the main character sprites dictionary
+            sprite_group.sprites[loaded_sprite.name] = loaded_sprite
 
 
 
         # If the sprite is not already visible, start to make it visible.
-        if not new_sprite.visible:
+        if not loaded_sprite.visible:
 
             # If the sprite is a background, hide all backgrounds
             # before showing the new background.
@@ -5032,7 +5502,10 @@ class StoryReader:
             if sprite_type == file_reader.ContentType.BACKGROUND:
                 sd.Groups.background_group.hide_all()
 
-            new_sprite.start_show()
+            loaded_sprite.start_show()
+            
+            ## Update the newly set-visible sprite in the sprites dictionary
+            #sprite_group.sprites[loaded_sprite.name] = loaded_sprite            
 
     def _text_dialog_close(self):
         """
