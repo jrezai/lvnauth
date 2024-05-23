@@ -31,7 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
-import condition_handler
+from player.condition_handler import ConditionOperator
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import colorchooser
@@ -5563,7 +5563,7 @@ class SharedPages:
                                      text="Comparison operator:")
             
             # Get a tuple of condition operators (is, is not, etc.)
-            operators = condition_handler.ConditionOperator.get_values()
+            operators = ConditionOperator.get_values()
             self.cb_operators = ttk.Combobox(frame_content,
                                              width=25, 
                                              values=operators)
@@ -5638,7 +5638,7 @@ class SharedPages:
             # Try to get the operator enum value.
             # This is done to ensure the operator is one that really exists.
             try:
-                operator = condition_handler.ConditionOperator(value=operator)
+                operator = ConditionOperator(value=operator)
             except ValueError:            
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
                                        title="No operator selected",
