@@ -6000,11 +6000,20 @@ class SharedPages:
 
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
 
+            message = "(optional) - Load as a different name? Used for spawning copies.\n" \
+                      "Enter a new copy name below:"
+            lbl_load_as_prompt = ttk.Label(frame_content, text=message)
+            self.entry_load_as = ttk.Entry(frame_content, width=25)
+
             lbl_prompt.grid(row=0, column=0, sticky="w")
             self.cb_selections.grid(row=1, column=0, sticky="w")
-            
-            self.lbl_general_alias.grid(row=2, column=0, sticky="w", pady=(15, 0))
+
+            self.lbl_general_alias.grid(row=2, column=0, sticky="w",
+                                        pady=(15, 0))
             self.entry_general_alias.grid(row=3, column=0, sticky="w")
+
+            lbl_load_as_prompt.grid(row=4, column=0, sticky="w", pady=(15, 0))
+            self.entry_load_as.grid(row=5, column=0, sticky="w")
             
             return frame_content
 
@@ -6048,8 +6057,25 @@ class SharedPages:
                                        title=f"No {entry_type} provided",
                                        message=f"Enter {entry_type_preposition} {entry_type} for the {self.get_purpose_name()}.")
                 return
+
+            # Load the sprite using a different name? (load as).
+            load_as_name = self.entry_load_as.get().strip()
+
+            # Make sure the copy/load as name is different
+            # from the original name.
+            if load_as_name and load_as_name.lower() == selection.lower():
+                messagebox.showwarning(
+                    parent=self.treeview_commands.winfo_toplevel(),
+                    title="Load As Name",
+                    message=f"The name of the copy must be different from the original name: '{selection}'")
+                return
+
+            elif not load_as_name:
+                # So we don't end up with an empty string.
+                load_as_name = None
             
             user_input = {"Selection": selection,
+                          "LoadAsName": load_as_name,
                           "Alias": alias}
     
             return user_input
@@ -6061,6 +6087,7 @@ class SharedPages:
     
             # The user input will be a dictionary like this:
             # {"Selection": "rave_normal",
+            # "LoadAsName": None,
             # "Alias": "Rave"}
             user_inputs = self.check_inputs()
             
@@ -6068,9 +6095,17 @@ class SharedPages:
                 return
     
             sprite_name = user_inputs.get("Selection")
+            load_as_name = user_inputs.get("LoadAsName")
             alias = user_inputs.get("Alias")
-            
-            return f"<{self.command_name}: {sprite_name}, {alias}>"
+
+            if load_as_name:
+                # Using 'load as'
+                return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+            else:
+                # Not using 'load as'
+                return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
+
+            return return_value
 
 
     class PlayAudioGeneric(LoadSpriteNoAlias):
