@@ -18,9 +18,11 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 from lvnauth_editor_widget import LVNAuthEditorWidget
 from treeview_edit_widget import TreeviewEdit
+from entry_limit import EntryWithLimit
 from pygubu.api.v1 import BuilderObject, register_widget
 from pygubu.plugins.tk.tkstdwidgets import TKText
-from pygubu.plugins.ttk.ttkstdwidgets import TTKTreeviewBO
+from pygubu.plugins.ttk.ttkstdwidgets import TTKTreeviewBO, TTKEntry
+
 
 
 class LVNAuthWidgetBuilder(TKText):
@@ -28,6 +30,9 @@ class LVNAuthWidgetBuilder(TKText):
     
 class TreeviewEditBuilder(TTKTreeviewBO):
     class_ = TreeviewEdit
+    
+class EntryWithLimitBuilder(TTKEntry):
+    class_ = EntryWithLimit
 
 
 register_widget("lvnauthwidgets.editorwidget", LVNAuthWidgetBuilder,
@@ -35,3 +40,6 @@ register_widget("lvnauthwidgets.editorwidget", LVNAuthWidgetBuilder,
 
 register_widget("lvnauthwidgets.treeviewedit", TreeviewEditBuilder,
     "TreeviewEdit",("ttk", "LVNAuth Widgets"))
+
+register_widget("lvnauthwidgets.entrylimitwidget", EntryWithLimitBuilder,
+                'EntryWithLimit', ('ttk', 'LVNAuth Widgets'))
