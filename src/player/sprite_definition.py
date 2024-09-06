@@ -1376,8 +1376,8 @@ class SpriteObject:
                 # The displayed image is different from the image with text,
                 # so get the image with text on it (self.original_image)
                 self.image = self.original_image
-                
-                print("Copied sprite with text")
+
+                print("Copied sprite with text", datetime.now())
                 
             #print("Animation not needed")
             
