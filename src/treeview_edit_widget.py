@@ -18,7 +18,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import ttk
-from entrylimit import EntryWithLimit
+from entry_limit import EntryWithLimit
 
 
 

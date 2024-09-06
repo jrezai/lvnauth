@@ -38,7 +38,7 @@ from tkinter import colorchooser
 from typing import Dict
 from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
-from entrylimit import EntryWithLimit
+from entry_limit import EntryWithLimit
 from functools import partial
 
 
