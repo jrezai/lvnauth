@@ -1072,8 +1072,37 @@ class WizardWindow:
                                         sub_display_text="character_center_x_with",
                                         command_name="character_center_x_with",
                                         purpose_line="Center the X of a character sprite with the center X of another sprite.\n"
-                                        "Note: both sprites must already be visible.")              
+                                        "Note: both sprites must already be visible.")
+        
+        page_character_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_click",
+                                        command_name="character_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.")             
 
+        page_character_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_enter",
+                                        command_name="character_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.")             
+
+        page_character_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_leave",
+                                        command_name="character_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.")             
 
 
         """
@@ -1673,6 +1702,36 @@ class WizardWindow:
                                         purpose_line="Center the X of a dialog sprite with the center X of another sprite.\n"
                                         "Note: both sprites must already be visible.")     
 
+        page_dialog_sprite_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_click",
+                                        command_name="dialog_sprite_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.")             
+
+        page_dialog_sprite_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_enter",
+                                        command_name="dialog_sprite_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.")             
+
+        page_dialog_sprite_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_leave",
+                                        command_name="dialog_sprite_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.")             
+
 
         """
         Object
@@ -2193,6 +2252,36 @@ class WizardWindow:
                                         purpose_line="Center the X of an object sprite with the center X of another sprite.\n"
                                         "Note: both sprites must already be visible.")  
 
+        page_object_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_click",
+                                        command_name="object_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.")             
+
+        page_object_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_enter",
+                                        command_name="object_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.")             
+
+        page_object_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_leave",
+                                        command_name="object_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.")             
+
 
         """
         Font
@@ -2690,6 +2779,10 @@ class WizardWindow:
         self.pages["character_set_center"] = page_character_set_center
         self.pages["character_center_x_with"] = page_character_center_x_with
         
+        self.pages["character_on_mouse_click"] =  page_character_on_mouse_click
+        self.pages["character_on_mouse_enter"] =  page_character_on_mouse_enter
+        self.pages["character_on_mouse_leave"] =  page_character_on_mouse_leave
+        
         """
         General
         """
@@ -2757,6 +2850,9 @@ class WizardWindow:
         self.pages["object_set_center"] = page_object_set_center
         self.pages["object_center_x_with"] = page_object_center_x_with
 
+        self.pages["object_on_mouse_click"] =  page_object_on_mouse_click
+        self.pages["object_on_mouse_enter"] =  page_object_on_mouse_enter
+        self.pages["object_on_mouse_leave"] =  page_object_on_mouse_leave
 
         """
         Dialog
@@ -2814,6 +2910,9 @@ class WizardWindow:
         self.pages["dialog_sprite_set_center"] = page_dialog_set_center
         self.pages["dialog_sprite_center_x_with"] = page_dialog_sprite_center_x_with
 
+        self.pages["dialog_sprite_on_mouse_click"] =  page_dialog_sprite_on_mouse_click
+        self.pages["dialog_sprite_on_mouse_enter"] =  page_dialog_sprite_on_mouse_enter
+        self.pages["dialog_sprite_on_mouse_leave"] =  page_dialog_sprite_on_mouse_leave
         
         """
         Font
@@ -5832,8 +5931,83 @@ class SharedPages:
 
             self.populate()
 
-            self.frame_content.grid()
+            self.frame_content.grid(pady=5)
             
+            
+    class SpriteMouseEvent(AfterStop):
+        """
+        <dialog_sprite_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        <object_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        
+        Also, same arguments for:
+        <dialog_sprite_on_mouse_leave>
+        <dialog_sprite_on_mouse_click>
+        
+        <object_on_mouse_leave>
+        <object_on_mouse_click>
+        
+        <character_on_mouse_leave>
+        <character_on_mouse_click>
+        """
+    
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line):
+    
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name, purpose_line)
+            
+            self.create_frame_arguments().grid(pady=15)
+    
+        def generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            """
+    
+            # The user input will be a dictionary like this:
+            # {"Alias": "Rave",
+            # "ReusableScript": "rave_normal"}
+            user_inputs = self.check_inputs()
+    
+            if not user_inputs:
+                return
+    
+            reusable_script_name = user_inputs.get("ReusableScript")
+            alias = user_inputs.get("Alias")
+            
+            # We don't get the optional arguments from a dictionary, we just
+            # get it directly from the entry widget.            
+            optional_arguments = self.entry_arguments.get().strip()
+    
+            if optional_arguments:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}, {optional_arguments}>"
+            else:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}>"
+            
+        def create_frame_arguments(self) -> ttk.Frame:
+            """
+            Create and return a frame, used for specifying arguments
+            when running a specific script.
+            
+            Example:
+            For a command like this:
+            <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+            This method is used for the optional values part.
+            """
+            
+            self.frame_arguments = ttk.Frame(self.frame_content)
+            
+            self.lbl_arguments_instructions = ttk.Label(self.frame_arguments,
+                                                        text="(optional) Argument(s) to pass to the reusable script:\nExample: color=blue,character=Theo")
+            self.entry_arguments = ttk.Entry(self.frame_arguments)
+            
+            self.lbl_arguments_instructions.grid(row=0, column=0, sticky=tk.W)
+            self.entry_arguments.grid(row=1, column=0, sticky=tk.W)
+            
+            return self.frame_arguments    
+
 
     class LoadSpriteNoAlias(WizardListing):
         """
@@ -6401,6 +6575,7 @@ class CharacterAfterFadingStop(SharedPages.AfterStop):
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
+        
 
 
 class VariableSet(SharedPages.LoadSpriteWithAlias):
