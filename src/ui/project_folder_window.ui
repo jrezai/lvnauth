@@ -83,7 +83,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="lvnauthwidgets.entrylimitwidget" id="entrylimitwidget1">
+                  <object class="lvnauthwidgets.entrylimitwidget" id="entry_project_name" named="True">
                     <layout manager="grid">
                       <property name="column">0</property>
                       <property name="row">1</property>
