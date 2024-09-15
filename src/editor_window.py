@@ -55,6 +55,8 @@ from custom_pygubu_widgets import LVNAuthEditorWidget
 from edit_colors_window import EditColorsWindow
 from variable_editor_window import VariableEditorWindow
 from functools import partial
+from parameter_description import ParameterDescription
+
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -228,6 +230,25 @@ class EditorMainApp:
         self.text_script.bind("<KP_Enter>", self._on_num_pad_enter_key_pressed)
         self.text_script.configure(font=("tkDefaultText", 19, "normal"),
                                    wrap=tk.NONE)
+        
+        self.text_parameters = builder.get_object("text_parameters")
+        self.frame_parameters = builder.get_object("frame_parameters")
+
+        self.param_desc =\
+            ParameterDescription(read_text_widget=self.text_script,
+                                 show_text_widget=self.text_parameters, 
+                                 show_text_frame=self.frame_parameters)
+        
+        # Start off with not showing the parameter description frame.
+        self.param_desc.hide_description_frame()
+        
+        # When a mouse button is released or when a key is released on the 
+        # keyboard, then find where the cursor is and show the parameter's 
+        # description based on where the cursor is.
+        self.text_script.bind("<ButtonRelease>",
+                              self.param_desc.start_timer)
+        self.text_script.bind("<KeyRelease>",
+                              self.param_desc.start_timer)            
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
@@ -950,6 +971,8 @@ class EditorMainApp:
 
         treeview_widget.item(item=selected_item,
                              image="")
+        
+        
         #
         # # If we're not hiding the pencil icon in the reusables treeview widget,
         # # then that means the user has selected a reusables script, so set the active script to None.
@@ -1634,7 +1657,11 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
-
+        
+        # A reusable script has been clicked on, so hide the
+        # parameter description frame, because the caret has moved.
+        Passer.editor.param_desc.hide_description_frame()
+        
     def on_reusables_treeview_item_selected(self, event=None):
         """
         A script or scene has been selected (or unselected).
@@ -2229,6 +2256,10 @@ class ChapterSceneManager:
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
         
+        # A chapter script has been clicked on, so hide the
+        # parameter description frame, because the caret has moved.        
+        Passer.editor.param_desc.hide_description_frame()
+        
     def show_scene_script(self, chapter_name: str, scene_name: str):
         """
         Show the scene that has the given name (case-sensitive)
@@ -2260,6 +2291,11 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", scene_script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
+        
+        # A scene script has been clicked on, so hide the
+        # parameter description frame, because the caret has moved.        
+        Passer.editor.param_desc.hide_description_frame()
+        
 
 class StatusBar:
     def __init__(self, lbl_status):

@@ -2876,7 +2876,8 @@ class WizardWindow:
                                     sub_display_text="variable_set",
                                     command_name="variable_set",
                                     purpose_line="Create a new variable or update an existing one.\n\n"
-                                    "Variable names are case-sensitive")
+                                    "Variable names are case-sensitive",
+                                    hide_load_as_widgets=True)
         
         page_case_condition =\
             CaseCondition(parent_frame=self.frame_contents_outer,
@@ -6510,8 +6511,14 @@ class SharedPages:
                                         pady=(15, 0))
             self.entry_general_alias.grid(row=3, column=0, sticky="w")
 
-            lbl_load_as_prompt.grid(row=4, column=0, sticky="w", pady=(15, 0))
-            self.entry_load_as.grid(row=5, column=0, sticky="w")
+            # Without this, it will show widgets for 'Load as name...'
+            # which doesn't apply to <variable_set>, which is why we
+            # have 'hide_load_as_widgets' here.
+            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+            if not hide_load_as_widgets:
+                lbl_load_as_prompt.grid(row=4, column=0, sticky="w",
+                                        pady=(15, 0))
+                self.entry_load_as.grid(row=5, column=0, sticky="w")
             
             return frame_content
 
@@ -6912,11 +6919,12 @@ class VariableSet(SharedPages.LoadSpriteWithAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
 
 
 class CaseCondition(SharedPages.Case):
