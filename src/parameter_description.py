@@ -330,6 +330,11 @@ class ParameterDescription:
         Hide (ungrid) the frame that shows the parameter textbox.
         Purpose: when there is nothing to show.
         """
+        
+        # Prevents flickering. Without this, when the frame is gridded,
+        # it will flicker the first time it's gridded.
+        self.show_text_frame.update_idletasks()
+        
         self.show_text_frame.grid_remove()
         
     def bold_words(self, words: str):
