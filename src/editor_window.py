@@ -245,10 +245,15 @@ class EditorMainApp:
         # When a mouse button is released or when a key is released on the 
         # keyboard, then find where the cursor is and show the parameter's 
         # description based on where the cursor is.
+        # We're adding this binding so that the editor's text color
+        # will change depending if it's a command or dialogue text.
+        # Without add="+", the colors won't change in the text widget.
         self.text_script.bind("<ButtonRelease>",
-                              self.param_desc.start_timer)
+                              self.param_desc.start_timer,
+                              add="+")
         self.text_script.bind("<KeyRelease>",
-                              self.param_desc.start_timer)            
+                              self.param_desc.start_timer,
+                              add="+")            
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
