@@ -182,6 +182,21 @@ class FontAnimation:
         # Deals with the <no_clear> command
         self.no_clear_handler = NoClearHandler(self)
 
+        # This variable is used to indicate that we should change the intro
+        # animation-type back if it was temporarily changed.
+        # This gets used by story_reader.py
+        # when swapping a sprite out and replacing it with another sprite.
+        # During the swap, if the intro text for that sprite has already
+        # finished, then we temporarily change the animation type to SUDDEN
+        # so that it doesn't re-animate the text that is already done from
+        # the previous sprite text. Then we change it back later to whatever
+        # original animation type it had (after the swap is finished), so that
+        # if any additional text wants to get appended or changed later on,
+        # then the original animation type will be used rather than the
+        # temporary sudden-mode. This flag below gets used to tell us we need
+        # to restore it from sudden-mode back to its original animation type.
+        self.restore_sprite_intro_animation_type: FontAnimationShowingType | None = None
+
     def set_letter_delay(self, letter: str, delay_frames: int):
         """
         Set a delay for a specific letter.
@@ -937,8 +952,8 @@ class ActiveFontHandler:
     def reset_sudden_text_finished_flag(self):
         """
         Reset flag which indicates that all the text in sudden-mode
-        has already been blitted (to prevent repeated letter blittings in sudden-mode
-        because there is no gradual animation for sudden-mode).
+        has already been blitted (to prevent repeated letter blittings
+        in sudden-mode because there is no gradual animation for sudden-mode).
         """
         self.sudden_text_drawn_already = False
 
@@ -1349,6 +1364,28 @@ class ActiveFontHandler:
 
                     # self.sprite_object._apply_still_effects()
 
+                """
+                Restore the font animation type, if it was temporarily
+                ------------------------------------------------------
+                If the sprite text animation-type for this sprite was
+                temporarily changed earlier (to SUDDEN mode), due to a sprite
+                swap, then restore the animation type back to its original
+                text animation type.
+                We'll know to restore the animation type, if the variable,
+                restore_sprite_intro_animation_type,
+                contains a value or not.
+                """
+                if self.font_animation.restore_sprite_intro_animation_type:
+                    # Yes, restore the sprite text animation type.
+
+                    self.font_animation.start_animation_type \
+                        = self.font_animation. \
+                        restore_sprite_intro_animation_type
+
+                    # Reset the variable which is used for restoring
+                    # the sprite text animation type.
+                    self.font_animation. \
+                        restore_sprite_intro_animation_type = None
 
                 if self.font_animation.start_animation_type == FontAnimationShowingType.SUDDEN:
                     # We've blitted sudden-mode text

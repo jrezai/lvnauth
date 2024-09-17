@@ -38,7 +38,7 @@ from tkinter import colorchooser
 from typing import Dict
 from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
-from entrylimit import EntryWithLimit
+from entry_limit import EntryWithLimit
 from functools import partial
 
 
@@ -61,6 +61,36 @@ class Purpose(Enum):
     REUSABLE_SCRIPT = auto() # such as <call> or <after>
     SCENE_SCRIPT = auto() # such as <scene>
     VARIABLE_SET = auto() # such as <variable_set>
+
+
+class GroupName(Enum):
+    LOAD = auto()
+    PLAY = auto()
+    STOP = auto()
+    VOLUME = auto()
+    TEXT_SOUND = auto()
+    SHOW = auto()
+    HIDE = auto()
+    FLIP = auto()
+    FADE = auto()
+    ROTATE = auto()
+    SCALE = auto()
+    MOVE = auto()
+    POSITION = auto()
+    MOUSE = auto()
+
+    # Font
+    SPEED = auto()
+    TEXT = auto()
+    USE_FONT = auto()
+    FONT_ANIMATION = auto()
+    
+    CREATE_DIALOGUE_AREA = auto()
+    PAUSE = auto()
+    TIMER = auto()
+    
+    RUN_SCRIPT = auto()
+    
 
 
 class TextCreateDialogFrame:
@@ -319,6 +349,13 @@ class WizardWindow:
         self.treeview_commands: ttk.Treeview
         self.treeview_commands = builder.get_object("treeview_commands")
         
+        # The row background color to change to when a new group of command
+        # rows are being populated in the wizard treeview widget.
+        self.treeview_commands.tag_configure("row_color_1",
+                                             background="#e4e4e4")        
+        self.treeview_commands.tag_configure("row_color_2",
+                                             background="lightgray")
+        
         # Connect treeview horizontal scrollbar
         self.sb_vertical.configure(command=self.treeview_commands.yview)
         self.treeview_commands.configure(yscrollcommand=self.sb_vertical.set)
@@ -356,7 +393,8 @@ class WizardWindow:
                          parent_display_text="Audio",
                          sub_display_text="load_audio",
                          command_name="load_audio",
-                         purpose_line="Prepare an audio file to be played.")
+                         purpose_line="Prepare an audio file to be played.",
+                         group_name=GroupName.LOAD)
 
         page_music_load =\
             AudioLoad(parent_frame=self.frame_contents_outer,
@@ -366,7 +404,8 @@ class WizardWindow:
                          parent_display_text="Audio",
                          sub_display_text="load_music",
                          command_name="load_music",
-                         purpose_line="Prepare a music file to be played.")
+                         purpose_line="Prepare a music file to be played.",
+                         group_name=GroupName.LOAD)
 
         page_audio_play_music =\
             AudioPlay(parent_frame=self.frame_contents_outer,
@@ -376,7 +415,8 @@ class WizardWindow:
                          parent_display_text="Audio",
                          sub_display_text="play_music",
                          command_name="play_music",
-                         purpose_line="Play audio in the music channel.")
+                         purpose_line="Play audio in the music channel.",
+                         group_name=GroupName.PLAY)
         
         page_audio_play_sound =\
             AudioPlay(parent_frame=self.frame_contents_outer,
@@ -386,7 +426,8 @@ class WizardWindow:
                          parent_display_text="Audio",
                          sub_display_text="play_sound",
                          command_name="play_sound",
-                         purpose_line="Play a sound effect in the sound channel.")
+                         purpose_line="Play a sound effect in the sound channel.",
+                         group_name=GroupName.PLAY)
 
         page_audio_play_voice =\
             AudioPlay(parent_frame=self.frame_contents_outer,
@@ -396,7 +437,8 @@ class WizardWindow:
                          parent_display_text="Audio",
                          sub_display_text="play_voice",
                          command_name="play_voice",
-                         purpose_line="Play audio in the voice channel.")
+                         purpose_line="Play audio in the voice channel.",
+                         group_name=GroupName.PLAY)
 
         page_audio_stop_fx = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -407,7 +449,8 @@ class WizardWindow:
                         sub_display_text="stop_fx",
                         command_name="stop_fx",
                         purpose_line="Stops the audio in the FX channel.",
-                        when_to_use="When you want to stop playing an audio effect.")
+                        when_to_use="When you want to stop playing an audio effect.",
+                        group_name=GroupName.STOP)
 
         page_audio_stop_all_audio = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -419,7 +462,8 @@ class WizardWindow:
                         command_name="stop_all_audio",
                         purpose_line="Stops playing the audio for: effects, voices, music.",
                         when_to_use="When you want to stop playing audio effects, voices, and music.\n"
-                                    "No error will occur if no audio is playing.")
+                                    "No error will occur if no audio is playing.",
+                        group_name=GroupName.STOP)
 
         page_audio_stop_music = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -430,7 +474,8 @@ class WizardWindow:
                         sub_display_text="stop_music",
                         command_name="stop_music",
                         purpose_line="Stops the audio in the music channel.",
-                        when_to_use="When you want to stop playing music.")
+                        when_to_use="When you want to stop playing music.",
+                        group_name=GroupName.STOP)
 
         page_audio_stop_voice = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -441,7 +486,8 @@ class WizardWindow:
                         sub_display_text="stop_voice",
                         command_name="stop_voice",
                         purpose_line="Stops the audio in the voice channel.",
-                        when_to_use="When you want to stop playing audio in the voice channel.")
+                        when_to_use="When you want to stop playing audio in the voice channel.",
+                        group_name=GroupName.STOP)
 
 
         page_audio_volume_fx =\
@@ -457,7 +503,8 @@ class WizardWindow:
                          scale_to_value=100,
                          scale_instructions="Volume (0-100):\n"
                          "0 = muted  100 = max volume",
-                         scale_default_value=100)
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
 
         page_audio_volume_music =\
             Audio_Volume(parent_frame=self.frame_contents_outer,
@@ -472,7 +519,8 @@ class WizardWindow:
                          scale_to_value=100,
                          scale_instructions="Volume (0-100):\n"
                          "0 = muted  100 = max volume",
-                         scale_default_value=100)
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
 
         page_audio_volume_text =\
             Audio_Volume(parent_frame=self.frame_contents_outer,
@@ -488,7 +536,8 @@ class WizardWindow:
                          scale_to_value=100,
                          scale_instructions="Volume (0-100):\n"
                          "0 = muted  100 = max volume",
-                         scale_default_value=100)
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
 
         page_audio_volume_voice =\
             Audio_Volume(parent_frame=self.frame_contents_outer,
@@ -503,7 +552,8 @@ class WizardWindow:
                          scale_to_value=100,
                          scale_instructions="Volume (0-100):\n"
                          "0 = muted  100 = max volume",
-                         scale_default_value=100)
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
 
         page_audio_dialog_text_sound =\
             DialogTextSound(parent_frame=self.frame_contents_outer,
@@ -514,7 +564,8 @@ class WizardWindow:
                             sub_display_text="dialog_text_sound",
                             command_name="dialog_text_sound",
                             purpose_line="Set audio to play for each gradually shown letter.\n"
-                            "Only works for gradually-shown text (non-fading).")
+                            "Only works for gradually-shown text (non-fading).",
+                            group_name=GroupName.TEXT_SOUND)
 
         page_audio_dialog_text_sound_clear = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -525,7 +576,8 @@ class WizardWindow:
                         sub_display_text="dialog_text_sound_clear",
                         command_name="dialog_text_sound_clear",
                         purpose_line="Set no audio to play for each gradually shown letter.",
-                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.")
+                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.",
+                        group_name=GroupName.TEXT_SOUND)
 
 
         page_load_background =\
@@ -536,7 +588,8 @@ class WizardWindow:
                                       parent_display_text="Background",
                                       sub_display_text="load_background",
                                       command_name="load_background",
-                                      purpose_line="Load a background sprite into memory.")
+                                      purpose_line="Load a background sprite into memory.",
+                                      group_name=GroupName.LOAD)
 
         page_show_background =\
             BackgroundShow(parent_frame=self.frame_contents_outer,
@@ -546,7 +599,8 @@ class WizardWindow:
                            parent_display_text="Background",
                            sub_display_text="background_show",
                            command_name="background_show",
-                           purpose_line="Show a specific a background sprite in the story.")
+                           purpose_line="Show a specific a background sprite in the story.",
+                           group_name=GroupName.SHOW)
 
         page_hide_background =\
             BackgroundHide(parent_frame=self.frame_contents_outer,
@@ -556,7 +610,8 @@ class WizardWindow:
                            parent_display_text="Background",
                            sub_display_text="background_hide",
                            command_name="background_hide",
-                           purpose_line="Hide a specific a background sprite in the story.")
+                           purpose_line="Hide a specific a background sprite in the story.",
+                           group_name=GroupName.HIDE)
 
         page_load_character =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -566,7 +621,8 @@ class WizardWindow:
                                     parent_display_text="Character",
                                     sub_display_text="load_character",
                                     command_name="load_character",
-                                    purpose_line="Load a character sprite into memory.")
+                                    purpose_line="Load a character sprite into memory.",
+                                    group_name=GroupName.LOAD)
 
         page_show_character =\
             CharacterShow(parent_frame=self.frame_contents_outer,
@@ -577,7 +633,8 @@ class WizardWindow:
                           sub_display_text="character_show",
                           command_name="character_show",
                           purpose_line="Shows the given sprite and it hides the currently visible\n"
-                          "sprite with the same general alias as the one we’re about to show.")
+                          "sprite with the same general alias as the one we’re about to show.",
+                          group_name=GroupName.SHOW)
 
 
         page_hide_character =\
@@ -588,7 +645,8 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_hide",
                           command_name="character_hide",
-                          purpose_line="Hides the given sprite.")
+                          purpose_line="Hides the given sprite.",
+                          group_name=GroupName.HIDE)
 
         page_hide_all_character = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -598,7 +656,8 @@ class WizardWindow:
                         parent_display_text="Character",
                         sub_display_text="character_hide_all",
                         command_name="character_hide_all",
-                        purpose_line="Hides all character sprites.")
+                        purpose_line="Hides all character sprites.",
+                        group_name=GroupName.HIDE)
 
         page_character_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -608,7 +667,8 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_flip_both",
                           command_name="character_flip_both",
-                          purpose_line="Flips the given sprite both horizontally and vertically.")
+                          purpose_line="Flips the given sprite both horizontally and vertically.",
+                          group_name=GroupName.FLIP)
 
 
         page_character_flip_horizontal =\
@@ -619,7 +679,8 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_flip_horizontal",
                           command_name="character_flip_horizontal",
-                          purpose_line="Flips the given sprite horizontally.")
+                          purpose_line="Flips the given sprite horizontally.",
+                          group_name=GroupName.FLIP)
 
 
         page_character_flip_vertical =\
@@ -630,7 +691,8 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_flip_vertical",
                           command_name="character_flip_vertical",
-                          purpose_line="Flips the given sprite vertically.")
+                          purpose_line="Flips the given sprite vertically.",
+                          group_name=GroupName.FLIP)
         
 
         page_character_after_fading_stop =\
@@ -641,7 +703,8 @@ class WizardWindow:
                                     parent_display_text="Character",
                                     sub_display_text="character_after_fading_stop",
                                     command_name="character_after_fading_stop",
-                                    purpose_line="Run a reusable script after a specific character sprite stops fading.")
+                                    purpose_line="Run a reusable script after a specific character sprite stops fading.",
+                                    group_name=GroupName.FADE)
 
         page_character_fade_current_value =\
             CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
@@ -657,7 +720,8 @@ class WizardWindow:
                                       to_value=255,
                                       amount_usage_info="Opacity level:\n"
                                       "0=fully transparent  255=fully opaque",
-                                      amount_name="opacity level")
+                                      amount_name="opacity level",
+                                      group_name=GroupName.FADE)
 
         page_character_fade_delay =\
             CharacterFadeDelay(parent_frame=self.frame_contents_outer,
@@ -674,7 +738,8 @@ class WizardWindow:
                                from_value=1,
                                to_value=120,
                                amount_usage_info="Number of frames to skip:",
-                               amount_name="number of frames to skip")
+                               amount_name="number of frames to skip",
+                               group_name=GroupName.FADE)
 
         page_character_fade_speed =\
             CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -695,7 +760,8 @@ class WizardWindow:
                                scale_default_value=5,
                                scale_from_value=1,
                                scale_to_value=100,
-                               scale_instructions="Fade speed (1 to 100):")
+                               scale_instructions="Fade speed (1 to 100):",
+                               group_name=GroupName.FADE)
 
         page_character_fade_until =\
             CharacterFadeUntil(parent_frame=self.frame_contents_outer,
@@ -711,7 +777,8 @@ class WizardWindow:
                                "0 = fully transparent  255 = fully opaque",
                                scale_from_value=0,
                                scale_to_value=255,
-                               scale_default_value=128)
+                               scale_default_value=128,
+                               group_name=GroupName.FADE)
 
         page_character_start_fading =\
             CharacterStartFading(parent_frame=self.frame_contents_outer,
@@ -722,7 +789,8 @@ class WizardWindow:
                                  sub_display_text="character_start_fading",
                                  command_name="character_start_fading",
                                  purpose_line="Starts a character sprite fading animation.\n"
-                                 "Note: the character sprite must already be visible.")
+                                 "Note: the character sprite must already be visible.",
+                                 group_name=GroupName.FADE)
 
         page_character_stop_fading =\
             CharacterStopFading(parent_frame=self.frame_contents_outer,
@@ -733,7 +801,8 @@ class WizardWindow:
                                 sub_display_text="character_stop_fading",
                                 command_name="character_stop_fading",
                                 purpose_line="Stops a character sprite fading animation.\n"
-                                "Note: the character sprite must already be visible.")
+                                "Note: the character sprite must already be visible.",
+                                group_name=GroupName.FADE)
 
         page_character_after_rotating_stop =\
             CharacterAfterRotatingStop(parent_frame=self.frame_contents_outer,
@@ -744,7 +813,8 @@ class WizardWindow:
                                        sub_display_text="character_after_rotating_stop",
                                        command_name="character_after_rotating_stop",
                                        purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
-                                       "Note: the character sprite must already be visible.")
+                                       "Note: the character sprite must already be visible.",
+                                       group_name=GroupName.ROTATE)
 
         page_character_rotate_current_value =\
             CharacterRotateCurrentValue(parent_frame=self.frame_contents_outer,
@@ -755,7 +825,8 @@ class WizardWindow:
                                         sub_display_text="character_rotate_current_value",
                                         command_name="character_rotate_current_value",
                                         purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
-                                        "Note: the character sprite must already be visible.")
+                                        "Note: the character sprite must already be visible.",
+                                        group_name=GroupName.ROTATE)
 
         page_character_rotate_delay =\
             CharacterRotateDelay(parent_frame=self.frame_contents_outer,
@@ -773,7 +844,8 @@ class WizardWindow:
                                  from_value=1,
                                  to_value=120,
                                  amount_usage_info="Number of frames to skip:",
-                                 amount_name="number of frames to skip")
+                                 amount_name="number of frames to skip",
+                                 group_name=GroupName.ROTATE)
 
         page_character_rotate_speed =\
             CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -795,7 +867,8 @@ class WizardWindow:
                                  scale_default_value=5,
                                  scale_from_value=1,
                                  scale_to_value=100,
-                                 scale_instructions="Rotation speed (1 to 100):")
+                                 scale_instructions="Rotation speed (1 to 100):",
+                                 group_name=GroupName.ROTATE)
 
         page_character_rotate_until =\
             CharacterRotateUntil(parent_frame=self.frame_contents_outer,
@@ -810,7 +883,8 @@ class WizardWindow:
                                  scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
                                  scale_from_value=0,
                                  scale_to_value=359,
-                                 scale_default_value=180)
+                                 scale_default_value=180,
+                                 group_name=GroupName.ROTATE)
 
         page_character_start_rotating =\
             CharacterStartRotating(parent_frame=self.frame_contents_outer,
@@ -821,7 +895,8 @@ class WizardWindow:
                                    sub_display_text="character_start_rotating",
                                    command_name="character_start_rotating",
                                    purpose_line="Starts a character sprite rotation animation.\n"
-                                   "Note: the character sprite must already be visible.")
+                                   "Note: the character sprite must already be visible.",
+                                   group_name=GroupName.ROTATE)
 
         page_character_stop_rotating =\
             CharacterStopRotating(parent_frame=self.frame_contents_outer,
@@ -832,7 +907,8 @@ class WizardWindow:
                                   sub_display_text="character_stop_rotating",
                                   command_name="character_stop_rotating",
                                   purpose_line="Stops a character sprite rotation animation.\n"
-                                  "Note: the character sprite must already be visible.")
+                                  "Note: the character sprite must already be visible.",
+                                  group_name=GroupName.ROTATE)
 
         page_character_after_scaling_stop =\
             CharacterAfterScalingStop(parent_frame=self.frame_contents_outer,
@@ -844,7 +920,8 @@ class WizardWindow:
                                       command_name="character_after_scaling_stop",
                                       purpose_line="When a specific sprite image stops scaling using <character_scale_until>,\n"
                                       "run a specific reusable script.\n\n"
-                                      "Note: the character sprite must already be visible.")
+                                      "Note: the character sprite must already be visible.",
+                                      group_name=GroupName.SCALE)
 
         page_character_scale_by =\
             CharacterScaleBy(parent_frame=self.frame_contents_outer,
@@ -865,7 +942,8 @@ class WizardWindow:
                              scale_default_value=5,
                              scale_from_value=1,
                              scale_to_value=100,
-                             scale_instructions="Scale speed (1 to 100):")
+                             scale_instructions="Scale speed (1 to 100):",
+                             group_name=GroupName.SCALE)
 
         page_character_scale_current_value =\
             CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
@@ -881,7 +959,8 @@ class WizardWindow:
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
                                        "(example: 2 means twice as big as the original size)",
-                                       amount_name="scale")
+                                       amount_name="scale",
+                                       group_name=GroupName.SCALE)
 
         page_character_scale_delay =\
             CharacterScaleDelay(parent_frame=self.frame_contents_outer,
@@ -899,7 +978,8 @@ class WizardWindow:
                                 from_value=1,
                                 to_value=120,
                                 amount_usage_info="Number of frames to skip:",
-                                amount_name="number of frames to skip")
+                                amount_name="number of frames to skip",
+                                group_name=GroupName.SCALE)
 
         page_character_scale_until =\
             CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -914,7 +994,8 @@ class WizardWindow:
                                 scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
-                                scale_default_value=2)
+                                scale_default_value=2,
+                                group_name=GroupName.SCALE)
 
         page_character_start_scaling =\
             CharacterStartScaling(parent_frame=self.frame_contents_outer,
@@ -926,7 +1007,8 @@ class WizardWindow:
                                   command_name="character_start_scaling",
                                   purpose_line="Starts a character sprite scaling animation.\n\n"
                                   "Note: the character sprite must already be visible.\n"
-                                  "Also, <character_scale_until> should be used prior.")
+                                  "Also, <character_scale_until> should be used prior.",
+                                  group_name=GroupName.SCALE)
 
         page_character_stop_scaling =\
             CharacterStopScaling(parent_frame=self.frame_contents_outer,
@@ -939,7 +1021,8 @@ class WizardWindow:
                                  purpose_line="Stops a character sprite scaling animation.\n\n"
                                  "The scale value is not lost. If the scaling is started again,\n"
                                  "it will resume from where it stopped last.\n\n"
-                                 "Note: the character sprite must already be visible.")
+                                 "Note: the character sprite must already be visible.",
+                                 group_name=GroupName.SCALE)
 
         page_character_after_movement_stop =\
             CharacterAfterMovementStop(parent_frame=self.frame_contents_outer,
@@ -949,7 +1032,8 @@ class WizardWindow:
                                        parent_display_text="Character",
                                        sub_display_text="character_after_movement_stop",
                                        command_name="character_after_movement_stop",
-                                       purpose_line="Run a reusable script after a specific character sprite stops moving.")
+                                       purpose_line="Run a reusable script after a specific character sprite stops moving.",
+                                       group_name=GroupName.MOVE)
    
         page_character_stop_movement_condition =\
             CharacterStopMovementCondition(parent_frame=self.frame_contents_outer,
@@ -963,7 +1047,8 @@ class WizardWindow:
                                       "Multiple stop conditions can be added for a single sprite by calling\n"
                                       "this command multiple times with different parameters.\n\n"
                                       "Once all the stop conditions have been satisfied, then the specified sprite\n"
-                                      "will stop moving.")
+                                      "will stop moving.",
+                                      group_name=GroupName.MOVE)
 
         page_character_move =\
             CharacterMove(parent_frame=self.frame_contents_outer,
@@ -973,7 +1058,8 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_move",
                           command_name="character_move",
-                          purpose_line="Sets the movement amount and direction of a character sprite.")
+                          purpose_line="Sets the movement amount and direction of a character sprite.",
+                          group_name=GroupName.MOVE)
 
         page_character_move_delay =\
             CharacterMoveDelay(parent_frame=self.frame_contents_outer,
@@ -995,7 +1081,8 @@ class WizardWindow:
                                subject_sentence_1="the number of frames to skip for horizontal movements",
                                subject_sentence_2="the number of frames to skip for vertical movements",
                                spinbox_from_value=1,
-                               spinbox_to_value=120)
+                               spinbox_to_value=120,
+                               group_name=GroupName.MOVE)
 
         page_character_start_moving =\
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -1005,7 +1092,8 @@ class WizardWindow:
                                  parent_display_text="Character",
                                  sub_display_text="character_start_moving",
                                  command_name="character_start_moving",
-                                 purpose_line="Starts a movement animation on a specific character sprite.")
+                                 purpose_line="Starts a movement animation on a specific character sprite.",
+                                 group_name=GroupName.MOVE)
 
         page_character_stop_moving = \
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -1015,7 +1103,8 @@ class WizardWindow:
                                  parent_display_text="Character",
                                  sub_display_text="character_stop_moving",
                                  command_name="character_stop_moving",
-                                 purpose_line="Stops a movement animation on a specific character sprite.")
+                                 purpose_line="Stops a movement animation on a specific character sprite.",
+                                 group_name=GroupName.MOVE)
 
         page_character_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -1028,7 +1117,8 @@ class WizardWindow:
                                   purpose_line="Sets the horizontal position of a specific character relative to the top-left\n"
                                   "corner of the sprite.\n\n"
                                   "Note: the character sprite must already be visible.",
-                                  direction="horizontal")
+                                  direction="horizontal",
+                                  group_name=GroupName.POSITION)
 
         page_character_set_position_y =\
             CharacterSetPositionY(parent_frame=self.frame_contents_outer,
@@ -1041,7 +1131,8 @@ class WizardWindow:
                                   purpose_line="Sets the vertical position of a specific character relative to the top-left\n"
                                   "corner of the sprite.\n\n"
                                   "Note: the character sprite must already be visible.",
-                                  direction="vertical")                                  
+                                  direction="vertical",
+                                  group_name=GroupName.POSITION)                                  
 
         page_character_set_center =\
             CharacterSetCenter(parent_frame=self.frame_contents_outer,
@@ -1061,7 +1152,8 @@ class WizardWindow:
                                subject_sentence_1="the horizontal center position",
                                subject_sentence_2="the vertical center position",
                                spinbox_from_value=-5000,
-                               spinbox_to_value=9000)
+                               spinbox_to_value=9000,
+                               group_name=GroupName.POSITION)
         
         page_character_center_x_with =\
             SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
@@ -1072,8 +1164,41 @@ class WizardWindow:
                                         sub_display_text="character_center_x_with",
                                         command_name="character_center_x_with",
                                         purpose_line="Center the X of a character sprite with the center X of another sprite.\n"
-                                        "Note: both sprites must already be visible.")              
+                                        "Note: both sprites must already be visible.",
+                                        group_name=GroupName.POSITION)
+        
+        page_character_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_click",
+                                        command_name="character_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        group_name=GroupName.MOUSE)             
 
+        page_character_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_enter",
+                                        command_name="character_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        group_name=GroupName.MOUSE)             
+
+        page_character_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Character",
+                                        sub_display_text="character_on_mouse_leave",
+                                        command_name="character_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        group_name=GroupName.MOUSE)             
 
 
         """
@@ -1089,7 +1214,8 @@ class WizardWindow:
                                  parent_display_text="Dialog",
                                  sub_display_text="text_dialog_define",
                                  command_name="text_dialog_define",
-                                 purpose_line="Create a dialog rectangle for character text to appear in.")
+                                 purpose_line="Create a dialog rectangle for character text to appear in.",
+                                 group_name=GroupName.CREATE_DIALOGUE_AREA)
 
         page_dialog_show = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1100,7 +1226,8 @@ class WizardWindow:
                         sub_display_text="text_dialog_show",
                         command_name="text_dialog_show",
                         purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
-                        when_to_use="When a character wants to speak or for narration text.")
+                        when_to_use="When a character wants to speak or for narration text.",
+                        group_name=GroupName.SHOW)
 
         page_dialog_close = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1111,7 +1238,8 @@ class WizardWindow:
                         sub_display_text="text_dialog_close",
                         command_name="text_dialog_close",
                         purpose_line="Close the dialog by initiating its outro animation.",
-                        when_to_use="When all the characters finish speaking.")
+                        when_to_use="When all the characters finish speaking.",
+                        group_name=GroupName.HIDE)
 
         page_dialog_halt = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1122,7 +1250,8 @@ class WizardWindow:
                         sub_display_text="halt",
                         command_name="halt",
                         purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
-                        when_to_use="When you want to give the viewer a chance to pause and read.")
+                        when_to_use="When you want to give the viewer a chance to pause and read.",
+                        group_name=GroupName.PAUSE)
 
         page_dialog_halt_auto = \
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
@@ -1136,7 +1265,8 @@ class WizardWindow:
                            scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
                            scale_from_value=1,
                            scale_to_value=600,
-                           scale_default_value=120)
+                           scale_default_value=120,
+                           group_name=GroupName.PAUSE)
 
         page_dialog_no_clear = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1146,7 +1276,8 @@ class WizardWindow:
                         parent_display_text="Dialog",
                         sub_display_text="no_clear",
                         command_name="no_clear",
-                        purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.")
+                        purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.",
+                        group_name=GroupName.PAUSE)
 
         page_dialog_continue = \
             DialogContinue(parent_frame=self.frame_contents_outer,
@@ -1156,7 +1287,8 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="continue",
                            command_name="continue",
-                           purpose_line="Stay on the same line as the previous text.")
+                           purpose_line="Stay on the same line as the previous text.",
+                           group_name=GroupName.TEXT)
 
         page_load_dialog =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -1166,7 +1298,8 @@ class WizardWindow:
                                         parent_display_text="Dialog",
                                         sub_display_text="load_dialog_sprite",
                                         command_name="load_dialog_sprite",
-                                        purpose_line="Load an dialog sprite into memory.")
+                                        purpose_line="Load an dialog sprite into memory.",
+                                        group_name=GroupName.LOAD)
     
         page_show_dialog =\
                 CharacterShow(parent_frame=self.frame_contents_outer,
@@ -1177,7 +1310,8 @@ class WizardWindow:
                               sub_display_text="dialog_sprite_show",
                               command_name="dialog_sprite_show",
                               purpose_line="Shows the given sprite and it hides the currently visible\n"
-                                           "sprite with the same general alias as the one we’re about to show.")
+                                           "sprite with the same general alias as the one we’re about to show.",
+                              group_name=GroupName.SHOW)
     
         page_hide_dialog =\
                 CharacterHide(parent_frame=self.frame_contents_outer,
@@ -1187,7 +1321,8 @@ class WizardWindow:
                               parent_display_text="Dialog",
                               sub_display_text="dialog_sprite_hide",
                               command_name="dialog_sprite_hide",
-                              purpose_line="Hides the given sprite.")
+                              purpose_line="Hides the given sprite.",
+                              group_name=GroupName.HIDE)
 
         page_hide_all_dialog = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1197,7 +1332,8 @@ class WizardWindow:
                         parent_display_text="Dialog",
                         sub_display_text="dialog_sprite_hide_all",
                         command_name="dialog_sprite_hide_all",
-                        purpose_line="Hides all dialog sprites.")
+                        purpose_line="Hides all dialog sprites.",
+                        group_name=GroupName.HIDE)
 
         page_dialog_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -1207,7 +1343,8 @@ class WizardWindow:
                           parent_display_text="Dialog",
                           sub_display_text="dialog_sprite_flip_both",
                           command_name="dialog_sprite_flip_both",
-                          purpose_line="Flips the given sprite both horizontally and vertically.")
+                          purpose_line="Flips the given sprite both horizontally and vertically.",
+                          group_name=GroupName.FLIP)
 
 
         page_dialog_flip_horizontal =\
@@ -1218,7 +1355,8 @@ class WizardWindow:
                           parent_display_text="Dialog",
                           sub_display_text="dialog_sprite_flip_horizontal",
                           command_name="dialog_sprite_flip_horizontal",
-                          purpose_line="Flips the given sprite horizontally.")
+                          purpose_line="Flips the given sprite horizontally.",
+                          group_name=GroupName.FLIP)
 
 
         page_dialog_flip_vertical =\
@@ -1229,7 +1367,8 @@ class WizardWindow:
                           parent_display_text="Dialog",
                           sub_display_text="dialog_sprite_flip_vertical",
                           command_name="dialog_sprite_flip_vertical",
-                          purpose_line="Flips the given sprite vertically.")
+                          purpose_line="Flips the given sprite vertically.",
+                          group_name=GroupName.FLIP)
 
     
         page_dialog_after_fading_stop =\
@@ -1240,7 +1379,8 @@ class WizardWindow:
                                         parent_display_text="Dialog",
                                         sub_display_text="dialog_sprite_after_fading_stop",
                                         command_name="dialog_sprite_after_fading_stop",
-                                        purpose_line="Run a reusable script after a specific dialog sprite stops fading.")
+                                        purpose_line="Run a reusable script after a specific dialog sprite stops fading.",
+                                        group_name=GroupName.FADE)
     
         page_dialog_fade_current_value =\
                 CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
@@ -1256,7 +1396,8 @@ class WizardWindow:
                                           to_value=255,
                                           amount_usage_info="Opacity level:\n"
                                           "0=fully transparent  255=fully opaque",
-                                          amount_name="opacity level")
+                                          amount_name="opacity level",
+                                          group_name=GroupName.FADE)
     
         page_dialog_fade_delay =\
                 CharacterFadeDelay(parent_frame=self.frame_contents_outer,
@@ -1273,7 +1414,8 @@ class WizardWindow:
                                    from_value=1,
                                    to_value=120,
                                    amount_usage_info="Number of frames to skip:",
-                                   amount_name="number of frames to skip")
+                                   amount_name="number of frames to skip",
+                                   group_name=GroupName.FADE)
     
         page_dialog_fade_speed =\
                 CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -1294,7 +1436,8 @@ class WizardWindow:
                                    scale_default_value=5,
                                    scale_from_value=1,
                                    scale_to_value=100,
-                                   scale_instructions="Fade speed (1 to 100):")
+                                   scale_instructions="Fade speed (1 to 100):",
+                                   group_name=GroupName.FADE)
     
         page_dialog_fade_until =\
                 CharacterFadeUntil(parent_frame=self.frame_contents_outer,
@@ -1310,7 +1453,8 @@ class WizardWindow:
                                    "0 = fully transparent  255 = fully opaque",
                                    scale_from_value=0,
                                    scale_to_value=255,
-                                   scale_default_value=128)
+                                   scale_default_value=128,
+                                   group_name=GroupName.FADE)
     
         page_dialog_start_fading =\
                 CharacterStartFading(parent_frame=self.frame_contents_outer,
@@ -1321,7 +1465,8 @@ class WizardWindow:
                                      sub_display_text="dialog_sprite_start_fading",
                                      command_name="dialog_sprite_start_fading",
                                      purpose_line="Starts an dialog sprite fading animation.\n"
-                                     "Note: the dialog sprite must already be visible.")
+                                     "Note: the dialog sprite must already be visible.",
+                                     group_name=GroupName.FADE)
     
         page_dialog_stop_fading =\
                 CharacterStopFading(parent_frame=self.frame_contents_outer,
@@ -1332,7 +1477,8 @@ class WizardWindow:
                                     sub_display_text="dialog_sprite_stop_fading",
                                     command_name="dialog_sprite_stop_fading",
                                     purpose_line="Stops an dialog sprite fading animation.\n"
-                                    "Note: the dialog sprite must already be visible.")
+                                    "Note: the dialog sprite must already be visible.",
+                                    group_name=GroupName.FADE)
     
         page_dialog_after_rotating_stop =\
                 CharacterAfterRotatingStop(parent_frame=self.frame_contents_outer,
@@ -1343,7 +1489,8 @@ class WizardWindow:
                                            sub_display_text="dialog_sprite_after_rotating_stop",
                                            command_name="dialog_sprite_after_rotating_stop",
                                            purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
-                                           "Note: the dialog sprite must already be visible.")
+                                           "Note: the dialog sprite must already be visible.",
+                                           group_name=GroupName.ROTATE)
     
         page_dialog_rotate_current_value =\
                 CharacterRotateCurrentValue(parent_frame=self.frame_contents_outer,
@@ -1354,7 +1501,8 @@ class WizardWindow:
                                             sub_display_text="dialog_sprite_rotate_current_value",
                                             command_name="dialog_sprite_rotate_current_value",
                                             purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
-                                            "Note: the dialog sprite must already be visible.")
+                                            "Note: the dialog sprite must already be visible.",
+                                            group_name=GroupName.ROTATE)
     
         page_dialog_rotate_delay =\
                 CharacterRotateDelay(parent_frame=self.frame_contents_outer,
@@ -1372,7 +1520,8 @@ class WizardWindow:
                                      from_value=1,
                                      to_value=120,
                                      amount_usage_info="Number of frames to skip:",
-                                     amount_name="number of frames to skip")
+                                     amount_name="number of frames to skip",
+                                     group_name=GroupName.ROTATE)
     
         page_dialog_rotate_speed =\
                 CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -1394,7 +1543,8 @@ class WizardWindow:
                                      scale_default_value=5,
                                      scale_from_value=1,
                                      scale_to_value=100,
-                                     scale_instructions="Rotation speed (1 to 100):")
+                                     scale_instructions="Rotation speed (1 to 100):",
+                                     group_name=GroupName.ROTATE)
     
         page_dialog_rotate_until =\
                 CharacterRotateUntil(parent_frame=self.frame_contents_outer,
@@ -1409,7 +1559,8 @@ class WizardWindow:
                                      scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
                                      scale_from_value=0,
                                      scale_to_value=359,
-                                     scale_default_value=180)
+                                     scale_default_value=180,
+                                     group_name=GroupName.ROTATE)
     
         page_dialog_start_rotating =\
                 CharacterStartRotating(parent_frame=self.frame_contents_outer,
@@ -1420,7 +1571,8 @@ class WizardWindow:
                                        sub_display_text="dialog_sprite_start_rotating",
                                        command_name="dialog_sprite_start_rotating",
                                        purpose_line="Starts an dialog sprite rotation animation.\n"
-                                       "Note: the dialog sprite must already be visible.")
+                                       "Note: the dialog sprite must already be visible.",
+                                       group_name=GroupName.ROTATE)
     
         page_dialog_stop_rotating =\
                 CharacterStopRotating(parent_frame=self.frame_contents_outer,
@@ -1431,7 +1583,8 @@ class WizardWindow:
                                       sub_display_text="dialog_sprite_stop_rotating",
                                       command_name="dialog_sprite_stop_rotating",
                                       purpose_line="Stops an dialog sprite rotation animation.\n"
-                                      "Note: the dialog sprite must already be visible.")
+                                      "Note: the dialog sprite must already be visible.",
+                                      group_name=GroupName.ROTATE)
     
         page_dialog_after_scaling_stop =\
                 CharacterAfterScalingStop(parent_frame=self.frame_contents_outer,
@@ -1443,7 +1596,8 @@ class WizardWindow:
                                           command_name="dialog_sprite_after_scaling_stop",
                                           purpose_line="When a specific sprite image stops scaling using <dialog_scale_until>,\n"
                                           "run a specific reusable script.\n\n"
-                                          "Note: the dialog sprite must already be visible.")
+                                          "Note: the dialog sprite must already be visible.", 
+                                          group_name=GroupName.SCALE)
     
         page_dialog_scale_by =\
                 CharacterScaleBy(parent_frame=self.frame_contents_outer,
@@ -1464,7 +1618,8 @@ class WizardWindow:
                                  scale_default_value=5,
                                  scale_from_value=1,
                                  scale_to_value=100,
-                                 scale_instructions="Scale speed (1 to 100):")
+                                 scale_instructions="Scale speed (1 to 100):",
+                                 group_name=GroupName.SCALE)
     
         page_dialog_scale_current_value =\
                 CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
@@ -1480,7 +1635,8 @@ class WizardWindow:
                                            to_value=100,
                                            amount_usage_info="Scale value:\n"
                                            "(example: 2 means twice as big as the original size)",
-                                           amount_name="scale")
+                                           amount_name="scale",
+                                           group_name=GroupName.SCALE)
     
         page_dialog_scale_delay =\
                 CharacterScaleDelay(parent_frame=self.frame_contents_outer,
@@ -1498,7 +1654,8 @@ class WizardWindow:
                                     from_value=1,
                                     to_value=120,
                                     amount_usage_info="Number of frames to skip:",
-                                    amount_name="number of frames to skip")
+                                    amount_name="number of frames to skip",
+                                    group_name=GroupName.SCALE)
     
         page_dialog_scale_until =\
                 CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -1513,7 +1670,8 @@ class WizardWindow:
                                     scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                     scale_from_value=0,
                                     scale_to_value=100,
-                                    scale_default_value=2)
+                                    scale_default_value=2,
+                                    group_name=GroupName.SCALE)
     
         page_dialog_start_scaling =\
                 CharacterStartScaling(parent_frame=self.frame_contents_outer,
@@ -1525,7 +1683,8 @@ class WizardWindow:
                                       command_name="dialog_sprite_start_scaling",
                                       purpose_line="Starts an dialog sprite scaling animation.\n\n"
                                       "Note: the dialog sprite must already be visible.\n"
-                                      "Also, <dialog_sprite_scale_until> should be used prior.")
+                                      "Also, <dialog_sprite_scale_until> should be used prior.",
+                                      group_name=GroupName.SCALE)
     
         page_dialog_stop_scaling =\
                 CharacterStopScaling(parent_frame=self.frame_contents_outer,
@@ -1538,7 +1697,8 @@ class WizardWindow:
                                      purpose_line="Stops an dialog sprite scaling animation.\n\n"
                                      "The scale value is not lost. If the scaling is started again,\n"
                                      "it will resume from where it stopped last.\n\n"
-                                     "Note: the dialog sprite must already be visible.")
+                                     "Note: the dialog sprite must already be visible.",
+                                     group_name=GroupName.SCALE)
     
         page_dialog_after_movement_stop =\
                 CharacterAfterMovementStop(parent_frame=self.frame_contents_outer,
@@ -1548,7 +1708,8 @@ class WizardWindow:
                                            parent_display_text="Dialog",
                                            sub_display_text="dialog_sprite_after_movement_stop",
                                            command_name="dialog_sprite_after_movement_stop",
-                                           purpose_line="Run a reusable script after a specific dialog sprite stops moving.")
+                                           purpose_line="Run a reusable script after a specific dialog sprite stops moving.",
+                                           group_name=GroupName.MOVE)
     
         page_dialog_stop_movement_condition =\
                 CharacterStopMovementCondition(parent_frame=self.frame_contents_outer,
@@ -1562,7 +1723,8 @@ class WizardWindow:
                                           "Multiple stop conditions can be added for a single sprite by calling\n"
                                           "this command multiple times with different parameters.\n\n"
                                           "Once all the stop conditions have been satisfied, then the specified sprite\n"
-                                          "will stop moving.")
+                                          "will stop moving.",
+                                          group_name=GroupName.MOVE)
     
         page_dialog_move =\
                 CharacterMove(parent_frame=self.frame_contents_outer,
@@ -1572,7 +1734,8 @@ class WizardWindow:
                               parent_display_text="Dialog",
                               sub_display_text="dialog_sprite_move",
                               command_name="dialog_sprite_move",
-                              purpose_line="Sets the movement amount and direction of an dialog sprite.")
+                              purpose_line="Sets the movement amount and direction of an dialog sprite.",
+                              group_name=GroupName.MOVE)
     
         page_dialog_move_delay =\
                 CharacterMoveDelay(parent_frame=self.frame_contents_outer,
@@ -1594,7 +1757,8 @@ class WizardWindow:
                                    subject_sentence_1="the number of frames to skip for horizontal movements",
                                    subject_sentence_2="the number of frames to skip for vertical movements",
                                    spinbox_from_value=1,
-                                   spinbox_to_value=120)
+                                   spinbox_to_value=120,
+                                   group_name=GroupName.MOVE)
     
         page_dialog_start_moving =\
                 CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -1604,7 +1768,8 @@ class WizardWindow:
                                      parent_display_text="Dialog",
                                      sub_display_text="dialog_sprite_start_moving",
                                      command_name="dialog_sprite_start_moving",
-                                     purpose_line="Starts a movement animation on a specific dialog sprite.")
+                                     purpose_line="Starts a movement animation on a specific dialog sprite.",
+                                     group_name=GroupName.MOVE)
 
         page_dialog_stop_moving = \
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -1614,7 +1779,8 @@ class WizardWindow:
                                  parent_display_text="Dialog",
                                  sub_display_text="dialog_sprite_stop_moving",
                                  command_name="dialog_sprite_stop_moving",
-                                 purpose_line="Stops a movement animation on a specific dialog sprite.")
+                                 purpose_line="Stops a movement animation on a specific dialog sprite.",
+                                 group_name=GroupName.MOVE)
 
         page_dialog_set_position_x =\
                 CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -1627,7 +1793,8 @@ class WizardWindow:
                                       purpose_line="Sets the horizontal position of a specific dialog relative to the top-left\n"
                                       "corner of the sprite.\n\n"
                                       "Note: the dialog sprite must already be visible.",
-                                      direction="horizontal")
+                                      direction="horizontal",
+                                      group_name=GroupName.POSITION)
     
         page_dialog_set_position_y =\
                 CharacterSetPositionY(parent_frame=self.frame_contents_outer,
@@ -1640,7 +1807,8 @@ class WizardWindow:
                                       purpose_line="Sets the vertical position of a specific dialog relative to the top-left\n"
                                       "corner of the sprite.\n\n"
                                       "Note: the dialog sprite must already be visible.",
-                                      direction="vertical")
+                                      direction="vertical",
+                                      group_name=GroupName.POSITION)
     
         page_dialog_set_center =\
                 CharacterSetCenter(parent_frame=self.frame_contents_outer,
@@ -1660,7 +1828,8 @@ class WizardWindow:
                                    subject_sentence_1="the horizontal center position",
                                    subject_sentence_2="the vertical center position",
                                    spinbox_from_value=-5000,
-                                   spinbox_to_value=9000)
+                                   spinbox_to_value=9000,
+                                   group_name=GroupName.POSITION)
 
         page_dialog_sprite_center_x_with =\
             SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
@@ -1671,7 +1840,41 @@ class WizardWindow:
                                         sub_display_text="dialog_sprite_center_x_with",
                                         command_name="dialog_sprite_center_x_with",
                                         purpose_line="Center the X of a dialog sprite with the center X of another sprite.\n"
-                                        "Note: both sprites must already be visible.")     
+                                        "Note: both sprites must already be visible.",
+                                        group_name=GroupName.POSITION)     
+
+        page_dialog_sprite_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_click",
+                                        command_name="dialog_sprite_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        group_name=GroupName.MOUSE)             
+
+        page_dialog_sprite_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_enter",
+                                        command_name="dialog_sprite_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        group_name=GroupName.MOUSE)             
+
+        page_dialog_sprite_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Dialog",
+                                        sub_display_text="dialog_sprite_on_mouse_leave",
+                                        command_name="dialog_sprite_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        group_name=GroupName.MOUSE)             
 
 
         """
@@ -1686,7 +1889,8 @@ class WizardWindow:
                                     parent_display_text="Object",
                                     sub_display_text="load_object",
                                     command_name="load_object",
-                                    purpose_line="Load an object sprite into memory.")
+                                    purpose_line="Load an object sprite into memory.",
+                                    group_name=GroupName.LOAD)
 
         page_show_object =\
             CharacterShow(parent_frame=self.frame_contents_outer,
@@ -1697,7 +1901,8 @@ class WizardWindow:
                           sub_display_text="object_show",
                           command_name="object_show",
                           purpose_line="Shows the given sprite and it hides the currently visible\n"
-                          "sprite with the same general alias as the one we’re about to show.")
+                          "sprite with the same general alias as the one we’re about to show.",
+                          group_name=GroupName.SHOW)
 
         page_hide_object =\
             CharacterHide(parent_frame=self.frame_contents_outer,
@@ -1707,7 +1912,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_hide",
                           command_name="object_hide",
-                          purpose_line="Hides the given sprite.")
+                          purpose_line="Hides the given sprite.",
+                          group_name=GroupName.HIDE)
 
         page_hide_all_object = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -1717,7 +1923,8 @@ class WizardWindow:
                         parent_display_text="Object",
                         sub_display_text="object_hide_all",
                         command_name="object_hide_all",
-                        purpose_line="Hides all object sprites.")
+                        purpose_line="Hides all object sprites.",
+                        group_name=GroupName.HIDE)
         
         page_object_flip_both =\
             Flip(parent_frame=self.frame_contents_outer,
@@ -1727,7 +1934,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_flip_both",
                           command_name="object_flip_both",
-                          purpose_line="Flips the given sprite both horizontally and vertically.")
+                          purpose_line="Flips the given sprite both horizontally and vertically.",
+                          group_name=GroupName.FLIP)
 
 
         page_object_flip_horizontal =\
@@ -1738,7 +1946,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_flip_horizontal",
                           command_name="object_flip_horizontal",
-                          purpose_line="Flips the given sprite horizontally.")
+                          purpose_line="Flips the given sprite horizontally.",
+                          group_name=GroupName.FLIP)
 
 
         page_object_flip_vertical =\
@@ -1749,7 +1958,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_flip_vertical",
                           command_name="object_flip_vertical",
-                          purpose_line="Flips the given sprite vertically.")
+                          purpose_line="Flips the given sprite vertically.",
+                          group_name=GroupName.FLIP)
         
 
         page_object_after_fading_stop =\
@@ -1760,7 +1970,8 @@ class WizardWindow:
                                     parent_display_text="Object",
                                     sub_display_text="object_after_fading_stop",
                                     command_name="object_after_fading_stop",
-                                    purpose_line="Run a reusable script after a specific object sprite stops fading.")
+                                    purpose_line="Run a reusable script after a specific object sprite stops fading.",
+                                    group_name=GroupName.FLIP)
 
         page_object_fade_current_value =\
             CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
@@ -1776,7 +1987,8 @@ class WizardWindow:
                                       to_value=255,
                                       amount_usage_info="Opacity level:\n"
                                       "0=fully transparent  255=fully opaque",
-                                      amount_name="opacity level")
+                                      amount_name="opacity level",
+                                      group_name=GroupName.FADE)
 
         page_object_fade_delay =\
             CharacterFadeDelay(parent_frame=self.frame_contents_outer,
@@ -1793,7 +2005,8 @@ class WizardWindow:
                                from_value=1,
                                to_value=120,
                                amount_usage_info="Number of frames to skip:",
-                               amount_name="number of frames to skip")
+                               amount_name="number of frames to skip",
+                               group_name=GroupName.FADE)
 
         page_object_fade_speed =\
             CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -1814,7 +2027,8 @@ class WizardWindow:
                                scale_default_value=5,
                                scale_from_value=1,
                                scale_to_value=100,
-                               scale_instructions="Fade speed (1 to 100):")
+                               scale_instructions="Fade speed (1 to 100):",
+                               group_name=GroupName.FADE)
 
         page_object_fade_until =\
             CharacterFadeUntil(parent_frame=self.frame_contents_outer,
@@ -1830,7 +2044,8 @@ class WizardWindow:
                                "0 = fully transparent  255 = fully opaque",
                                scale_from_value=0,
                                scale_to_value=255,
-                               scale_default_value=128)
+                               scale_default_value=128,
+                               group_name=GroupName.FADE)
 
         page_object_start_fading =\
             CharacterStartFading(parent_frame=self.frame_contents_outer,
@@ -1841,7 +2056,8 @@ class WizardWindow:
                                  sub_display_text="object_start_fading",
                                  command_name="object_start_fading",
                                  purpose_line="Starts an object sprite fading animation.\n"
-                                 "Note: the object sprite must already be visible.")
+                                 "Note: the object sprite must already be visible.",
+                                 group_name=GroupName.FADE)
 
         page_object_stop_fading =\
             CharacterStopFading(parent_frame=self.frame_contents_outer,
@@ -1852,7 +2068,8 @@ class WizardWindow:
                                 sub_display_text="object_stop_fading",
                                 command_name="object_stop_fading",
                                 purpose_line="Stops an object sprite fading animation.\n"
-                                "Note: the object sprite must already be visible.")
+                                "Note: the object sprite must already be visible.",
+                                group_name=GroupName.FADE)
 
         page_object_after_rotating_stop =\
             CharacterAfterRotatingStop(parent_frame=self.frame_contents_outer,
@@ -1863,7 +2080,8 @@ class WizardWindow:
                                        sub_display_text="object_after_rotating_stop",
                                        command_name="object_after_rotating_stop",
                                        purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
-                                       "Note: the object sprite must already be visible.")
+                                       "Note: the object sprite must already be visible.",
+                                       group_name=GroupName.ROTATE)
 
         page_object_rotate_current_value =\
             CharacterRotateCurrentValue(parent_frame=self.frame_contents_outer,
@@ -1874,7 +2092,8 @@ class WizardWindow:
                                         sub_display_text="object_rotate_current_value",
                                         command_name="object_rotate_current_value",
                                         purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
-                                        "Note: the object sprite must already be visible.")
+                                        "Note: the object sprite must already be visible.",
+                                        group_name=GroupName.ROTATE)
 
         page_object_rotate_delay =\
             CharacterRotateDelay(parent_frame=self.frame_contents_outer,
@@ -1892,7 +2111,8 @@ class WizardWindow:
                                  from_value=1,
                                  to_value=120,
                                  amount_usage_info="Number of frames to skip:",
-                                 amount_name="number of frames to skip")
+                                 amount_name="number of frames to skip",
+                                 group_name=GroupName.ROTATE)
 
         page_object_rotate_speed =\
             CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -1914,7 +2134,8 @@ class WizardWindow:
                                  scale_default_value=5,
                                  scale_from_value=1,
                                  scale_to_value=100,
-                                 scale_instructions="Rotation speed (1 to 100):")
+                                 scale_instructions="Rotation speed (1 to 100):",
+                                 group_name=GroupName.ROTATE)
 
         page_object_rotate_until =\
             CharacterRotateUntil(parent_frame=self.frame_contents_outer,
@@ -1929,7 +2150,8 @@ class WizardWindow:
                                  scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
                                  scale_from_value=0,
                                  scale_to_value=359,
-                                 scale_default_value=180)
+                                 scale_default_value=180,
+                                 group_name=GroupName.ROTATE)
 
         page_object_start_rotating =\
             CharacterStartRotating(parent_frame=self.frame_contents_outer,
@@ -1940,7 +2162,8 @@ class WizardWindow:
                                    sub_display_text="object_start_rotating",
                                    command_name="object_start_rotating",
                                    purpose_line="Starts an object sprite rotation animation.\n"
-                                   "Note: the object sprite must already be visible.")
+                                   "Note: the object sprite must already be visible.",
+                                   group_name=GroupName.ROTATE)
 
         page_object_stop_rotating =\
             CharacterStopRotating(parent_frame=self.frame_contents_outer,
@@ -1951,7 +2174,8 @@ class WizardWindow:
                                   sub_display_text="object_stop_rotating",
                                   command_name="object_stop_rotating",
                                   purpose_line="Stops an object sprite rotation animation.\n"
-                                  "Note: the object sprite must already be visible.")
+                                  "Note: the object sprite must already be visible.",
+                                  group_name=GroupName.ROTATE)
 
         page_object_after_scaling_stop =\
             CharacterAfterScalingStop(parent_frame=self.frame_contents_outer,
@@ -1963,7 +2187,8 @@ class WizardWindow:
                                       command_name="object_after_scaling_stop",
                                       purpose_line="When a specific sprite image stops scaling using <object_scale_until>,\n"
                                       "run a specific reusable script.\n\n"
-                                      "Note: the object sprite must already be visible.")
+                                      "Note: the object sprite must already be visible.",
+                                      group_name=GroupName.SCALE)
 
         page_object_scale_by =\
             CharacterScaleBy(parent_frame=self.frame_contents_outer,
@@ -1984,7 +2209,8 @@ class WizardWindow:
                              scale_default_value=5,
                              scale_from_value=1,
                              scale_to_value=100,
-                             scale_instructions="Scale speed (1 to 100):")
+                             scale_instructions="Scale speed (1 to 100):",
+                             group_name=GroupName.SCALE)
 
         page_object_scale_current_value =\
             CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
@@ -2000,7 +2226,8 @@ class WizardWindow:
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
                                        "(example: 2 means twice as big as the original size)",
-                                       amount_name="scale")
+                                       amount_name="scale",
+                                       group_name=GroupName.SCALE)
 
         page_object_scale_delay =\
             CharacterScaleDelay(parent_frame=self.frame_contents_outer,
@@ -2018,7 +2245,8 @@ class WizardWindow:
                                 from_value=1,
                                 to_value=120,
                                 amount_usage_info="Number of frames to skip:",
-                                amount_name="number of frames to skip")
+                                amount_name="number of frames to skip",
+                                group_name=GroupName.SCALE)
 
         page_object_scale_until =\
             CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -2033,7 +2261,8 @@ class WizardWindow:
                                 scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
                                 scale_from_value=0,
                                 scale_to_value=100,
-                                scale_default_value=2)
+                                scale_default_value=2,
+                                group_name=GroupName.SCALE)
 
         page_object_start_scaling =\
             CharacterStartScaling(parent_frame=self.frame_contents_outer,
@@ -2045,7 +2274,8 @@ class WizardWindow:
                                   command_name="object_start_scaling",
                                   purpose_line="Starts an object sprite scaling animation.\n\n"
                                   "Note: the object sprite must already be visible.\n"
-                                  "Also, <object_scale_until> should be used prior.")
+                                  "Also, <object_scale_until> should be used prior.",
+                                  group_name=GroupName.SCALE)
 
         page_object_stop_scaling =\
             CharacterStopScaling(parent_frame=self.frame_contents_outer,
@@ -2058,7 +2288,8 @@ class WizardWindow:
                                  purpose_line="Stops an object sprite scaling animation.\n\n"
                                  "The scale value is not lost. If the scaling is started again,\n"
                                  "it will resume from where it stopped last.\n\n"
-                                 "Note: the object sprite must already be visible.")
+                                 "Note: the object sprite must already be visible.",
+                                 group_name=GroupName.SCALE)
 
         page_object_after_movement_stop =\
             CharacterAfterMovementStop(parent_frame=self.frame_contents_outer,
@@ -2068,7 +2299,8 @@ class WizardWindow:
                                        parent_display_text="Object",
                                        sub_display_text="object_after_movement_stop",
                                        command_name="object_after_movement_stop",
-                                       purpose_line="Run a reusable script after a specific object sprite stops moving.")
+                                       purpose_line="Run a reusable script after a specific object sprite stops moving.",
+                                       group_name=GroupName.MOVE)
    
         page_object_stop_movement_condition =\
             CharacterStopMovementCondition(parent_frame=self.frame_contents_outer,
@@ -2082,7 +2314,8 @@ class WizardWindow:
                                       "Multiple stop conditions can be added for a single sprite by calling\n"
                                       "this command multiple times with different parameters.\n\n"
                                       "Once all the stop conditions have been satisfied, then the specified sprite\n"
-                                      "will stop moving.")
+                                      "will stop moving.",
+                                      group_name=GroupName.MOVE)
 
         page_object_move =\
             CharacterMove(parent_frame=self.frame_contents_outer,
@@ -2092,7 +2325,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_move",
                           command_name="object_move",
-                          purpose_line="Sets the movement amount and direction of an object sprite.")
+                          purpose_line="Sets the movement amount and direction of an object sprite.",
+                          group_name=GroupName.MOVE)
 
         page_object_move_delay =\
             CharacterMoveDelay(parent_frame=self.frame_contents_outer,
@@ -2114,7 +2348,8 @@ class WizardWindow:
                                subject_sentence_1="the number of frames to skip for horizontal movements",
                                subject_sentence_2="the number of frames to skip for vertical movements",
                                spinbox_from_value=1,
-                               spinbox_to_value=120)
+                               spinbox_to_value=120,
+                               group_name=GroupName.MOVE)
 
         page_object_start_moving =\
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -2124,7 +2359,8 @@ class WizardWindow:
                                  parent_display_text="Object",
                                  sub_display_text="object_start_moving",
                                  command_name="object_start_moving",
-                                 purpose_line="Starts a movement animation on a specific object sprite.")
+                                 purpose_line="Starts a movement animation on a specific object sprite.",
+                                 group_name=GroupName.MOVE)
 
         page_object_stop_moving = \
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -2134,7 +2370,8 @@ class WizardWindow:
                                  parent_display_text="Object",
                                  sub_display_text="object_stop_moving",
                                  command_name="object_stop_moving",
-                                 purpose_line="Stops a movement animation on a specific object sprite.")
+                                 purpose_line="Stops a movement animation on a specific object sprite.",
+                                 group_name=GroupName.MOVE)
 
         page_object_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -2147,7 +2384,8 @@ class WizardWindow:
                                   purpose_line="Sets the horizontal position of a specific object relative to the top-left\n"
                                   "corner of the sprite.\n\n"
                                   "Note: the object sprite must already be visible.",
-                                  direction="horizontal")
+                                  direction="horizontal",
+                                  group_name=GroupName.POSITION)
 
         page_object_set_position_y =\
             CharacterSetPositionY(parent_frame=self.frame_contents_outer,
@@ -2160,7 +2398,8 @@ class WizardWindow:
                                   purpose_line="Sets the vertical position of a specific object relative to the top-left\n"
                                   "corner of the sprite.\n\n"
                                   "Note: the object sprite must already be visible.",
-                                  direction="vertical")
+                                  direction="vertical",
+                                  group_name=GroupName.POSITION)
 
         page_object_set_center =\
             CharacterSetCenter(parent_frame=self.frame_contents_outer,
@@ -2180,7 +2419,8 @@ class WizardWindow:
                                subject_sentence_1="the horizontal center position",
                                subject_sentence_2="the vertical center position",
                                spinbox_from_value=-5000,
-                               spinbox_to_value=9000)
+                               spinbox_to_value=9000,
+                               group_name=GroupName.POSITION)
 
         page_object_center_x_with =\
             SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
@@ -2191,7 +2431,41 @@ class WizardWindow:
                                         sub_display_text="object_center_x_with",
                                         command_name="object_center_x_with",
                                         purpose_line="Center the X of an object sprite with the center X of another sprite.\n"
-                                        "Note: both sprites must already be visible.")  
+                                        "Note: both sprites must already be visible.",
+                                        group_name=GroupName.POSITION)  
+
+        page_object_on_mouse_click =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_click",
+                                        command_name="object_on_mouse_click",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        group_name=GroupName.MOUSE)             
+
+        page_object_on_mouse_enter =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_enter",
+                                        command_name="object_on_mouse_enter",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        group_name=GroupName.MOUSE)
+
+        page_object_on_mouse_leave =\
+            SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
+                                        header_label=self.lbl_header,
+                                        purpose_label=self.lbl_purpose,
+                                        treeview_commands=self.treeview_commands,
+                                        parent_display_text="Object",
+                                        sub_display_text="object_on_mouse_leave",
+                                        command_name="object_on_mouse_leave",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        group_name=GroupName.MOUSE)             
 
 
         """
@@ -2205,7 +2479,8 @@ class WizardWindow:
                           parent_display_text="Font",
                           sub_display_text="load_font_sprite",
                           command_name="load_font_sprite",
-                          purpose_line="Load a font sprite into memory.")
+                          purpose_line="Load a font sprite into memory.",
+                          group_name=GroupName.LOAD)
 
         page_font =\
             Font_Font(parent_frame=self.frame_contents_outer,
@@ -2215,7 +2490,8 @@ class WizardWindow:
                       parent_display_text="Font",
                       sub_display_text="font",
                       command_name="font",
-                      purpose_line="Sets the font to use for the next letter.")      
+                      purpose_line="Sets the font to use for the next letter.",
+                      group_name=GroupName.USE_FONT)      
         
         page_font_x =\
             Font_Position(parent_frame=self.frame_contents_outer,
@@ -2230,7 +2506,8 @@ class WizardWindow:
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the horizontal position (x):",
-                          amount_name="horizontal position")
+                          amount_name="horizontal position",
+                          group_name=GroupName.POSITION)
 
         
         page_font_y =\
@@ -2246,7 +2523,8 @@ class WizardWindow:
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the vertical position (y):",
-                          amount_name="vertical position")
+                          amount_name="vertical position",
+                          group_name=GroupName.POSITION)
         
         page_font_text_delay =\
             Font_TextDelay(parent_frame=self.frame_contents_outer,
@@ -2264,7 +2542,8 @@ class WizardWindow:
                            scale_instructions="Delay (frames) (0-600):\n\n"
                            "For example: a value of 2 means: apply the letter by letter animation\n"
                            "every 2 frames. A value of 0 means apply the animation at every frame.",
-                           scale_default_value=2)
+                           scale_default_value=2,
+                           group_name=GroupName.SPEED)
         
         page_font_text_delay_punc =\
             Font_TextDelayPunc(parent_frame=self.frame_contents_outer,
@@ -2282,7 +2561,8 @@ class WizardWindow:
                            scale_from_value=0,
                            scale_to_value=120,
                            scale_instructions="The number of frames to skip (0 to 120):",
-                           scale_default_value=2)
+                           scale_default_value=2,
+                           group_name=GroupName.SPEED)
     
 
         page_font_text_fade_speed =\
@@ -2300,7 +2580,8 @@ class WizardWindow:
                                scale_to_value=10,
                                scale_instructions="Set the fade speed (1-10):\n"
                                "1 = slowest  10 = fastest",
-                               scale_default_value=5)
+                               scale_default_value=5,
+                               group_name=GroupName.SPEED)
 
         page_font_intro_animation =\
             Font_IntroAnimation(parent_frame=self.frame_contents_outer,
@@ -2312,7 +2593,8 @@ class WizardWindow:
                                 command_name="font_intro_animation",
                                 purpose_line="Set the animation type when the character text is being displayed.",
                                 instructions="Dialog text starting animation:",
-                                values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
+                                values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"),
+                                group_name=GroupName.FONT_ANIMATION)
         
 
         page_sprite_font =\
@@ -2324,7 +2606,8 @@ class WizardWindow:
                             sub_display_text="sprite_font",
                             command_name="sprite_font",
                             purpose_line="Sets the font to use for a sprite's text.\n"
-                            "Note: the sprite must already be visible.")  
+                            "Note: the sprite must already be visible.",
+                            group_name=GroupName.USE_FONT)  
 
         page_sprite_font_x =\
             Font_SpriteFontPosition(parent_frame=self.frame_contents_outer,
@@ -2340,7 +2623,8 @@ class WizardWindow:
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the horizontal position (x):",
-                                    amount_name="horizontal position")
+                                    amount_name="horizontal position",
+                                    group_name=GroupName.POSITION)
         
         page_sprite_font_y =\
             Font_SpriteFontPosition(parent_frame=self.frame_contents_outer,
@@ -2356,7 +2640,8 @@ class WizardWindow:
                                     from_value=-50,
                                     to_value=5000,
                                     amount_usage_info="Set the vertical position (y):",
-                                    amount_name="vertical position")
+                                    amount_name="vertical position",
+                                    group_name=GroupName.POSITION)
 
         page_sprite_font_delay =\
             Font_SpriteTextDelay(parent_frame=self.frame_contents_outer,
@@ -2375,7 +2660,8 @@ class WizardWindow:
                                  scale_instructions="Delay (frames) (0-600):\n\n"
                                  "For example: a value of 2 means: apply the letter by letter animation\n"
                                  "every 2 frames. A value of 0 means apply the animation at every frame.",
-                                 scale_default_value=2)
+                                 scale_default_value=2,
+                                 group_name=GroupName.SPEED)
         
         page_sprite_font_delay_punc =\
             Font_SpriteTextDelayPunc(parent_frame=self.frame_contents_outer,
@@ -2394,7 +2680,8 @@ class WizardWindow:
                                      scale_from_value=0,
                                      scale_to_value=120,
                                      scale_instructions="The number of frames to skip (0 to 120):",
-                                     scale_default_value=2)
+                                     scale_default_value=2,
+                                     group_name=GroupName.SPEED)
 
         page_sprite_font_fade_speed =\
             Font_SpriteTextFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -2412,7 +2699,8 @@ class WizardWindow:
                                      scale_to_value=10,
                                      scale_instructions="Set the fade speed (1-10):\n"
                                      "1 = slowest  10 = fastest",
-                                     scale_default_value=5)
+                                     scale_default_value=5,
+                                     group_name=GroupName.SPEED)
         
         page_sprite_font_intro_animation =\
             Font_SpriteIntroAnimation(parent_frame=self.frame_contents_outer,
@@ -2425,7 +2713,8 @@ class WizardWindow:
                                 purpose_line="Set the animation type when sprite text is being displayed.\n"
                                 "Note: the sprite must already be visible.",
                                 instructions="Sprite text starting animation:",
-                                values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"))
+                                values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"),
+                                group_name=GroupName.FONT_ANIMATION)
         
         page_sprite_text =\
             Font_SpriteText(parent_frame=self.frame_contents_outer,
@@ -2438,7 +2727,8 @@ class WizardWindow:
                             purpose_line="Set the text to show on a sprite.\n\n"
                             "You can run this command multiple times to append text.\n"
                             "To clear the text, use <sprite_text_clear>\n\n"
-                            "Note: the sprite must already be visible.")
+                            "Note: the sprite must already be visible.",
+                            group_name=GroupName.TEXT)
         
         page_sprite_text_clear =\
             Font_SpriteTextClear(parent_frame=self.frame_contents_outer,
@@ -2449,7 +2739,8 @@ class WizardWindow:
                                  sub_display_text="sprite_text_clear",
                                  command_name="sprite_text_clear",
                                  purpose_line="Clear text on a sprite where <sprite_text> was used.\n"
-                                 "Note: the sprite must already be visible.")
+                                 "Note: the sprite must already be visible.",
+                                 group_name=GroupName.TEXT)
 
         page_general_scene_with_fade = \
             SceneWithFade(parent_frame=self.frame_contents_outer,
@@ -2460,7 +2751,8 @@ class WizardWindow:
                           sub_display_text="scene_with_fade",
                           command_name="scene_with_fade",
                           purpose_line="Gradually fade into another scene.\n"
-                                       "Provides a fade effect when transitioning between scenes.")
+                                       "Provides a fade effect when transitioning between scenes.",
+                          group_name=GroupName.FADE)
 
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
@@ -2478,7 +2770,8 @@ class WizardWindow:
                        scale_instructions="Choose the number of frames to halt chapter/scenes.\nNote: 60 frames is 1 second.",
                        scale_from_value=1,
                        scale_to_value=600,
-                       scale_default_value=120)        
+                       scale_default_value=120,
+                       group_name=GroupName.PAUSE)        
 
         page_after =\
             ReusableScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2496,7 +2789,8 @@ class WizardWindow:
                                  to_value=30000,
                                  amount_name="number of frames to elapse", 
                                  spinbox_default_value=120,
-                                 show_delay_widgets=True)
+                                 show_delay_widgets=True,
+                                 group_name=GroupName.TIMER)
         
         page_after_cancel =\
             ReusableScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2506,7 +2800,8 @@ class WizardWindow:
                                  parent_display_text="General",
                                  sub_display_text="after_cancel",
                                  command_name="after_cancel",
-                                 purpose_line="Cancels an existing 'after' timer.")
+                                 purpose_line="Cancels an existing 'after' timer.",
+                                 group_name=GroupName.TIMER)
 
         page_after_cancel_all = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -2516,7 +2811,8 @@ class WizardWindow:
                         parent_display_text="General",
                         sub_display_text="after_cancel_all",
                         command_name="after_cancel_all",
-                        purpose_line="Cancels all after-timers.")
+                        purpose_line="Cancels all after-timers.",
+                        group_name=GroupName.TIMER)
         
         page_call =\
             ReusableScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2526,7 +2822,8 @@ class WizardWindow:
                                  parent_display_text="General",
                                  sub_display_text="call",
                                  command_name="call",
-                                 purpose_line="Run a reusable script.")           
+                                 purpose_line="Run a reusable script.",
+                                 group_name=GroupName.RUN_SCRIPT)           
 
         page_scene =\
             SceneScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2536,7 +2833,8 @@ class WizardWindow:
                               parent_display_text="General",
                               sub_display_text="scene",
                               command_name="scene",
-                              purpose_line="Run a scene in a specific chapter.")
+                              purpose_line="Run a scene in a specific chapter.",
+                              group_name=GroupName.RUN_SCRIPT)
 
         page_wait_for_animation = \
             WaitForAnimation(parent_frame=self.frame_contents_outer,
@@ -2549,7 +2847,8 @@ class WizardWindow:
                              purpose_line="Pauses the main script until one or more types of animations\n"
                                           "have finished animating.\n\n"
                                           "This command will only pause the main script, but can\n"
-                                          "be called from anywhere (chapters/scenes/reusable scripts).")
+                                          "be called from anywhere (chapters/scenes/reusable scripts).",
+                             group_name=GroupName.PAUSE)
         
         page_exit = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -2562,7 +2861,8 @@ class WizardWindow:
                         purpose_line="Stops a script from running.",
                         when_to_use="When you want to prevent the rest of a script from running.\n\n"
                         "It can be used in any script, such as: chapters, scenes, reusable scripts.\n"
-                        "The script that uses <exit> will be the script that will be stopped.")
+                        "The script that uses <exit> will be the script that will be stopped.",
+                        group_name=GroupName.STOP)
         
         """
         Variable
@@ -2576,7 +2876,8 @@ class WizardWindow:
                                     sub_display_text="variable_set",
                                     command_name="variable_set",
                                     purpose_line="Create a new variable or update an existing one.\n\n"
-                                    "Variable names are case-sensitive")
+                                    "Variable names are case-sensitive",
+                                    hide_load_as_widgets=True)
         
         page_case_condition =\
             CaseCondition(parent_frame=self.frame_contents_outer,
@@ -2690,6 +2991,10 @@ class WizardWindow:
         self.pages["character_set_center"] = page_character_set_center
         self.pages["character_center_x_with"] = page_character_center_x_with
         
+        self.pages["character_on_mouse_click"] =  page_character_on_mouse_click
+        self.pages["character_on_mouse_enter"] =  page_character_on_mouse_enter
+        self.pages["character_on_mouse_leave"] =  page_character_on_mouse_leave
+        
         """
         General
         """
@@ -2757,6 +3062,9 @@ class WizardWindow:
         self.pages["object_set_center"] = page_object_set_center
         self.pages["object_center_x_with"] = page_object_center_x_with
 
+        self.pages["object_on_mouse_click"] =  page_object_on_mouse_click
+        self.pages["object_on_mouse_enter"] =  page_object_on_mouse_enter
+        self.pages["object_on_mouse_leave"] =  page_object_on_mouse_leave
 
         """
         Dialog
@@ -2814,6 +3122,9 @@ class WizardWindow:
         self.pages["dialog_sprite_set_center"] = page_dialog_set_center
         self.pages["dialog_sprite_center_x_with"] = page_dialog_sprite_center_x_with
 
+        self.pages["dialog_sprite_on_mouse_click"] =  page_dialog_sprite_on_mouse_click
+        self.pages["dialog_sprite_on_mouse_enter"] =  page_dialog_sprite_on_mouse_enter
+        self.pages["dialog_sprite_on_mouse_leave"] =  page_dialog_sprite_on_mouse_leave
         
         """
         Font
@@ -2897,7 +3208,78 @@ class WizardWindow:
         self.mainwindow.mainloop()
 
 
+class GroupRowColorSwitch:
+    """
+    Used for switching row background colors in the wizard window's
+    treeview widget, whenever a new/different group is being listed
+    in the treeview widget.
+    
+    For example:
+    Group A
+    Group A
+    Group B <-switch row color here, because we're no longer on group A
+    Group B
+    Group C <-switch row color here, because we're no longer on group B
+    """
+    def __init__(self):
+        
+        # The last group name that was populated in the treeview widget.
+        self.last_group_name = None
+
+        # Start off with this row color tag value.
+        self.tag_color = "row_color_1"
+        
+    def switch_color(self):
+        """
+        Toggle the next row's background color.
+        """
+        if self.tag_color == "row_color_1":
+            self.tag_color = "row_color_2"
+        else:
+            self.tag_color = "row_color_1"
+            
+    def set_current_group_name(self, group_name: GroupName):
+        """
+        Record the group that was last added to the treeview.
+        
+        Arguments:
+        
+        - group_name: the enum group name that was last added.
+        """
+        self.last_group_name = group_name
+        
+    def is_group_different(self, group_name: GroupName) -> bool:
+        """
+        Return whether the given group name is different from the
+        last recorded group name.
+        
+        Purpose: this method is used to determine whether it's time
+        to switch the next row's background color or not.
+        
+        Return: True if the given group name is not the same as the
+        last recorded group name, which would mean it's time to switch
+        the row's background color (dealt with in a different method).
+        
+        Return False if the given group name matches the last inserted
+        treeview group name, which would mean it's not time to switch the
+        row's background color.
+        """
+        return group_name and group_name != self.last_group_name
+            
+    def get_row_color_tag(self) -> str:
+        """
+        Return the current background row color tag name.
+        This gets used when inserting rows in the wizard's treeview widget.
+        """
+        return self.tag_color
+
+
 class WizardListing:
+    
+    # Used for determining when to switch the wizard's treeview widget
+    # row background color.
+    row_switcher = GroupRowColorSwitch()
+    
     def __init__(self,
                  parent_frame: ttk.Frame,
                  header_label: ttk.Label,
@@ -3019,11 +3401,46 @@ class WizardListing:
             parent_iid = self.treeview_commands.insert(parent=parent_iid,
                                                        index="end",
                                                        text=parent_display_text)
+            
+            
+        """
+        If available, use the group name for this listing to determine
+        whether we should change the background row of the treeview item
+        or not (so that similarly grouped names will have the same
+        background row color).
+        
+        How it works: if we're on a different group name compared to the
+        last-recorded group name for a wizard listing, then toggle its row
+        color to a different color.
+        """       
+
+        group_name: GroupName
+        group_name = kwargs.get("group_name", "")
+        
+        # Different group name than last time?
+        if WizardListing.row_switcher.is_group_different(group_name):
+            # Yes, different group name than last time.
+            
+            # Record the new group name that we're now on, so we can
+            # check it again for the next wizard listing.
+            WizardListing.row_switcher.set_current_group_name(group_name)
+            
+            # Toggle the row color to the other row color
+            # because we're about to show a new group name.
+            WizardListing.row_switcher.switch_color()
+            
+        # The group name to display in the treeview widget.
+        if group_name:
+            display_group_name = f"{group_name.name.title()}"
+        else:
+            display_group_name = ""
 
         # Insert command name to the treeview.
         self.treeview_commands.insert(parent=parent_iid,
                                       index="end",
-                                      values=(sub_display_text, ))
+                                      text=display_group_name, 
+                                      values=(sub_display_text, ),
+                                      tag=WizardListing.row_switcher.get_row_color_tag())
 
         # This frame will contain the contents of the page.
         # It will be shown when the show() method is called.
@@ -3718,11 +4135,12 @@ class SharedPages:
     
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
 
             self.frame_content = self.create_content_frame()
     
@@ -4044,11 +4462,12 @@ class SharedPages:
 
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
     
             self.frame_content = self.create_content_frame()
     
@@ -4260,11 +4679,12 @@ class SharedPages:
     
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
     
             self.frame_content = self.create_content_frame()
     
@@ -5718,11 +6138,12 @@ class SharedPages:
 
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
 
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
 
             self.frame_content = self.create_content_frame()
 
@@ -5832,8 +6253,84 @@ class SharedPages:
 
             self.populate()
 
-            self.frame_content.grid()
+            self.frame_content.grid(pady=5)
             
+            
+    class SpriteMouseEvent(AfterStop):
+        """
+        <dialog_sprite_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        <object_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        
+        Also, same arguments for:
+        <dialog_sprite_on_mouse_leave>
+        <dialog_sprite_on_mouse_click>
+        
+        <object_on_mouse_leave>
+        <object_on_mouse_click>
+        
+        <character_on_mouse_leave>
+        <character_on_mouse_click>
+        """
+    
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line, **kwargs):
+    
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
+            
+            self.create_frame_arguments().grid(pady=15)
+    
+        def generate_command(self) -> str | None:
+            """
+            Return the command based on the user's configuration/selection.
+            """
+    
+            # The user input will be a dictionary like this:
+            # {"Alias": "Rave",
+            # "ReusableScript": "rave_normal"}
+            user_inputs = self.check_inputs()
+    
+            if not user_inputs:
+                return
+    
+            reusable_script_name = user_inputs.get("ReusableScript")
+            alias = user_inputs.get("Alias")
+            
+            # We don't get the optional arguments from a dictionary, we just
+            # get it directly from the entry widget.            
+            optional_arguments = self.entry_arguments.get().strip()
+    
+            if optional_arguments:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}, {optional_arguments}>"
+            else:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}>"
+            
+        def create_frame_arguments(self) -> ttk.Frame:
+            """
+            Create and return a frame, used for specifying arguments
+            when running a specific script.
+            
+            Example:
+            For a command like this:
+            <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+            This method is used for the optional values part.
+            """
+            
+            self.frame_arguments = ttk.Frame(self.frame_content)
+            
+            self.lbl_arguments_instructions = ttk.Label(self.frame_arguments,
+                                                        text="(optional) Argument(s) to pass to the reusable script:\nExample: color=blue,character=Theo")
+            self.entry_arguments = ttk.Entry(self.frame_arguments)
+            
+            self.lbl_arguments_instructions.grid(row=0, column=0, sticky=tk.W)
+            self.entry_arguments.grid(row=1, column=0, sticky=tk.W)
+            
+            return self.frame_arguments    
+
 
     class LoadSpriteNoAlias(WizardListing):
         """
@@ -5842,11 +6339,12 @@ class SharedPages:
     
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
     
             self.frame_content = self.create_content_frame()
             
@@ -5955,11 +6453,12 @@ class SharedPages:
     
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -6000,11 +6499,26 @@ class SharedPages:
 
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
 
+            message = "(optional) - Load as a different name? Used for spawning copies.\n" \
+                      "Enter a new copy name below:"
+            lbl_load_as_prompt = ttk.Label(frame_content, text=message)
+            self.entry_load_as = ttk.Entry(frame_content, width=25)
+
             lbl_prompt.grid(row=0, column=0, sticky="w")
             self.cb_selections.grid(row=1, column=0, sticky="w")
-            
-            self.lbl_general_alias.grid(row=2, column=0, sticky="w", pady=(15, 0))
+
+            self.lbl_general_alias.grid(row=2, column=0, sticky="w",
+                                        pady=(15, 0))
             self.entry_general_alias.grid(row=3, column=0, sticky="w")
+
+            # Without this, it will show widgets for 'Load as name...'
+            # which doesn't apply to <variable_set>, which is why we
+            # have 'hide_load_as_widgets' here.
+            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+            if not hide_load_as_widgets:
+                lbl_load_as_prompt.grid(row=4, column=0, sticky="w",
+                                        pady=(15, 0))
+                self.entry_load_as.grid(row=5, column=0, sticky="w")
             
             return frame_content
 
@@ -6048,8 +6562,25 @@ class SharedPages:
                                        title=f"No {entry_type} provided",
                                        message=f"Enter {entry_type_preposition} {entry_type} for the {self.get_purpose_name()}.")
                 return
+
+            # Load the sprite using a different name? (load as).
+            load_as_name = self.entry_load_as.get().strip()
+
+            # Make sure the copy/load as name is different
+            # from the original name.
+            if load_as_name and load_as_name.lower() == selection.lower():
+                messagebox.showwarning(
+                    parent=self.treeview_commands.winfo_toplevel(),
+                    title="Load As Name",
+                    message=f"The name of the copy must be different from the original name: '{selection}'")
+                return
+
+            elif not load_as_name:
+                # So we don't end up with an empty string.
+                load_as_name = None
             
             user_input = {"Selection": selection,
+                          "LoadAsName": load_as_name,
                           "Alias": alias}
     
             return user_input
@@ -6061,6 +6592,7 @@ class SharedPages:
     
             # The user input will be a dictionary like this:
             # {"Selection": "rave_normal",
+            # "LoadAsName": None,
             # "Alias": "Rave"}
             user_inputs = self.check_inputs()
             
@@ -6068,9 +6600,17 @@ class SharedPages:
                 return
     
             sprite_name = user_inputs.get("Selection")
+            load_as_name = user_inputs.get("LoadAsName")
             alias = user_inputs.get("Alias")
-            
-            return f"<{self.command_name}: {sprite_name}, {alias}>"
+
+            if load_as_name:
+                # Using 'load as'
+                return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+            else:
+                # Not using 'load as'
+                return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
+
+            return return_value
 
 
     class PlayAudioGeneric(LoadSpriteNoAlias):
@@ -6192,11 +6732,12 @@ class SharedPages:
 
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
 
             self.show_relative_text()
 
@@ -6225,11 +6766,12 @@ class SharedPages:
         """
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)          
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)          
 
             self.show_relative_text()
 
@@ -6247,11 +6789,12 @@ class SharedPages:
         """
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+                    command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
                              treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)          
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)          
 
             self.show_relative_text()
 
@@ -6273,11 +6816,11 @@ class CharacterStartFading(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
         
 class CharacterStopFading(SharedPages.StartStop):
@@ -6288,11 +6831,11 @@ class CharacterStopFading(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterFadeUntil(SharedPages.Until):
@@ -6361,11 +6904,12 @@ class CharacterAfterFadingStop(SharedPages.AfterStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
+        
 
 
 class VariableSet(SharedPages.LoadSpriteWithAlias):
@@ -6375,11 +6919,12 @@ class VariableSet(SharedPages.LoadSpriteWithAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
 
 
 class CaseCondition(SharedPages.Case):
@@ -6399,11 +6944,12 @@ class Character_LoadCharacter(SharedPages.LoadSpriteWithAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
 
 
 class Background_LoadBackground(SharedPages.LoadSpriteNoAlias):
@@ -6413,11 +6959,12 @@ class Background_LoadBackground(SharedPages.LoadSpriteNoAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
 
 
 class Audio_Volume(SharedPages.SpeedOnly):
@@ -6439,11 +6986,11 @@ class AudioLoad(SharedPages.LoadSpriteNoAlias):
     
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)    
+                         sub_display_text, command_name, purpose_line, **kwargs)    
 
 
 
@@ -6456,11 +7003,12 @@ class AudioPlay(SharedPages.PlayAudioGeneric):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
 
 
 class Font_LoadFont(SharedPages.LoadSpriteNoAlias):
@@ -6470,11 +7018,11 @@ class Font_LoadFont(SharedPages.LoadSpriteNoAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class Font_Position(SharedPages.PositionOnly):
@@ -6744,11 +7292,11 @@ class Font_Font(SharedPages.LoadSpriteNoAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
         self.set_font_text()
 
@@ -6767,11 +7315,12 @@ class Font_SpriteFont(Font_Font, SharedPages.SpriteTextExtension):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                            treeview_commands, parent_display_text,
-                           sub_display_text, command_name, purpose_line)
+                           sub_display_text, command_name, purpose_line,
+                           **kwargs)
         
         SharedPages.SpriteTextExtension.__init__(self, parent_frame=self.frame_content)
         
@@ -6787,11 +7336,11 @@ class Font_SpriteText(WizardListing, SharedPages.SpriteTextExtension):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         WizardListing.__init__(self, parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
         
         self.frame_content = ttk.Frame(self.parent_frame)
         #self.scene_frame = SceneWithFadeFrame(self.frame_content)
@@ -6816,11 +7365,11 @@ class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         WizardListing.__init__(self, parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
         
         self.frame_content = ttk.Frame(self.parent_frame)       
         
@@ -6863,21 +7412,23 @@ class Font_SpriteFontPosition(Font_Position, SharedPages.SpriteTextExtension):
 class BackgroundShow(SharedPages.ShowSprite):
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line):
+                sub_display_text, command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line)
+                sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class BackgroundHide(SharedPages.HideSpriteNoAlias):
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line):
+                sub_display_text, command_name, purpose_line,
+                **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line)
+                sub_display_text, command_name, purpose_line,
+                **kwargs)
         
 
 class DefaultPage(WizardListing):
@@ -7252,11 +7803,12 @@ class DialogTextSound(SharedPages.LoadSpriteNoAlias):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
         
         self.set_audio_text()
         
@@ -7646,11 +8198,11 @@ class CharacterAfterRotatingStop(SharedPages.AfterStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterRotateCurrentValue(WizardListing):
@@ -7661,11 +8213,11 @@ class CharacterRotateCurrentValue(WizardListing):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
         self.frame_content = self.create_content_frame()
 
@@ -7821,11 +8373,11 @@ class CharacterStartRotating(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterStopRotating(SharedPages.StartStop):
@@ -7836,11 +8388,11 @@ class CharacterStopRotating(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterAfterScalingStop(SharedPages.AfterStop):
@@ -7850,11 +8402,11 @@ class CharacterAfterScalingStop(SharedPages.AfterStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterScaleBy(SharedPages.Speed):
@@ -7929,11 +8481,11 @@ class CharacterStartScaling(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterStopScaling(SharedPages.StartStop):
@@ -7944,11 +8496,11 @@ class CharacterStopScaling(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterAfterMovementStop(SharedPages.AfterStop):
@@ -7958,11 +8510,11 @@ class CharacterAfterMovementStop(SharedPages.AfterStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterStopMovementCondition(SharedPages.StopMovementCondition):
@@ -7973,11 +8525,11 @@ class CharacterStopMovementCondition(SharedPages.StopMovementCondition):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 class CharacterMove(SharedPages.Move):
     """
@@ -7990,11 +8542,11 @@ class CharacterMove(SharedPages.Move):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterStartMoving(SharedPages.StartStop):
@@ -8004,11 +8556,11 @@ class CharacterStartMoving(SharedPages.StartStop):
 
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line):
+                command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name, purpose_line)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
 
 class CharacterMoveDelay(SharedPages.MoveDelay):
@@ -8075,22 +8627,22 @@ class CharacterSetCenter(SharedPages.SetCenter):
 class CharacterShow(SharedPages.ShowSprite):
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line):
+                sub_display_text, command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line)
+                sub_display_text, command_name, purpose_line, **kwargs)
 
 
 
 class CharacterHide(SharedPages.HideSpriteWithAlias):
     def __init__(self, parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line):
+                sub_display_text, command_name, purpose_line, **kwargs):
 
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
-                sub_display_text, command_name, purpose_line)
+                sub_display_text, command_name, purpose_line, **kwargs)
 
         
 

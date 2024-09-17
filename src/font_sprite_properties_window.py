@@ -23,7 +23,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from project_snapshot import ProjectSnapshot, SubPaths, FontSprite, LetterProperties
 from input_trim_values_window import InputTrimValuesWindow
-from entrylimit import EntryWithLimit
+from entry_limit import EntryWithLimit
 from pathlib import Path
 from PIL import Image, ImageTk
 from typing import Tuple, List
