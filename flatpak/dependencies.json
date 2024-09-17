@@ -62,13 +62,13 @@
 		    "name": "python3-pygubu",
 		    "buildsystem": "simple",
 		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygubu==0.31\" --no-build-isolation"
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygubu==0.35.5\" --no-build-isolation"
 		    ],
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/46/fd/b7cc00c8ea6d4d2867f6bb94bd2a1e6212f0ad529120666ac6e7b56ffc82/pygubu-0.31-py3-none-any.whl",
-			    "sha256": "b8a177deee56a9686e2a9d2939f4af5e82b27c504bf51c79610d33a8c5b6a04d"
+			    "url": "https://files.pythonhosted.org/packages/b1/63/d7e50f9939f312cdc43df642958b3f5072c0d9096a702479137649ce47b3/pygubu-0.35.5-py3-none-any.whl",
+			    "sha256": "4f1bd1e8f39e2e50a1febe093062eb2c9625ac415486f0bfb0ed860ee3c776e3"
 			}
 		    ]
 		},

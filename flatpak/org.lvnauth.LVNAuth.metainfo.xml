@@ -72,5 +72,17 @@
           </ul>
       </description>
      </release>
+         <release version="0.6.1" date="2024-09-16">
+    <url type="details">https://lvnauth.org/blog/lvnauth-0.6.1-release.html</url>
+      <description>
+        <p>Release description</p>
+          <ul>
+            <li>Added the new **load as** keyword (introduced in v0.6) to the Wizard window so that it's easier to spawn copies of sprites without needing to memorize the command.</li>
+            <li>The Wizard window's command list now contains a background color for each row. The colors are grouped by the category of each command. For example: commands related to fades will be in one color and commands related to rotation will be in a different color. This makes it easier and faster to find specific commands. Also, command category names are now listed on the same row as the command names.</li>
+            <li>Added a command helper near the bottom of the main window. If you place the blinking cursor over a command parameter, the name of the parameter that you're currently on, will be shown. This is especially useful for commands that contain many parameters, such as `<text_dialog_define>`.</li>
+            <li>Fixed a bug that caused a sprite's text animation to unnecessarily run again even if the text's animation had already finished, when swapping the sprite out with a different sprite.</li>
+          </ul>
+      </description>
+     </release>
    </releases>
 </component>
