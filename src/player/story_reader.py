@@ -4850,7 +4850,8 @@ class StoryReader:
             # No condition name was provided. Generate a random string.
             random_condition_name = string.ascii_letters + string.digits
             random_condition_name =\
-                "".join(secrets.choice(random_condition_name) in range(8))
+                "".join([secrets.choice(random_condition_name)
+                         for item in range(12)])
             
             # Add the random condition name to the arguments.
             arguments += f", {random_condition_name}"
