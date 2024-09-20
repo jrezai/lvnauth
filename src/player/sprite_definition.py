@@ -18,8 +18,9 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import pygame
 import font_handler
+import command_class as cc
 from shared_components import Passer, ManualUpdate, MouseActionsAndCoordinates
-from typing import NamedTuple, Tuple, List
+from typing import Tuple
 from enum import Enum, auto
 from datetime import datetime
 from time import perf_counter
@@ -31,144 +32,20 @@ class RotateType(Enum):
     COUNTERCLOCKWISE = auto()
 
 
-class MovementSpeed(NamedTuple):
-    sprite_name: str
-    x: int
-    x_direction: str
-    y: int
-    y_direction: str
-
-
-class MovementDelay(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
-
-class MovementStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class SpriteShowHide(NamedTuple):
-    sprite_name: str
-
-
-class SpriteCenter(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
-
-class SpriteCenterWith(NamedTuple):
-    alias_to_move: str
-    sprite_type_to_center_with: str
-    center_with_alias: str
-
-
-class SpriteLoad(NamedTuple):
-    sprite_name: str
-    sprite_general_alias: str
-
-
-class FadeUntilValue(NamedTuple):
-    sprite_name: str
-    fade_value: float
-
-
-class FadeCurrentValue(NamedTuple):
-    sprite_name: str
-    current_fade_value: int
-
-
-class FadeSpeed(NamedTuple):
-    sprite_name: str
-    fade_speed: float
-    fade_direction: str  # "fade in" or "fade out"
-
-
-class FadeStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class FadeDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    fade_delay: int
-
-
 class FadeDelayMain:
-    def __init__(self, fade_delay: FadeDelay):
+    def __init__(self, fade_delay: cc.FadeDelay):
         self.fade_delay = fade_delay
         self.frames_skipped_so_far = 0
 
 
-class ScaleDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    scale_delay: int
-
-
 class ScaleDelayMain:
-    def __init__(self, scale_delay: ScaleDelay):
+    def __init__(self, scale_delay: cc.ScaleDelay):
         self.scale_delay = scale_delay
         self.frames_skipped_so_far = 0
 
 
-class ScaleBy(NamedTuple):
-    sprite_name: str
-    scale_by: float
-    scale_rotation: str
-
-
-class ScaleUntil(NamedTuple):
-    sprite_name: str
-    scale_until: float
-
-
-class ScaleCurrentValue(NamedTuple):
-    sprite_name: str
-    scale_current_value: float
-
-
-class ScaleStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class RotateCurrentValue(NamedTuple):
-    sprite_name: str
-    rotate_current_value: float
-
-
-class RotateSpeed(NamedTuple):
-    sprite_name: str
-    rotate_speed: float
-    rotate_direction: str
-
-
-class RotateStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class RotateUntil(NamedTuple):
-    sprite_name: str
-    rotate_until: str  # str because the word 'forever' can be used.
-
-
-class RotateDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip when rotating a sprite.
-    rotate_delay: int
-
-
 class RotateDelayMain:
-    def __init__(self, rotate_delay: RotateDelay):
+    def __init__(self, rotate_delay: cc.RotateDelay):
         self.rotate_delay = rotate_delay
         self.frames_skipped_so_far = 0
 
@@ -313,7 +190,7 @@ class SpriteObject:
         self.movement_stop_run_script = None
 
         # Will be based on the MovementSpeed class.
-        self.movement_speed: MovementSpeed
+        self.movement_speed: cc.MovementSpeed
         self.movement_speed = None
 
         # Will be based on the MovementDelay class.
@@ -374,8 +251,8 @@ class SpriteObject:
         # We initialize the sprite to 1.0 here so if scaling is used
         # without '<scale_current_value>', it will default to a regular size.
         self.scale_current_value = \
-            ScaleCurrentValue(sprite_name=None,
-                              scale_current_value=1.0)
+            cc.ScaleCurrentValue(sprite_name=None,
+                                 scale_current_value=1.0)
 
         # Will be based on the ScaleStopRunScript class
         self.scale_stop_run_script = None
@@ -471,15 +348,15 @@ class SpriteObject:
             if self.fade_speed is not None and \
                self.fade_speed.fade_direction == "fade in":
                 
-                self.fade_until = FadeUntilValue(sprite_name=self.name,
-                                                 fade_value=255)
+                self.fade_until = cc.FadeUntilValue(sprite_name=self.name,
+                                                    fade_value=255)
             
             # Fading out? Assume the destination fade value to be 0.
             elif self.fade_speed is not None and \
                self.fade_speed.fade_direction == "fade out":
                 
-                self.fade_until = FadeUntilValue(sprite_name=self.name,
-                                                 fade_value=0)
+                self.fade_until = cc.FadeUntilValue(sprite_name=self.name,
+                                                    fade_value=0)
                 
             else:
                 # No fade speed or no valid fade direction.

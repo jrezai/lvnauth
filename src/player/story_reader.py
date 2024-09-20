@@ -36,8 +36,9 @@ import sprite_definition as sd
 import cover_screen_handler
 import font_handler
 import audio_player
+import command_class as cc
 from re import search, findall
-from typing import Tuple, NamedTuple
+from typing import Tuple
 # from font_handler import ActiveFontHandler
 from typing import Dict
 from shared_components import Passer
@@ -46,158 +47,6 @@ from rest_handler import RestHandler
 from variable_handler import VariableHandler
 from condition_handler import Condition
 
-
-
-class DialogRectangleDefinition(NamedTuple):
-    width: int
-    height: int
-    animation_speed: float
-    intro_animation: str
-    outro_animation: str
-    anchor: str
-    bg_color_hex: str
-    padding_x: int
-    padding_y: int
-    opacity: int
-    rounded_corners: str
-    reusable_on_intro_starting: str
-    reusable_on_intro_finished: str
-    reusable_on_outro_starting: str
-    reusable_on_outro_finished: str
-    reusable_on_halt: str
-    reusable_on_unhalt: str
-    border_color_hex: str
-    border_opacity: int
-    border_width: int
-
-
-class VariableSet(NamedTuple):
-    variable_name: str
-    variable_value: str
-
-
-class Continue(NamedTuple):
-    adjust_y: int
-
-
-class HaltAuto(NamedTuple):
-    number_of_frames: int
-
-
-class Rest(NamedTuple):
-    number_of_frames: int
-
-
-class WaitForAnimation(NamedTuple):
-    sprite_type: str
-    general_alias: str
-    animation_type: str
-
-
-class WaitForAnimationFadeScreen(NamedTuple):
-    fade_screen: str
-
-
-class SceneWithFade(NamedTuple):
-    hex_color: str
-    fade_in_speed: int
-    fade_out_speed: int
-    fade_hold_for_frame_count: int
-    chapter_name: str
-    scene_name: str
-
-
-class ConditionDefinition(NamedTuple):
-    value1: str
-    operator: str
-    value2: str
-    condition_name: str
-
-
-class PlayAudio(NamedTuple):
-    audio_name: str
-
-
-class DialogTextSound(NamedTuple):
-    audio_name: str
-    
-
-class Volume(NamedTuple):
-    volume: int
-
-
-class SpriteText(NamedTuple):
-    sprite_type: str
-    general_alias: str
-    value: str
-    
-    
-class SpriteTextClear(NamedTuple):
-    sprite_type: str
-    general_alias: str
-
-
-class MouseEventRunScriptNoArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-    
-    
-class MouseEventRunScriptWithArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-    arguments: str
-
-
-class Flip(NamedTuple):
-    general_alias: str
-
-
-class FontTextFadeSpeed(NamedTuple):
-    fade_speed: int
-
-
-class FontTextDelay(NamedTuple):
-    number_of_frames: int
-
-    
-class FontTextDelayPunc(NamedTuple):
-    previous_letter: str
-    number_of_frames: int
-
-
-class FontStartPosition(NamedTuple):
-    start_position: int
-    
-    
-class FontIntroAnimation(NamedTuple):
-    animation_type: str
-
-
-class FontOutroAnimation(NamedTuple):
-    animation_type: str
-
-
-class After(NamedTuple):
-    frames_elapse: int
-    reusable_script: str
-    
-
-class AfterCancel(NamedTuple):
-    reusable_script: str
-
-    
-class SceneLoad(NamedTuple):
-    chapter_name: str
-    scene_name: str
-
-
-class CallWithArguments(NamedTuple):
-    reusable_script_name: str
-    arguments: str
-
-
-class CallWithNoArguments(NamedTuple):
-    reusable_script_name: str
 
 
 class AfterCounter:
@@ -1786,8 +1635,8 @@ class StoryReader:
         but pygame expects 0 to 1.
         """
         
-        volume: Volume
-        volume = self._get_arguments(class_namedtuple=Volume,
+        volume: cc.Volume
+        volume = self._get_arguments(class_namedtuple=cc.Volume,
                                      given_arguments=arguments)
         
         if not volume:
@@ -1972,8 +1821,8 @@ class StoryReader:
         for letter-by-letter non-gradual text displays.
         """
 
-        dialog_sound: DialogTextSound
-        dialog_sound = self._get_arguments(class_namedtuple=DialogTextSound,
+        dialog_sound: cc.DialogTextSound
+        dialog_sound = self._get_arguments(class_namedtuple=cc.DialogTextSound,
                                            given_arguments=arguments)
 
         if not dialog_sound:
@@ -2008,8 +1857,8 @@ class StoryReader:
         if not arguments:
             return
         
-        flip: Flip
-        flip = self._get_arguments(class_namedtuple=Flip,
+        flip: cc.Flip
+        flip = self._get_arguments(class_namedtuple=cc.Flip,
                                    given_arguments=arguments)
 
         if not flip:
@@ -2118,8 +1967,8 @@ class StoryReader:
         <object_center_x_with: my object name, character, theo>
         """
 
-        name: sd.SpriteCenterWith
-        name = self._get_arguments(class_namedtuple=sd.SpriteCenterWith,
+        name: cc.SpriteCenterWith
+        name = self._get_arguments(class_namedtuple=cc.SpriteCenterWith,
                                    given_arguments=arguments)
 
         if not name:
@@ -2227,8 +2076,8 @@ class StoryReader:
         :return: None
         """
 
-        scale_center: sd.SpriteCenter
-        scale_center = self._get_arguments(class_namedtuple=sd.SpriteCenter,
+        scale_center: cc.SpriteCenter
+        scale_center = self._get_arguments(class_namedtuple=cc.SpriteCenter,
                                            given_arguments=arguments)
 
         if not scale_center:
@@ -2399,8 +2248,8 @@ class StoryReader:
         or update an existing variable's value.
         """
         
-        variable_set: VariableSet
-        variable_set = self._get_arguments(class_namedtuple=VariableSet,
+        variable_set: cc.VariableSet
+        variable_set = self._get_arguments(class_namedtuple=cc.VariableSet,
                                            given_arguments=arguments)
         
         if variable_set:
@@ -2434,8 +2283,8 @@ class StoryReader:
 
         # Is there an argument?
         if arguments:
-            adjust_y: Continue
-            adjust_y = self._get_arguments(class_namedtuple=Continue,
+            adjust_y: cc.Continue
+            adjust_y = self._get_arguments(class_namedtuple=cc.Continue,
                                            given_arguments=arguments)
 
         if not adjust_y:
@@ -2483,9 +2332,9 @@ class StoryReader:
         or dialog sprite. If it's None, then it's being applied to a dialog
         rectangle.
         """
-        animation_type: FontIntroAnimation
+        animation_type: cc.FontIntroAnimation
         animation_type =\
-            self._get_arguments(class_namedtuple=FontIntroAnimation,
+            self._get_arguments(class_namedtuple=cc.FontIntroAnimation,
                                 given_arguments=arguments)
 
         if not animation_type:
@@ -2524,9 +2373,10 @@ class StoryReader:
         return: None
         """
 
-        rotate_current_value: sd.RotateCurrentValue
-        rotate_current_value = self._get_arguments(class_namedtuple=sd.RotateCurrentValue,
-                                                   given_arguments=arguments)
+        rotate_current_value: cc.RotateCurrentValue
+        rotate_current_value =\
+            self._get_arguments(class_namedtuple=cc.RotateCurrentValue,
+                                given_arguments=arguments)
 
         if not rotate_current_value:
             return
@@ -2562,8 +2412,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_until: sd.RotateUntil
-        rotate_until = self._get_arguments(class_namedtuple=sd.RotateUntil,
+        rotate_until: cc.RotateUntil
+        rotate_until = self._get_arguments(class_namedtuple=cc.RotateUntil,
                                            given_arguments=arguments)
 
         if not rotate_until:
@@ -2611,8 +2461,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_delay: sd.RotateDelay
-        rotate_delay = self._get_arguments(class_namedtuple=sd.RotateDelay,
+        rotate_delay: cc.RotateDelay
+        rotate_delay = self._get_arguments(class_namedtuple=cc.RotateDelay,
                                            given_arguments=arguments)
 
         if not rotate_delay:
@@ -2651,8 +2501,8 @@ class StoryReader:
         Return: None
         """
 
-        rotate_speed: sd.RotateSpeed
-        rotate_speed = self._get_arguments(class_namedtuple=sd.RotateSpeed,
+        rotate_speed: cc.RotateSpeed
+        rotate_speed = self._get_arguments(class_namedtuple=cc.RotateSpeed,
                                            given_arguments=arguments)
 
         if not rotate_speed:
@@ -2678,7 +2528,7 @@ class StoryReader:
             return
         
         # Use the new float value instead of the convenience value.
-        rotate_speed = sd.RotateSpeed(rotate_speed.sprite_name,
+        rotate_speed = cc.RotateSpeed(rotate_speed.sprite_name,
                                       rotate_float_value,
                                       rotate_speed.rotate_direction)
 
@@ -2691,7 +2541,8 @@ class StoryReader:
                                     sprite_type: file_reader.ContentType,
                                     arguments):
         """
-        When a specific sprite image stops rotating, run a specific reusable script.
+        When a specific sprite image stops rotating, run a specific
+        reusable script.
         
         Arguments:
         
@@ -2701,9 +2552,10 @@ class StoryReader:
         return: None
         """
 
-        rotate_stop_run_script: sd.RotateStopRunScript
-        rotate_stop_run_script = self._get_arguments(class_namedtuple=sd.RotateStopRunScript,
-                                                     given_arguments=arguments)
+        rotate_stop_run_script: cc.RotateStopRunScript
+        rotate_stop_run_script =\
+            self._get_arguments(class_namedtuple=cc.RotateStopRunScript,
+                                given_arguments=arguments)
 
         if not rotate_stop_run_script:
             return
@@ -2754,7 +2606,7 @@ class StoryReader:
                 # it for the animation to work.
                 if sprite.rotate_current_value is None:
                     sprite.rotate_current_value = \
-                        sd.RotateCurrentValue(sprite_name=sprite_name,
+                        cc.RotateCurrentValue(sprite_name=sprite_name,
                                               rotate_current_value=0)
                 
                 sprite.start_rotating()
@@ -2777,8 +2629,8 @@ class StoryReader:
         return: None
         """
 
-        scale_delay: sd.ScaleDelay
-        scale_delay = self._get_arguments(class_namedtuple=sd.ScaleDelay,
+        scale_delay: cc.ScaleDelay
+        scale_delay = self._get_arguments(class_namedtuple=cc.ScaleDelay,
                                           given_arguments=arguments)
 
         if not scale_delay:
@@ -2833,7 +2685,7 @@ class StoryReader:
                 # it for the animation to work.
                 if sprite.scale_current_value is None:
                     sprite.scale_current_value = \
-                        sd.ScaleCurrentValue(sprite_name=sprite_name,
+                        cc.ScaleCurrentValue(sprite_name=sprite_name,
                                              scale_current_value=0)
                 
                 sprite.start_scaling()
@@ -2855,9 +2707,10 @@ class StoryReader:
         return: None
         """
 
-        scale_stop_run_script: sd.ScaleStopRunScript
-        scale_stop_run_script = self._get_arguments(class_namedtuple=sd.ScaleStopRunScript,
-                                                    given_arguments=arguments)
+        scale_stop_run_script: cc.ScaleStopRunScript
+        scale_stop_run_script =\
+            self._get_arguments(class_namedtuple=cc.ScaleStopRunScript,
+                                given_arguments=arguments)
 
         if not scale_stop_run_script:
             return
@@ -2887,9 +2740,10 @@ class StoryReader:
         return: None
         """
 
-        scale_current_value: sd.ScaleCurrentValue
-        scale_current_value = self._get_arguments(class_namedtuple=sd.ScaleCurrentValue,
-                                                  given_arguments=arguments)
+        scale_current_value: cc.ScaleCurrentValue
+        scale_current_value =\
+            self._get_arguments(class_namedtuple=cc.ScaleCurrentValue,
+                                given_arguments=arguments)
 
         if not scale_current_value:
             return
@@ -2922,8 +2776,8 @@ class StoryReader:
         return: None
         """
 
-        scale_until: sd.ScaleUntil
-        scale_until = self._get_arguments(class_namedtuple=sd.ScaleUntil,
+        scale_until: cc.ScaleUntil
+        scale_until = self._get_arguments(class_namedtuple=cc.ScaleUntil,
                                           given_arguments=arguments)
 
         if not scale_until:
@@ -2957,8 +2811,8 @@ class StoryReader:
         return: None
         """
 
-        scale_by: sd.ScaleBy
-        scale_by = self._get_arguments(class_namedtuple=sd.ScaleBy,
+        scale_by: cc.ScaleBy
+        scale_by = self._get_arguments(class_namedtuple=cc.ScaleBy,
                                        given_arguments=arguments)
 
         if not scale_by:
@@ -3194,7 +3048,7 @@ class StoryReader:
         elif percent < 1:
             percent = 1
         
-        fade_direction = rotate_direction.lower()
+        rotate_direction = rotate_direction.lower()
         if not rotate_direction in ("clockwise", "counterclockwise"):
             return
 
@@ -3487,8 +3341,8 @@ class StoryReader:
         return: None
         """
 
-        fade_speed: sd.FadeSpeed
-        fade_speed = self._get_arguments(class_namedtuple=sd.FadeSpeed,
+        fade_speed: cc.FadeSpeed
+        fade_speed = self._get_arguments(class_namedtuple=cc.FadeSpeed,
                                          given_arguments=arguments)
 
         if not fade_speed:
@@ -3514,7 +3368,7 @@ class StoryReader:
             return
 
         # Use the new float value instead of the convenience value.
-        fade_speed = sd.FadeSpeed(fade_speed.sprite_name,
+        fade_speed = cc.FadeSpeed(fade_speed.sprite_name,
                                   fade_float_value,
                                   fade_speed.fade_direction)
 
@@ -3534,7 +3388,7 @@ class StoryReader:
                 initial_fade_value = 0
 
             sprite.current_fade_value = \
-                sd.FadeCurrentValue(sprite_name=fade_speed.sprite_name,
+                cc.FadeCurrentValue(sprite_name=fade_speed.sprite_name,
                                     current_fade_value=initial_fade_value)
 
         # Set the fade speed.
@@ -3556,9 +3410,10 @@ class StoryReader:
         return: None
         """
 
-        current_fade_value: sd.FadeCurrentValue
-        current_fade_value = self._get_arguments(class_namedtuple=sd.FadeCurrentValue,
-                                                 given_arguments=arguments)
+        current_fade_value: cc.FadeCurrentValue
+        current_fade_value =\
+            self._get_arguments(class_namedtuple=cc.FadeCurrentValue,
+                                given_arguments=arguments)
 
         if not current_fade_value:
             return
@@ -3591,8 +3446,8 @@ class StoryReader:
         return: None
         """
 
-        fade_until: sd.FadeUntilValue
-        fade_until = self._get_arguments(class_namedtuple=sd.FadeUntilValue,
+        fade_until: cc.FadeUntilValue
+        fade_until = self._get_arguments(class_namedtuple=cc.FadeUntilValue,
                                          given_arguments=arguments)
 
         if not fade_until:
@@ -3624,8 +3479,8 @@ class StoryReader:
         return: None
         """
 
-        fade_delay: sd.FadeDelay
-        fade_delay = self._get_arguments(class_namedtuple=sd.FadeDelay,
+        fade_delay: cc.FadeDelay
+        fade_delay = self._get_arguments(class_namedtuple=cc.FadeDelay,
                                          given_arguments=arguments)
 
         if not fade_delay:
@@ -3693,9 +3548,9 @@ class StoryReader:
                             "OriginalName": original_name}
         
 
-        sprite_name_and_alias: sd.SpriteLoad
+        sprite_name_and_alias: cc.SpriteLoad
         sprite_name_and_alias = \
-            self._get_arguments(class_namedtuple=sd.SpriteLoad,
+            self._get_arguments(class_namedtuple=cc.SpriteLoad,
                                 given_arguments=arguments)
 
         if not sprite_name_and_alias:
@@ -3767,9 +3622,10 @@ class StoryReader:
         return: None
         """
 
-        fade_stop_run_script: sd.FadeStopRunScript
-        fade_stop_run_script = self._get_arguments(class_namedtuple=sd.FadeStopRunScript,
-                                                   given_arguments=arguments)
+        fade_stop_run_script: cc.FadeStopRunScript
+        fade_stop_run_script =\
+            self._get_arguments(class_namedtuple=cc.FadeStopRunScript,
+                                given_arguments=arguments)
 
         if not fade_stop_run_script:
             return
@@ -3799,9 +3655,10 @@ class StoryReader:
         return: None
         """
 
-        movement_stop_run_script: sd.MovementStopRunScript
-        movement_stop_run_script = self._get_arguments(class_namedtuple=sd.MovementStopRunScript,
-                                                       given_arguments=arguments)
+        movement_stop_run_script: cc.MovementStopRunScript
+        movement_stop_run_script =\
+            self._get_arguments(class_namedtuple=cc.MovementStopRunScript,
+                                given_arguments=arguments)
 
         if not movement_stop_run_script:
             return
@@ -3824,9 +3681,9 @@ class StoryReader:
         Example: <after: 30 (frames), reusable script here>
         """
 
-        after_timer: After
+        after_timer: cc.After
         after_timer =\
-            self._get_arguments(class_namedtuple=After,
+            self._get_arguments(class_namedtuple=cc.After,
                                 given_arguments=arguments)
 
 
@@ -3849,9 +3706,9 @@ class StoryReader:
         to cancel a timer.
         """
 
-        after_cancel: AfterCancel
+        after_cancel: cc.AfterCancel
         after_cancel =\
-            self._get_arguments(class_namedtuple=AfterCancel,
+            self._get_arguments(class_namedtuple=cc.AfterCancel,
                                 given_arguments=arguments)
         
 
@@ -3939,16 +3796,16 @@ class StoryReader:
         :return: None
         """
 
-        call: CallWithArguments
+        call: cc.CallWithArguments
 
         if not with_arguments:
             # The class type will be CallWithNoArguments here
             call = \
-                self._get_arguments(class_namedtuple=CallWithNoArguments,
+                self._get_arguments(class_namedtuple=cc.CallWithNoArguments,
                                     given_arguments=reusable_script_name)
         else:
             call = \
-                self._get_arguments(class_namedtuple=CallWithArguments,
+                self._get_arguments(class_namedtuple=cc.CallWithArguments,
                                     given_arguments=reusable_script_name)
 
         # If a reusable script is calling another reusable script, spawn the new background reader
@@ -4058,9 +3915,9 @@ class StoryReader:
         :return: None
         """
         
-        load_scene: SceneLoad
+        load_scene: cc.SceneLoad
         load_scene =\
-            self._get_arguments(class_namedtuple=SceneLoad,
+            self._get_arguments(class_namedtuple=cc.SceneLoad,
                                 given_arguments=arguments)
 
         chapter_name = load_scene.chapter_name
@@ -4111,8 +3968,8 @@ class StoryReader:
         :param arguments: str, such as '3, 5' (which means delay x by 3 frames, delay y by 5 frames.
         :return: None
         """
-        movement_delay: sd.MovementDelay
-        movement_delay = self._get_arguments(class_namedtuple=sd.MovementDelay,
+        movement_delay: cc.MovementDelay
+        movement_delay = self._get_arguments(class_namedtuple=cc.MovementDelay,
                                              given_arguments=arguments)
 
         if not movement_delay:
@@ -4181,8 +4038,8 @@ class StoryReader:
         :return: None
         """
 
-        movement_speed: sd.MovementSpeed
-        movement_speed = self._get_arguments(class_namedtuple=sd.MovementSpeed,
+        movement_speed: cc.MovementSpeed
+        movement_speed = self._get_arguments(class_namedtuple=cc.MovementSpeed,
                                              given_arguments=arguments)
 
         if not movement_speed:
@@ -4312,9 +4169,9 @@ class StoryReader:
         rectangle.
         """
 
-        fade_speed: FontTextFadeSpeed
+        fade_speed: cc.FontTextFadeSpeed
         fade_speed =\
-            self._get_arguments(class_namedtuple=FontTextFadeSpeed,
+            self._get_arguments(class_namedtuple=cc.FontTextFadeSpeed,
                                 given_arguments=arguments)
 
         fade_speed = fade_speed.fade_speed
@@ -4357,9 +4214,9 @@ class StoryReader:
         rectangle.
         """
 
-        delay_punc: FontTextDelayPunc
+        delay_punc: cc.FontTextDelayPunc
         delay_punc =\
-            self._get_arguments(class_namedtuple=FontTextDelayPunc,
+            self._get_arguments(class_namedtuple=cc.FontTextDelayPunc,
                                 given_arguments=arguments)
 
         previous_letter = delay_punc.previous_letter
@@ -4426,9 +4283,9 @@ class StoryReader:
         active font handler in a reusable script.
         """
 
-        text_speed_delay: FontTextDelay
+        text_speed_delay: cc.FontTextDelay
         text_speed_delay =\
-            self._get_arguments(class_namedtuple=FontTextDelay,
+            self._get_arguments(class_namedtuple=cc.FontTextDelay,
                                 given_arguments=arguments)
         
         text_speed_delay = text_speed_delay.number_of_frames
@@ -4482,9 +4339,10 @@ class StoryReader:
         rectangle.
         """
         
-        start_position: FontStartPosition
-        start_position = self._get_arguments(class_namedtuple=FontStartPosition,
-                                             given_arguments=arguments)
+        start_position: cc.FontStartPosition
+        start_position =\
+            self._get_arguments(class_namedtuple=cc.FontStartPosition,
+                                given_arguments=arguments)
 
         if not start_position:
             return
@@ -4516,8 +4374,8 @@ class StoryReader:
         Return: a tuple (the sprite, sprite type, sprite_text (argument info))
         """
         
-        sprite_text: SpriteText
-        sprite_text = self._get_arguments(class_namedtuple=SpriteText,
+        sprite_text: cc.SpriteText
+        sprite_text = self._get_arguments(class_namedtuple=cc.SpriteText,
                                           given_arguments=arguments)
 
         if not sprite_text:
@@ -4560,7 +4418,7 @@ class StoryReader:
         
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4584,7 +4442,7 @@ class StoryReader:
         
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4613,7 +4471,7 @@ class StoryReader:
     
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4637,7 +4495,7 @@ class StoryReader:
     
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4661,7 +4519,7 @@ class StoryReader:
     
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4685,7 +4543,7 @@ class StoryReader:
     
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4711,7 +4569,7 @@ class StoryReader:
 
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteTextClear
+        command_arguments: cc.SpriteTextClear
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4751,7 +4609,7 @@ class StoryReader:
 
         # Type-hints
         sprite: sd.SpriteObject
-        command_arguments: SpriteText
+        command_arguments: cc.SpriteText
         
         # Get the sprite we want to deal with
         # and the command arguments we want to apply.
@@ -4856,8 +4714,8 @@ class StoryReader:
             # Add the random condition name to the arguments.
             arguments += f", {random_condition_name}"
         
-        condition: ConditionDefinition
-        condition = self._get_arguments(class_namedtuple=ConditionDefinition,
+        condition: cc.ConditionDefinition
+        condition = self._get_arguments(class_namedtuple=cc.ConditionDefinition,
                                         given_arguments=arguments)
         
         condition_checker = Condition(value1=condition.value1,
@@ -4927,8 +4785,8 @@ class StoryReader:
         else:
             # We're playing an audio file or a music file with no loop.
             
-            play_audio: PlayAudio
-            play_audio = self._get_arguments(class_namedtuple=PlayAudio,
+            play_audio: cc.PlayAudio
+            play_audio = self._get_arguments(class_namedtuple=cc.PlayAudio,
                                              given_arguments=arguments)
     
             if not play_audio:
@@ -4953,8 +4811,8 @@ class StoryReader:
         
         Return: None
         """
-        halt_auto: HaltAuto
-        halt_auto = self._get_arguments(class_namedtuple=HaltAuto,
+        halt_auto: cc.HaltAuto
+        halt_auto = self._get_arguments(class_namedtuple=cc.HaltAuto,
                                         given_arguments=arguments)
 
         if not halt_auto:
@@ -4995,8 +4853,8 @@ class StoryReader:
         It forces the main reader to pause. It has
         no effect on background readers.
         """
-        rest: Rest
-        rest = self._get_arguments(class_namedtuple=Rest,
+        rest: cc.Rest
+        rest = self._get_arguments(class_namedtuple=cc.Rest,
                                    given_arguments=arguments)
 
         if not rest:
@@ -5035,11 +4893,11 @@ class StoryReader:
         When a mouse action occurs, run a specific reusable script.
         """
         
-        class_name = MouseEventRunScriptWithArguments \
+        class_name = cc.MouseEventRunScriptWithArguments \
             if arguments.count(",") >=2 \
-            else MouseEventRunScriptNoArguments
+            else cc.MouseEventRunScriptNoArguments
         
-        mouse_run_script: MouseEventRunScriptWithArguments
+        mouse_run_script: cc.MouseEventRunScriptWithArguments
         mouse_run_script =\
             self._get_arguments(class_namedtuple=class_name,
                                 given_arguments=arguments)
@@ -5062,11 +4920,11 @@ class StoryReader:
         if not existing_sprite:
             return
         
-        if class_name == MouseEventRunScriptWithArguments:
+        if class_name == cc.MouseEventRunScriptWithArguments:
             reusable_script_name = mouse_run_script.reusable_script_name + \
                 ", " + mouse_run_script.arguments
             
-        elif class_name == MouseEventRunScriptNoArguments:
+        elif class_name == cc.MouseEventRunScriptNoArguments:
             reusable_script_name = mouse_run_script.reusable_script_name
         
         # Set the name of the reusable script to run when a specific 
@@ -5086,16 +4944,20 @@ class StoryReader:
         This is similar to <halt> except it's not interactive (mouse-clicking)
         will not resume it.
 
-        It forces the main reader to pause. It has no effect on background readers.
+        It forces the main reader to pause.
+        It has no effect on background readers.
         """
 
         # <wait_for_animation: fade screen> ?
         if "," not in arguments:
-            # There are no commas, which means it is probably: <wait_for_animation: fade screen>
+            # There are no commas, which means it is probably:
+            # <wait_for_animation: fade screen>
 
-            wait_for_fade_screen: WaitForAnimationFadeScreen
-            wait_for_fade_screen = self._get_arguments(class_namedtuple=WaitForAnimationFadeScreen,
-                                                       given_arguments=arguments)
+            wait_for_fade_screen: cc.WaitForAnimationFadeScreen
+            wait_for_fade_screen =\
+                self._get_arguments(
+                    class_namedtuple=cc.WaitForAnimationFadeScreen,
+                    given_arguments=arguments)
 
             if not wait_for_fade_screen:
                 return
@@ -5115,9 +4977,10 @@ class StoryReader:
             # We probably need to wait for a specific type of sprite.
             # Example: <wait_for_animation: character, theo, move>
 
-            wait_for_sprite_animation: WaitForAnimation
-            wait_for_sprite_animation = self._get_arguments(class_namedtuple=WaitForAnimation,
-                                                            given_arguments=arguments)
+            wait_for_sprite_animation: cc.WaitForAnimation
+            wait_for_sprite_animation =\
+                self._get_arguments(class_namedtuple=cc.WaitForAnimation,
+                                    given_arguments=arguments)
 
             if not wait_for_sprite_animation:
                 return
@@ -5137,8 +5000,8 @@ class StoryReader:
         Right before it starts fading out, play a specific scene.
         This is used when transitioning between scenes.
         """
-        scene_with_fade: SceneWithFade
-        scene_with_fade = self._get_arguments(class_namedtuple=SceneWithFade,
+        scene_with_fade: cc.SceneWithFade
+        scene_with_fade = self._get_arguments(class_namedtuple=cc.SceneWithFade,
                                               given_arguments=arguments)
 
         if not scene_with_fade:
@@ -5187,8 +5050,8 @@ class StoryReader:
         
         Find the sprite using its general alias.
         """
-        name: sd.SpriteShowHide
-        name = self._get_arguments(class_namedtuple=sd.SpriteShowHide,
+        name: cc.SpriteShowHide
+        name = self._get_arguments(class_namedtuple=cc.SpriteShowHide,
                                    given_arguments=arguments)
 
         if not name:
@@ -5251,8 +5114,8 @@ class StoryReader:
         Changes:
         Oct 12, 2023 - Match flip values when swapping sprites (Jobin Rezai)
         """
-        name: sd.SpriteShowHide
-        name = self._get_arguments(class_namedtuple=sd.SpriteShowHide,
+        name: cc.SpriteShowHide
+        name = self._get_arguments(class_namedtuple=cc.SpriteShowHide,
                                    given_arguments=arguments)
 
         if not name:
@@ -5527,8 +5390,8 @@ class StoryReader:
         reusable outro finished, border color hex, border opacity, border width>
         """
 
-        dialog_rectangle_arguments: DialogRectangleDefinition
-        dialog_rectangle_arguments = self._get_arguments(class_namedtuple=DialogRectangleDefinition,
+        dialog_rectangle_arguments: cc.DialogRectangleDefinition
+        dialog_rectangle_arguments = self._get_arguments(class_namedtuple=cc.DialogRectangleDefinition,
                                                          given_arguments=arguments)
 
         if not dialog_rectangle_arguments:
@@ -5677,7 +5540,7 @@ class StoryReader:
                 # Example: "75" to 75
                 try:
                     stop_where = int(stop_where)
-                except ValueError as e:
+                except ValueError:
                     logging.warning(f"Could not convert stop location, {stop_where}, to an int")
                     return
                 
@@ -5896,9 +5759,9 @@ class WaitForAnimationHandler:
         """
         return sprite_object.is_fading \
         and isinstance(sprite_object.current_fade_value,
-                       sd.FadeCurrentValue) \
+                       cc.FadeCurrentValue) \
         and isinstance(sprite_object.fade_until,
-                       sd.FadeUntilValue) \
+                       cc.FadeUntilValue) \
         and sprite_object.current_fade_value != sprite_object.fade_until.fade_value
 
 class ReusableScriptArgument:
