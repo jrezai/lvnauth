@@ -31,6 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
+import command_class as cc
 from player.condition_handler import ConditionOperator
 from tkinter import messagebox
 from tkinter import ttk
@@ -40,6 +41,8 @@ from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entry_limit import EntryWithLimit
 from functools import partial
+from re import search
+from command_helper import CommandHelper, ContextEditRun
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -327,8 +330,19 @@ class TextCreateDialogFrame:
         
         lbl_widget.configure(background=hex_new_color)
 
+
 class WizardWindow:
+    
+    # This dictionary is used for selecting a specific command
+    # in the treeview widget when editing an existing command from a script.
+    # Purpose: so we can select any command via the treeview widget when
+    # editing a script command.
+    # Key: command name (lowercase)
+    # Value: iid in the treeview widget
+    command_item_iids = {}
+    
     def __init__(self, master=None):
+        
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
         builder.add_from_file(PROJECT_UI)
@@ -337,6 +351,10 @@ class WizardWindow:
         self.mainwindow.bind("<Escape>", self.on_cancel_button_clicked)
         
         builder.connect_callbacks(self)
+        
+        # Clear dictionary used for keeping track of command name item iids
+        # in the treeview widget.
+        WizardWindow.command_item_iids.clear()
         
         self.sb_vertical = builder.get_object("sb_vertical")
 
@@ -3203,6 +3221,23 @@ class WizardWindow:
 
         self.active_page = page
         page.show()
+        
+    def show_edit_page(self, command_object: ContextEditRun):
+        """
+        Edit a command based on the given command object variable.
+        
+        First, find the page in the wizard from the command name.
+        Then once the page is found, pass the command object to the page,
+        which is basically the arguments from the script line.
+        """
+        wizard_page: WizardListing
+        wizard_page = self.pages.get(command_object.command_name)
+        
+        if not wizard_page:
+            return
+        
+        # Populate the widgets on the page with the provided argument(s) data.
+        wizard_page.edit(command_object.command_object)
 
     def run(self):
         self.mainwindow.mainloop()
@@ -3402,7 +3437,6 @@ class WizardListing:
                                                        index="end",
                                                        text=parent_display_text)
             
-            
         """
         If available, use the group name for this listing to determine
         whether we should change the background row of the treeview item
@@ -3436,11 +3470,18 @@ class WizardListing:
             display_group_name = ""
 
         # Insert command name to the treeview.
-        self.treeview_commands.insert(parent=parent_iid,
-                                      index="end",
-                                      text=display_group_name, 
-                                      values=(sub_display_text, ),
-                                      tag=WizardListing.row_switcher.get_row_color_tag())
+        command_iid = \
+            self.treeview_commands.insert(
+                parent=parent_iid,
+                index="end",
+                text=display_group_name, 
+                values=(sub_display_text, ),
+                tag=WizardListing.row_switcher.get_row_color_tag())
+        
+        # So we can find the item iid in the treeview widget for a particular
+        # command when editing a command from a script. That way, we can select
+        # the command item iid in the treeview widget later on if needed.
+        WizardWindow.command_item_iids[sub_display_text.lower()] = command_iid
 
         # This frame will contain the contents of the page.
         # It will be shown when the show() method is called.
@@ -3537,8 +3578,46 @@ class WizardListing:
         self.header_label.configure(text=self.command_name)
         self.purpose_label.configure(text=self.purpose_line)
 
-        self.frame_content.grid()    
-
+        self.frame_content.grid()
+    
+    def edit(self, command_class_object):
+        """
+        Show the current wizard listing (frame) and populate
+        the widgets with the given command arguments.
+        
+        Arguments:
+        
+        - command_class_object: the arguments for the applicable class
+        of the command. For example, for <character_show>, the command
+        object class would be: SpriteShowHide.
+        
+        Each command will have its own class object, although some commands
+        will be share the same class object due to similarities.
+        """
+        
+        # Find the treeview iid for the command
+        command_iid =\
+            WizardWindow.command_item_iids.get(self.command_name.lower())
+        
+        if not command_iid:
+            return
+        
+        self.treeview_commands.see(command_iid)
+        self.treeview_commands.selection_add(command_iid)
+        print(command_class_object)
+        
+        self._edit_populate(command_class_object=command_class_object)
+        
+    def _edit_populate(self, command_class_object):
+        """
+        Populate the widgets for this listing from the given command
+        class arguments (namedtuple).
+        
+        This method should be overridden by each page as each
+        wizard listing page will have its own unique widgets and parameters.
+        """
+        pass
+        
 
 class SharedPages:
     
@@ -5332,6 +5411,21 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.Volume):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio volume, which may look like this:
+            # '35'
+            audio_volume = command_class_object.volume            
+
+            self.v_scale_value.set(audio_volume)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -6381,7 +6475,7 @@ class SharedPages:
             names = [item for item in ref_dict]
             self.cb_selections.configure(values=names)
             
-            self.cb_selections.delete(0, "end")
+            # self.cb_selections.delete(0, "end")
             
         def check_inputs(self) -> str | None:
             """
@@ -6440,6 +6534,21 @@ class SharedPages:
             self.populate()
     
             self.frame_content.grid()
+            
+        def _edit_populate(self, command_class_object: cc.PlayAudio):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio name, which may look like this:
+            # 'normal_music'
+            audio_name = command_class_object.audio_name.strip()         
+
+            self.cb_selections.insert(0, audio_name)     
             
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
         """
@@ -6666,6 +6775,43 @@ class SharedPages:
                     return f"<{self.command_name}: {selection}, loop>"
                     
             return f"<{self.command_name}: {selection}>"
+        
+        def _edit_populate(self, command_class_object: cc.PlayAudio):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio name, which may look like this:
+            # 'normal_music, loop' (the loop part is optional)
+            audio_name = command_class_object.audio_name            
+
+            # Even if there is no ', loop' part, this will still work.
+            # We'll either have ['normal_music'] or ['normal_music', 'loop']
+            arguments = [item.strip() for item in audio_name.split(",")]
+
+            if not arguments:
+                return
+            
+            # Some commands that share this method won't have a loop option.
+            # For example: <play_music> has a loop option but <play_sound>
+            # doesn't, so we check here to prevent an exception.
+            if hasattr(self, "v_loop_audio"):
+
+                if len(arguments) > 1 and arguments[1] == "loop":
+                    loop = True
+                else:
+                    loop = False
+                    
+                self.v_loop_audio.set(loop)
+            
+            self.cb_selections.insert(0, arguments[0])
+            
+            
+
     
     
 

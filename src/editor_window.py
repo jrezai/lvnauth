@@ -32,6 +32,7 @@ import json
 import subprocess
 import sys
 import webbrowser
+import command_helper as ch
 # from shared_components import Story
 from story_details_window import StoryDetailsWindow
 from font_sprite_properties_window import FontSpriteWindow
@@ -370,6 +371,92 @@ class EditorMainApp:
 
         # Connect bindings for the right-click 'Rename...' menus.
         self.connect_rename_context_menus()
+        
+        # Connect bindings for the right-click 'Edit line' menu.
+        self.connect_edit_line_context_menu()
+        
+    @staticmethod
+    def always_on_top(master, window):
+            """
+            Set the given window to be always on top.
+            
+            Arguments:
+            
+            - master: the parent
+            
+            - window: the window that needs to be always on top
+            """
+            window.transient(master)
+        
+            window.update_idletasks()
+        
+            # Don't allow interactions with other windows in the app.
+            window.grab_set()
+        
+            # Wait for this top-level window to close before giving access back
+            # to the root's main loop.
+        
+            # In other words, with this line, other code won't run until
+            # this window is closed.
+            window.wait_window(window)    
+        
+    def on_edit_line_menu_right_clicked(self, event):
+        """
+        Determine whether the current line that the blinking cursor is on
+        can be edited or not (check if the arguments can be parsed) and if it
+        can, show the Edit menu as enabled; otherwise show the menu as
+        disabled.
+        """
+        
+        # Get the current line of script based on where the caret is.
+        script_line = self.text_script.get("insert linestart",
+                                           "insert lineend")
+        
+        script_line = script_line.strip()
+        
+        # Can the current line be edited? Try to parse the arguments.
+        can_edit = ch.CommandHelper.can_edit(script_line=script_line)
+        if can_edit:
+            state = "normal"
+        else:
+            state = "disabled"
+        
+        self.mnu_editor.entryconfig (0, state=state)
+        
+        # Show the 'Edit line' context menu.
+        self.mnu_command_edit_line.tk_popup(event.x_root, event.y_root)
+        
+    def on_edit_line_menu_clicked(self):
+        
+        wizard = WizardWindow(self.mainwindow)
+        
+        wizard.show_edit_page(command_object=ch.CommandHelper.context_edit_run)
+        
+
+        # Set the wizard window to be always on top and wait
+        # for the wizard window to close before releasing control back.
+        self.always_on_top(self.mainwindow, wizard.mainwindow)        
+ 
+    def connect_edit_line_context_menu(self):
+        """
+        Connect the bindings for the right-click 'Edit line' menu. 
+        """
+        
+        # The parent menu (we need this to make the Command menu the sub
+        # of this menu)
+        self.mnu_editor = self.builder.get_object("mnu_editor")
+        
+        # Edit line menu
+        self.mnu_command_edit_line =\
+            self.builder.get_object("mnu_command_edit_line", self.mnu_editor)
+        
+        # Bind the command here because it doesn't appear to work from pygubu.
+        self.mnu_command_edit_line.entryconfigure(
+            index=0,
+            command=self.on_edit_line_menu_clicked)          
+        
+        self.text_script.bind("<Button-3>", self.on_edit_line_menu_right_clicked)
+      
 
     def connect_rename_context_menus(self):
         """
@@ -388,7 +475,6 @@ class EditorMainApp:
         # Binding for the 'Move Up...' menu itself.
         self.mnu_command_move_up = self.builder.get_object("mnu_command_move_up")
         self.mnu_command_move_up.entryconfigure(index=2,
-                                                
                                                command=move_up_method)
         # Binding for the 'Move Down...' menu itself.
         self.mnu_command_move_up = self.builder.get_object("mnu_command_move_down")
@@ -1497,11 +1583,10 @@ class EditorMainApp:
             return
         
         wizard = WizardWindow(self.mainwindow)
-
-        wizard.mainwindow.transient(self.mainwindow)
-        wizard.mainwindow.update_idletasks()
-        wizard.mainwindow.grab_set()
-        wizard.mainwindow.wait_window(wizard.mainwindow)
+        
+        # Set the wizard window to be always on top and wait
+        # for the wizard window to close before releasing control back.
+        self.always_on_top(self.mainwindow, wizard.mainwindow)
         
         # The wizard window was cancelled? Return.
         if not wizard.generated_command:
