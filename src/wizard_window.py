@@ -6535,7 +6535,7 @@ class SharedPages:
     
             self.frame_content.grid()
             
-        def _edit_populate(self, command_class_object: cc.PlayAudio):
+        def _edit_populate(self, command_class_object: cc.PlayAudio | cc.SpriteLoad):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -6544,11 +6544,20 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the audio name, which may look like this:
-            # 'normal_music'
-            audio_name = command_class_object.audio_name.strip()         
-
-            self.cb_selections.insert(0, audio_name)     
+            # Get the audio name, which may look like this: 'normal_music'
+            if isinstance(command_class_object, cc.PlayAudio):
+                # Used with <load_audio> and <load_music>
+                
+                audio_name = command_class_object.audio_name.strip()         
+                self.cb_selections.insert(0, audio_name)
+            
+            elif isinstance(command_class_object, cc.SpriteLoad) \
+                 or isinstance(command_class_object, cc.SpriteShowHide):
+                # Used with <load_background>, <background_show>
+                
+                sprite_name = command_class_object.sprite_name
+                self.cb_selections.insert(0, sprite_name)
+                
             
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
         """

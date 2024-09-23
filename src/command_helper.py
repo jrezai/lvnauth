@@ -47,6 +47,10 @@ class CommandHelper:
         "volume_music": cc.Volume,
         "volume_text": cc.Volume,
         "volume_voice": cc.Volume,
+        "dialog_text_sound": cc.DialogTextSound,
+        "load_background": cc.SpriteLoad,
+        "background_show": cc.SpriteShowHide,
+        "background_hide": cc.SpriteShowHide,
     }
     
     @staticmethod
@@ -227,7 +231,18 @@ class CommandHelper:
         # valid and can be edited in the Wizard.
         command_object = None
         if arguments:
-            command_object = command_cls(arguments)
+            
+            # <load_background> has a special fixed alias, so we need
+            # to deal with this command a bit differently.
+            if command_name == "load_background":
+                if "," not in arguments:
+                    fixed_alias = "fixedalias"
+                    command_object = command_cls(arguments, fixed_alias)
+            
+            # If we haven't instantiated the command class from 
+            # <load_background> above, then continue instantiating here.
+            if not command_object:
+                command_object = command_cls(arguments)
             
         # So if the 'Edit' menu is clicked, we know which command
         # to show the wizard's page for.
