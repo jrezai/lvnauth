@@ -41,7 +41,7 @@ from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entry_limit import EntryWithLimit
 from functools import partial
-from re import search
+from re import search, IGNORECASE
 from command_helper import CommandHelper, ContextEditRun
 
 
@@ -6639,6 +6639,41 @@ class SharedPages:
                 self.entry_load_as.grid(row=5, column=0, sticky="w")
             
             return frame_content
+
+        def _edit_populate(self, command_class_object: cc.SpriteLoad):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            sprite_name = command_class_object.sprite_name
+            alias = command_class_object.sprite_general_alias
+            
+            # Should we sprite be loaded as a different name instead of
+            # the original name? Find out with the method below.            
+            preferred_name =\
+                CommandHelper.get_preferred_sprite_name(sprite_name)
+            
+            if preferred_name:
+                # The argument for this command has a 'load as' keyword
+                # meaning that the sprite needs to be loaded using a different
+                # name.
+                # Example:
+                # <load_character: akari_happy load as other_akari, akari>
+                
+                # Distinguish the two names so we can show them in
+                # separate widgets.
+                sprite_name = preferred_name.get("OriginalName")
+                load_as_name = preferred_name.get("LoadAsName")
+                
+                # Include a custom 'load as' name.
+                self.entry_load_as.insert(0, load_as_name)
+
+            self.cb_selections.insert(0, sprite_name)
+            self.entry_general_alias.insert(0, alias)
 
         def check_inputs(self) -> Dict | None:
             """

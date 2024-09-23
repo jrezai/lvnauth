@@ -37,6 +37,7 @@ import cover_screen_handler
 import font_handler
 import audio_player
 import command_class as cc
+import command_helper as ch
 from re import search, findall
 from typing import Tuple
 # from font_handler import ActiveFontHandler
@@ -3508,46 +3509,6 @@ class StoryReader:
         so it's ready to be displayed whenever it's needed.
         """
         
-        def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
-            """
-            Return the preferred name and the original name of a sprite
-            when using 'Load As' in the name section.
-            If 'Load As' is not used, then None is returned.
-            
-            For example:
-            'Theo Load As Th' will return {"LoadAsName": "Th", "OriginalName": "Theo"}
-            The 'Load As' keyword part is not case-sensitive
-            
-            If there is no 'Load As', None is returned.
-            For example:
-            'Theo' will return None.
-            """
-        
-            result = re.search(pattern=r"^(?P<OriginalName>.*)[\s](load as)[\s](?P<LoadAsName>.*)",
-                               string=sprite_name_argument,
-                               flags=re.IGNORECASE)
-            
-            # Was there a search match?
-            if not result:
-                # No match was found, which means 'Load As' is not being used.
-                
-                return
-            
-            else:
-            
-                result = result.groupdict()
-                load_as_name = result.get("LoadAsName")
-                original_name = result.get("OriginalName")
-                
-                # Remove leading and trailing spaces.
-                if load_as_name and original_name:
-                    load_as_name = load_as_name.strip()
-                    original_name = original_name.strip()
-                    
-                    return {"LoadAsName": load_as_name,
-                            "OriginalName": original_name}
-        
-
         sprite_name_and_alias: cc.SpriteLoad
         sprite_name_and_alias = \
             self._get_arguments(class_namedtuple=cc.SpriteLoad,
@@ -3561,7 +3522,7 @@ class StoryReader:
         # new name.
         # For example: <load_character: theo Load As th>
         original_and_preferred_name =\
-            get_preferred_sprite_name(
+            ch.CommandHelper.get_preferred_sprite_name(
                 sprite_name_argument=sprite_name_and_alias.sprite_name)
         
         # Separate the original name and preferred load-as name,

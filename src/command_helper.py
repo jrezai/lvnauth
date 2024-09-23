@@ -17,7 +17,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import command_class as cc
-from re import search
+from re import search, IGNORECASE
 from typing import Dict
 
 
@@ -51,6 +51,7 @@ class CommandHelper:
         "load_background": cc.SpriteLoad,
         "background_show": cc.SpriteShowHide,
         "background_hide": cc.SpriteShowHide,
+        "load_character": cc.SpriteLoad,
     }
     
     @staticmethod
@@ -225,6 +226,12 @@ class CommandHelper:
         # Remove excess spacing
         if arguments:
             arguments = arguments.strip()
+            
+            # If there is more than 1 argument, put the arguments in a list
+            # because multi-parameter command classes need to be instantiated
+            # using a list, not a single string.
+            if "," in arguments:
+                arguments = [item.strip() for item in arguments.split(",")]
         
         # Attempt to instantiate the command's class using the supplied
         # arguments. If successful, that means the arguments are likely
@@ -242,7 +249,15 @@ class CommandHelper:
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.
             if not command_object:
-                command_object = command_cls(arguments)
+                # If we're passing in a list, unpack it into separate arguments.
+                # This is used for commands that accept multiple arguments.
+                
+                if isinstance(arguments, list):
+                    # Multi-argument command
+                    command_object = command_cls(*arguments)
+                else:
+                    # Single argument command
+                    command_object = command_cls(arguments)
             
         # So if the 'Edit' menu is clicked, we know which command
         # to show the wizard's page for.
@@ -252,3 +267,43 @@ class CommandHelper:
             
         # So the caller knows that this script line can be edited.
         return True
+
+    @staticmethod
+    def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
+        """
+        Return the preferred name and the original name of a sprite
+        when using 'Load As' in the name section.
+        If 'Load As' is not used, then None is returned.
+        
+        For example:
+        'Theo Load As Th' will return {"LoadAsName": "Th", "OriginalName": "Theo"}
+        The 'Load As' keyword part is not case-sensitive
+        
+        If there is no 'Load As', None is returned.
+        For example:
+        'Theo' will return None.
+        """
+    
+        result = search(pattern=r"^(?P<OriginalName>.*)[\s](load as)[\s](?P<LoadAsName>.*)",
+                           string=sprite_name_argument,
+                           flags=IGNORECASE)
+        
+        # Was there a search match?
+        if not result:
+            # No match was found, which means 'Load As' is not being used.
+            
+            return
+        
+        else:
+        
+            result = result.groupdict()
+            load_as_name = result.get("LoadAsName")
+            original_name = result.get("OriginalName")
+            
+            # Remove leading and trailing spaces.
+            if load_as_name and original_name:
+                load_as_name = load_as_name.strip()
+                original_name = original_name.strip()
+                
+                return {"LoadAsName": load_as_name,
+                        "OriginalName": original_name}
