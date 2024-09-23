@@ -52,6 +52,7 @@ class CommandHelper:
         "background_show": cc.SpriteShowHide,
         "background_hide": cc.SpriteShowHide,
         "load_character": cc.SpriteLoad,
+        "character_show": cc.SpriteShowHide,
     }
     
     @staticmethod
