@@ -56,7 +56,8 @@ class CommandHelper:
         "character_hide": cc.SpriteShowHide,
         "character_flip_both": cc.SpriteShowHide,
         "character_flip_horizontal": cc.SpriteShowHide,
-        "character_flip_vertical": cc.SpriteShowHide,
+        "character_flip_vertical": cc.SpriteShowHide, 
+        "character_after_fading_stop": cc.FadeStopRunScript,
     }
     
     @staticmethod
@@ -257,12 +258,19 @@ class CommandHelper:
                 # If we're passing in a list, unpack it into separate arguments.
                 # This is used for commands that accept multiple arguments.
                 
-                if isinstance(arguments, list):
-                    # Multi-argument command
-                    command_object = command_cls(*arguments)
-                else:
-                    # Single argument command
-                    command_object = command_cls(arguments)
+                try:
+                    if isinstance(arguments, list):
+                        # Multi-argument command
+                        command_object = command_cls(*arguments)
+                    else:
+                        # Single argument command
+                        command_object = command_cls(arguments)
+                        
+                # If the incorrect number of arguments is passed into
+                # the class, a TypeError will be rasied. So return None so the 
+                # caller knows this line can't be edited.
+                except TypeError:
+                    return
             
         # So if the 'Edit' menu is clicked, we know which command
         # to show the wizard's page for.

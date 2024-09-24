@@ -6285,17 +6285,24 @@ class SharedPages:
             reusable script names.
             """
 
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_reusable_script.configure(values=())
-
-            # Clear the general alias entry, just in case there is a value in it.
-            self.entry_general_alias.delete(0, "end")
-
             reusable_script_names = [item for item in ProjectSnapshot.reusables]
 
             self.cb_reusable_script.configure(values=reusable_script_names)
 
-            self.cb_reusable_script.delete(0, "end")
+        def _edit_populate(self, command_class_object: cc.FadeStopRunScript):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            reusable_script_name = command_class_object.reusable_script_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            self.cb_reusable_script.insert(0, reusable_script_name)
 
         def check_inputs(self) -> Dict | None:
             """
