@@ -4786,6 +4786,21 @@ class SharedPages:
     
             return frame_content
         
+        def _edit_populate(self, command_class_object: cc.SpriteShowHide):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            # Get the alias
+            sprite_name = command_class_object.sprite_name
+            
+            # Show the alias in the entry widget
+            self.entry_general_alias.insert(0, sprite_name)
+        
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
