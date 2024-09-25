@@ -5314,6 +5314,33 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.FadeSpeed):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            # Get the alias
+            sprite_name = command_class_object.sprite_name
+            
+            # Fade direction
+            direction = command_class_object.fade_direction
+
+            # Fade value (as a string)
+            speed = command_class_object.fade_speed
+        
+            # Show the alias in the entry widget
+            self.entry_general_alias.insert(0, sprite_name)
+
+            # Set the direction in the appropriate optionbutton widget
+            self.v_radio_button_selection.set(direction)
+
+            # Show the speed value in the spinbox widget
+            self.v_scale_value.set(speed)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5541,7 +5568,7 @@ class SharedPages:
 
             return frame_content
 
-        def _edit_populate(self, command_class_object: cc.FadeCurrentValue):
+        def _edit_populate(self, command_class_object: cc.FadeCurrentValue | cc.FadeDelay):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5554,7 +5581,10 @@ class SharedPages:
             sprite_name = command_class_object.sprite_name
             
             # Fade value (as a string)
-            fade_value = command_class_object.current_fade_value
+            if isinstance(command_class_object, cc.FadeDelay):
+                fade_value = command_class_object.fade_delay
+            else:  
+                fade_value = command_class_object.current_fade_value
             
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
