@@ -58,6 +58,7 @@ class CommandHelper:
         "character_flip_horizontal": cc.SpriteShowHide,
         "character_flip_vertical": cc.SpriteShowHide, 
         "character_after_fading_stop": cc.FadeStopRunScript,
+        "character_fade_current_value": cc.FadeCurrentValue,
     }
     
     @staticmethod

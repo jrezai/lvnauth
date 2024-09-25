@@ -3604,7 +3604,6 @@ class WizardListing:
         
         self.treeview_commands.see(command_iid)
         self.treeview_commands.selection_add(command_iid)
-        print(command_class_object)
         
         self._edit_populate(command_class_object=command_class_object)
         
@@ -5541,6 +5540,27 @@ class SharedPages:
             self.sb_amount.grid(row=3, column=0, sticky="w")
 
             return frame_content
+
+        def _edit_populate(self, command_class_object: cc.FadeCurrentValue):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            # Get the alias
+            sprite_name = command_class_object.sprite_name
+            
+            # Fade value (as a string)
+            fade_value = command_class_object.current_fade_value
+            
+            # Show the alias in the entry widget
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Show the fade value in the spinbox widget
+            self.sb_amount.insert(0, fade_value)
 
         def check_inputs(self) -> Dict | None:
             """
