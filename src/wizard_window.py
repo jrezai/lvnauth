@@ -5149,6 +5149,24 @@ class SharedPages:
                 widget = self.scale.nametowidget(name)
                 widget.state([state_change])
     
+        def _edit_populate(self, command_class_object: cc.FadeUntilValue):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the sprite alias.
+            alias = command_class_object.sprite_name            
+
+            # Fade value
+            fade_value = command_class_object.fade_value
+            
+            self.entry_general_alias.insert(0, alias)
+            self.v_until.set(fade_value)
+    
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information

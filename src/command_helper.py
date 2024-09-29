@@ -61,6 +61,9 @@ class CommandHelper:
         "character_fade_current_value": cc.FadeCurrentValue,
         "character_fade_delay": cc.FadeDelay,
         "character_fade_speed": cc.FadeSpeed,
+        "character_fade_until": cc.FadeUntilValue,
+        "character_start_fading": cc.SpriteShowHide,
+        "character_stop_fading": cc.SpriteShowHide,
     }
     
     @staticmethod
