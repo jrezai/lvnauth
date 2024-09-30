@@ -64,6 +64,8 @@ class CommandHelper:
         "character_fade_until": cc.FadeUntilValue,
         "character_start_fading": cc.SpriteShowHide,
         "character_stop_fading": cc.SpriteShowHide,
+        "character_after_rotating_stop": cc.RotateStopRunScript,
+        "character_rotate_current_value": cc.RotateCurrentValue,
     }
     
     @staticmethod

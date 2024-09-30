@@ -8582,6 +8582,38 @@ class CharacterRotateCurrentValue(WizardListing):
         
         return f"<character_rotate_current_value: {alias}, {angle}>"
 
+    def _edit_populate(self, command_class_object: cc.RotateCurrentValue):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        # Get the alias
+        sprite_name = command_class_object.sprite_name
+        
+        # Show the alias in the entry widget
+        self.entry_general_alias.insert(0, sprite_name)
+        
+        # Rotation angle
+        angle = command_class_object.rotate_current_value
+        
+        # The angle may not be numeric, so be prepared for an invalid value.
+        try:
+            angle = float(angle)
+        except ValueError:
+            angle = 0
+        
+        if angle > 359:
+            angle = 359
+        elif angle < 0:
+            angle = 0
+                
+        # Rotation angle
+        self.v_angle.set(angle)
+    
     def show(self):
         """
         Set the text of the purpose labels to indicate to the user
