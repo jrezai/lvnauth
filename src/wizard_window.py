@@ -5149,7 +5149,8 @@ class SharedPages:
                 widget = self.scale.nametowidget(name)
                 widget.state([state_change])
     
-        def _edit_populate(self, command_class_object: cc.FadeUntilValue):
+        def _edit_populate(self,
+                           command_class_object: cc.FadeUntilValue | cc.RotateUntil):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5159,13 +5160,37 @@ class SharedPages:
                 return
             
             # Get the sprite alias.
-            alias = command_class_object.sprite_name            
+            alias = command_class_object.sprite_name
+            
+            if isinstance(command_class_object, cc.FadeUntilValue):
 
-            # Fade value
-            fade_value = command_class_object.fade_value
+                # Fade value
+                fade_value = command_class_object.fade_value
+                
+                try:
+                    fade_value = float(fade_value)
+                except ValueError:
+                    fade_value = 0
+                
+                self.v_until.set(fade_value)
+                
+            elif isinstance(command_class_object, cc.RotateUntil):
+                
+                # str because the word 'forever' can be used to rotate
+                # continuously.
+                rotate_until_value = command_class_object.rotate_until
+                if rotate_until_value == "forever":
+                    self.v_rotate_forever.set(True)
+                else:
+                    try:
+                        rotate_until_value = float(rotate_until_value)
+                    except ValueError:
+                        rotate_until_value = 0                    
+                    
+                    self.v_until.set(rotate_until_value)
             
             self.entry_general_alias.insert(0, alias)
-            self.v_until.set(fade_value)
+            
     
         def check_inputs(self) -> Dict | None:
             """
@@ -5332,7 +5357,8 @@ class SharedPages:
 
             return frame_content
 
-        def _edit_populate(self, command_class_object: cc.FadeSpeed):
+        def _edit_populate(self,
+                           command_class_object: cc.FadeSpeed | cc.RotateSpeed):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5344,11 +5370,18 @@ class SharedPages:
             # Get the alias
             sprite_name = command_class_object.sprite_name
             
-            # Fade direction
-            direction = command_class_object.fade_direction
-
-            # Fade value (as a string)
-            speed = command_class_object.fade_speed
+            if isinstance(command_class_object, cc.FadeSpeed):
+            
+                # Fade direction
+                direction = command_class_object.fade_direction
+    
+                # Fade value (as a string)
+                speed = command_class_object.fade_speed
+                
+            elif isinstance(command_class_object, cc.RotateSpeed):
+                
+                direction = command_class_object.rotate_direction
+                speed = command_class_object.rotate_speed
         
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
@@ -5598,17 +5631,24 @@ class SharedPages:
             # Get the alias
             sprite_name = command_class_object.sprite_name
             
+            # Initialize
+            numeric_value = 0
+            
             # Fade value (as a string)
             if isinstance(command_class_object, cc.FadeDelay):
-                fade_value = command_class_object.fade_delay
-            else:  
-                fade_value = command_class_object.current_fade_value
+                numeric_value = command_class_object.fade_delay
+                
+            elif isinstance(command_class_object, cc.FadeCurrentValue):
+                numeric_value = command_class_object.current_fade_value
+                
+            elif isinstance(command_class_object, cc.RotateDelay):
+                numeric_value = command_class_object.rotate_delay
             
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
             
             # Show the fade value in the spinbox widget
-            self.sb_amount.insert(0, fade_value)
+            self.sb_amount.insert(0, numeric_value)
 
         def check_inputs(self) -> Dict | None:
             """

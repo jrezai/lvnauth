@@ -66,6 +66,11 @@ class CommandHelper:
         "character_stop_fading": cc.SpriteShowHide,
         "character_after_rotating_stop": cc.RotateStopRunScript,
         "character_rotate_current_value": cc.RotateCurrentValue,
+        "character_rotate_delay": cc.RotateDelay,
+        "character_rotate_speed": cc.RotateSpeed,
+        "character_rotate_until": cc.RotateUntil,
+        "character_start_rotating": cc.SpriteShowHide,
+        "character_stop_rotating": cc.SpriteShowHide,
     }
     
     @staticmethod
