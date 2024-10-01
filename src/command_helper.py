@@ -71,6 +71,13 @@ class CommandHelper:
         "character_rotate_until": cc.RotateUntil,
         "character_start_rotating": cc.SpriteShowHide,
         "character_stop_rotating": cc.SpriteShowHide,
+        "character_after_scaling_stop": cc.ScaleStopRunScript,
+        "character_scale_by": cc.ScaleBy,
+        "character_scale_current_value": cc.ScaleCurrentValue,
+        "character_scale_delay": cc.ScaleDelay,
+        "character_scale_until": cc.ScaleUntil,
+        "character_start_scaling": cc.SpriteShowHide,
+        "character_stop_scaling": cc.SpriteShowHide,
     }
     
     @staticmethod

@@ -976,7 +976,7 @@ class WizardWindow:
                                        from_value=0,
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
-                                       "(example: 2 means twice as big as the original size)",
+                                       "(example: 2 means twice as big as the original size)\nDecimal numbers such as 1.2 can be used as well.",
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
@@ -5165,14 +5165,12 @@ class SharedPages:
             if isinstance(command_class_object, cc.FadeUntilValue):
 
                 # Fade value
-                fade_value = command_class_object.fade_value
+                numeric_value = command_class_object.fade_value
                 
-                try:
-                    fade_value = float(fade_value)
-                except ValueError:
-                    fade_value = 0
+            elif isinstance(command_class_object, cc.ScaleUntil):
                 
-                self.v_until.set(fade_value)
+                # Scale until value
+                numeric_value = command_class_object.scale_until
                 
             elif isinstance(command_class_object, cc.RotateUntil):
                 
@@ -5181,16 +5179,24 @@ class SharedPages:
                 rotate_until_value = command_class_object.rotate_until
                 if rotate_until_value == "forever":
                     self.v_rotate_forever.set(True)
+                    numeric_value = 0
                 else:
                     try:
-                        rotate_until_value = float(rotate_until_value)
+                        numeric_value = float(rotate_until_value)
                     except ValueError:
-                        rotate_until_value = 0                    
+                        numeric_value = 0                    
                     
-                    self.v_until.set(rotate_until_value)
+                    self.v_until.set(numeric_value)
+                    
+            # To ensure it's not a non-numeric value.
+            try:
+                numeric_value = float(numeric_value)
+            except ValueError:
+                numeric_value = 0
+            
+            self.v_until.set(numeric_value)                
             
             self.entry_general_alias.insert(0, alias)
-            
     
         def check_inputs(self) -> Dict | None:
             """
@@ -5358,7 +5364,7 @@ class SharedPages:
             return frame_content
 
         def _edit_populate(self,
-                           command_class_object: cc.FadeSpeed | cc.RotateSpeed):
+                           command_class_object: cc.FadeSpeed | cc.RotateSpeed | cc.ScaleBy):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5382,12 +5388,21 @@ class SharedPages:
                 
                 direction = command_class_object.rotate_direction
                 speed = command_class_object.rotate_speed
+                
+            elif isinstance(command_class_object, cc.ScaleBy):
+                direction = command_class_object.scale_rotation
+                speed = command_class_object.scale_by
         
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
 
             # Set the direction in the appropriate optionbutton widget
             self.v_radio_button_selection.set(direction)
+            
+            try:
+                speed = int(speed)
+            except ValueError:
+                speed = 0
 
             # Show the speed value in the spinbox widget
             self.v_scale_value.set(speed)
@@ -5634,6 +5649,11 @@ class SharedPages:
             # Initialize
             numeric_value = 0
             
+            # The type of numeric class to try to convert the value to,
+            # to ensure it's a proper number. Most of the time it will be an int
+            # but sometimes it will be a float, depending on the command.
+            numeric_class_type = int
+            
             # Fade value (as a string)
             if isinstance(command_class_object, cc.FadeDelay):
                 numeric_value = command_class_object.fade_delay
@@ -5643,9 +5663,24 @@ class SharedPages:
                 
             elif isinstance(command_class_object, cc.RotateDelay):
                 numeric_value = command_class_object.rotate_delay
+                
+            elif isinstance(command_class_object, cc.ScaleDelay):
+                numeric_value = command_class_object.scale_delay
+                
+            elif isinstance(command_class_object, cc.ScaleCurrentValue):
+                numeric_value = command_class_object.scale_current_value
+                
+                # ScaleCurrentValue uses float instead of the usual int
+                # for use in commands such as: <character_scale_current_value>
+                numeric_class_type = float
             
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
+            
+            try:
+                numeric_value = numeric_class_type(numeric_value)
+            except:
+                numeric_value = 0
             
             # Show the fade value in the spinbox widget
             self.sb_amount.insert(0, numeric_value)
