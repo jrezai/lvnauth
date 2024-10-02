@@ -78,6 +78,8 @@ class CommandHelper:
         "character_scale_until": cc.ScaleUntil,
         "character_start_scaling": cc.SpriteShowHide,
         "character_stop_scaling": cc.SpriteShowHide,
+        "character_after_movement_stop": cc.MovementStopRunScript,
+        "character_stop_movement_condition": cc.MovementStopCondition,
     }
     
     @staticmethod
@@ -271,6 +273,15 @@ class CommandHelper:
                 if "," not in arguments:
                     fixed_alias = "fixedalias"
                     command_object = command_cls(arguments, fixed_alias)
+                    
+            # <character_stop_movement_condition> can have 2 or 3 arguments.
+            # If we have 2 arguments here, use the 2 argument version of the
+            # class instead of the 3 argument class.
+            elif command_name == "character_stop_movement_condition":
+                
+                if isinstance(arguments, list) and len(arguments) == 2:
+                    # Use the 2-argument version of the class.
+                    command_cls = cc.MovementStopConditionShorter
             
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.

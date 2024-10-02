@@ -192,6 +192,19 @@ class MovementStopRunScript(NamedTuple):
     sprite_name: str
     reusable_script_name: str
 
+    
+# Used when the 'side to check' is specified (3 arguments)
+class MovementStopCondition(NamedTuple):
+    sprite_name: str
+    side_to_check: str
+    stop_location: str
+    
+    
+# Used when the 'side to check' is automatic (2 arguments)
+class MovementStopConditionShorter(NamedTuple):
+    sprite_name: str
+    stop_location: str
+
 
 class SpriteShowHide(NamedTuple):
     sprite_name: str

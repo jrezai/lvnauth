@@ -4627,7 +4627,17 @@ class SharedPages:
             which allows the user to type in a pixel coordinate.
             Otherwise, grid_forget the frame.
             """
-            selection_index = event.widget.current()
+
+            # Has this method been called from an actual event, such as
+            # when the combobox selection changes?
+            if event:
+                selection_index = event.widget.current()
+            else:
+                # This method has been called directly without an event,
+                # likely from a right-click edit of the command.
+                # The caller wants the pixel coordinate spinbox widget
+                # to hide, so set this to None so we end up hiding the spinbox.
+                selection_index = None
     
             # Specific pixel coordinate is at index zero.
             if selection_index == 0:
@@ -4635,7 +4645,72 @@ class SharedPages:
                 self.spinbox_pixel_location.focus()
             else:
                 self.frame_pixel_location.grid_forget()
-    
+
+        def _edit_populate(self, command_class_object: cc.MovementStopCondition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Do we have a specific side to check?
+            if isinstance(command_class_object, cc.MovementStopCondition):
+                # Yes, we have a specific side to check.
+            
+                # if 'side of sprite' is an empty string, 
+                # set self.cb_side_to_check to index 0, which is 
+                # "Determine automatically"
+                side_to_check = command_class_object.side_to_check
+                if not side_to_check:
+                    self.cb_side_to_check.current(0)
+                else:
+                    side_to_check = side_to_check.lower()
+                    
+                    # Show the 'side to check' in the combobox
+                    if side_to_check in ("left", "right", "top", "bottom"):
+                        self.cb_side_to_check.state(["!readonly"])
+                        self.cb_side_to_check.delete(0, tk.END)
+                        self.cb_side_to_check.insert(0, side_to_check)
+                        self.cb_side_to_check.state(["readonly"])                    
+
+            stop_location = command_class_object.stop_location
+            
+            if stop_location:
+                stop_location = stop_location.lower()
+            
+            # Is the stop location a specific pixel location?
+            if stop_location not in ("start of display", "end of display",
+                                     "before start of display",
+                                     "after end of display",
+                                     "top of display",
+                                     "above top of display",
+                                     "bottom of display",
+                                     "below bottom of display"):
+                
+                # The stop location is a specific pixel location.
+                # Show the spinbox widget.
+                self.cb_stop_location.current(0)
+                self.spinbox_pixel_location.set(stop_location)
+                
+            else:
+                # The stop location is a fixed section, such as 'left', 
+                # 'right', etc.
+                
+                # Show the stop location in the combobox.
+                self.cb_stop_location.state(["!readonly"])
+                self.cb_stop_location.delete(0, tk.END)
+                self.cb_stop_location.insert(0, stop_location)
+                self.cb_stop_location.state(["readonly"])
+                
+                # Causes the pixel coordinate spinbox to ungrid.
+                self.on_stop_location_changed(event=None)
+                
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
