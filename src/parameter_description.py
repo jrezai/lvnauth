@@ -117,7 +117,7 @@ class ParameterDescription:
                      "character_set_position_x": ("Alias", "Horizontal position"),
                      "character_set_position_y": ("Alias", "Vertical position"),
                      "character_set_center": ("Alias", "Center of X (horizontal position)", "Center of Y (vertical position)"),
-                     "character_set_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
+                     "character_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
                      "character_on_mouse_click": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "character_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "character_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
