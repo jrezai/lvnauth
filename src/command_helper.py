@@ -81,6 +81,7 @@ class CommandHelper:
         "character_after_movement_stop": cc.MovementStopRunScript,
         "character_stop_movement_condition": cc.MovementStopCondition,
         "character_move": cc.MovementSpeed,
+        "character_move_delay": cc.MovementDelay,
     }
     
     @staticmethod

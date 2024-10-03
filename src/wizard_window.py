@@ -4126,7 +4126,26 @@ class SharedPages:
             self.sb_vertical.grid(row=5, column=0, sticky="w")
     
             return frame_content
-        
+
+        def _edit_populate(self, command_class_object: cc.MovementDelay):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            x_skip_frames_amount = command_class_object.x
+            y_skip_frames_amount = command_class_object.y
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Set skip frame x/y amounts
+            self.sb_horizontal.set(x_skip_frames_amount)
+            self.sb_vertical.set(y_skip_frames_amount)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
