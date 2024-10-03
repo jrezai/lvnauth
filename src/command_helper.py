@@ -86,6 +86,7 @@ class CommandHelper:
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
+        "character_set_center": cc.SpriteCenter,
     }
     
     @staticmethod
