@@ -80,6 +80,7 @@ class CommandHelper:
         "character_stop_scaling": cc.SpriteShowHide,
         "character_after_movement_stop": cc.MovementStopRunScript,
         "character_stop_movement_condition": cc.MovementStopCondition,
+        "character_move": cc.MovementSpeed,
     }
     
     @staticmethod

@@ -4507,6 +4507,64 @@ class SharedPages:
     
             return user_input
         
+        def _edit_populate(self, command_class_object: cc.MovementSpeed):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            x_amount = command_class_object.x
+            x_direction = command_class_object.x_direction
+            y_amount = command_class_object.y
+            y_direction = command_class_object.y_direction
+            
+            try:
+                x_amount = int(x_amount)
+            except ValueError:
+                x_amount = 0
+                
+            try:
+                y_amount = int(y_amount)
+            except ValueError:
+                y_amount = 0
+                
+            # Default to 'right' if x_direction contains an invalid value.
+            if not x_direction:
+                x_direction = "right"
+    
+            x_direction = x_direction.lower()
+            
+            if x_direction not in ("left", "right"):
+                x_direction = "right"
+                
+            # Default to 'up' if y_direction contains an invalid value.
+            if not y_direction:
+                y_direction = "up"
+            
+            y_direction = y_direction.lower()
+            
+            if y_direction not in ("up", "down"):
+                y_direction = "up"            
+            
+            # Sprite alias    
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # X movement amount and direction
+            self.v_horizontal_amount.set(x_amount)
+            self.v_horizontal_direction.set(x_direction)
+            
+            # Y movement amount and direction
+            self.v_vertical_amount.set(y_amount)
+            self.v_vertical_direction.set(y_direction)
+            
+            # Check the 'Move' checkbuttons if the values are greater than zero.
+            self.v_move_horizontally.set(x_amount>0)
+            self.v_move_vertically.set(y_amount>0)
+            
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
