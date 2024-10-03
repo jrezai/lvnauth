@@ -1215,9 +1215,10 @@ class StoryReader:
         elif command_name in ("character_set_position_x",
                               "character_set_position_y"):
 
-            self._sprite_set_position(command_name=command_name,
-                                      arguments=arguments,
-                                      sprite_type=file_reader.ContentType.CHARACTER)
+            self._sprite_set_position(
+                command_name=command_name,
+                arguments=arguments,
+                sprite_type=file_reader.ContentType.CHARACTER)
             
         elif command_name in ("object_set_position_x",
                               "object_set_position_y"):
@@ -1889,7 +1890,6 @@ class StoryReader:
         
         sprite.flip(horizontal=horizontal, vertical=vertical)
 
-
     def _sprite_set_position(self,
                              command_name: str,
                              arguments: str,
@@ -1912,7 +1912,8 @@ class StoryReader:
         <object_set_position_y: rave, bottom of display>
         """
         
-        general_alias_and_position = self._split_arguments_to_tuple(arguments=arguments)
+        general_alias_and_position = \
+            self._split_arguments_to_tuple(arguments=arguments)
 
         if not general_alias_and_position:
             return

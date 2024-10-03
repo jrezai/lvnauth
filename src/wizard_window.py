@@ -3919,24 +3919,24 @@ class SharedPages:
 
             self.lbl_position = ttk.Label(frame_content, text=f"{self.direction.title()} position:")
 
-            selection = ["Specific pixel coordinate",
-                         "start of display",
-                         "end of display",
-                         "before start of display",
-                         "after end of display",
-                         "top of display",
-                         "above top of display",
-                         "bottom of display",
-                         "below bottom of display"]
+            self.selection_choices = ["Specific pixel coordinate",
+                                      "start of display",
+                                      "end of display",
+                                      "before start of display",
+                                      "after end of display",
+                                      "top of display",
+                                      "above top of display",
+                                      "bottom of display",
+                                      "below bottom of display"]
 
             if self.direction == "horizontal":
-                selection = selection[:5]
+                self.selection_choices = self.selection_choices[:5]
             elif self.direction == "vertical":
-                selection = [selection[0]] + selection[5:]
+                self.selection_choices = [self.selection_choices[0]] + self.selection_choices[5:]
 
             self.cb_position =\
                 ttk.Combobox(frame_content,
-                             values=selection,
+                             values=self.selection_choices,
                              state="readonly")
             self.cb_position.bind("<<ComboboxSelected>>", self.on_position_selection_changed)
 
@@ -3972,14 +3972,29 @@ class SharedPages:
             which allows the user to type in a pixel coordinate.
             Otherwise, grid_forget the frame.
             """
+            
             selection_index = event.widget.current()
     
             # Specific pixel coordinate is at index zero.
             if selection_index == 0:
-                self.frame_pixel_location.grid(row=3, column=1, sticky="w", padx=(3, 1))
-                self.spinbox_pixel_location.focus()
+                self.show_pixel_widgets()
             else:
-                self.frame_pixel_location.grid_forget()
+                self.hide_pixel_widgets()
+                
+        def show_pixel_widgets(self):
+            """
+            Show the pixel location related widgets.
+            """
+            
+            self.frame_pixel_location.grid(row=3, column=1,
+                                           sticky="w", padx=(3, 1))
+            self.spinbox_pixel_location.focus()
+            
+        def hide_pixel_widgets(self):
+            """
+            Ungrid / hide the pixel location related widgets.
+            """
+            self.frame_pixel_location.grid_forget()
     
         def check_inputs(self) -> Dict | None:
             """
@@ -4035,6 +4050,63 @@ class SharedPages:
     
             return user_input
         
+        def _edit_populate(self, command_class_object: cc.SpritePosition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            position = command_class_object.position
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Initialize
+            show_pixel_coordinate_widgets = False            
+
+            try:
+                # Specific pixel location?
+                position = int(position)
+                
+                self.spinbox_pixel_location.delete(0, tk.END)
+                self.spinbox_pixel_location.insert(0, position)
+                
+                # Show the widgets related to a specific pixel location.
+                show_pixel_coordinate_widgets = True
+                
+            except ValueError:
+                # We don't have a numeric value, so check if it's
+                # a valid string value.
+                
+                if position:
+                    position = position.lower()
+                    
+                    # Make sure it's a valid string value, such as 
+                    # 'end of display' and not just any random string value.
+                    if position in self.selection_choices:
+                        self.cb_position.state(["!readonly"])
+                        self.cb_position.delete(0, tk.END)
+                        self.cb_position.insert(0, position)
+                        self.cb_position.state(["readonly"])
+                    else:
+                        # There's an unsupported string value
+                        # So default to showing the pixel coordinate widgets.
+                        show_pixel_coordinate_widgets = True
+                else:
+                    # We have no position value (it's blank)
+                    # so default to showing the pixel coordinate widgets.
+                    show_pixel_coordinate_widgets = True
+                    
+            if show_pixel_coordinate_widgets:
+                self.show_pixel_widgets()
+            else:                
+                # If we got here, it means we have a proper valid
+                # string value (such as 'end of display')
+                self.hide_pixel_widgets()
+                
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
@@ -4705,23 +4777,26 @@ class SharedPages:
             Otherwise, grid_forget the frame.
             """
 
-            # Has this method been called from an actual event, such as
-            # when the combobox selection changes?
-            if event:
-                selection_index = event.widget.current()
-            else:
-                # This method has been called directly without an event,
-                # likely from a right-click edit of the command.
-                # The caller wants the pixel coordinate spinbox widget
-                # to hide, so set this to None so we end up hiding the spinbox.
-                selection_index = None
+            selection_index = event.widget.current()
     
             # Specific pixel coordinate is at index zero.
             if selection_index == 0:
-                self.frame_pixel_location.grid(row=5, column=1, sticky="w", padx=(3, 1))
-                self.spinbox_pixel_location.focus()
+                self.show_pixel_widgets()
             else:
-                self.frame_pixel_location.grid_forget()
+                self.hide_pixel_widgets()
+
+        def show_pixel_widgets(self):
+            """
+            Show widgets related to pixel coordinates.
+            """
+            self.frame_pixel_location.grid(row=5, column=1, sticky="w", padx=(3, 1))
+            self.spinbox_pixel_location.focus()
+            
+        def hide_pixel_widgets(self):
+            """
+            Hide widgets related to pixel coordinates.
+            """
+            self.frame_pixel_location.grid_forget()
 
         def _edit_populate(self, command_class_object: cc.MovementStopCondition):
             """
@@ -4786,7 +4861,7 @@ class SharedPages:
                 self.cb_stop_location.state(["readonly"])
                 
                 # Causes the pixel coordinate spinbox to ungrid.
-                self.on_stop_location_changed(event=None)
+                self.hide_pixel_widgets()
                 
         def check_inputs(self) -> Dict | None:
             """

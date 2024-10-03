@@ -204,6 +204,13 @@ class MovementStopCondition(NamedTuple):
 class MovementStopConditionShorter(NamedTuple):
     sprite_name: str
     stop_location: str
+    
+    
+class SpritePosition(NamedTuple):
+    sprite_name: str
+    
+    # Could be a fixed location such as 'start of display' or a pixel position.
+    position: str
 
 
 class SpriteShowHide(NamedTuple):

@@ -82,6 +82,9 @@ class CommandHelper:
         "character_stop_movement_condition": cc.MovementStopCondition,
         "character_move": cc.MovementSpeed,
         "character_move_delay": cc.MovementDelay,
+        "character_start_moving": cc.SpriteShowHide,
+        "character_stop_moving": cc.SpriteShowHide,
+        "character_set_position_x": cc.SpritePosition,
     }
     
     @staticmethod
