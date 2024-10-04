@@ -18,7 +18,7 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import command_class as cc
 from re import search, IGNORECASE
-from typing import Dict
+from typing import Dict, List
 
 
 class ContextEditRun:
@@ -88,6 +88,9 @@ class CommandHelper:
         "character_set_position_y": cc.SpritePosition,
         "character_set_center": cc.SpriteCenter,
         "character_center_x_with": cc.SpriteCenterWith,
+        "character_on_mouse_click": cc.MouseEventRunScriptWithArguments,
+        "character_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
+        "character_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
     }
     
     @staticmethod
@@ -290,6 +293,29 @@ class CommandHelper:
                 if isinstance(arguments, list) and len(arguments) == 2:
                     # Use the 2-argument version of the class.
                     command_cls = cc.MovementStopConditionShorter
+                    
+            # Mouse related commands such as <character_on_mouse_click> 
+            # can have 2 or 3 arguments. If we have 2 arguments here, use the 
+            # 2 argument class version.
+            elif command_name in ("dialog_sprite_on_mouse_enter",
+                                  "object_on_mouse_enter",
+                                  "character_on_mouse_enter",
+                                  "dialog_sprite_on_mouse_leave",
+                                  "object_on_mouse_leave",
+                                  "character_on_mouse_leave",
+                                  "dialog_sprite_on_mouse_click", 
+                                  "object_on_mouse_click", 
+                                  "character_on_mouse_click"):
+                
+                if isinstance(arguments, list) and len(arguments) == 2:
+                    # Use the 2-argument version of the class.
+                    command_cls = cc.MouseEventRunScriptNoArguments
+                    
+                else:
+                    # 3-argument version of the class, where the 3rd
+                    # argument is for multiple optional arguments.
+                    arguments =\
+                        CommandHelper._get_optional_arguments(arguments, 2)
             
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.
@@ -319,7 +345,49 @@ class CommandHelper:
             
         # So the caller knows that this script line can be edited.
         return True
-
+    
+    @staticmethod
+    def _get_optional_arguments(arguments: List,
+                                num_of_fixed_arguments: int) -> List:
+        """
+        Return a list that puts the optional arguments into a single string
+        rather than separate elements.
+        
+        Given a list such as:
+        ['theo', 'some script name', 'color=blue', 'voice=low']
+        
+        The first two arguments are required, whereas the third
+        and fourth arguments are optional. The third/fourth arguments is
+        actually one string: color=blue,voice=low
+        But because there is a comma, it might appear like two separate
+        arguments, but it's one argument.
+        
+        So in the example above, the following list will be returned:
+        ['theo', 'some script name', 'color=blue,voice=low']
+        
+        Purpose: for getting 1 or more optional arguments as a single element
+        in a list so we can show it in the Wizard (when editing a command
+        with multiple optional arguments).
+        """
+        if not arguments:
+            return arguments
+        
+        # Make sure we have a minimum number of elements to slice.
+        elif len(arguments) < num_of_fixed_arguments:
+            return arguments
+        
+        # Get the optional arguments (1 or more) as a single list element.
+        # Example: ['name=theo', 'color=blue'] will become ['name=theo,color=blue']
+        # If it's just one element ['name=theo'] then it will stay the same.
+        optional_arguments = [",".join(arguments[num_of_fixed_arguments:])]
+        
+        # Get the non-optional argument part (the first part of the command
+        # before the optional arguments)
+        required_arguments = arguments[:num_of_fixed_arguments]
+        
+        # Combine the fixed arguments and the optional argument(s).
+        return required_arguments + optional_arguments
+        
     @staticmethod
     def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
         """

@@ -6849,6 +6849,24 @@ class SharedPages:
             
             return self.frame_arguments    
 
+        def _edit_populate(self, command_class_object: cc.MouseEventRunScriptWithArguments):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            reusable_script_name = command_class_object.reusable_script_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            self.cb_reusable_script.insert(0, reusable_script_name)
+            
+            if isinstance(command_class_object, cc.MouseEventRunScriptWithArguments):
+                arguments = command_class_object.arguments
+                self.entry_arguments.insert(0, arguments)
 
     class LoadSpriteNoAlias(WizardListing):
         """
