@@ -131,11 +131,14 @@ class TextCreateDialogFrame:
         self.cb_dialog_position = self.builder.get_object("cb_dialog_position")
 
         # Default values
-        self.v_width.set(400)
-        self.v_height.set(200)
+        self.default_width = 400
+        self.default_height = 200
+        self.v_width.set(self.default_width)
+        self.v_height.set(self.default_height)
         
+        self.default_anchor = "mid bottom"
         self.cb_dialog_position.configure(state="normal")
-        self.cb_dialog_position.insert(0, "mid bottom")
+        self.cb_dialog_position.insert(0, self.default_anchor)
         self.cb_dialog_position.configure(state="readonly")
 
         
@@ -147,15 +150,18 @@ class TextCreateDialogFrame:
         self.v_animation_speed = self.builder.get_variable("v_animation_speed")
 
         # Default values
+        self.default_intro_animation = "scale up width and height"
         self.cb_intro_animation.configure(state="normal")
-        self.cb_intro_animation.insert(0, "scale up width and height")
+        self.cb_intro_animation.insert(0, self.default_intro_animation)
         self.cb_intro_animation.configure(state="readonly")
 
+        self.default_outro_animation = "fade out"
         self.cb_outro_animation.configure(state="normal")
-        self.cb_outro_animation.insert(0, "fade out")
+        self.cb_outro_animation.insert(0, self.default_outro_animation)
         self.cb_outro_animation.configure(state="readonly")
 
-        self.v_animation_speed.set(5)
+        self.default_animation_speed = 5
+        self.v_animation_speed.set(self.default_animation_speed)
 
 
         """
@@ -165,17 +171,20 @@ class TextCreateDialogFrame:
         self.lbl_backcolor = self.builder.get_object("lbl_backcolor")
         self.v_opacity = self.builder.get_variable("v_opacity")
         
-        self.v_opacity.set(200)
+        self.default_opacity = 200
+        self.v_opacity.set(self.default_opacity)
         
         self.lbl_backcolor_border: ttk.Label
         self.lbl_backcolor_border =\
             self.builder.get_object("lbl_backcolor_border")
         
+        self.default_opacity_border = 200
         self.v_opacity_border = self.builder.get_variable("v_opacity_border")
-        self.v_opacity_border.set(200)
+        self.v_opacity_border.set(self.default_opacity_border)
         
+        self.default_border_width = 0
         self.v_border_width = self.builder.get_variable("v_border_width")
-        self.v_border_width.set(0)
+        self.v_border_width.set(self.default_border_width)
         
         
         
@@ -186,8 +195,10 @@ class TextCreateDialogFrame:
         self.v_padding_y = self.builder.get_variable("v_padding_y")
         
         # Default values
-        self.v_padding_x.set(0)
-        self.v_padding_y.set(0)
+        self.default_padding_x = 0
+        self.default_padding_y = 0
+        self.v_padding_x.set(self.default_padding_x)
+        self.v_padding_y.set(self.default_padding_y)
 
         """
         Comboboxes in the Run tab (run reusable script on event)
@@ -8616,6 +8627,220 @@ class TextDialogDefine(WizardListing):
         
         return frame_content
     
+    def set_combobox_text(self, combobox_widget, text: str):
+        """
+        Set the combobox to normal-mode (not read-only) and set its text
+        then change it back to read-only.
+        
+        Since there are many combobox widgets on the dialog define window,
+        it's easier to have one method handle this.
+        """
+        
+        # Interpret the text 'none' as a blank string.
+        # 'none' gets used for on_reusuable_on_halt, etc.
+        if text == "none":
+            text = ""
+        
+        combobox_widget.state(["!readonly"])
+        combobox_widget.delete(0, tk.END)
+        combobox_widget.insert(0, text)
+        combobox_widget.state(["readonly"])
+
+    def _edit_populate(self, command_class_object: cc.DialogRectangleDefinition):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        width = command_class_object.width
+        height = command_class_object.height
+        animation_speed = command_class_object.animation_speed
+        padding_x = command_class_object.padding_x
+        padding_y = command_class_object.padding_y
+        opacity = command_class_object.opacity
+        
+        try:
+            width = int(width)
+        except ValueError:
+            width = self.text_define.default_width
+            
+        self.text_define.v_width.set(command_class_object.width)
+        
+            
+        try:
+            height = int(height)
+        except ValueError:
+            height = self.text_define.default_height        
+        
+        self.text_define.v_height.set(command_class_object.height)
+        
+        try:
+            animation_speed = float(animation_speed)
+        except ValueError:
+            animation_speed = self.text_define.default_animation_speed
+            
+        self.text_define.v_animation_speed.set(animation_speed)
+            
+            
+        # Intro animation
+        
+        # Valid values for intro animation.
+        intro_animation_possible_values =\
+            self.text_define.cb_intro_animation.cget("values")
+        
+        intro_animation = command_class_object.intro_animation
+        if not intro_animation:
+            intro_animation = self.text_define.default_intro_animation
+        else:
+            intro_animation = intro_animation.lower()
+        
+        # No valid value provided? Set it to the default intro animation.
+        if intro_animation not in (intro_animation_possible_values):
+            intro_animation = self.text_define.default_intro_animation
+        else:
+            self.text_define.cb_intro_animation.state(["!readonly"])
+            self.text_define.cb_intro_animation.delete(0, tk.END)
+            self.text_define.cb_intro_animation.insert(0, intro_animation)
+            self.text_define.cb_intro_animation.state(["readonly"])
+            
+            
+        # Outro animation
+        
+        # Valid values for outro animation.
+        outro_animation_possible_values =\
+            self.text_define.cb_outro_animation.cget("values")
+        
+        outro_animation = command_class_object.outro_animation
+        if not outro_animation:
+            outro_animation = self.text_define.default_outro_animation
+        else:
+            outro_animation = outro_animation.lower()
+        
+        # No valid value provided? Set it to the default outro animation.
+        if outro_animation not in (outro_animation_possible_values):
+            outro_animation = self.text_define.default_outro_animation
+        else:
+            self.set_combobox_text(self.text_define.cb_outro_animation,
+                                   outro_animation)
+            
+        # Anchor (dialog rectangle position)
+        
+        # Valid values for anchor.
+        anchor_possible_values =\
+            self.text_define.cb_dialog_position.cget("values")
+        
+        anchor = command_class_object.anchor
+        if not anchor:
+            anchor = self.text_define.default_anchor
+        else:
+            anchor = anchor.lower()
+        
+        # No valid value provided? Set it to the default anchor position.
+        if anchor not in (anchor_possible_values):
+            anchor = self.text_define.default_anchor
+        else:
+            self.set_combobox_text(self.text_define.cb_dialog_position,
+                                   anchor)
+
+        # Background color hex
+        bg_color_hex = command_class_object.bg_color_hex
+        try:
+            self.text_define.lbl_backcolor.configure(background=bg_color_hex)
+        except tk.TclError:
+            # Default to black
+            self.text_define.lbl_backcolor.configure(background="#000000")
+
+            
+        try:
+            padding_x = int(padding_x)
+        except ValueError:
+            padding_x = self.text_define.default_padding_x
+            
+        try:
+            padding_y = int(padding_y)
+        except ValueError:
+            padding_y = self.text_define.default_padding_y
+            
+        try:
+            opacity = int(opacity)
+        except ValueError:
+            opacity = self.text_define.default_opacity
+            
+        self.text_define.v_opacity.set(opacity)
+            
+            
+        # Rounded corners?
+        rounded_corners = command_class_object.rounded_corners
+        if rounded_corners:
+            rounded_corners = rounded_corners.lower()
+            
+        if rounded_corners not in ("yes", "no"):
+            # Default to no rounded corners.
+            rounded_corners = False
+            
+        elif rounded_corners == "yes":
+            rounded_corners = True
+        else:
+            rounded_corners = False
+            
+        self.text_define.v_rounded_corners.set(rounded_corners)
+        
+        # Run a reusable script when the intro animation starts
+        self.set_combobox_text(self.text_define.cb_reusable_on_intro_starting,
+                               command_class_object.reusable_on_intro_starting)         
+        
+        # Run a reusable script when the intro animation finishes
+        self.set_combobox_text(self.text_define.cb_reusable_on_intro_finished,
+                               command_class_object.reusable_on_intro_finished)           
+        
+        # Run a reusable script when the outro animation starts      
+        self.set_combobox_text(self.text_define.cb_reusable_on_outro_starting,
+                               command_class_object.reusable_on_outro_starting)        
+        
+        # Run a reusable script when the outro animation finishes
+        self.set_combobox_text(self.text_define.cb_reusable_on_outro_finished,
+                               command_class_object.reusable_on_outro_finished)             
+        
+        # Run a reusable script when the the visual novel is halted
+        self.set_combobox_text(self.text_define.cb_resuable_on_halt,
+                               command_class_object.reusable_on_halt)           
+        
+        # Run a reusable script when the the visual novel is unhalted
+        self.set_combobox_text(self.text_define.cb_resuable_on_unhalt,
+                               command_class_object.reusable_on_unhalt)               
+        
+        
+        # Border color hex
+        border_color_hex = command_class_object.border_color_hex
+        try:
+            
+            self.text_define.\
+                lbl_backcolor_border.configure(background=border_color_hex)
+        except tk.TclError:
+            
+            # Default to black
+            self.text_define.\
+                lbl_backcolor_border.configure(background="#000000")        
+        
+            
+        try:
+            border_opacity = int(command_class_object.border_opacity)
+        except ValueError:
+            border_opacity = self.text_define.default_opacity_border
+            
+        self.text_define.v_opacity_border.set(border_opacity)
+        
+            
+        try:
+            border_width = int(command_class_object.border_width)
+        except ValueError:
+            border_width = self.text_define.default_border_width
+            
+        self.text_define.v_border_width.set(border_width)
+        
     def check_inputs(self) -> Dict | None:
         """
         Check whether the user has inputted sufficient information
