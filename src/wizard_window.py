@@ -5788,7 +5788,7 @@ class SharedPages:
 
             return frame_content
 
-        def _edit_populate(self, command_class_object: cc.Volume):
+        def _edit_populate(self, command_class_object: cc.Volume|cc.HaltAuto):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5799,9 +5799,13 @@ class SharedPages:
             
             # Get the audio volume, which may look like this:
             # '35'
-            audio_volume = command_class_object.volume            
+            if isinstance(command_class_object, cc.Volume):
+                scale_value = command_class_object.volume
+                
+            elif isinstance(command_class_object, cc.HaltAuto):
+                scale_value = command_class_object.number_of_frames
 
-            self.v_scale_value.set(audio_volume)
+            self.v_scale_value.set(scale_value)
 
         def check_inputs(self) -> Dict | None:
             """
