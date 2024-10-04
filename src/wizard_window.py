@@ -5203,6 +5203,38 @@ class SharedPages:
             
             return frame_content
         
+        def _edit_populate(self, command_class_object: cc.SpriteCenterWith):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            alias_to_move = command_class_object.alias_to_move
+            
+            sprite_type_to_center_with =\
+                command_class_object.sprite_type_to_center_with
+            
+            # Capitalize the sprite type, because that's how the sprite types
+            # are listed in the combobox.
+            if sprite_type_to_center_with:
+                sprite_type_to_center_with =\
+                    sprite_type_to_center_with.capitalize()
+                
+                # A sprite type can only be these 3 values, nothing else.
+                if sprite_type_to_center_with not in ("Character",
+                                                      "Dialog sprite",
+                                                      "Object"):
+                    sprite_type_to_center_with = ""
+            
+            center_with_alias = command_class_object.center_with_alias
+            
+            self.v_alias_to_move.set(alias_to_move)
+            self.v_sprite_type_center_with.set(sprite_type_to_center_with)
+            self.v_center_with_alias.set(center_with_alias)
+        
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
