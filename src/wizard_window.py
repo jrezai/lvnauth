@@ -8595,7 +8595,32 @@ class DialogContinue(WizardListing):
 
         self.lbl_y_position_instructions.state([state_change])
         
-
+    def _edit_populate(self, command_class_object: cc.Continue):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        adjust_y = command_class_object.adjust_y
+        
+        try:
+            # Do we have a proper int value as an argument?
+            
+            adjust_y = int(adjust_y)
+            
+            self.v_use_manual_y.set(True)
+            self.v_scale_value.set(adjust_y)
+            
+        except ValueError:
+            # The argument value does not evaluate to an int,
+            # so uncheck the 'adjust y' checkbutton.
+            adjust_y = 0
+            self.v_use_manual_y.set(False)
+        
+        
 class TextDialogDefine(WizardListing):
     """
     <text_dialog_define: width, height, animation_speed, intro_animation,

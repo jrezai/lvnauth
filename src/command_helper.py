@@ -93,6 +93,7 @@ class CommandHelper:
         "character_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
         "text_dialog_define": cc.DialogRectangleDefinition,
         "halt_auto": cc.HaltAuto,
+        "continue": cc.Continue,
     }
     
     @staticmethod
