@@ -94,6 +94,7 @@ class CommandHelper:
         "text_dialog_define": cc.DialogRectangleDefinition,
         "halt_auto": cc.HaltAuto,
         "continue": cc.Continue,
+        "load_dialog_sprite": cc.SpriteLoad,
     }
     
     @staticmethod
