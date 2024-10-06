@@ -5023,7 +5023,7 @@ class SharedPages:
     
             return frame_content
         
-        def _edit_populate(self, command_class_object: cc.SpriteShowHide):
+        def _edit_populate(self, command_class_object: cc.SpriteShowHide|cc.Flip):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5032,8 +5032,12 @@ class SharedPages:
             if not command_class_object:
                 return
 
-            # Get the alias
-            sprite_name = command_class_object.sprite_name
+            if isinstance(command_class_object, cc.SpriteShowHide):
+                # Get the alias
+                sprite_name = command_class_object.sprite_name
+                
+            elif isinstance(command_class_object, cc.Flip):
+                sprite_name = command_class_object.general_alias
             
             # Show the alias in the entry widget
             self.entry_general_alias.insert(0, sprite_name)
@@ -5804,6 +5808,17 @@ class SharedPages:
                 
             elif isinstance(command_class_object, cc.HaltAuto):
                 scale_value = command_class_object.number_of_frames
+                
+            elif isinstance(command_class_object, cc.FontTextDelay):
+                scale_value = command_class_object.number_of_frames
+                
+            elif isinstance(command_class_object, cc.FontTextFadeSpeed):
+                scale_value = command_class_object.fade_speed
+                
+            try:
+                scale_value = int(scale_value)
+            except ValueError:
+                scale_value = 1
 
             self.v_scale_value.set(scale_value)
 
@@ -5917,8 +5932,11 @@ class SharedPages:
             if not command_class_object:
                 return
 
-            # Get the alias
-            sprite_name = command_class_object.sprite_name
+            # FontStartPosition (used by <font_x>, <font_y>)
+            # does not have sprite name.
+            if not isinstance(command_class_object, cc.FontStartPosition):
+                # Get the alias
+                sprite_name = command_class_object.sprite_name
             
             # Initialize
             numeric_value = 0
@@ -5941,6 +5959,9 @@ class SharedPages:
             elif isinstance(command_class_object, cc.ScaleDelay):
                 numeric_value = command_class_object.scale_delay
                 
+            elif isinstance(command_class_object, cc.FontStartPosition):
+                numeric_value = command_class_object.start_position
+                
             elif isinstance(command_class_object, cc.ScaleCurrentValue):
                 numeric_value = command_class_object.scale_current_value
                 
@@ -5948,8 +5969,11 @@ class SharedPages:
                 # for use in commands such as: <character_scale_current_value>
                 numeric_class_type = float
             
-            # Show the alias in the entry widget
-            self.entry_general_alias.insert(0, sprite_name)
+            # FontStartPosition (used by <font_x>, <font_y>)
+            # does not have sprite name.
+            if not isinstance(command_class_object, cc.FontStartPosition):
+                # Show the alias in the entry widget
+                self.entry_general_alias.insert(0, sprite_name)
             
             try:
                 numeric_value = numeric_class_type(numeric_value)
@@ -7791,6 +7815,26 @@ class Font_TextDelayPunc(WizardListing):
 
         return frame_content
     
+    def _edit_populate(self, command_class_object: cc.FontTextDelayPunc):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        previous_letter = command_class_object.previous_letter
+        number_of_frames = command_class_object.number_of_frames
+        
+        try:
+            number_of_frames = int(number_of_frames)
+        except ValueError:
+            number_of_frames = 1
+
+        self.entry_letter.insert(0, previous_letter)
+        self.v_scale_value.set(number_of_frames)
+
     def check_inputs(self) -> Dict:
         """
         Make sure a letter has been provided.
