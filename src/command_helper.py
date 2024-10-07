@@ -181,6 +181,8 @@ class CommandHelper:
         "font_text_delay": cc.FontTextDelay,
         "font_text_delay_punc": cc.FontTextDelayPunc,
         "font_text_fade_speed": cc.FontTextFadeSpeed,
+        "font_intro_animation": cc.FontIntroAnimation,
+        "sprite_font": cc.SpriteText,
     }
     
     @staticmethod

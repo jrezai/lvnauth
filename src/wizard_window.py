@@ -3666,7 +3666,6 @@ class SharedPages:
             # Entry: sprite alias
             self.sprite_frame = self.get_sprite_template()
             self.sprite_frame.grid(pady=(15, 0), sticky=tk.W, columnspan=2)   
-
             
         def get_frame_sprite_text(self) -> ttk.Frame:
             """
@@ -3715,7 +3714,7 @@ class SharedPages:
             self.frame_sprite.grid()
             
             return self.frame_sprite
-    
+
         def check_inputs_sprite_text(self) -> Dict:
             """
             Check sprite_text specific widgets: 'sprite type' and 'sprite alias'.
@@ -3834,6 +3833,32 @@ class SharedPages:
             self.cb_selection.grid(row=1, column=0, sticky="w")
 
             return frame_content
+
+        def _edit_populate(self, command_class_object: cc.FontIntroAnimation):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            animation_type = command_class_object.animation_type
+            
+            # Set to lowercase so we can compare it in lowercase.
+            if animation_type:
+                animation_type = animation_type.lower()
+                
+            # Default to the first selection if an invalid
+            # value was provided.
+            if animation_type not in self.values_to_choose:
+                # Default to the first index
+                self.cb_selection.current(newindex=0)
+            else:
+                self.cb_selection.state(["!readonly"])
+                self.cb_selection.delete(0, tk.END)
+                self.cb_selection.insert(0, animation_type)
+                self.cb_selection.state(["readonly"])
 
         def check_inputs(self) -> Dict | None:
             """
@@ -7039,7 +7064,35 @@ class SharedPages:
                 sprite_name = command_class_object.sprite_name
                 self.cb_selections.insert(0, sprite_name)
                 
+            elif isinstance(command_class_object, cc.SpriteText):
+                # Used with <sprite_font>
+                
+                sprite_type = command_class_object.sprite_type
+                general_alias = command_class_object.general_alias
+                font_name = command_class_object.value
+                
+                if sprite_type:
+                    sprite_type = sprite_type.lower()
+                    
+                if sprite_type not in self.cb_sprite_type.cget("values"):
+                    sprite_type = ""
+                    
+                # Font name
+                self.cb_selections.state(["!readonly"])
+                self.cb_selections.delete(0, tk.END)
+                self.cb_selections.insert(0, font_name)
+                self.cb_selections.state(["readonly"])                       
             
+                # Sprite type (ie: character, object, dialog_sprite)
+                self.cb_sprite_type.state(["!readonly"])
+                self.cb_sprite_type.delete(0, tk.END)
+                self.cb_sprite_type.insert(0, sprite_type)
+                self.cb_sprite_type.state(["readonly"])
+                
+                # General alias of the sprite
+                self.entry_sprite_alias.insert(0, general_alias)
+                
+
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
         """
         <load_character>
