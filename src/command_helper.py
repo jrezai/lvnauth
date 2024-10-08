@@ -183,6 +183,15 @@ class CommandHelper:
         "font_text_fade_speed": cc.FontTextFadeSpeed,
         "font_intro_animation": cc.FontIntroAnimation,
         "sprite_font": cc.SpriteText,
+        "sprite_font_x": cc.SpriteText,
+        "sprite_font_y": cc.SpriteText,
+        "sprite_font_delay": cc.SpriteTextDelay,
+        "sprite_font_delay_punc": cc.SpriteTextDelayPunc,
+        "sprite_font_intro_animation": cc.SpriteFontIntroAnimation,
+        "sprite_font_fade_speed": cc.SpriteFontFadeSpeed,
+        "sprite_text": cc.SpriteText,
+        "sprite_text_clear": cc.SpriteTextClear,
+        "scene_with_fade": cc.SceneWithFade,
     }
     
     @staticmethod

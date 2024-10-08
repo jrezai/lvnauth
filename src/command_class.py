@@ -103,6 +103,31 @@ class SpriteText(NamedTuple):
     value: str
     
     
+class SpriteTextDelay(NamedTuple):
+    sprite_type: str
+    general_alias: str
+    number_of_frames: int
+    
+    
+class SpriteTextDelayPunc(NamedTuple):
+    sprite_type: str
+    general_alias: str
+    previous_letter: str
+    number_of_frames: int
+    
+
+class SpriteFontIntroAnimation(NamedTuple):
+    sprite_type: str
+    sprite_name: str
+    animation_type: str
+    
+    
+class SpriteFontFadeSpeed(NamedTuple):
+    sprite_type: str
+    sprite_name: str
+    fade_speed: int
+    
+    
 class SpriteTextClear(NamedTuple):
     sprite_type: str
     general_alias: str

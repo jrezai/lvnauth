@@ -3667,6 +3667,24 @@ class SharedPages:
             self.sprite_frame = self.get_sprite_template()
             self.sprite_frame.grid(pady=(15, 0), sticky=tk.W, columnspan=2)   
             
+        def set_sprite_type(self, sprite_type: str):
+            """
+            Set the sprite type in the combobox.
+            
+            Purpose: when editing a command, we dynamically set the sprite type
+            combobox using this method. It's a convenience method.
+            """
+            
+            if sprite_type:
+                sprite_type = sprite_type.lower()
+                
+            # Make sure a valid sprite type value is selected.
+            if sprite_type in self.cb_sprite_type.cget("values"):
+                self.cb_sprite_type.state(["!readonly"])
+                self.cb_sprite_type.delete(0, tk.END)
+                self.cb_sprite_type.insert(0, sprite_type)
+                self.cb_sprite_type.state(["readonly"])         
+            
         def get_frame_sprite_text(self) -> ttk.Frame:
             """
             Create a frame that includes a sprite text label and entry widget
@@ -3859,6 +3877,18 @@ class SharedPages:
                 self.cb_selection.delete(0, tk.END)
                 self.cb_selection.insert(0, animation_type)
                 self.cb_selection.state(["readonly"])
+                
+            # This part is specific to SpriteFontIntroAnimation
+            # Used with <sprite_font_intro_animation>
+            if isinstance(command_class_object, cc.SpriteFontIntroAnimation):
+                
+                # Sprite type (ie: character, object, dialog_sprite)
+                sprite_type = command_class_object.sprite_type
+                self.set_sprite_type(sprite_type)
+                
+                # General alias
+                alias = command_class_object.sprite_name
+                self.entry_sprite_alias.insert(0, alias)        
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5840,6 +5870,29 @@ class SharedPages:
             elif isinstance(command_class_object, cc.FontTextFadeSpeed):
                 scale_value = command_class_object.fade_speed
                 
+            elif isinstance(command_class_object, cc.SpriteFontFadeSpeed):
+                scale_value = command_class_object.fade_speed
+                
+                general_alias = command_class_object.sprite_name
+                sprite_type = command_class_object.sprite_type
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
+                
+                self.entry_sprite_alias.insert(0, general_alias)                
+                
+            elif isinstance(command_class_object, cc.SpriteTextDelay):
+
+                scale_value = command_class_object.number_of_frames
+                
+                sprite_type = command_class_object.sprite_type
+                general_alias = command_class_object.general_alias
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
+                
+                self.entry_sprite_alias.insert(0, general_alias)
+                
             try:
                 scale_value = int(scale_value)
             except ValueError:
@@ -5951,17 +6004,44 @@ class SharedPages:
         def _edit_populate(self, command_class_object: cc.FadeCurrentValue | cc.FadeDelay):
             """
             Populate the widgets with the arguments for editing.
+            
+            This specific method gets used by various different commands
+            so we have a lot of if-statements to check each one.
             """
             
             # No arguments? return.
             if not command_class_object:
                 return
+            
+            # The entry widget will have a different name depending
+            # on the command class. So we use one variable to reference 
+            # the entry widget depending on the class.
+            entry_widget = None
+            
+            # SpriteText class uses 'general_alias' instead of 'sprite_text'.
+            # Used by commands such as <sprite_font_x>
+            if isinstance(command_class_object, cc.SpriteText):
+
+                sprite_name = command_class_object.general_alias
+                
+                entry_widget = self.entry_sprite_alias
+                
+                # Sprite type
+                sprite_type = command_class_object.sprite_type
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
 
             # FontStartPosition (used by <font_x>, <font_y>)
             # does not have sprite name.
-            if not isinstance(command_class_object, cc.FontStartPosition):
+            elif not isinstance(command_class_object, cc.FontStartPosition):
                 # Get the alias
                 sprite_name = command_class_object.sprite_name
+                
+            # If a entry widget hasn't been specified by the time we reach here,
+            # then assume self.entry_general_alias
+            if entry_widget is None:
+                entry_widget = self.entry_general_alias
             
             # Initialize
             numeric_value = 0
@@ -5987,6 +6067,9 @@ class SharedPages:
             elif isinstance(command_class_object, cc.FontStartPosition):
                 numeric_value = command_class_object.start_position
                 
+            elif isinstance(command_class_object, cc.SpriteText):
+                numeric_value = command_class_object.value
+                
             elif isinstance(command_class_object, cc.ScaleCurrentValue):
                 numeric_value = command_class_object.scale_current_value
                 
@@ -5998,7 +6081,7 @@ class SharedPages:
             # does not have sprite name.
             if not isinstance(command_class_object, cc.FontStartPosition):
                 # Show the alias in the entry widget
-                self.entry_general_alias.insert(0, sprite_name)
+                entry_widget.insert(0, sprite_name)
             
             try:
                 numeric_value = numeric_class_type(numeric_value)
@@ -7070,12 +7153,6 @@ class SharedPages:
                 sprite_type = command_class_object.sprite_type
                 general_alias = command_class_object.general_alias
                 font_name = command_class_object.value
-                
-                if sprite_type:
-                    sprite_type = sprite_type.lower()
-                    
-                if sprite_type not in self.cb_sprite_type.cget("values"):
-                    sprite_type = ""
                     
                 # Font name
                 self.cb_selections.state(["!readonly"])
@@ -7083,11 +7160,8 @@ class SharedPages:
                 self.cb_selections.insert(0, font_name)
                 self.cb_selections.state(["readonly"])                       
             
-                # Sprite type (ie: character, object, dialog_sprite)
-                self.cb_sprite_type.state(["!readonly"])
-                self.cb_sprite_type.delete(0, tk.END)
-                self.cb_sprite_type.insert(0, sprite_type)
-                self.cb_sprite_type.state(["readonly"])
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)                
                 
                 # General alias of the sprite
                 self.entry_sprite_alias.insert(0, general_alias)
@@ -7887,6 +7961,16 @@ class Font_TextDelayPunc(WizardListing):
 
         self.entry_letter.insert(0, previous_letter)
         self.v_scale_value.set(number_of_frames)
+        
+        # SpriteTextDelayPunc has 2 additional widgets:
+        # an entry widget and a combobox.
+        if isinstance(command_class_object, cc.SpriteTextDelayPunc):
+            # Used with <sprite_font_delay_punc>
+            alias = command_class_object.general_alias
+            self.entry_sprite_alias.insert(0, alias)
+            
+            sprite_type = command_class_object.sprite_type
+            self.set_sprite_type(sprite_type)
 
     def check_inputs(self) -> Dict:
         """
@@ -8102,6 +8186,24 @@ class Font_SpriteText(WizardListing, SharedPages.SpriteTextExtension):
         # Use a sprite_text specific generate_command method.
         self.generate_command = self.custom_generate_command
         
+    def _edit_populate(self, command_class_object: cc.SpriteText):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        sprite_name = command_class_object.general_alias
+        text = command_class_object.value
+        sprite_type = command_class_object.sprite_type
+        
+        self.set_sprite_type(sprite_type)
+        
+        self.entry_sprite_alias.insert(0, sprite_name)
+        self.entry_sprite_text.insert(0, text)    
+        
 class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
     """
     <sprite_text_clear: sprite type, sprite alias>
@@ -8128,6 +8230,21 @@ class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
         
         # Use a sprite_text specific generate_command method.
         self.generate_command = self.custom_generate_command
+        
+    def _edit_populate(self, command_class_object: cc.SpriteTextClear):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        sprite_name = command_class_object.general_alias
+        sprite_type = command_class_object.sprite_type
+        
+        self.set_sprite_type(sprite_type)
+        self.entry_sprite_alias.insert(0, sprite_name)   
         
 
 class Font_SpriteFontPosition(Font_Position, SharedPages.SpriteTextExtension):
@@ -8340,8 +8457,59 @@ class SceneWithFade(WizardListing):
         # Populate chapter and scene names combo boxes
         SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
                                                self.scene_frame.cb_scenes)
-                                               
+    
+    def _set_combobox_text(self, combobox, text: str):
+        """
+        Set the displayed text in a combobox.
         
+        Purpose: when editing a command, we dynamically set the combobox text
+        combobox using this method. It's a convenience method.
+        """
+        combobox.state(["!readonly"])
+        combobox.delete(0, tk.END)
+        combobox.insert(0, text)
+        combobox.state(["readonly"])             
+                               
+    def _edit_populate(self, command_class_object: cc.SceneWithFade):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        hex_color = command_class_object.hex_color
+        fade_in_speed = command_class_object.fade_in_speed
+        fade_out_speed = command_class_object.fade_out_speed
+        fade_hold_for_frame_count =\
+            command_class_object.fade_hold_for_frame_count
+        chapter_name = command_class_object.chapter_name
+        scene_name = command_class_object.scene_name
+        
+        
+        # Background color
+        self.scene_frame.lbl_color.configure(background=hex_color)
+        
+        # Fade in speed
+        self.scene_frame.v_scale_fade_in.set(fade_in_speed)
+        
+        # Fade out speed
+        self.scene_frame.v_scale_fade_out.set(fade_out_speed)
+        
+        # Hold frames value
+        self.scene_frame.v_scale_hold_frames.set(fade_hold_for_frame_count)
+        
+        # Chapter name
+        self._set_combobox_text(self.scene_frame.cb_chapters, chapter_name)
+        
+        # Populate the scene combobox values based on the chapter name above.
+        # See the method: SharedPages.SceneScriptSelect.populate
+        # for more info.
+        self.scene_frame.cb_chapters.event_generate("<<ComboboxSelected>>")
+        
+        # Scene name
+        self._set_combobox_text(self.scene_frame.cb_scenes, scene_name)
 
     def check_inputs(self) -> Dict | None:
         """

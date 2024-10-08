@@ -220,7 +220,7 @@ class ParameterDescription:
                      "sprite_font_y": ("Sprite type", "Sprite alias", "Vertical position value (x)"),
                      "sprite_font_delay": ("Sprite type", "Sprite alias", "Delay frames (0 to 600)"),
                      "sprite_font_delay_punc": ("Sprite type", "Sprite alias", "Previous letter", "Number of frames to skip (0 to 120)"),
-                     "sprite_font_speed": ("Sprite type", "Sprite alias", "Fade speed (1 to 10)"),
+                     "sprite_font_fade_speed": ("Sprite type", "Sprite alias", "Fade speed (1 to 10)"),
                      "sprite_font_intro_animation": ("Sprite type", "Sprite alias", "Starting animation type"),
                      "sprite_text": ("Sprite type", "Sprite alias", "Sprite text"),
                      "sprite_text_clear": ("Sprite type", "Sprite alias"),
