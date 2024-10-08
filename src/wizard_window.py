@@ -2771,18 +2771,6 @@ class WizardWindow:
                                  "Note: the sprite must already be visible.",
                                  group_name=GroupName.TEXT)
 
-        page_general_scene_with_fade = \
-            SceneWithFade(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="General",
-                          sub_display_text="scene_with_fade",
-                          command_name="scene_with_fade",
-                          purpose_line="Gradually fade into another scene.\n"
-                                       "Provides a fade effect when transitioning between scenes.",
-                          group_name=GroupName.FADE)
-
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
                        header_label=self.lbl_header,
@@ -2864,6 +2852,18 @@ class WizardWindow:
                               command_name="scene",
                               purpose_line="Run a scene in a specific chapter.",
                               group_name=GroupName.RUN_SCRIPT)
+        
+        page_general_scene_with_fade = \
+            SceneWithFade(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="General",
+                          sub_display_text="scene_with_fade",
+                          command_name="scene_with_fade",
+                          purpose_line="Gradually fade into another scene.\n"
+                                       "Provides a fade effect when transitioning between scenes.",
+                          group_name=GroupName.RUN_SCRIPT)
 
         page_wait_for_animation = \
             WaitForAnimation(parent_frame=self.frame_contents_outer,
