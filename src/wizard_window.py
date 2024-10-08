@@ -8384,15 +8384,21 @@ class SceneWithFadeFrame:
 
         self.cb_chapters = builder.get_object("cb_chapters")
         self.cb_scenes = builder.get_object("cb_scenes")
+        
+        # Default values
+        self.default_fade_in = 10
+        self.default_fade_out = 10
+        self.default_hold_frames = 80
+        self.default_background_color = "#000000"
 
         self.v_scale_fade_in = builder.get_variable("v_scale_fade_in")
-        self.v_scale_fade_in.set(10)
+        self.v_scale_fade_in.set(self.default_fade_in)
 
         self.v_scale_fade_out = builder.get_variable("v_scale_fade_out")
-        self.v_scale_fade_out.set(10)
+        self.v_scale_fade_out.set(self.default_fade_out)
 
         self.v_scale_hold_frames = builder.get_variable("v_scale_hold_frames")
-        self.v_scale_hold_frames.set(80)
+        self.v_scale_hold_frames.set(self.default_hold_frames)
 
     def on_change_color_button_clicked(self):
         """
@@ -8487,17 +8493,33 @@ class SceneWithFade(WizardListing):
         chapter_name = command_class_object.chapter_name
         scene_name = command_class_object.scene_name
         
-        
         # Background color
-        self.scene_frame.lbl_color.configure(background=hex_color)
-        
+        try:
+            self.scene_frame.lbl_color.configure(background=hex_color)
+        except tk.TclError:
+            # Default background color
+            self.scene_frame.lbl_color.\
+                configure(background=self.scene_frame.default_background_color)
+            
         # Fade in speed
+        try:
+            fade_in_speed = int(fade_in_speed)
+        except ValueError:
+            fade_in_speed = self.scene_frame.default_fade_in
         self.scene_frame.v_scale_fade_in.set(fade_in_speed)
         
         # Fade out speed
+        try:
+            fade_out_speed = int(fade_out_speed)
+        except ValueError:
+            fade_out_speed = self.scene_frame.default_fade_out
         self.scene_frame.v_scale_fade_out.set(fade_out_speed)
         
         # Hold frames value
+        try:
+            fade_hold_for_frame_count = int(fade_hold_for_frame_count)
+        except ValueError:
+            fade_hold_for_frame_count = self.scene_frame.default_hold_frames
         self.scene_frame.v_scale_hold_frames.set(fade_hold_for_frame_count)
         
         # Chapter name
