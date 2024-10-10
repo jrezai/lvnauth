@@ -192,6 +192,10 @@ class CommandHelper:
         "sprite_text": cc.SpriteText,
         "sprite_text_clear": cc.SpriteTextClear,
         "scene_with_fade": cc.SceneWithFade,
+        "rest": cc.Rest,
+        "after": cc.AfterWithArguments,
+        "after_cancel": cc.AfterCancel,
+        "call": cc.CallWithArguments,
     }
     
     @staticmethod
@@ -394,6 +398,36 @@ class CommandHelper:
                 if isinstance(arguments, list) and len(arguments) == 2:
                     # Use the 2-argument version of the class.
                     command_cls = cc.MovementStopConditionShorter
+                    
+            # <call> can have 1 argument or more.
+            elif command_name == "call":
+                if isinstance(arguments, str):
+                    # Use the 1-argument version of the class.
+                    command_cls = cc.CallWithNoArguments
+                    
+                else:
+                    # 2-argument version of the class, where the 2nd
+                    # argument is for multiple optional arguments.
+                    arguments =\
+                        CommandHelper._get_optional_arguments(arguments, 1)
+                    
+            # <after> can have optional arguments.
+            elif command_name == "after":
+                
+                # <after> commands must always be a list, because the
+                # minimum number of arguments is 2.
+                if isinstance(arguments, list):
+                    
+                    if len(arguments) == 2:
+                        # Use the regular 2-argument version of the class.
+                        command_cls = cc.AfterWithoutArguments
+                    
+                    else:
+                        # 3-argument version of the class, where the 3rd
+                        # argument is for multiple optional arguments.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 2)                
+                
                     
             # Mouse related commands such as <character_on_mouse_click> 
             # can have 2 or 3 arguments. If we have 2 arguments here, use the 

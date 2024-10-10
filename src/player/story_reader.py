@@ -57,16 +57,23 @@ class AfterCounter:
     Purpose: to keep track of how many frames need to be skipped
     and how many frames have been skipped so far.
     """
-    def __init__(self, frames_to_skip: int):
+    def __init__(self,
+                 frames_to_skip: int,
+                 optional_arguments: str = None):
         """
         Arguments:
         
         - frames_to_skip: the number of frames to elapse
         until the reusable script is run.
+        
+        - optional_arguments: arguments to pass to the reusable script
+        once the number of frames has been satisfied.
         """
         
         self.frames_to_skip = frames_to_skip
         self.frames_skipped_so_far = 0
+        
+        self.optional_arguments = optional_arguments
 
     def elapse(self):
         """
@@ -110,7 +117,10 @@ class AfterManager:
         # We'll need this method in the tick_elapse() method.
         self.method_spawn_background_reader = method_spawn_background_reader
         
-    def add_timer(self, reusable_script_name: str, frames_to_skip: int):
+    def add_timer(self,
+                  reusable_script_name: str,
+                  frames_to_skip: int,
+                  optional_arguments: str|None = None):
         """
         Add the given reusable script to a queue so that after X number of
         frames has been elapsed, run the reusable script and then remove it
@@ -124,7 +134,8 @@ class AfterManager:
         if reusable_script_name in self.scripts_and_timers:
             return
 
-        counter = AfterCounter(frames_to_skip=frames_to_skip)
+        counter = AfterCounter(frames_to_skip=frames_to_skip,
+                               optional_arguments=optional_arguments)
 
         # Add to dictionary
         self.scripts_and_timers[reusable_script_name] = counter
@@ -159,7 +170,10 @@ class AfterManager:
         even if the queue is empty.
         """
 
-        run_script_names = []
+        # Key: reusable script name
+        # Value: optional additional arguments to pass to the reusable script
+        #        or None if not available.
+        run_script_names = {}
 
         counter: AfterCounter
         for reusable_script_name, counter in self.scripts_and_timers.items():
@@ -169,20 +183,36 @@ class AfterManager:
             
             # Is this queue ready to run the script?
             if counter.is_ready():
-                # Yes, run this script at the end of this method.
-                run_script_names.append(reusable_script_name)
+                # Yes, run this script at the end of this method with
+                # optional arguments, if available.
+                run_script_names[reusable_script_name] = \
+                    counter.optional_arguments
             else:
+                # This queue is not ready to run the script yet.
+                # Updated the counter with the elapsed version.
                 self.scripts_and_timers[reusable_script_name] = counter
 
         # Remove timers that have expired and run the reusable scripts.
-        for reusable_script_name in run_script_names:
+        for reusable_script_name, optional_arguments in run_script_names.items():
             
             # Remove expired timer
             del self.scripts_and_timers[reusable_script_name]
+            
+            if optional_arguments:
+                with_arguments = True
+                
+                # Combine the reusable script name with the optional arguments
+                # because it gets passed all as one string when spawning
+                # a background reader.
+                reusable_script_name =\
+                    f"{reusable_script_name},{optional_arguments}"
+            else:
+                with_arguments = False
 
             # Spawn a new background reader so we can run
             # the reusable script that we're iterating on.
-            self.method_spawn_background_reader(reusable_script_name)
+            self.method_spawn_background_reader(reusable_script_name,
+                                                with_arguments=with_arguments)
 
 
 class StoryReader:
@@ -3642,20 +3672,29 @@ class StoryReader:
         Run a reusable script after X number of frames has elapsed.
         Example: <after: 30 (frames), reusable script here>
         """
+        
+        if arguments.count(",") > 1:
+            class_type = cc.AfterWithArguments
+        else:
+            class_type = cc.AfterWithoutArguments
+            optional_arguments = None
 
-        after_timer: cc.After
+        after_timer: cc.AfterWithArguments
         after_timer =\
-            self._get_arguments(class_namedtuple=cc.After,
+            self._get_arguments(class_namedtuple=class_type,
                                 given_arguments=arguments)
 
+        if class_type == cc.AfterWithArguments:
+            optional_arguments = after_timer.arguments
 
         # Use the after manager of the main reader if we're currently
         # in a background reader.
         after_manager_method = self._get_after_manager()
 
         # Create a timer to run the specific reusable script.
-        after_manager_method.add_timer(reusable_script_name=after_timer.reusable_script,
-                                       frames_to_skip=after_timer.frames_elapse)
+        after_manager_method.add_timer(reusable_script_name=after_timer.reusable_script_name,
+                                       frames_to_skip=after_timer.frames_elapse,
+                                       optional_arguments=optional_arguments)
         
     def after_cancel(self, arguments):
         """
@@ -3681,7 +3720,7 @@ class StoryReader:
         # Remove the timer with the name that matches the
         # specified reusable script name. If the name doesn't exist,
         # it won't raise an exception.
-        after_manager_method.remove_timer(reusable_script_name=after_cancel.reusable_script)
+        after_manager_method.remove_timer(reusable_script_name=after_cancel.reusable_script_name)
 
     def after_cancel_all(self):
         """

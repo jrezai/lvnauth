@@ -227,7 +227,7 @@ class ParameterDescription:
                      
                      "scene_with_fade": ("Background color (hex)", "Fade-in speed (1 to 100)", "Fade-out speed (1 to 100)", "Number of frames to hold", "Chapter name", "Scene name"),
                      "rest": ("Number of frames to pause",),
-                     "after": ("Reusable script name", "Number of frames to elapse"),
+                     "after": ("Number of frames to elapse", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "after_cancel": ("Reusable script name",),
                      "call": ("Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "scene": ("Chapter name", "Scene name"),

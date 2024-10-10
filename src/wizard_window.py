@@ -2807,6 +2807,7 @@ class WizardWindow:
                                  amount_name="number of frames to elapse", 
                                  spinbox_default_value=120,
                                  show_delay_widgets=True,
+                                 show_additional_argument_widgets=True, 
                                  group_name=GroupName.TIMER)
         
         page_after_cancel =\
@@ -2840,7 +2841,8 @@ class WizardWindow:
                                  sub_display_text="call",
                                  command_name="call",
                                  purpose_line="Run a reusable script.",
-                                 group_name=GroupName.RUN_SCRIPT)           
+                                 group_name=GroupName.RUN_SCRIPT,
+                                 show_additional_argument_widgets=True)           
 
         page_scene =\
             SceneScriptSelect(parent_frame=self.frame_contents_outer,
@@ -5870,6 +5872,9 @@ class SharedPages:
             elif isinstance(command_class_object, cc.FontTextFadeSpeed):
                 scale_value = command_class_object.fade_speed
                 
+            elif isinstance(command_class_object, cc.Rest):
+                scale_value = command_class_object.number_of_frames
+                
             elif isinstance(command_class_object, cc.SpriteFontFadeSpeed):
                 scale_value = command_class_object.fade_speed
                 
@@ -6170,12 +6175,15 @@ class SharedPages:
             # Used for showing a spinbox and its label.
             # For <after: elapse frames, script name>
             self.show_delay_widgets = False
+            
+            # Default frames_elapse value
+            self.spinbox_default_value =\
+                self.kwargs.get("spinbox_default_value")            
 
             self.frame_content = self.create_content_frame()
-            
+
             # Populate reusable script names combobox
             self.populate()
-            
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -6192,8 +6200,16 @@ class SharedPages:
             # Meant for showing spinbox for delay frames selection.
             # (<after> uses this, but not <after_cancel>)
             self.show_delay_widgets = self.kwargs.get("show_delay_widgets")
+            
+            # Used for showing 'optional additional arguments'
+            # for use with <call> and <after> when passing additional
+            # arguments to a reusable script.
+            self.show_additional_argument_widgets =\
+                self.kwargs.get("show_additional_argument_widgets")
 
-            self.lbl_reusable_script = ttk.Label(frame_content, text=f"{self.get_purpose_name(capitalize_first_word=True)}:")
+            self.lbl_reusable_script =\
+                ttk.Label(frame_content,
+                          text=f"{self.get_purpose_name(capitalize_first_word=True)}:")
             self.cb_reusable_script = ttk.Combobox(frame_content, width=25)
 
             
@@ -6203,8 +6219,6 @@ class SharedPages:
                 # Example: "The number of frames to elapse:"
                 spinbox_instructions = self.kwargs.get("spinbox_instructions")
                 
-                spinbox_default_value = self.kwargs.get("spinbox_default_value")
-    
                 # Such as 'number of frames to delay level'; used for the message box
                 # when the amount is missing
                 self.amount_name = self.kwargs.get("amount_name")
@@ -6212,8 +6226,20 @@ class SharedPages:
                 self.lbl_amount = ttk.Label(frame_content, text=spinbox_instructions)
                 self.sb_amount = ttk.Spinbox(frame_content, from_=from_value, to=to_value)
                 self.sb_amount.delete(0, "end")
-                self.sb_amount.insert(0, spinbox_default_value)
-    
+                self.sb_amount.insert(0, self.spinbox_default_value)
+                
+            if self.show_additional_argument_widgets:
+                # For optional additional arguments (used by <call> and <after>)
+                frame_additional_args = ttk.Frame(frame_content)
+                lbl_argument_instructions = ttk.Label(frame_additional_args,
+                                                      text="(optional) Arguments to pass to the reusable script")
+                
+                self.entry_arguments = ttk.Entry(frame_additional_args,
+                                                 width=30)
+                
+                lbl_argument_instructions.grid(row=0, column=0, sticky=tk.W)
+                self.entry_arguments.grid(row=1, column=0, sticky=tk.W)
+
 
             self.lbl_reusable_script.grid(row=0, column=0, sticky="w")
             self.cb_reusable_script.grid(row=1, column=0, sticky="w")
@@ -6221,6 +6247,9 @@ class SharedPages:
             if self.show_delay_widgets:
                 self.lbl_amount.grid(row=2, column=0, sticky="w", pady=(15, 0))
                 self.sb_amount.grid(row=3, column=0, sticky="w")
+
+            if self.show_additional_argument_widgets:
+                frame_additional_args.grid(row=4, column=0, sticky="w", pady=(15, 0))
 
             return frame_content
 
@@ -6239,6 +6268,46 @@ class SharedPages:
 
             self.cb_reusable_script.delete(0, "end")
 
+        def _edit_populate(self,
+                           command_class_object: cc.AfterWithArguments|cc.AfterWithoutArguments|cc.AfterCancel):
+            """
+            Populate the widgets with the arguments for editing.
+            Used by <after>, <after_cancel>, <call>
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Only <after> (with or without arguments) uses frames_elapse, 
+            # not <after_cancel> or <call>
+            if isinstance(command_class_object, cc.AfterWithArguments) \
+               or isinstance(command_class_object, cc.AfterWithoutArguments):
+                
+                frames_elapse = command_class_object.frames_elapse
+                
+                # Verify that it's a valid numeric value.
+                try:
+                    frames_elapse = int(frames_elapse)
+                except ValueError:
+                    frames_elapse = self.spinbox_default_value
+                    
+                self.sb_amount.set(frames_elapse)
+                
+
+            reusable_script_name = command_class_object.reusable_script_name
+            self.cb_reusable_script.insert(0, reusable_script_name)
+            
+            # <call> without additional arguments won't have an 'arguments'
+            # attribute, so check for it here.
+            if hasattr(command_class_object, "arguments"):
+                additional_arguments = command_class_object.arguments
+            else:
+                additional_arguments = ""
+            
+            if self.show_additional_argument_widgets:
+                self.entry_arguments.insert(0, additional_arguments)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -6249,6 +6318,9 @@ class SharedPages:
             {"ReusableScriptName": "some script name",
              "DelayFramesAmount": "60"}
             or None if insufficient information was provided by the user.
+            
+            In the case of <after> and <call>, there will be an optional
+            arguments entry widget too, with the user_input key: "Arguments"
             """
 
             user_input = {}
@@ -6282,9 +6354,17 @@ class SharedPages:
                                        title=f"No {self.get_purpose_name()} provided",
                                        message=f"Enter a {self.get_purpose_name()}.")
                 return
+            
+            # In the case of <after> and <call>, there will be an arguments
+            # entry widget too.
+            if hasattr(self, "entry_arguments"):
+                arguments = self.entry_arguments.get().strip()
+            else:
+                arguments = None
 
             user_input = {"ReusableScriptName": reusable_script_name,
-                          "DelayFramesAmount": delay_frames_amount}
+                          "DelayFramesAmount": delay_frames_amount,
+                          "Arguments": arguments,}
 
             return user_input
 
@@ -6303,13 +6383,20 @@ class SharedPages:
 
             delay_frames_amount = user_inputs.get("DelayFramesAmount")
             reusable_script_name = user_inputs.get("ReusableScriptName")
+            arguments = user_inputs.get("Arguments")
             
             if self.show_delay_widgets:
-                # <after: 60, reusable script name>
-                return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}>"
+                # <after: 60, reusable script name, optional arguments>
+                if arguments:
+                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}, {arguments}>"
+                else:
+                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}>"
             else:
-                # <after_cancel: reusable script name>
-                return f"<{self.command_name}: {reusable_script_name}>"
+                # <after_cancel: reusable script name> or <call: reusable script name, optional arguments>
+                if arguments:
+                    return f"<{self.command_name}: {reusable_script_name}, {arguments}>"
+                else:
+                    return f"<{self.command_name}: {reusable_script_name}>"
 
     class SceneScriptSelect(WizardListing):
         """

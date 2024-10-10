@@ -173,13 +173,19 @@ class FontOutroAnimation(NamedTuple):
     animation_type: str
 
 
-class After(NamedTuple):
+class AfterWithArguments(NamedTuple):
     frames_elapse: int
-    reusable_script: str
+    reusable_script_name: str
+    arguments: str
+
+    
+class AfterWithoutArguments(NamedTuple):
+    frames_elapse: int
+    reusable_script_name: str
     
 
 class AfterCancel(NamedTuple):
-    reusable_script: str
+    reusable_script_name: str
 
     
 class SceneLoad(NamedTuple):
