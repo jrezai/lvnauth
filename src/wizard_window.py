@@ -3593,6 +3593,19 @@ class WizardListing:
 
         self.frame_content.grid()
     
+    @staticmethod
+    def set_combobox_readonly_text(combobox, text: str):
+        """
+        Set the displayed text in a combobox.
+        
+        Purpose: when editing a command, we dynamically set the combobox text
+        combobox using this method. It's a convenience method.
+        """
+        combobox.state(["!readonly"])
+        combobox.delete(0, tk.END)
+        combobox.insert(0, text)
+        combobox.state(["readonly"])     
+    
     def edit(self, command_class_object):
         """
         Show the current wizard listing (frame) and populate
@@ -3682,10 +3695,8 @@ class SharedPages:
                 
             # Make sure a valid sprite type value is selected.
             if sprite_type in self.cb_sprite_type.cget("values"):
-                self.cb_sprite_type.state(["!readonly"])
-                self.cb_sprite_type.delete(0, tk.END)
-                self.cb_sprite_type.insert(0, sprite_type)
-                self.cb_sprite_type.state(["readonly"])         
+                WizardListing.set_combobox_readonly_text(self.cb_sprite_type,
+                                                         sprite_type)       
             
         def get_frame_sprite_text(self) -> ttk.Frame:
             """
@@ -3875,10 +3886,8 @@ class SharedPages:
                 # Default to the first index
                 self.cb_selection.current(newindex=0)
             else:
-                self.cb_selection.state(["!readonly"])
-                self.cb_selection.delete(0, tk.END)
-                self.cb_selection.insert(0, animation_type)
-                self.cb_selection.state(["readonly"])
+                WizardListing.set_combobox_readonly_text(self.cb_selection,
+                                                         animation_type)
                 
             # This part is specific to SpriteFontIntroAnimation
             # Used with <sprite_font_intro_animation>
@@ -4155,10 +4164,8 @@ class SharedPages:
                     # Make sure it's a valid string value, such as 
                     # 'end of display' and not just any random string value.
                     if position in self.selection_choices:
-                        self.cb_position.state(["!readonly"])
-                        self.cb_position.delete(0, tk.END)
-                        self.cb_position.insert(0, position)
-                        self.cb_position.state(["readonly"])
+                        WizardListing.set_combobox_readonly_text(
+                            self.cb_position, position)
                     else:
                         # There's an unsupported string value
                         # So default to showing the pixel coordinate widgets.
@@ -4894,10 +4901,9 @@ class SharedPages:
                     
                     # Show the 'side to check' in the combobox
                     if side_to_check in ("left", "right", "top", "bottom"):
-                        self.cb_side_to_check.state(["!readonly"])
-                        self.cb_side_to_check.delete(0, tk.END)
-                        self.cb_side_to_check.insert(0, side_to_check)
-                        self.cb_side_to_check.state(["readonly"])                    
+                        WizardListing.\
+                            set_combobox_readonly_text(self.cb_side_to_check,
+                                                       side_to_check)                
 
             stop_location = command_class_object.stop_location
             
@@ -4923,10 +4929,8 @@ class SharedPages:
                 # 'right', etc.
                 
                 # Show the stop location in the combobox.
-                self.cb_stop_location.state(["!readonly"])
-                self.cb_stop_location.delete(0, tk.END)
-                self.cb_stop_location.insert(0, stop_location)
-                self.cb_stop_location.state(["readonly"])
+                WizardListing.set_combobox_readonly_text(self.cb_stop_location,
+                                                         stop_location)
                 
                 # Causes the pixel coordinate spinbox to ungrid.
                 self.hide_pixel_widgets()
@@ -6516,6 +6520,29 @@ class SharedPages:
             # in the selected chapter.
             cb_scenes.configure(values=scene_names)
 
+        def _edit_populate(self, command_class_object: cc.SceneLoad):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            chapter_name = command_class_object.chapter_name
+            scene_name = command_class_object.scene_name
+            
+            WizardListing.set_combobox_readonly_text(self.cb_chapters,
+                                                     chapter_name)
+            
+            # Populate the scene combobox values based on the chapter name above.
+            # See the method: SharedPages.SceneScriptSelect.populate
+            # for more info.
+            self.cb_chapters.event_generate("<<ComboboxSelected>>")            
+            
+            WizardListing.set_combobox_readonly_text(self.cb_scenes,
+                                                     scene_name)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -7242,10 +7269,8 @@ class SharedPages:
                 font_name = command_class_object.value
                     
                 # Font name
-                self.cb_selections.state(["!readonly"])
-                self.cb_selections.delete(0, tk.END)
-                self.cb_selections.insert(0, font_name)
-                self.cb_selections.state(["readonly"])                       
+                WizardListing.set_combobox_readonly_text(cb_selections,
+                                                         font_name)                     
             
                 # Set the sprite type in the combobox
                 self.set_sprite_type(sprite_type)                
@@ -8549,19 +8574,7 @@ class SceneWithFade(WizardListing):
 
         # Populate chapter and scene names combo boxes
         SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
-                                               self.scene_frame.cb_scenes)
-    
-    def _set_combobox_text(self, combobox, text: str):
-        """
-        Set the displayed text in a combobox.
-        
-        Purpose: when editing a command, we dynamically set the combobox text
-        combobox using this method. It's a convenience method.
-        """
-        combobox.state(["!readonly"])
-        combobox.delete(0, tk.END)
-        combobox.insert(0, text)
-        combobox.state(["readonly"])             
+                                               self.scene_frame.cb_scenes)           
                                
     def _edit_populate(self, command_class_object: cc.SceneWithFade):
         """
@@ -8610,7 +8623,8 @@ class SceneWithFade(WizardListing):
         self.scene_frame.v_scale_hold_frames.set(fade_hold_for_frame_count)
         
         # Chapter name
-        self._set_combobox_text(self.scene_frame.cb_chapters, chapter_name)
+        WizardListing.set_combobox_readonly_text(self.scene_frame.cb_chapters,
+                                                 chapter_name)
         
         # Populate the scene combobox values based on the chapter name above.
         # See the method: SharedPages.SceneScriptSelect.populate
@@ -8618,7 +8632,8 @@ class SceneWithFade(WizardListing):
         self.scene_frame.cb_chapters.event_generate("<<ComboboxSelected>>")
         
         # Scene name
-        self._set_combobox_text(self.scene_frame.cb_scenes, scene_name)
+        WizardListing.set_combobox_readonly_text(self.scene_frame.cb_scenes,
+                                                 scene_name)
 
     def check_inputs(self) -> Dict | None:
         """
@@ -8698,6 +8713,13 @@ class WaitForAnimationFrame:
 
         self.v_sprite_type: tk.StringVar = self.builder.get_variable("v_sprite_type")
 
+        # Valid values for the radiobuttons.
+        # Purpose: when editing the <wait_for_animation> command, it will
+        # select the appropriate radio button only if the argument has
+        # a valid sprite-type value that's defined here.
+        self.valid_sprite_types =\
+            ("character", "object", "dialog_sprite", "cover")
+
         # Default to the radio button, 'Character'
         self.v_sprite_type.set("character")
 
@@ -8744,7 +8766,59 @@ class WaitForAnimation(WizardListing):
         self.frame_content = ttk.Frame(self.parent_frame)
         self.wait_frame = WaitForAnimationFrame(self.frame_content)
         self.wait_frame.mainframe.pack()
-
+        
+    def _edit_populate(self, command_class_object: cc.WaitForAnimation):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        # Waiting for a fade screen animation?
+        if hasattr(command_class_object, "fade_screen"):
+            fade_screen = command_class_object.fade_screen
+            
+            if fade_screen == "fade screen":
+                self.wait_frame.v_sprite_type.set("cover")
+            
+        else:
+            # Waiting for a specific type of animation on a specific
+            # type of sprite.
+        
+            sprite_type = command_class_object.sprite_type
+            general_alias = command_class_object.general_alias
+            animation_type = command_class_object.animation_type
+            
+            if animation_type:
+                animation_type = animation_type.lower()
+                
+            if sprite_type:
+                sprite_type = sprite_type.lower()
+                
+            wait_for = \
+                ("fade", "move", "rotate", "scale", "all", "any")
+            
+            try:
+                wait_for_animation_index = wait_for.index(animation_type)
+            except ValueError:
+                wait_for_animation_index = None
+            
+            self.wait_frame.cb_animation_type.current(wait_for_animation_index)         
+            
+            # Select a sprite type radio button, only if a valid sprite type
+            # has been specified. Sprite type examples are: 'character', 
+            # 'object', etc.
+            if sprite_type in self.wait_frame.valid_sprite_types:      
+                self.wait_frame.v_sprite_type.set(sprite_type)
+            else:
+                # Select no sprite type, because the provided sprite type
+                # is invalid.
+                self.wait_frame.v_sprite_type.set("")
+                
+            self.wait_frame.entry_sprite_alias.insert(0, general_alias)
+        
     def check_inputs(self) -> Dict | None:
         """
         Check whether the user has inputted sufficient information
@@ -8760,17 +8834,25 @@ class WaitForAnimation(WizardListing):
         sprite_alias = self.wait_frame.entry_sprite_alias.get()
         animation_type = self.wait_frame.cb_animation_type.get()
 
+        if not sprite_type:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite type",
+                                 message="Choose a sprite type.")
+            return            
+
         if sprite_alias:
             sprite_alias = sprite_alias.strip()
 
         if not sprite_alias:
-            messagebox.showerror(title="Sprite alias",
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
                                  message="The sprite alias is missing.")
             self.wait_frame.entry_sprite_alias.focus()
             return
 
         if not animation_type:
-            messagebox.showerror(title="Animation type",
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation type",
                                  message="Choose the animation type to wait for.")
             self.wait_frame.cb_animation_type.focus()
             return
@@ -9104,11 +9186,9 @@ class TextDialogDefine(WizardListing):
         if intro_animation not in (intro_animation_possible_values):
             intro_animation = self.text_define.default_intro_animation
         else:
-            self.text_define.cb_intro_animation.state(["!readonly"])
-            self.text_define.cb_intro_animation.delete(0, tk.END)
-            self.text_define.cb_intro_animation.insert(0, intro_animation)
-            self.text_define.cb_intro_animation.state(["readonly"])
-            
+            WizardListing.set_combobox_readonly_text(
+                self.text_define.cb_intro_animation,
+                intro_animation)
             
         # Outro animation
         

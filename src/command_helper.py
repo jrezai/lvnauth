@@ -196,6 +196,8 @@ class CommandHelper:
         "after": cc.AfterWithArguments,
         "after_cancel": cc.AfterCancel,
         "call": cc.CallWithArguments,
+        "scene": cc.SceneLoad,
+        "wait_for_animation": cc.WaitForAnimation,
     }
     
     @staticmethod
@@ -451,6 +453,22 @@ class CommandHelper:
                     # argument is for multiple optional arguments.
                     arguments =\
                         CommandHelper._get_optional_arguments(arguments, 2)
+                    
+            elif command_name == "wait_for_animation":
+                # <wait_for_animation> can have 1 argument or 3 arguments.
+                
+                # Examples:
+                # <wait_for_animation: fade screen>
+                # <wait_for_animation: dialog_sprite, some rect, all>
+                if isinstance(arguments, list):
+                    
+                    if len(arguments) == 3:
+                        # Use the 3-argument version of the class
+                        command_cls = cc.WaitForAnimation
+                else:
+                    # Use the 1-argument version of the class
+                    command_cls = cc.WaitForAnimationFadeScreen
+                
             
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.
