@@ -198,6 +198,7 @@ class CommandHelper:
         "call": cc.CallWithArguments,
         "scene": cc.SceneLoad,
         "wait_for_animation": cc.WaitForAnimation,
+        "variable_set": cc.VariableSet,
     }
     
     @staticmethod

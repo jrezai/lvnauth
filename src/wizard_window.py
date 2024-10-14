@@ -7368,29 +7368,40 @@ class SharedPages:
             # No arguments? return.
             if not command_class_object:
                 return
-
-            sprite_name = command_class_object.sprite_name
-            alias = command_class_object.sprite_general_alias
-            
-            # Should we sprite be loaded as a different name instead of
-            # the original name? Find out with the method below.            
-            preferred_name =\
-                CommandHelper.get_preferred_sprite_name(sprite_name)
-            
-            if preferred_name:
-                # The argument for this command has a 'load as' keyword
-                # meaning that the sprite needs to be loaded using a different
-                # name.
-                # Example:
-                # <load_character: akari_happy load as other_akari, akari>
                 
-                # Distinguish the two names so we can show them in
-                # separate widgets.
-                sprite_name = preferred_name.get("OriginalName")
-                load_as_name = preferred_name.get("LoadAsName")
+            # For use with <variable_set>
+            if isinstance(command_class_object, cc.VariableSet):
                 
-                # Include a custom 'load as' name.
-                self.entry_load_as.insert(0, load_as_name)
+                # variable name and variable value, but we use
+                # sprite name and general alias here for consistency.
+                sprite_name = command_class_object.variable_name
+                alias = command_class_object.variable_value
+                
+            else:
+                # For use with ie: <load_character>, etc.
+    
+                sprite_name = command_class_object.sprite_name
+                alias = command_class_object.sprite_general_alias
+                
+                # Should we sprite be loaded as a different name instead of
+                # the original name? Find out with the method below.            
+                preferred_name =\
+                    CommandHelper.get_preferred_sprite_name(sprite_name)
+                
+                if preferred_name:
+                    # The argument for this command has a 'load as' keyword
+                    # meaning that the sprite needs to be loaded using a different
+                    # name.
+                    # Example:
+                    # <load_character: akari_happy load as other_akari, akari>
+                    
+                    # Distinguish the two names so we can show them in
+                    # separate widgets.
+                    sprite_name = preferred_name.get("OriginalName")
+                    load_as_name = preferred_name.get("LoadAsName")
+                    
+                    # Include a custom 'load as' name.
+                    self.entry_load_as.insert(0, load_as_name)
 
             self.cb_selections.insert(0, sprite_name)
             self.entry_general_alias.insert(0, alias)
