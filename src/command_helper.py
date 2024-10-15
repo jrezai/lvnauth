@@ -200,6 +200,7 @@ class CommandHelper:
         "wait_for_animation": cc.WaitForAnimation,
         "variable_set": cc.VariableSet,
         "case": cc.ConditionDefinition,
+        "or_case": cc.ConditionDefinition,
     }
     
     @staticmethod
