@@ -3195,8 +3195,9 @@ class WizardWindow:
 
     def on_ok_btn_clicked(self):
         # The 'Default' page doesn't have a generate_command method,
-        # so check for it, in case the customer clicked OK at the default page.
+        # so check for it, in case the user clicked OK on the default page.
         if hasattr(self.active_page, "generate_command"):
+            
             generated_command = self.active_page.generate_command()
             if not generated_command:
                 return

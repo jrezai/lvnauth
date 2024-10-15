@@ -432,10 +432,15 @@ class EditorMainApp:
         
         wizard.show_edit_page(command_object=ch.CommandHelper.context_edit_run)
         
-
         # Set the wizard window to be always on top and wait
         # for the wizard window to close before releasing control back.
-        self.always_on_top(self.mainwindow, wizard.mainwindow)        
+        self.always_on_top(self.mainwindow, wizard.mainwindow)
+        
+        # The wizard window was cancelled? Return.
+        if not wizard.generated_command:
+            return
+        
+        self.insert_edit_command(wizard.generated_command)        
  
     def connect_edit_line_context_menu(self):
         """
@@ -1629,6 +1634,22 @@ class EditorMainApp:
             # So that colorization can occur on the newly added line.
             self.text_script.mark_set("insert", f"{line_number}.0")
             
+        # Colorize the modified line.
+        self.text_script.reevaluate_current_line()
+        
+    def insert_edit_command(self, command: str):
+        """
+        Edit the command text on the current line.
+        
+        Delete the current line and insert the edited command on the same line.
+        """
+
+        # Delete the text on the current line the cursor is on.
+        self.text_script.delete("insert linestart", "insert lineend")
+
+        # Insert the command into the text widget.
+        self.text_script.insert("insert lineend", command)
+        
         # Colorize the modified line.
         self.text_script.reevaluate_current_line()
 
