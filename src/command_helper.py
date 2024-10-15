@@ -199,6 +199,7 @@ class CommandHelper:
         "scene": cc.SceneLoad,
         "wait_for_animation": cc.WaitForAnimation,
         "variable_set": cc.VariableSet,
+        "case": cc.ConditionDefinition,
     }
     
     @staticmethod
@@ -469,6 +470,19 @@ class CommandHelper:
                 else:
                     # Use the 1-argument version of the class
                     command_cls = cc.WaitForAnimationFadeScreen
+                    
+            elif command_name == "case":
+                # <case> can have 3 arguments or 4 arguments.
+                
+                if isinstance(arguments, list) and len(arguments) == 3:
+                    
+                    # Use the 3-argument version of the class.
+                    command_cls = cc.ConditionDefinitionNoConditionName
+                    
+                else:
+                    # 4-argument version of the class, where the 4th
+                    # argument is the conditon name.
+                    command_cls = cc.ConditionDefinition
                 
             
             # If we haven't instantiated the command class from 

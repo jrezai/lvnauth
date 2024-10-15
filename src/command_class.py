@@ -83,6 +83,14 @@ class ConditionDefinition(NamedTuple):
     operator: str
     value2: str
     condition_name: str
+    
+    
+# <case> has an optional condition_name argument.
+# This class is used when no condition_name has been specified when editing.
+class ConditionDefinitionNoConditionName(NamedTuple):
+    value1: str
+    operator: str
+    value2: str
 
 
 class PlayAudio(NamedTuple):

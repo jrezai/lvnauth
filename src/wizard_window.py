@@ -6799,6 +6799,39 @@ class SharedPages:
             
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.ConditionDefinition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            variable_name = command_class_object.value1
+            comparison_operator = command_class_object.operator
+            check_against = command_class_object.value2
+            
+            # Variable name
+            self.cb_variable_names.insert(0, variable_name)
+            
+            # Comparison operator
+            if comparison_operator in self.cb_operators.cget("values"):
+                self.cb_operators.insert(0, comparison_operator)
+                
+            # Variable or value to check against
+            self.cb_variable_names_check_against.insert(0, check_against)
+                
+            # <case> can have an optional 'condition_name' argument.
+            # If the class is ConditionDefinition, it has the condition name.
+            # If it's ConditionDefinitionNoConditionName, then it will have
+            # no condition name. Check for it here.
+            if isinstance(command_class_object, cc.ConditionDefinition):
+                
+                # There is a condition name.
+                
+                condition_name = command_class_object.condition_name
+                self.entry_condition_name.insert(0, condition_name)
 
         def check_inputs(self) -> Dict | None:
             """
