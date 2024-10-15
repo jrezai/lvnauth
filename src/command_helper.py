@@ -404,6 +404,15 @@ class CommandHelper:
                     # Use the 2-argument version of the class.
                     command_cls = cc.MovementStopConditionShorter
                     
+            elif command_name == "play_music":
+                
+                # <play_music> can have two arguments.
+                # Example: <play_music: some name: loop>
+                # or <play_music: some name> (no loop)
+                if isinstance(arguments, list) and len(arguments) == 2:
+                    # Use the 2-argument version of the class.
+                    command_cls = cc.PlayAudioLoop
+                    
             # <call> can have 1 argument or more.
             elif command_name == "call":
                 if isinstance(arguments, str):

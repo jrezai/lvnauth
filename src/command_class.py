@@ -95,6 +95,12 @@ class ConditionDefinitionNoConditionName(NamedTuple):
 
 class PlayAudio(NamedTuple):
     audio_name: str
+    
+    
+# Used by <play_music> when wanting to loop the music.
+class PlayAudioLoop(NamedTuple):
+    audio_name: str
+    loop: str
 
 
 class DialogTextSound(NamedTuple):

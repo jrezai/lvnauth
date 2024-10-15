@@ -7594,35 +7594,20 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the audio name, which may look like this:
-            # 'normal_music, loop' (the loop part is optional)
-            audio_name = command_class_object.audio_name            
+            # Get the audio name
+            audio_name = command_class_object.audio_name
 
-            # Even if there is no ', loop' part, this will still work.
-            # We'll either have ['normal_music'] or ['normal_music', 'loop']
-            arguments = [item.strip() for item in audio_name.split(",")]
-
-            if not arguments:
-                return
-            
-            # Some commands that share this method won't have a loop option.
-            # For example: <play_music> has a loop option but <play_sound>
-            # doesn't, so we check here to prevent an exception.
-            if hasattr(self, "v_loop_audio"):
-
-                if len(arguments) > 1 and arguments[1] == "loop":
+            # The loop option is specific to <play_music> and is optional.
+            if isinstance(command_class_object, cc.PlayAudioLoop):
+                if command_class_object.loop == "loop":
                     loop = True
                 else:
                     loop = False
-                    
+                
                 self.v_loop_audio.set(loop)
+                
+            self.cb_selections.insert(0, audio_name)
             
-            self.cb_selections.insert(0, arguments[0])
-            
-            
-
-    
-    
 
     class CommandNoParameters(WizardListing):
         """
