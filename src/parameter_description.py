@@ -66,22 +66,22 @@ class ParameterDescription:
                                         foreground=label_fg_color)
         
         # The parameter descriptions are stored here.
-        self.data = {"load_audio": ("Audio file to load (no extension)",),
-                     "load_music": ("Music file to load (no extension)",), 
-                     "play_music": ("Music file to play (no extension)", "(optional) Loop playback"),
-                     "play_sound": ("Sound file to play (no extension)", ),
-                     "play_voice": ("Voice sound file to play (no extension)", ),
+        self.data = {"load_audio": ("Audio name",),
+                     "load_music": ("Music name",), 
+                     "play_music": ("Music name", "(optional) Loop playback"),
+                     "play_sound": ("Sound name", ),
+                     "play_voice": ("Voice sound", ),
                      "volume_fx": ("Volume (0 to 100)", ),
                      "volume_music": ("Volume (0 to 100)", ),
                      "volume_text": ("Volume (0 to 100)", ),
                      "volume_voice": ("Volume (0 to 100)", ),
-                     "dialog_text_sound": ("Audio file to play", ),
+                     "dialog_text_sound": ("Audio file", ),
                      
-                     "load_background": ("Background file to load (no extension)", ),
-                     "background_show": ("Background file to show (no extension)", ),
-                     "background_hide": ("Background file to hide (no extension)", ),
+                     "load_background": ("Background name", ),
+                     "background_show": ("Background name", ),
+                     "background_hide": ("Background name", ),
                      
-                     "load_character": ("Character sprite to load (no extension)", "Alias"),
+                     "load_character": ("Character sprite name", "Alias"),
                      "character_show": ("Sprite name (not alias)", ),
                      "character_hide": ("Alias", ),
                      "character_flip_both": ("Alias", ),
@@ -125,7 +125,7 @@ class ParameterDescription:
                      "halt_auto": ("Number of frames to halt the dialog",), 
                      "continue": ("(optional) Manual Y position",),
                      
-                     "load_dialog_sprite": ("Character sprite to load (no extension)", "Alias"),
+                     "load_dialog_sprite": ("Character sprite name", "Alias"),
                      "dialog_sprite_show": ("Sprite name (not alias)", ),
                      "dialog_sprite_hide": ("Alias", ),
                      "dialog_sprite_flip_both": ("Alias", ),
@@ -166,7 +166,7 @@ class ParameterDescription:
                      "dialog_sprite_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "dialog_sprite_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      
-                     "load_object": ("Object sprite to load (no extension)", "Alias"),
+                     "load_object": ("Object sprite name", "Alias"),
                      "object_show": ("Sprite name (not alias)", ),
                      "object_hide": ("Alias", ),
                      "object_flip_both": ("Alias", ),
@@ -207,7 +207,7 @@ class ParameterDescription:
                      "object_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "object_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      
-                     "load_font_sprite": ("Font sprite to load (no extension)", ),
+                     "load_font_sprite": ("Font sprite name", ),
                      "font": ("Font name", ),
                      "font_x": ("Horizontal position (x)", ),
                      "font_y": ("Vertical position (y)", ),

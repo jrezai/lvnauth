@@ -3612,6 +3612,9 @@ class WizardListing:
         Show the current wizard listing (frame) and populate
         the widgets with the given command arguments.
         
+        This method is used when editing an existing command in the editor,
+        not when adding a new command.
+        
         Arguments:
         
         - command_class_object: the arguments for the applicable class
