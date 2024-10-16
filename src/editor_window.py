@@ -254,7 +254,15 @@ class EditorMainApp:
                               add="+")
         self.text_script.bind("<KeyRelease>",
                               self.param_desc.start_timer,
-                              add="+")            
+                              add="+")
+        
+        # When an existing command is edited via the context menu through
+        # the Wizard window, we need to run this virtual event to cause the
+        # parameter description to update, after the user clicks OK in the
+        # Wizard window. This vritual event is used only when editing
+        # a command.
+        self.text_script.bind("<<UpdateParameterDescription>>",
+                              self.param_desc.start_timer)
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
@@ -1652,6 +1660,18 @@ class EditorMainApp:
         
         # Colorize the modified line.
         self.text_script.reevaluate_current_line()
+        
+        # This virtual event only gets used when editing an existing command.
+        # It causes the parameter description to refresh to reflect the
+        # newly edited command, because it could have been replaced with
+        # a completely new command by the user when they edited the command.
+        self.text_script.event_generate("<<UpdateParameterDescription>>")
+        
+        # Place the insert cursor on the last part of the current line 
+        # minus one. This is just so that the cursor doesn't end up at the end
+        # of the current line; it'll be before the last '>' command character, 
+        # on the last argument of the current command.
+        self.text_script.mark_set("insert", f"insert lineend - 1c")
 
     def on_debug_button_clicked(self):
         
