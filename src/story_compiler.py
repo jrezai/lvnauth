@@ -93,9 +93,21 @@ class StoryCompiler:
 
         - story_reusables_dict: reusable scripts dictionary (key: function name, value: script (str)).
         
-        - treeview_scripts: so we can get the display order of the chapter and scene names,
-        for use on the Launch window treeview widget.
+        - treeview_scripts: so we can get the display order of the chapter
+        and scene names, for use on the Launch window treeview widget.
         """
+        
+        # Save the project before compiling it to a .lvna file.
+        # Purpose: to include the latest scripts. If we don't save the project,
+        # the user may have made script changes without saving the project,
+        # and expecting to see the latest changes when playing the visual novel.
+        editor_window.Toolbar.save_project()
+        
+        # So that the '(Unsaved)' text in the status bar gets cleared.
+        # Without this, the status bar will still show '(Unsaved)', until
+        # the visual novel window is closed, even though the project was just
+        # saved in the line above.
+        treeview_scripts.update_idletasks()
 
         self.compile_part = compile_part
         self.save_file_path = save_file_path

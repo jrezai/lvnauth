@@ -1317,4 +1317,13 @@
       </object>
     </child>
   </object>
+  <object class="tk.Menu" id="mnu_editor" named="True">
+    <property name="tearoff">false</property>
+    <child>
+      <object class="tk.Menuitem.Command" id="mnu_command_edit_line" named="True">
+        <property name="command" type="command" cbtype="simple">on_edit_line_menu_clicked</property>
+        <property name="label" translatable="yes">Edit line</property>
+      </object>
+    </child>
+  </object>
 </interface>

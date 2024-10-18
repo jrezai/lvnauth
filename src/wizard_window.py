@@ -31,6 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
+import command_class as cc
 from player.condition_handler import ConditionOperator
 from tkinter import messagebox
 from tkinter import ttk
@@ -40,6 +41,8 @@ from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entry_limit import EntryWithLimit
 from functools import partial
+from re import search, IGNORECASE
+from command_helper import CommandHelper, ContextEditRun
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -128,11 +131,14 @@ class TextCreateDialogFrame:
         self.cb_dialog_position = self.builder.get_object("cb_dialog_position")
 
         # Default values
-        self.v_width.set(400)
-        self.v_height.set(200)
+        self.default_width = 400
+        self.default_height = 200
+        self.v_width.set(self.default_width)
+        self.v_height.set(self.default_height)
         
+        self.default_anchor = "mid bottom"
         self.cb_dialog_position.configure(state="normal")
-        self.cb_dialog_position.insert(0, "mid bottom")
+        self.cb_dialog_position.insert(0, self.default_anchor)
         self.cb_dialog_position.configure(state="readonly")
 
         
@@ -144,15 +150,18 @@ class TextCreateDialogFrame:
         self.v_animation_speed = self.builder.get_variable("v_animation_speed")
 
         # Default values
+        self.default_intro_animation = "scale up width and height"
         self.cb_intro_animation.configure(state="normal")
-        self.cb_intro_animation.insert(0, "scale up width and height")
+        self.cb_intro_animation.insert(0, self.default_intro_animation)
         self.cb_intro_animation.configure(state="readonly")
 
+        self.default_outro_animation = "fade out"
         self.cb_outro_animation.configure(state="normal")
-        self.cb_outro_animation.insert(0, "fade out")
+        self.cb_outro_animation.insert(0, self.default_outro_animation)
         self.cb_outro_animation.configure(state="readonly")
 
-        self.v_animation_speed.set(5)
+        self.default_animation_speed = 5
+        self.v_animation_speed.set(self.default_animation_speed)
 
 
         """
@@ -162,17 +171,20 @@ class TextCreateDialogFrame:
         self.lbl_backcolor = self.builder.get_object("lbl_backcolor")
         self.v_opacity = self.builder.get_variable("v_opacity")
         
-        self.v_opacity.set(200)
+        self.default_opacity = 200
+        self.v_opacity.set(self.default_opacity)
         
         self.lbl_backcolor_border: ttk.Label
         self.lbl_backcolor_border =\
             self.builder.get_object("lbl_backcolor_border")
         
+        self.default_opacity_border = 200
         self.v_opacity_border = self.builder.get_variable("v_opacity_border")
-        self.v_opacity_border.set(200)
+        self.v_opacity_border.set(self.default_opacity_border)
         
+        self.default_border_width = 0
         self.v_border_width = self.builder.get_variable("v_border_width")
-        self.v_border_width.set(0)
+        self.v_border_width.set(self.default_border_width)
         
         
         
@@ -183,8 +195,10 @@ class TextCreateDialogFrame:
         self.v_padding_y = self.builder.get_variable("v_padding_y")
         
         # Default values
-        self.v_padding_x.set(0)
-        self.v_padding_y.set(0)
+        self.default_padding_x = 0
+        self.default_padding_y = 0
+        self.v_padding_x.set(self.default_padding_x)
+        self.v_padding_y.set(self.default_padding_y)
 
         """
         Comboboxes in the Run tab (run reusable script on event)
@@ -327,8 +341,19 @@ class TextCreateDialogFrame:
         
         lbl_widget.configure(background=hex_new_color)
 
+
 class WizardWindow:
+    
+    # This dictionary is used for selecting a specific command
+    # in the treeview widget when editing an existing command from a script.
+    # Purpose: so we can select any command via the treeview widget when
+    # editing a script command.
+    # Key: command name (lowercase)
+    # Value: iid in the treeview widget
+    command_item_iids = {}
+    
     def __init__(self, master=None):
+        
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
         builder.add_from_file(PROJECT_UI)
@@ -337,6 +362,10 @@ class WizardWindow:
         self.mainwindow.bind("<Escape>", self.on_cancel_button_clicked)
         
         builder.connect_callbacks(self)
+        
+        # Clear dictionary used for keeping track of command name item iids
+        # in the treeview widget.
+        WizardWindow.command_item_iids.clear()
         
         self.sb_vertical = builder.get_object("sb_vertical")
 
@@ -958,7 +987,7 @@ class WizardWindow:
                                        from_value=0,
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
-                                       "(example: 2 means twice as big as the original size)",
+                                       "(example: 2 means twice as big as the original size)\nDecimal numbers such as 1.2 can be used as well.",
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
@@ -2742,18 +2771,6 @@ class WizardWindow:
                                  "Note: the sprite must already be visible.",
                                  group_name=GroupName.TEXT)
 
-        page_general_scene_with_fade = \
-            SceneWithFade(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="General",
-                          sub_display_text="scene_with_fade",
-                          command_name="scene_with_fade",
-                          purpose_line="Gradually fade into another scene.\n"
-                                       "Provides a fade effect when transitioning between scenes.",
-                          group_name=GroupName.FADE)
-
         page_general_rest =\
             DialogHaltAuto(parent_frame=self.frame_contents_outer,
                        header_label=self.lbl_header,
@@ -2790,6 +2807,7 @@ class WizardWindow:
                                  amount_name="number of frames to elapse", 
                                  spinbox_default_value=120,
                                  show_delay_widgets=True,
+                                 show_additional_argument_widgets=True, 
                                  group_name=GroupName.TIMER)
         
         page_after_cancel =\
@@ -2823,7 +2841,8 @@ class WizardWindow:
                                  sub_display_text="call",
                                  command_name="call",
                                  purpose_line="Run a reusable script.",
-                                 group_name=GroupName.RUN_SCRIPT)           
+                                 group_name=GroupName.RUN_SCRIPT,
+                                 show_additional_argument_widgets=True)           
 
         page_scene =\
             SceneScriptSelect(parent_frame=self.frame_contents_outer,
@@ -2835,6 +2854,18 @@ class WizardWindow:
                               command_name="scene",
                               purpose_line="Run a scene in a specific chapter.",
                               group_name=GroupName.RUN_SCRIPT)
+        
+        page_general_scene_with_fade = \
+            SceneWithFade(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="General",
+                          sub_display_text="scene_with_fade",
+                          command_name="scene_with_fade",
+                          purpose_line="Gradually fade into another scene.\n"
+                                       "Provides a fade effect when transitioning between scenes.",
+                          group_name=GroupName.RUN_SCRIPT)
 
         page_wait_for_animation = \
             WaitForAnimation(parent_frame=self.frame_contents_outer,
@@ -3164,8 +3195,9 @@ class WizardWindow:
 
     def on_ok_btn_clicked(self):
         # The 'Default' page doesn't have a generate_command method,
-        # so check for it, in case the customer clicked OK at the default page.
+        # so check for it, in case the user clicked OK on the default page.
         if hasattr(self.active_page, "generate_command"):
+            
             generated_command = self.active_page.generate_command()
             if not generated_command:
                 return
@@ -3203,6 +3235,23 @@ class WizardWindow:
 
         self.active_page = page
         page.show()
+        
+    def show_edit_page(self, command_object: ContextEditRun):
+        """
+        Edit a command based on the given command object variable.
+        
+        First, find the page in the wizard from the command name.
+        Then once the page is found, pass the command object to the page,
+        which is basically the arguments from the script line.
+        """
+        wizard_page: WizardListing
+        wizard_page = self.pages.get(command_object.command_name)
+        
+        if not wizard_page:
+            return
+        
+        # Populate the widgets on the page with the provided argument(s) data.
+        wizard_page.edit(command_object.command_object)
 
     def run(self):
         self.mainwindow.mainloop()
@@ -3402,7 +3451,6 @@ class WizardListing:
                                                        index="end",
                                                        text=parent_display_text)
             
-            
         """
         If available, use the group name for this listing to determine
         whether we should change the background row of the treeview item
@@ -3436,11 +3484,18 @@ class WizardListing:
             display_group_name = ""
 
         # Insert command name to the treeview.
-        self.treeview_commands.insert(parent=parent_iid,
-                                      index="end",
-                                      text=display_group_name, 
-                                      values=(sub_display_text, ),
-                                      tag=WizardListing.row_switcher.get_row_color_tag())
+        command_iid = \
+            self.treeview_commands.insert(
+                parent=parent_iid,
+                index="end",
+                text=display_group_name, 
+                values=(sub_display_text, ),
+                tag=WizardListing.row_switcher.get_row_color_tag())
+        
+        # So we can find the item iid in the treeview widget for a particular
+        # command when editing a command from a script. That way, we can select
+        # the command item iid in the treeview widget later on if needed.
+        WizardWindow.command_item_iids[sub_display_text.lower()] = command_iid
 
         # This frame will contain the contents of the page.
         # It will be shown when the show() method is called.
@@ -3537,8 +3592,61 @@ class WizardListing:
         self.header_label.configure(text=self.command_name)
         self.purpose_label.configure(text=self.purpose_line)
 
-        self.frame_content.grid()    
-
+        self.frame_content.grid()
+    
+    @staticmethod
+    def set_combobox_readonly_text(combobox, text: str):
+        """
+        Set the displayed text in a combobox.
+        
+        Purpose: when editing a command, we dynamically set the combobox text
+        combobox using this method. It's a convenience method.
+        """
+        combobox.state(["!readonly"])
+        combobox.delete(0, tk.END)
+        combobox.insert(0, text)
+        combobox.state(["readonly"])     
+    
+    def edit(self, command_class_object):
+        """
+        Show the current wizard listing (frame) and populate
+        the widgets with the given command arguments.
+        
+        This method is used when editing an existing command in the editor,
+        not when adding a new command.
+        
+        Arguments:
+        
+        - command_class_object: the arguments for the applicable class
+        of the command. For example, for <character_show>, the command
+        object class would be: SpriteShowHide.
+        
+        Each command will have its own class object, although some commands
+        will be share the same class object due to similarities.
+        """
+        
+        # Find the treeview iid for the command
+        command_iid =\
+            WizardWindow.command_item_iids.get(self.command_name.lower())
+        
+        if not command_iid:
+            return
+        
+        self.treeview_commands.see(command_iid)
+        self.treeview_commands.selection_add(command_iid)
+        
+        self._edit_populate(command_class_object=command_class_object)
+        
+    def _edit_populate(self, command_class_object):
+        """
+        Populate the widgets for this listing from the given command
+        class arguments (namedtuple).
+        
+        This method should be overridden by each page as each
+        wizard listing page will have its own unique widgets and parameters.
+        """
+        pass
+        
 
 class SharedPages:
     
@@ -3577,7 +3685,22 @@ class SharedPages:
             # Entry: sprite alias
             self.sprite_frame = self.get_sprite_template()
             self.sprite_frame.grid(pady=(15, 0), sticky=tk.W, columnspan=2)   
-
+            
+        def set_sprite_type(self, sprite_type: str):
+            """
+            Set the sprite type in the combobox.
+            
+            Purpose: when editing a command, we dynamically set the sprite type
+            combobox using this method. It's a convenience method.
+            """
+            
+            if sprite_type:
+                sprite_type = sprite_type.lower()
+                
+            # Make sure a valid sprite type value is selected.
+            if sprite_type in self.cb_sprite_type.cget("values"):
+                WizardListing.set_combobox_readonly_text(self.cb_sprite_type,
+                                                         sprite_type)       
             
         def get_frame_sprite_text(self) -> ttk.Frame:
             """
@@ -3626,7 +3749,7 @@ class SharedPages:
             self.frame_sprite.grid()
             
             return self.frame_sprite
-    
+
         def check_inputs_sprite_text(self) -> Dict:
             """
             Check sprite_text specific widgets: 'sprite type' and 'sprite alias'.
@@ -3746,6 +3869,42 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.FontIntroAnimation):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            animation_type = command_class_object.animation_type
+            
+            # Set to lowercase so we can compare it in lowercase.
+            if animation_type:
+                animation_type = animation_type.lower()
+                
+            # Default to the first selection if an invalid
+            # value was provided.
+            if animation_type not in self.values_to_choose:
+                # Default to the first index
+                self.cb_selection.current(newindex=0)
+            else:
+                WizardListing.set_combobox_readonly_text(self.cb_selection,
+                                                         animation_type)
+                
+            # This part is specific to SpriteFontIntroAnimation
+            # Used with <sprite_font_intro_animation>
+            if isinstance(command_class_object, cc.SpriteFontIntroAnimation):
+                
+                # Sprite type (ie: character, object, dialog_sprite)
+                sprite_type = command_class_object.sprite_type
+                self.set_sprite_type(sprite_type)
+                
+                # General alias
+                alias = command_class_object.sprite_name
+                self.entry_sprite_alias.insert(0, alias)        
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -3841,24 +4000,24 @@ class SharedPages:
 
             self.lbl_position = ttk.Label(frame_content, text=f"{self.direction.title()} position:")
 
-            selection = ["Specific pixel coordinate",
-                         "start of display",
-                         "end of display",
-                         "before start of display",
-                         "after end of display",
-                         "top of display",
-                         "above top of display",
-                         "bottom of display",
-                         "below bottom of display"]
+            self.selection_choices = ["Specific pixel coordinate",
+                                      "start of display",
+                                      "end of display",
+                                      "before start of display",
+                                      "after end of display",
+                                      "top of display",
+                                      "above top of display",
+                                      "bottom of display",
+                                      "below bottom of display"]
 
             if self.direction == "horizontal":
-                selection = selection[:5]
+                self.selection_choices = self.selection_choices[:5]
             elif self.direction == "vertical":
-                selection = [selection[0]] + selection[5:]
+                self.selection_choices = [self.selection_choices[0]] + self.selection_choices[5:]
 
             self.cb_position =\
                 ttk.Combobox(frame_content,
-                             values=selection,
+                             values=self.selection_choices,
                              state="readonly")
             self.cb_position.bind("<<ComboboxSelected>>", self.on_position_selection_changed)
 
@@ -3894,14 +4053,29 @@ class SharedPages:
             which allows the user to type in a pixel coordinate.
             Otherwise, grid_forget the frame.
             """
+            
             selection_index = event.widget.current()
     
             # Specific pixel coordinate is at index zero.
             if selection_index == 0:
-                self.frame_pixel_location.grid(row=3, column=1, sticky="w", padx=(3, 1))
-                self.spinbox_pixel_location.focus()
+                self.show_pixel_widgets()
             else:
-                self.frame_pixel_location.grid_forget()
+                self.hide_pixel_widgets()
+                
+        def show_pixel_widgets(self):
+            """
+            Show the pixel location related widgets.
+            """
+            
+            self.frame_pixel_location.grid(row=3, column=1,
+                                           sticky="w", padx=(3, 1))
+            self.spinbox_pixel_location.focus()
+            
+        def hide_pixel_widgets(self):
+            """
+            Ungrid / hide the pixel location related widgets.
+            """
+            self.frame_pixel_location.grid_forget()
     
         def check_inputs(self) -> Dict | None:
             """
@@ -3957,6 +4131,61 @@ class SharedPages:
     
             return user_input
         
+        def _edit_populate(self, command_class_object: cc.SpritePosition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            position = command_class_object.position
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Initialize
+            show_pixel_coordinate_widgets = False            
+
+            try:
+                # Specific pixel location?
+                position = int(position)
+                
+                self.spinbox_pixel_location.delete(0, tk.END)
+                self.spinbox_pixel_location.insert(0, position)
+                
+                # Show the widgets related to a specific pixel location.
+                show_pixel_coordinate_widgets = True
+                
+            except ValueError:
+                # We don't have a numeric value, so check if it's
+                # a valid string value.
+                
+                if position:
+                    position = position.lower()
+                    
+                    # Make sure it's a valid string value, such as 
+                    # 'end of display' and not just any random string value.
+                    if position in self.selection_choices:
+                        WizardListing.set_combobox_readonly_text(
+                            self.cb_position, position)
+                    else:
+                        # There's an unsupported string value
+                        # So default to showing the pixel coordinate widgets.
+                        show_pixel_coordinate_widgets = True
+                else:
+                    # We have no position value (it's blank)
+                    # so default to showing the pixel coordinate widgets.
+                    show_pixel_coordinate_widgets = True
+                    
+            if show_pixel_coordinate_widgets:
+                self.show_pixel_widgets()
+            else:                
+                # If we got here, it means we have a proper valid
+                # string value (such as 'end of display')
+                self.hide_pixel_widgets()
+                
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
@@ -4048,7 +4277,26 @@ class SharedPages:
             self.sb_vertical.grid(row=5, column=0, sticky="w")
     
             return frame_content
-        
+
+        def _edit_populate(self, command_class_object: cc.MovementDelay):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            x_skip_frames_amount = command_class_object.x
+            y_skip_frames_amount = command_class_object.y
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Set skip frame x/y amounts
+            self.sb_horizontal.set(x_skip_frames_amount)
+            self.sb_vertical.set(y_skip_frames_amount)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -4429,6 +4677,64 @@ class SharedPages:
     
             return user_input
         
+        def _edit_populate(self, command_class_object: cc.MovementSpeed):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            x_amount = command_class_object.x
+            x_direction = command_class_object.x_direction
+            y_amount = command_class_object.y
+            y_direction = command_class_object.y_direction
+            
+            try:
+                x_amount = int(x_amount)
+            except ValueError:
+                x_amount = 0
+                
+            try:
+                y_amount = int(y_amount)
+            except ValueError:
+                y_amount = 0
+                
+            # Default to 'right' if x_direction contains an invalid value.
+            if not x_direction:
+                x_direction = "right"
+    
+            x_direction = x_direction.lower()
+            
+            if x_direction not in ("left", "right"):
+                x_direction = "right"
+                
+            # Default to 'up' if y_direction contains an invalid value.
+            if not y_direction:
+                y_direction = "up"
+            
+            y_direction = y_direction.lower()
+            
+            if y_direction not in ("up", "down"):
+                y_direction = "up"            
+            
+            # Sprite alias    
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # X movement amount and direction
+            self.v_horizontal_amount.set(x_amount)
+            self.v_horizontal_direction.set(x_direction)
+            
+            # Y movement amount and direction
+            self.v_vertical_amount.set(y_amount)
+            self.v_vertical_direction.set(y_direction)
+            
+            # Check the 'Move' checkbuttons if the values are greater than zero.
+            self.v_move_horizontally.set(x_amount>0)
+            self.v_move_vertically.set(y_amount>0)
+            
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
@@ -4549,15 +4855,90 @@ class SharedPages:
             which allows the user to type in a pixel coordinate.
             Otherwise, grid_forget the frame.
             """
+
             selection_index = event.widget.current()
     
             # Specific pixel coordinate is at index zero.
             if selection_index == 0:
-                self.frame_pixel_location.grid(row=5, column=1, sticky="w", padx=(3, 1))
-                self.spinbox_pixel_location.focus()
+                self.show_pixel_widgets()
             else:
-                self.frame_pixel_location.grid_forget()
-    
+                self.hide_pixel_widgets()
+
+        def show_pixel_widgets(self):
+            """
+            Show widgets related to pixel coordinates.
+            """
+            self.frame_pixel_location.grid(row=5, column=1, sticky="w", padx=(3, 1))
+            self.spinbox_pixel_location.focus()
+            
+        def hide_pixel_widgets(self):
+            """
+            Hide widgets related to pixel coordinates.
+            """
+            self.frame_pixel_location.grid_forget()
+
+        def _edit_populate(self, command_class_object: cc.MovementStopCondition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            
+            # Do we have a specific side to check?
+            if isinstance(command_class_object, cc.MovementStopCondition):
+                # Yes, we have a specific side to check.
+            
+                # if 'side of sprite' is an empty string, 
+                # set self.cb_side_to_check to index 0, which is 
+                # "Determine automatically"
+                side_to_check = command_class_object.side_to_check
+                if not side_to_check:
+                    self.cb_side_to_check.current(0)
+                else:
+                    side_to_check = side_to_check.lower()
+                    
+                    # Show the 'side to check' in the combobox
+                    if side_to_check in ("left", "right", "top", "bottom"):
+                        WizardListing.\
+                            set_combobox_readonly_text(self.cb_side_to_check,
+                                                       side_to_check)                
+
+            stop_location = command_class_object.stop_location
+            
+            if stop_location:
+                stop_location = stop_location.lower()
+            
+            # Is the stop location a specific pixel location?
+            if stop_location not in ("start of display", "end of display",
+                                     "before start of display",
+                                     "after end of display",
+                                     "top of display",
+                                     "above top of display",
+                                     "bottom of display",
+                                     "below bottom of display"):
+                
+                # The stop location is a specific pixel location.
+                # Show the spinbox widget.
+                self.cb_stop_location.current(0)
+                self.spinbox_pixel_location.set(stop_location)
+                
+            else:
+                # The stop location is a fixed section, such as 'left', 
+                # 'right', etc.
+                
+                # Show the stop location in the combobox.
+                WizardListing.set_combobox_readonly_text(self.cb_stop_location,
+                                                         stop_location)
+                
+                # Causes the pixel coordinate spinbox to ungrid.
+                self.hide_pixel_widgets()
+                
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -4706,6 +5087,25 @@ class SharedPages:
             self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
     
             return frame_content
+        
+        def _edit_populate(self, command_class_object: cc.SpriteShowHide|cc.Flip):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            if isinstance(command_class_object, cc.SpriteShowHide):
+                # Get the alias
+                sprite_name = command_class_object.sprite_name
+                
+            elif isinstance(command_class_object, cc.Flip):
+                sprite_name = command_class_object.general_alias
+            
+            # Show the alias in the entry widget
+            self.entry_general_alias.insert(0, sprite_name)
         
         def check_inputs(self) -> Dict | None:
             """
@@ -4883,6 +5283,38 @@ class SharedPages:
             
             return frame_content
         
+        def _edit_populate(self, command_class_object: cc.SpriteCenterWith):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            alias_to_move = command_class_object.alias_to_move
+            
+            sprite_type_to_center_with =\
+                command_class_object.sprite_type_to_center_with
+            
+            # Capitalize the sprite type, because that's how the sprite types
+            # are listed in the combobox.
+            if sprite_type_to_center_with:
+                sprite_type_to_center_with =\
+                    sprite_type_to_center_with.capitalize()
+                
+                # A sprite type can only be these 3 values, nothing else.
+                if sprite_type_to_center_with not in ("Character",
+                                                      "Dialog sprite",
+                                                      "Object"):
+                    sprite_type_to_center_with = ""
+            
+            center_with_alias = command_class_object.center_with_alias
+            
+            self.v_alias_to_move.set(alias_to_move)
+            self.v_sprite_type_center_with.set(sprite_type_to_center_with)
+            self.v_center_with_alias.set(center_with_alias)
+        
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5056,6 +5488,55 @@ class SharedPages:
                 widget = self.scale.nametowidget(name)
                 widget.state([state_change])
     
+        def _edit_populate(self,
+                           command_class_object: cc.FadeUntilValue | cc.RotateUntil):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the sprite alias.
+            alias = command_class_object.sprite_name
+            
+            if isinstance(command_class_object, cc.FadeUntilValue):
+
+                # Fade value
+                numeric_value = command_class_object.fade_value
+                
+            elif isinstance(command_class_object, cc.ScaleUntil):
+                
+                # Scale until value
+                numeric_value = command_class_object.scale_until
+                
+            elif isinstance(command_class_object, cc.RotateUntil):
+                
+                # str because the word 'forever' can be used to rotate
+                # continuously.
+                rotate_until_value = command_class_object.rotate_until
+                if rotate_until_value == "forever":
+                    self.v_rotate_forever.set(True)
+                    numeric_value = 0
+                else:
+                    try:
+                        numeric_value = float(rotate_until_value)
+                    except ValueError:
+                        numeric_value = 0                    
+                    
+                    self.v_until.set(numeric_value)
+                    
+            # To ensure it's not a non-numeric value.
+            try:
+                numeric_value = float(numeric_value)
+            except ValueError:
+                numeric_value = 0
+            
+            self.v_until.set(numeric_value)                
+            
+            self.entry_general_alias.insert(0, alias)
+    
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5221,6 +5702,50 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self,
+                           command_class_object: cc.FadeSpeed | cc.RotateSpeed | cc.ScaleBy):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+
+            # Get the alias
+            sprite_name = command_class_object.sprite_name
+            
+            if isinstance(command_class_object, cc.FadeSpeed):
+            
+                # Fade direction
+                direction = command_class_object.fade_direction
+    
+                # Fade value (as a string)
+                speed = command_class_object.fade_speed
+                
+            elif isinstance(command_class_object, cc.RotateSpeed):
+                
+                direction = command_class_object.rotate_direction
+                speed = command_class_object.rotate_speed
+                
+            elif isinstance(command_class_object, cc.ScaleBy):
+                direction = command_class_object.scale_rotation
+                speed = command_class_object.scale_by
+        
+            # Show the alias in the entry widget
+            self.entry_general_alias.insert(0, sprite_name)
+
+            # Set the direction in the appropriate optionbutton widget
+            self.v_radio_button_selection.set(direction)
+            
+            try:
+                speed = int(speed)
+            except ValueError:
+                speed = 0
+
+            # Show the speed value in the spinbox widget
+            self.v_scale_value.set(speed)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5332,6 +5857,62 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.Volume|cc.HaltAuto):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio volume, which may look like this:
+            # '35'
+            if isinstance(command_class_object, cc.Volume):
+                scale_value = command_class_object.volume
+                
+            elif isinstance(command_class_object, cc.HaltAuto):
+                scale_value = command_class_object.number_of_frames
+                
+            elif isinstance(command_class_object, cc.FontTextDelay):
+                scale_value = command_class_object.number_of_frames
+                
+            elif isinstance(command_class_object, cc.FontTextFadeSpeed):
+                scale_value = command_class_object.fade_speed
+                
+            elif isinstance(command_class_object, cc.Rest):
+                scale_value = command_class_object.number_of_frames
+                
+            elif isinstance(command_class_object, cc.SpriteFontFadeSpeed):
+                scale_value = command_class_object.fade_speed
+                
+                general_alias = command_class_object.sprite_name
+                sprite_type = command_class_object.sprite_type
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
+                
+                self.entry_sprite_alias.insert(0, general_alias)                
+                
+            elif isinstance(command_class_object, cc.SpriteTextDelay):
+
+                scale_value = command_class_object.number_of_frames
+                
+                sprite_type = command_class_object.sprite_type
+                general_alias = command_class_object.general_alias
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
+                
+                self.entry_sprite_alias.insert(0, general_alias)
+                
+            try:
+                scale_value = int(scale_value)
+            except ValueError:
+                scale_value = 1
+
+            self.v_scale_value.set(scale_value)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5433,6 +6014,96 @@ class SharedPages:
 
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.FadeCurrentValue | cc.FadeDelay):
+            """
+            Populate the widgets with the arguments for editing.
+            
+            This specific method gets used by various different commands
+            so we have a lot of if-statements to check each one.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # The entry widget will have a different name depending
+            # on the command class. So we use one variable to reference 
+            # the entry widget depending on the class.
+            entry_widget = None
+            
+            # SpriteText class uses 'general_alias' instead of 'sprite_text'.
+            # Used by commands such as <sprite_font_x>
+            if isinstance(command_class_object, cc.SpriteText):
+
+                sprite_name = command_class_object.general_alias
+                
+                entry_widget = self.entry_sprite_alias
+                
+                # Sprite type
+                sprite_type = command_class_object.sprite_type
+                
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)
+
+            # FontStartPosition (used by <font_x>, <font_y>)
+            # does not have sprite name.
+            elif not isinstance(command_class_object, cc.FontStartPosition):
+                # Get the alias
+                sprite_name = command_class_object.sprite_name
+                
+            # If a entry widget hasn't been specified by the time we reach here,
+            # then assume self.entry_general_alias
+            if entry_widget is None:
+                entry_widget = self.entry_general_alias
+            
+            # Initialize
+            numeric_value = 0
+            
+            # The type of numeric class to try to convert the value to,
+            # to ensure it's a proper number. Most of the time it will be an int
+            # but sometimes it will be a float, depending on the command.
+            numeric_class_type = int
+            
+            # Fade value (as a string)
+            if isinstance(command_class_object, cc.FadeDelay):
+                numeric_value = command_class_object.fade_delay
+                
+            elif isinstance(command_class_object, cc.FadeCurrentValue):
+                numeric_value = command_class_object.current_fade_value
+                
+            elif isinstance(command_class_object, cc.RotateDelay):
+                numeric_value = command_class_object.rotate_delay
+                
+            elif isinstance(command_class_object, cc.ScaleDelay):
+                numeric_value = command_class_object.scale_delay
+                
+            elif isinstance(command_class_object, cc.FontStartPosition):
+                numeric_value = command_class_object.start_position
+                
+            elif isinstance(command_class_object, cc.SpriteText):
+                numeric_value = command_class_object.value
+                
+            elif isinstance(command_class_object, cc.ScaleCurrentValue):
+                numeric_value = command_class_object.scale_current_value
+                
+                # ScaleCurrentValue uses float instead of the usual int
+                # for use in commands such as: <character_scale_current_value>
+                numeric_class_type = float
+            
+            # FontStartPosition (used by <font_x>, <font_y>)
+            # does not have sprite name.
+            if not isinstance(command_class_object, cc.FontStartPosition):
+                # Show the alias in the entry widget
+                entry_widget.insert(0, sprite_name)
+            
+            try:
+                numeric_value = numeric_class_type(numeric_value)
+            except:
+                numeric_value = 0
+            
+            # Show the fade value in the spinbox widget
+            self.sb_amount.insert(0, numeric_value)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5512,12 +6183,15 @@ class SharedPages:
             # Used for showing a spinbox and its label.
             # For <after: elapse frames, script name>
             self.show_delay_widgets = False
+            
+            # Default frames_elapse value
+            self.spinbox_default_value =\
+                self.kwargs.get("spinbox_default_value")            
 
             self.frame_content = self.create_content_frame()
-            
+
             # Populate reusable script names combobox
             self.populate()
-            
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -5534,8 +6208,16 @@ class SharedPages:
             # Meant for showing spinbox for delay frames selection.
             # (<after> uses this, but not <after_cancel>)
             self.show_delay_widgets = self.kwargs.get("show_delay_widgets")
+            
+            # Used for showing 'optional additional arguments'
+            # for use with <call> and <after> when passing additional
+            # arguments to a reusable script.
+            self.show_additional_argument_widgets =\
+                self.kwargs.get("show_additional_argument_widgets")
 
-            self.lbl_reusable_script = ttk.Label(frame_content, text=f"{self.get_purpose_name(capitalize_first_word=True)}:")
+            self.lbl_reusable_script =\
+                ttk.Label(frame_content,
+                          text=f"{self.get_purpose_name(capitalize_first_word=True)}:")
             self.cb_reusable_script = ttk.Combobox(frame_content, width=25)
 
             
@@ -5545,8 +6227,6 @@ class SharedPages:
                 # Example: "The number of frames to elapse:"
                 spinbox_instructions = self.kwargs.get("spinbox_instructions")
                 
-                spinbox_default_value = self.kwargs.get("spinbox_default_value")
-    
                 # Such as 'number of frames to delay level'; used for the message box
                 # when the amount is missing
                 self.amount_name = self.kwargs.get("amount_name")
@@ -5554,8 +6234,20 @@ class SharedPages:
                 self.lbl_amount = ttk.Label(frame_content, text=spinbox_instructions)
                 self.sb_amount = ttk.Spinbox(frame_content, from_=from_value, to=to_value)
                 self.sb_amount.delete(0, "end")
-                self.sb_amount.insert(0, spinbox_default_value)
-    
+                self.sb_amount.insert(0, self.spinbox_default_value)
+                
+            if self.show_additional_argument_widgets:
+                # For optional additional arguments (used by <call> and <after>)
+                frame_additional_args = ttk.Frame(frame_content)
+                lbl_argument_instructions = ttk.Label(frame_additional_args,
+                                                      text="(optional) Arguments to pass to the reusable script")
+                
+                self.entry_arguments = ttk.Entry(frame_additional_args,
+                                                 width=30)
+                
+                lbl_argument_instructions.grid(row=0, column=0, sticky=tk.W)
+                self.entry_arguments.grid(row=1, column=0, sticky=tk.W)
+
 
             self.lbl_reusable_script.grid(row=0, column=0, sticky="w")
             self.cb_reusable_script.grid(row=1, column=0, sticky="w")
@@ -5563,6 +6255,9 @@ class SharedPages:
             if self.show_delay_widgets:
                 self.lbl_amount.grid(row=2, column=0, sticky="w", pady=(15, 0))
                 self.sb_amount.grid(row=3, column=0, sticky="w")
+
+            if self.show_additional_argument_widgets:
+                frame_additional_args.grid(row=4, column=0, sticky="w", pady=(15, 0))
 
             return frame_content
 
@@ -5581,6 +6276,46 @@ class SharedPages:
 
             self.cb_reusable_script.delete(0, "end")
 
+        def _edit_populate(self,
+                           command_class_object: cc.AfterWithArguments|cc.AfterWithoutArguments|cc.AfterCancel):
+            """
+            Populate the widgets with the arguments for editing.
+            Used by <after>, <after_cancel>, <call>
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Only <after> (with or without arguments) uses frames_elapse, 
+            # not <after_cancel> or <call>
+            if isinstance(command_class_object, cc.AfterWithArguments) \
+               or isinstance(command_class_object, cc.AfterWithoutArguments):
+                
+                frames_elapse = command_class_object.frames_elapse
+                
+                # Verify that it's a valid numeric value.
+                try:
+                    frames_elapse = int(frames_elapse)
+                except ValueError:
+                    frames_elapse = self.spinbox_default_value
+                    
+                self.sb_amount.set(frames_elapse)
+                
+
+            reusable_script_name = command_class_object.reusable_script_name
+            self.cb_reusable_script.insert(0, reusable_script_name)
+            
+            # <call> without additional arguments won't have an 'arguments'
+            # attribute, so check for it here.
+            if hasattr(command_class_object, "arguments"):
+                additional_arguments = command_class_object.arguments
+            else:
+                additional_arguments = ""
+            
+            if self.show_additional_argument_widgets:
+                self.entry_arguments.insert(0, additional_arguments)
+
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -5591,6 +6326,9 @@ class SharedPages:
             {"ReusableScriptName": "some script name",
              "DelayFramesAmount": "60"}
             or None if insufficient information was provided by the user.
+            
+            In the case of <after> and <call>, there will be an optional
+            arguments entry widget too, with the user_input key: "Arguments"
             """
 
             user_input = {}
@@ -5624,9 +6362,17 @@ class SharedPages:
                                        title=f"No {self.get_purpose_name()} provided",
                                        message=f"Enter a {self.get_purpose_name()}.")
                 return
+            
+            # In the case of <after> and <call>, there will be an arguments
+            # entry widget too.
+            if hasattr(self, "entry_arguments"):
+                arguments = self.entry_arguments.get().strip()
+            else:
+                arguments = None
 
             user_input = {"ReusableScriptName": reusable_script_name,
-                          "DelayFramesAmount": delay_frames_amount}
+                          "DelayFramesAmount": delay_frames_amount,
+                          "Arguments": arguments,}
 
             return user_input
 
@@ -5645,13 +6391,20 @@ class SharedPages:
 
             delay_frames_amount = user_inputs.get("DelayFramesAmount")
             reusable_script_name = user_inputs.get("ReusableScriptName")
+            arguments = user_inputs.get("Arguments")
             
             if self.show_delay_widgets:
-                # <after: 60, reusable script name>
-                return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}>"
+                # <after: 60, reusable script name, optional arguments>
+                if arguments:
+                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}, {arguments}>"
+                else:
+                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}>"
             else:
-                # <after_cancel: reusable script name>
-                return f"<{self.command_name}: {reusable_script_name}>"
+                # <after_cancel: reusable script name> or <call: reusable script name, optional arguments>
+                if arguments:
+                    return f"<{self.command_name}: {reusable_script_name}, {arguments}>"
+                else:
+                    return f"<{self.command_name}: {reusable_script_name}>"
 
     class SceneScriptSelect(WizardListing):
         """
@@ -5770,6 +6523,29 @@ class SharedPages:
             # Populate the scenes combo box with a list of scenes
             # in the selected chapter.
             cb_scenes.configure(values=scene_names)
+
+        def _edit_populate(self, command_class_object: cc.SceneLoad):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            chapter_name = command_class_object.chapter_name
+            scene_name = command_class_object.scene_name
+            
+            WizardListing.set_combobox_readonly_text(self.cb_chapters,
+                                                     chapter_name)
+            
+            # Populate the scene combobox values based on the chapter name above.
+            # See the method: SharedPages.SceneScriptSelect.populate
+            # for more info.
+            self.cb_chapters.event_generate("<<ComboboxSelected>>")            
+            
+            WizardListing.set_combobox_readonly_text(self.cb_scenes,
+                                                     scene_name)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -6027,6 +6803,39 @@ class SharedPages:
             
             return frame_content
 
+        def _edit_populate(self, command_class_object: cc.ConditionDefinition):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            variable_name = command_class_object.value1
+            comparison_operator = command_class_object.operator
+            check_against = command_class_object.value2
+            
+            # Variable name
+            self.cb_variable_names.insert(0, variable_name)
+            
+            # Comparison operator
+            if comparison_operator in self.cb_operators.cget("values"):
+                self.cb_operators.insert(0, comparison_operator)
+                
+            # Variable or value to check against
+            self.cb_variable_names_check_against.insert(0, check_against)
+                
+            # <case> can have an optional 'condition_name' argument.
+            # If the class is ConditionDefinition, it has the condition name.
+            # If it's ConditionDefinitionNoConditionName, then it will have
+            # no condition name. Check for it here.
+            if isinstance(command_class_object, cc.ConditionDefinition):
+                
+                # There is a condition name.
+                
+                condition_name = command_class_object.condition_name
+                self.entry_condition_name.insert(0, condition_name)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -6176,17 +6985,24 @@ class SharedPages:
             reusable script names.
             """
 
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_reusable_script.configure(values=())
-
-            # Clear the general alias entry, just in case there is a value in it.
-            self.entry_general_alias.delete(0, "end")
-
             reusable_script_names = [item for item in ProjectSnapshot.reusables]
 
             self.cb_reusable_script.configure(values=reusable_script_names)
 
-            self.cb_reusable_script.delete(0, "end")
+        def _edit_populate(self, command_class_object: cc.FadeStopRunScript):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            reusable_script_name = command_class_object.reusable_script_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            self.cb_reusable_script.insert(0, reusable_script_name)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -6331,6 +7147,24 @@ class SharedPages:
             
             return self.frame_arguments    
 
+        def _edit_populate(self, command_class_object: cc.MouseEventRunScriptWithArguments):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            sprite_name = command_class_object.sprite_name
+            reusable_script_name = command_class_object.reusable_script_name
+            
+            self.entry_general_alias.insert(0, sprite_name)
+            self.cb_reusable_script.insert(0, reusable_script_name)
+            
+            if isinstance(command_class_object, cc.MouseEventRunScriptWithArguments):
+                arguments = command_class_object.arguments
+                self.entry_arguments.insert(0, arguments)
 
     class LoadSpriteNoAlias(WizardListing):
         """
@@ -6381,7 +7215,7 @@ class SharedPages:
             names = [item for item in ref_dict]
             self.cb_selections.configure(values=names)
             
-            self.cb_selections.delete(0, "end")
+            # self.cb_selections.delete(0, "end")
             
         def check_inputs(self) -> str | None:
             """
@@ -6441,6 +7275,47 @@ class SharedPages:
     
             self.frame_content.grid()
             
+        def _edit_populate(self, command_class_object: cc.PlayAudio | cc.SpriteLoad):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio name, which may look like this: 'normal_music'
+            if isinstance(command_class_object, cc.PlayAudio):
+                # Used with <load_audio> and <load_music>
+                
+                audio_name = command_class_object.audio_name.strip()         
+                self.cb_selections.insert(0, audio_name)
+            
+            elif isinstance(command_class_object, cc.SpriteLoad) \
+                 or isinstance(command_class_object, cc.SpriteShowHide):
+                # Used with <load_background>, <background_show>
+                
+                sprite_name = command_class_object.sprite_name
+                self.cb_selections.insert(0, sprite_name)
+                
+            elif isinstance(command_class_object, cc.SpriteText):
+                # Used with <sprite_font>
+                
+                sprite_type = command_class_object.sprite_type
+                general_alias = command_class_object.general_alias
+                font_name = command_class_object.value
+                    
+                # Font name
+                WizardListing.set_combobox_readonly_text(cb_selections,
+                                                         font_name)                     
+            
+                # Set the sprite type in the combobox
+                self.set_sprite_type(sprite_type)                
+                
+                # General alias of the sprite
+                self.entry_sprite_alias.insert(0, general_alias)
+                
+
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
         """
         <load_character>
@@ -6521,6 +7396,52 @@ class SharedPages:
                 self.entry_load_as.grid(row=5, column=0, sticky="w")
             
             return frame_content
+
+        def _edit_populate(self, command_class_object: cc.SpriteLoad):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+                
+            # For use with <variable_set>
+            if isinstance(command_class_object, cc.VariableSet):
+                
+                # variable name and variable value, but we use
+                # sprite name and general alias here for consistency.
+                sprite_name = command_class_object.variable_name
+                alias = command_class_object.variable_value
+                
+            else:
+                # For use with ie: <load_character>, etc.
+    
+                sprite_name = command_class_object.sprite_name
+                alias = command_class_object.sprite_general_alias
+                
+                # Should we sprite be loaded as a different name instead of
+                # the original name? Find out with the method below.            
+                preferred_name =\
+                    CommandHelper.get_preferred_sprite_name(sprite_name)
+                
+                if preferred_name:
+                    # The argument for this command has a 'load as' keyword
+                    # meaning that the sprite needs to be loaded using a different
+                    # name.
+                    # Example:
+                    # <load_character: akari_happy load as other_akari, akari>
+                    
+                    # Distinguish the two names so we can show them in
+                    # separate widgets.
+                    sprite_name = preferred_name.get("OriginalName")
+                    load_as_name = preferred_name.get("LoadAsName")
+                    
+                    # Include a custom 'load as' name.
+                    self.entry_load_as.insert(0, load_as_name)
+
+            self.cb_selections.insert(0, sprite_name)
+            self.entry_general_alias.insert(0, alias)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -6666,8 +7587,30 @@ class SharedPages:
                     return f"<{self.command_name}: {selection}, loop>"
                     
             return f"<{self.command_name}: {selection}>"
-    
-    
+        
+        def _edit_populate(self, command_class_object: cc.PlayAudio):
+            """
+            Populate the widgets with the arguments for editing.
+            """
+            
+            # No arguments? return.
+            if not command_class_object:
+                return
+            
+            # Get the audio name
+            audio_name = command_class_object.audio_name
+
+            # The loop option is specific to <play_music> and is optional.
+            if isinstance(command_class_object, cc.PlayAudioLoop):
+                if command_class_object.loop == "loop":
+                    loop = True
+                else:
+                    loop = False
+                
+                self.v_loop_audio.set(loop)
+                
+            self.cb_selections.insert(0, audio_name)
+            
 
     class CommandNoParameters(WizardListing):
         """
@@ -7144,6 +8087,36 @@ class Font_TextDelayPunc(WizardListing):
 
         return frame_content
     
+    def _edit_populate(self, command_class_object: cc.FontTextDelayPunc):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        previous_letter = command_class_object.previous_letter
+        number_of_frames = command_class_object.number_of_frames
+        
+        try:
+            number_of_frames = int(number_of_frames)
+        except ValueError:
+            number_of_frames = 1
+
+        self.entry_letter.insert(0, previous_letter)
+        self.v_scale_value.set(number_of_frames)
+        
+        # SpriteTextDelayPunc has 2 additional widgets:
+        # an entry widget and a combobox.
+        if isinstance(command_class_object, cc.SpriteTextDelayPunc):
+            # Used with <sprite_font_delay_punc>
+            alias = command_class_object.general_alias
+            self.entry_sprite_alias.insert(0, alias)
+            
+            sprite_type = command_class_object.sprite_type
+            self.set_sprite_type(sprite_type)
+
     def check_inputs(self) -> Dict:
         """
         Make sure a letter has been provided.
@@ -7358,6 +8331,24 @@ class Font_SpriteText(WizardListing, SharedPages.SpriteTextExtension):
         # Use a sprite_text specific generate_command method.
         self.generate_command = self.custom_generate_command
         
+    def _edit_populate(self, command_class_object: cc.SpriteText):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        sprite_name = command_class_object.general_alias
+        text = command_class_object.value
+        sprite_type = command_class_object.sprite_type
+        
+        self.set_sprite_type(sprite_type)
+        
+        self.entry_sprite_alias.insert(0, sprite_name)
+        self.entry_sprite_text.insert(0, text)    
+        
 class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
     """
     <sprite_text_clear: sprite type, sprite alias>
@@ -7384,6 +8375,21 @@ class Font_SpriteTextClear(WizardListing, SharedPages.SpriteTextExtension):
         
         # Use a sprite_text specific generate_command method.
         self.generate_command = self.custom_generate_command
+        
+    def _edit_populate(self, command_class_object: cc.SpriteTextClear):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        sprite_name = command_class_object.general_alias
+        sprite_type = command_class_object.sprite_type
+        
+        self.set_sprite_type(sprite_type)
+        self.entry_sprite_alias.insert(0, sprite_name)   
         
 
 class Font_SpriteFontPosition(Font_Position, SharedPages.SpriteTextExtension):
@@ -7523,15 +8529,21 @@ class SceneWithFadeFrame:
 
         self.cb_chapters = builder.get_object("cb_chapters")
         self.cb_scenes = builder.get_object("cb_scenes")
+        
+        # Default values
+        self.default_fade_in = 10
+        self.default_fade_out = 10
+        self.default_hold_frames = 80
+        self.default_background_color = "#000000"
 
         self.v_scale_fade_in = builder.get_variable("v_scale_fade_in")
-        self.v_scale_fade_in.set(10)
+        self.v_scale_fade_in.set(self.default_fade_in)
 
         self.v_scale_fade_out = builder.get_variable("v_scale_fade_out")
-        self.v_scale_fade_out.set(10)
+        self.v_scale_fade_out.set(self.default_fade_out)
 
         self.v_scale_hold_frames = builder.get_variable("v_scale_hold_frames")
-        self.v_scale_hold_frames.set(80)
+        self.v_scale_hold_frames.set(self.default_hold_frames)
 
     def on_change_color_button_clicked(self):
         """
@@ -7595,9 +8607,66 @@ class SceneWithFade(WizardListing):
 
         # Populate chapter and scene names combo boxes
         SharedPages.SceneScriptSelect.populate(self.scene_frame.cb_chapters,
-                                               self.scene_frame.cb_scenes)
-                                               
+                                               self.scene_frame.cb_scenes)           
+                               
+    def _edit_populate(self, command_class_object: cc.SceneWithFade):
+        """
+        Populate the widgets with the arguments for editing.
+        """
         
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        hex_color = command_class_object.hex_color
+        fade_in_speed = command_class_object.fade_in_speed
+        fade_out_speed = command_class_object.fade_out_speed
+        fade_hold_for_frame_count =\
+            command_class_object.fade_hold_for_frame_count
+        chapter_name = command_class_object.chapter_name
+        scene_name = command_class_object.scene_name
+        
+        # Background color
+        try:
+            self.scene_frame.lbl_color.configure(background=hex_color)
+        except tk.TclError:
+            # Default background color
+            self.scene_frame.lbl_color.\
+                configure(background=self.scene_frame.default_background_color)
+            
+        # Fade in speed
+        try:
+            fade_in_speed = int(fade_in_speed)
+        except ValueError:
+            fade_in_speed = self.scene_frame.default_fade_in
+        self.scene_frame.v_scale_fade_in.set(fade_in_speed)
+        
+        # Fade out speed
+        try:
+            fade_out_speed = int(fade_out_speed)
+        except ValueError:
+            fade_out_speed = self.scene_frame.default_fade_out
+        self.scene_frame.v_scale_fade_out.set(fade_out_speed)
+        
+        # Hold frames value
+        try:
+            fade_hold_for_frame_count = int(fade_hold_for_frame_count)
+        except ValueError:
+            fade_hold_for_frame_count = self.scene_frame.default_hold_frames
+        self.scene_frame.v_scale_hold_frames.set(fade_hold_for_frame_count)
+        
+        # Chapter name
+        WizardListing.set_combobox_readonly_text(self.scene_frame.cb_chapters,
+                                                 chapter_name)
+        
+        # Populate the scene combobox values based on the chapter name above.
+        # See the method: SharedPages.SceneScriptSelect.populate
+        # for more info.
+        self.scene_frame.cb_chapters.event_generate("<<ComboboxSelected>>")
+        
+        # Scene name
+        WizardListing.set_combobox_readonly_text(self.scene_frame.cb_scenes,
+                                                 scene_name)
 
     def check_inputs(self) -> Dict | None:
         """
@@ -7677,6 +8746,13 @@ class WaitForAnimationFrame:
 
         self.v_sprite_type: tk.StringVar = self.builder.get_variable("v_sprite_type")
 
+        # Valid values for the radiobuttons.
+        # Purpose: when editing the <wait_for_animation> command, it will
+        # select the appropriate radio button only if the argument has
+        # a valid sprite-type value that's defined here.
+        self.valid_sprite_types =\
+            ("character", "object", "dialog_sprite", "cover")
+
         # Default to the radio button, 'Character'
         self.v_sprite_type.set("character")
 
@@ -7723,7 +8799,59 @@ class WaitForAnimation(WizardListing):
         self.frame_content = ttk.Frame(self.parent_frame)
         self.wait_frame = WaitForAnimationFrame(self.frame_content)
         self.wait_frame.mainframe.pack()
-
+        
+    def _edit_populate(self, command_class_object: cc.WaitForAnimation):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        # Waiting for a fade screen animation?
+        if hasattr(command_class_object, "fade_screen"):
+            fade_screen = command_class_object.fade_screen
+            
+            if fade_screen == "fade screen":
+                self.wait_frame.v_sprite_type.set("cover")
+            
+        else:
+            # Waiting for a specific type of animation on a specific
+            # type of sprite.
+        
+            sprite_type = command_class_object.sprite_type
+            general_alias = command_class_object.general_alias
+            animation_type = command_class_object.animation_type
+            
+            if animation_type:
+                animation_type = animation_type.lower()
+                
+            if sprite_type:
+                sprite_type = sprite_type.lower()
+                
+            wait_for = \
+                ("fade", "move", "rotate", "scale", "all", "any")
+            
+            try:
+                wait_for_animation_index = wait_for.index(animation_type)
+            except ValueError:
+                wait_for_animation_index = None
+            
+            self.wait_frame.cb_animation_type.current(wait_for_animation_index)         
+            
+            # Select a sprite type radio button, only if a valid sprite type
+            # has been specified. Sprite type examples are: 'character', 
+            # 'object', etc.
+            if sprite_type in self.wait_frame.valid_sprite_types:      
+                self.wait_frame.v_sprite_type.set(sprite_type)
+            else:
+                # Select no sprite type, because the provided sprite type
+                # is invalid.
+                self.wait_frame.v_sprite_type.set("")
+                
+            self.wait_frame.entry_sprite_alias.insert(0, general_alias)
+        
     def check_inputs(self) -> Dict | None:
         """
         Check whether the user has inputted sufficient information
@@ -7739,17 +8867,25 @@ class WaitForAnimation(WizardListing):
         sprite_alias = self.wait_frame.entry_sprite_alias.get()
         animation_type = self.wait_frame.cb_animation_type.get()
 
+        if not sprite_type:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite type",
+                                 message="Choose a sprite type.")
+            return            
+
         if sprite_alias:
             sprite_alias = sprite_alias.strip()
 
         if not sprite_alias:
-            messagebox.showerror(title="Sprite alias",
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
                                  message="The sprite alias is missing.")
             self.wait_frame.entry_sprite_alias.focus()
             return
 
         if not animation_type:
-            messagebox.showerror(title="Animation type",
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation type",
                                  message="Choose the animation type to wait for.")
             self.wait_frame.cb_animation_type.focus()
             return
@@ -7948,7 +9084,32 @@ class DialogContinue(WizardListing):
 
         self.lbl_y_position_instructions.state([state_change])
         
-
+    def _edit_populate(self, command_class_object: cc.Continue):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        adjust_y = command_class_object.adjust_y
+        
+        try:
+            # Do we have a proper int value as an argument?
+            
+            adjust_y = int(adjust_y)
+            
+            self.v_use_manual_y.set(True)
+            self.v_scale_value.set(adjust_y)
+            
+        except ValueError:
+            # The argument value does not evaluate to an int,
+            # so uncheck the 'adjust y' checkbutton.
+            adjust_y = 0
+            self.v_use_manual_y.set(False)
+        
+        
 class TextDialogDefine(WizardListing):
     """
     <text_dialog_define: width, height, animation_speed, intro_animation,
@@ -7984,6 +9145,218 @@ class TextDialogDefine(WizardListing):
         
         return frame_content
     
+    def set_combobox_text(self, combobox_widget, text: str):
+        """
+        Set the combobox to normal-mode (not read-only) and set its text
+        then change it back to read-only.
+        
+        Since there are many combobox widgets on the dialog define window,
+        it's easier to have one method handle this.
+        """
+        
+        # Interpret the text 'none' as a blank string.
+        # 'none' gets used for on_reusuable_on_halt, etc.
+        if text == "none":
+            text = ""
+        
+        combobox_widget.state(["!readonly"])
+        combobox_widget.delete(0, tk.END)
+        combobox_widget.insert(0, text)
+        combobox_widget.state(["readonly"])
+
+    def _edit_populate(self, command_class_object: cc.DialogRectangleDefinition):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        width = command_class_object.width
+        height = command_class_object.height
+        animation_speed = command_class_object.animation_speed
+        padding_x = command_class_object.padding_x
+        padding_y = command_class_object.padding_y
+        opacity = command_class_object.opacity
+        
+        try:
+            width = int(width)
+        except ValueError:
+            width = self.text_define.default_width
+            
+        self.text_define.v_width.set(command_class_object.width)
+        
+            
+        try:
+            height = int(height)
+        except ValueError:
+            height = self.text_define.default_height        
+        
+        self.text_define.v_height.set(command_class_object.height)
+        
+        try:
+            animation_speed = float(animation_speed)
+        except ValueError:
+            animation_speed = self.text_define.default_animation_speed
+            
+        self.text_define.v_animation_speed.set(animation_speed)
+            
+            
+        # Intro animation
+        
+        # Valid values for intro animation.
+        intro_animation_possible_values =\
+            self.text_define.cb_intro_animation.cget("values")
+        
+        intro_animation = command_class_object.intro_animation
+        if not intro_animation:
+            intro_animation = self.text_define.default_intro_animation
+        else:
+            intro_animation = intro_animation.lower()
+        
+        # No valid value provided? Set it to the default intro animation.
+        if intro_animation not in (intro_animation_possible_values):
+            intro_animation = self.text_define.default_intro_animation
+        else:
+            WizardListing.set_combobox_readonly_text(
+                self.text_define.cb_intro_animation,
+                intro_animation)
+            
+        # Outro animation
+        
+        # Valid values for outro animation.
+        outro_animation_possible_values =\
+            self.text_define.cb_outro_animation.cget("values")
+        
+        outro_animation = command_class_object.outro_animation
+        if not outro_animation:
+            outro_animation = self.text_define.default_outro_animation
+        else:
+            outro_animation = outro_animation.lower()
+        
+        # No valid value provided? Set it to the default outro animation.
+        if outro_animation not in (outro_animation_possible_values):
+            outro_animation = self.text_define.default_outro_animation
+        else:
+            self.set_combobox_text(self.text_define.cb_outro_animation,
+                                   outro_animation)
+            
+        # Anchor (dialog rectangle position)
+        
+        # Valid values for anchor.
+        anchor_possible_values =\
+            self.text_define.cb_dialog_position.cget("values")
+        
+        anchor = command_class_object.anchor
+        if not anchor:
+            anchor = self.text_define.default_anchor
+        else:
+            anchor = anchor.lower()
+        
+        # No valid value provided? Set it to the default anchor position.
+        if anchor not in (anchor_possible_values):
+            anchor = self.text_define.default_anchor
+        else:
+            self.set_combobox_text(self.text_define.cb_dialog_position,
+                                   anchor)
+
+        # Background color hex
+        bg_color_hex = command_class_object.bg_color_hex
+        try:
+            self.text_define.lbl_backcolor.configure(background=bg_color_hex)
+        except tk.TclError:
+            # Default to black
+            self.text_define.lbl_backcolor.configure(background="#000000")
+
+            
+        try:
+            padding_x = int(padding_x)
+        except ValueError:
+            padding_x = self.text_define.default_padding_x
+            
+        try:
+            padding_y = int(padding_y)
+        except ValueError:
+            padding_y = self.text_define.default_padding_y
+            
+        try:
+            opacity = int(opacity)
+        except ValueError:
+            opacity = self.text_define.default_opacity
+            
+        self.text_define.v_opacity.set(opacity)
+            
+            
+        # Rounded corners?
+        rounded_corners = command_class_object.rounded_corners
+        if rounded_corners:
+            rounded_corners = rounded_corners.lower()
+            
+        if rounded_corners not in ("yes", "no"):
+            # Default to no rounded corners.
+            rounded_corners = False
+            
+        elif rounded_corners == "yes":
+            rounded_corners = True
+        else:
+            rounded_corners = False
+            
+        self.text_define.v_rounded_corners.set(rounded_corners)
+        
+        # Run a reusable script when the intro animation starts
+        self.set_combobox_text(self.text_define.cb_reusable_on_intro_starting,
+                               command_class_object.reusable_on_intro_starting)         
+        
+        # Run a reusable script when the intro animation finishes
+        self.set_combobox_text(self.text_define.cb_reusable_on_intro_finished,
+                               command_class_object.reusable_on_intro_finished)           
+        
+        # Run a reusable script when the outro animation starts      
+        self.set_combobox_text(self.text_define.cb_reusable_on_outro_starting,
+                               command_class_object.reusable_on_outro_starting)        
+        
+        # Run a reusable script when the outro animation finishes
+        self.set_combobox_text(self.text_define.cb_reusable_on_outro_finished,
+                               command_class_object.reusable_on_outro_finished)             
+        
+        # Run a reusable script when the the visual novel is halted
+        self.set_combobox_text(self.text_define.cb_resuable_on_halt,
+                               command_class_object.reusable_on_halt)           
+        
+        # Run a reusable script when the the visual novel is unhalted
+        self.set_combobox_text(self.text_define.cb_resuable_on_unhalt,
+                               command_class_object.reusable_on_unhalt)               
+        
+        
+        # Border color hex
+        border_color_hex = command_class_object.border_color_hex
+        try:
+            
+            self.text_define.\
+                lbl_backcolor_border.configure(background=border_color_hex)
+        except tk.TclError:
+            
+            # Default to black
+            self.text_define.\
+                lbl_backcolor_border.configure(background="#000000")        
+        
+            
+        try:
+            border_opacity = int(command_class_object.border_opacity)
+        except ValueError:
+            border_opacity = self.text_define.default_opacity_border
+            
+        self.text_define.v_opacity_border.set(border_opacity)
+        
+            
+        try:
+            border_width = int(command_class_object.border_width)
+        except ValueError:
+            border_width = self.text_define.default_border_width
+            
+        self.text_define.v_border_width.set(border_width)
+        
     def check_inputs(self) -> Dict | None:
         """
         Check whether the user has inputted sufficient information
@@ -8302,6 +9675,38 @@ class CharacterRotateCurrentValue(WizardListing):
         
         return f"<character_rotate_current_value: {alias}, {angle}>"
 
+    def _edit_populate(self, command_class_object: cc.RotateCurrentValue):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        # Get the alias
+        sprite_name = command_class_object.sprite_name
+        
+        # Show the alias in the entry widget
+        self.entry_general_alias.insert(0, sprite_name)
+        
+        # Rotation angle
+        angle = command_class_object.rotate_current_value
+        
+        # The angle may not be numeric, so be prepared for an invalid value.
+        try:
+            angle = float(angle)
+        except ValueError:
+            angle = 0
+        
+        if angle > 359:
+            angle = 359
+        elif angle < 0:
+            angle = 0
+                
+        # Rotation angle
+        self.v_angle.set(angle)
+    
     def show(self):
         """
         Set the text of the purpose labels to indicate to the user
