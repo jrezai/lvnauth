@@ -7285,8 +7285,10 @@ class SharedPages:
                 return
             
             # Get the audio name, which may look like this: 'normal_music'
-            if isinstance(command_class_object, cc.PlayAudio):
-                # Used with <load_audio> and <load_music>
+            if isinstance(command_class_object, cc.PlayAudio) \
+               or isinstance(command_class_object, cc.DialogTextSound):
+                # Used with <load_audio> and <load_music> 
+                # and <dialog_text_sound>
                 
                 audio_name = command_class_object.audio_name.strip()         
                 self.cb_selections.insert(0, audio_name)
