@@ -16,6 +16,10 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import sys
+# Add the parent directory so the 'command_class' module can be used.
+sys.path.append("..")
+
 import pygame
 import font_handler
 import command_class as cc
