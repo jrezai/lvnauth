@@ -30,7 +30,7 @@ apps:
       - home
       - removable-media
     environment:
-      PYTHONPATH: "$PYTHONPATH:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.10:$SNAP/usr/lib/python3.10/lib-dynload"
+      PYTHONPATH: "$PYTHONPATH:$SNAP/src:$SNAP/src/player:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.10:$SNAP/usr/lib/python3.10/lib-dynload"
 
     command-chain:
     - bin/debian-multiarch-triplet-provider-launch
