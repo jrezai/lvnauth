@@ -17,8 +17,8 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
-# Add the parent directory so the 'command_class' module can be used.
-sys.path.append("../command_class")
+# So command_class can be imported
+sys.path.append(".")
 
 import pygame
 import font_handler
