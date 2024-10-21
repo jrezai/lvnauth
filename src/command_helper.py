@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
-import command_class as cc
+from player import command_class as cc
 from re import search, IGNORECASE
 from typing import Dict, List
 

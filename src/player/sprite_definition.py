@@ -16,10 +16,6 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 
-import sys
-# So command_class can be imported
-sys.path.append(".")
-
 import pygame
 import font_handler
 import command_class as cc
