@@ -31,7 +31,7 @@ Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 import pathlib
 import tkinter as tk
 import pygubu
-from player import command_class as cc
+import command_class as cc
 from player.condition_handler import ConditionOperator
 from tkinter import messagebox
 from tkinter import ttk
