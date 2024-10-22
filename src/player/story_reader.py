@@ -37,7 +37,7 @@ import cover_screen_handler
 import font_handler
 import audio_player
 import command_helper as ch
-from player import command_class as cc
+import command_class as cc
 from re import search, findall
 from typing import Tuple
 # from font_handler import ActiveFontHandler
