@@ -1505,7 +1505,7 @@ class WizardWindow:
                                     parent_display_text="Dialog",
                                     sub_display_text="dialog_sprite_stop_fading",
                                     command_name="dialog_sprite_stop_fading",
-                                    purpose_line="Stops an dialog sprite fading animation.\n"
+                                    purpose_line="Stops a dialog sprite fading animation.\n"
                                     "Note: the dialog sprite must already be visible.",
                                     group_name=GroupName.FADE)
     
@@ -1611,7 +1611,7 @@ class WizardWindow:
                                       parent_display_text="Dialog",
                                       sub_display_text="dialog_sprite_stop_rotating",
                                       command_name="dialog_sprite_stop_rotating",
-                                      purpose_line="Stops an dialog sprite rotation animation.\n"
+                                      purpose_line="Stops a dialog sprite rotation animation.\n"
                                       "Note: the dialog sprite must already be visible.",
                                       group_name=GroupName.ROTATE)
     
@@ -1723,7 +1723,7 @@ class WizardWindow:
                                      parent_display_text="Dialog",
                                      sub_display_text="dialog_sprite_stop_scaling",
                                      command_name="dialog_sprite_stop_scaling",
-                                     purpose_line="Stops an dialog sprite scaling animation.\n\n"
+                                     purpose_line="Stops a dialog sprite scaling animation.\n\n"
                                      "The scale value is not lost. If the scaling is started again,\n"
                                      "it will resume from where it stopped last.\n\n"
                                      "Note: the dialog sprite must already be visible.",
