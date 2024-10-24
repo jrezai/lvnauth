@@ -3878,32 +3878,32 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            animation_type = command_class_object.animation_type
-            
-            # Set to lowercase so we can compare it in lowercase.
-            if animation_type:
-                animation_type = animation_type.lower()
-                
-            # Default to the first selection if an invalid
-            # value was provided.
-            if animation_type not in self.values_to_choose:
-                # Default to the first index
-                self.cb_selection.current(newindex=0)
-            else:
-                WizardListing.set_combobox_readonly_text(self.cb_selection,
-                                                         animation_type)
-                
             # This part is specific to SpriteFontIntroAnimation
             # Used with <sprite_font_intro_animation>
-            if isinstance(command_class_object, cc.SpriteFontIntroAnimation):
-                
-                # Sprite type (ie: character, object, dialog_sprite)
-                sprite_type = command_class_object.sprite_type
-                self.set_sprite_type(sprite_type)
-                
-                # General alias
-                alias = command_class_object.sprite_name
-                self.entry_sprite_alias.insert(0, alias)        
+            match command_class_object:
+                case cc.SpriteFontIntroAnimation(sprite_type,
+                                                 alias, animation_type):
+                    
+               
+                    # Sprite type (ie: character, object, dialog_sprite)
+                    self.set_sprite_type(sprite_type)
+                    
+                    # General alias
+                    self.entry_sprite_alias.insert(0, alias)              
+            
+                    # Set to lowercase so we can compare it in lowercase.
+                    if animation_type:
+                        animation_type = animation_type.lower()
+                            
+                        # Default to the first selection if an invalid
+                        # value was provided.
+                        if animation_type not in self.values_to_choose:
+                            # Default to the first index
+                            self.cb_selection.current(newindex=0)
+                        else:
+                            WizardListing.set_combobox_readonly_text(
+                                self.cb_selection,
+                                animation_type)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -4890,54 +4890,72 @@ class SharedPages:
             
             self.entry_general_alias.insert(0, sprite_name)
             
-            # Do we have a specific side to check?
-            if isinstance(command_class_object, cc.MovementStopCondition):
-                # Yes, we have a specific side to check.
-            
-                # if 'side of sprite' is an empty string, 
-                # set self.cb_side_to_check to index 0, which is 
-                # "Determine automatically"
-                side_to_check = command_class_object.side_to_check
-                if not side_to_check:
-                    self.cb_side_to_check.current(0)
-                else:
-                    side_to_check = side_to_check.lower()
+            match command_class_object:
+                
+                # Do we have a specific side to check?
+                case cc.MovementStopCondition(_, side_to_check, stop_location):
+                
+                    # Yes, we have a specific side to check.
+                
+                    # if 'side of sprite' is an empty string, 
+                    # set self.cb_side_to_check to index 0, which is 
+                    # "Determine automatically"
+                    if not side_to_check:
+                        self.cb_side_to_check.current(0)
+                    else:
+                        side_to_check = side_to_check.lower()
+                        
+                        # Show the 'side to check' in the combobox
+                        if side_to_check in ("left", "right", "top", "bottom"):
+                            WizardListing.\
+                                set_combobox_readonly_text(self.cb_side_to_check,
+                                                           side_to_check)
                     
-                    # Show the 'side to check' in the combobox
-                    if side_to_check in ("left", "right", "top", "bottom"):
+                    if stop_location:
+                        stop_location = stop_location.lower()
+                    
+                    # Is the stop location a specific pixel location?
+                    if not self.supported_stop_location(stop_location):
+                        # Not a valid 'text' based stop location.
+                        
+                        # The stop location is a specific pixel location.
+                        # Show the spinbox widget.
+                        self.cb_stop_location.current(0)
+                        self.spinbox_pixel_location.set(stop_location)
+                    
+                case cc.MovementStopConditionShorter(_, stop_location):
+                    # The stop location is a fixed section, such as 'left', 
+                    # 'right', etc.
+                    
+                    if not self.supported_stop_location(stop_location):
+                        # Not a valid 'text' based stop location.
+                        
+                        # Default to 'Specific pixel coordinate'.
+                        self.cb_stop_location.current(0)
+                    else:
+                        # Show the stop location in the combobox.
                         WizardListing.\
-                            set_combobox_readonly_text(self.cb_side_to_check,
-                                                       side_to_check)                
-
-            stop_location = command_class_object.stop_location
+                            set_combobox_readonly_text(self.cb_stop_location,
+                                                       stop_location)
+                        
+                        # Causes the pixel coordinate spinbox to ungrid.
+                        self.hide_pixel_widgets()
+                    
+        def supported_stop_location(self, stop_location: str):
+            """
+            Check whether the given stop location is a valid stop location.
             
-            if stop_location:
-                stop_location = stop_location.lower()
+            Return: True if the stop location is valid or False if not.
+            """
             
             # Is the stop location a specific pixel location?
-            if stop_location not in ("start of display", "end of display",
+            return stop_location in ("start of display", "end of display",
                                      "before start of display",
                                      "after end of display",
                                      "top of display",
                                      "above top of display",
                                      "bottom of display",
-                                     "below bottom of display"):
-                
-                # The stop location is a specific pixel location.
-                # Show the spinbox widget.
-                self.cb_stop_location.current(0)
-                self.spinbox_pixel_location.set(stop_location)
-                
-            else:
-                # The stop location is a fixed section, such as 'left', 
-                # 'right', etc.
-                
-                # Show the stop location in the combobox.
-                WizardListing.set_combobox_readonly_text(self.cb_stop_location,
-                                                         stop_location)
-                
-                # Causes the pixel coordinate spinbox to ungrid.
-                self.hide_pixel_widgets()
+                                     "below bottom of display")
                 
         def check_inputs(self) -> Dict | None:
             """
@@ -5096,16 +5114,12 @@ class SharedPages:
             # No arguments? return.
             if not command_class_object:
                 return
-
-            if isinstance(command_class_object, cc.SpriteShowHide):
-                # Get the alias
-                sprite_name = command_class_object.sprite_name
-                
-            elif isinstance(command_class_object, cc.Flip):
-                sprite_name = command_class_object.general_alias
             
-            # Show the alias in the entry widget
-            self.entry_general_alias.insert(0, sprite_name)
+            match command_class_object:
+                case cc.SpriteShowHide(name) | cc.Flip(name):
+                    
+                    # Show the alias in the entry widget
+                    self.entry_general_alias.insert(0, name)
         
         def check_inputs(self) -> Dict | None:
             """
@@ -5498,34 +5512,25 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the sprite alias.
-            alias = command_class_object.sprite_name
-            
-            if isinstance(command_class_object, cc.FadeUntilValue):
-
-                # Fade value
-                numeric_value = command_class_object.fade_value
-                
-            elif isinstance(command_class_object, cc.ScaleUntil):
-                
-                # Scale until value
-                numeric_value = command_class_object.scale_until
-                
-            elif isinstance(command_class_object, cc.RotateUntil):
-                
-                # str because the word 'forever' can be used to rotate
-                # continuously.
-                rotate_until_value = command_class_object.rotate_until
-                if rotate_until_value == "forever":
-                    self.v_rotate_forever.set(True)
-                    numeric_value = 0
-                else:
-                    try:
-                        numeric_value = float(rotate_until_value)
-                    except ValueError:
-                        numeric_value = 0                    
+            match command_class_object:
+                case cc.FadeUntilValue(alias, numeric_value) | cc.ScaleUntil(alias, numeric_value):
+                    # We've extracted the values.
+                    pass
                     
-                    self.v_until.set(numeric_value)
+                case cc.RotateUntil(alias, rotate_until_value):
+                    
+                    # str because the word 'forever' can be used to rotate
+                    # continuously.
+                    if rotate_until_value == "forever":
+                        self.v_rotate_forever.set(True)
+                        numeric_value = 0
+                    else:
+                        try:
+                            numeric_value = float(rotate_until_value)
+                        except ValueError:
+                            numeric_value = 0                    
+                        
+                        self.v_until.set(numeric_value)
                     
             # To ensure it's not a non-numeric value.
             try:
@@ -5711,40 +5716,29 @@ class SharedPages:
             # No arguments? return.
             if not command_class_object:
                 return
+            
 
             # Get the alias
-            sprite_name = command_class_object.sprite_name
+            sprite_name = command_class_object.sprite_name            
             
-            if isinstance(command_class_object, cc.FadeSpeed):
-            
-                # Fade direction
-                direction = command_class_object.fade_direction
-    
-                # Fade value (as a string)
-                speed = command_class_object.fade_speed
-                
-            elif isinstance(command_class_object, cc.RotateSpeed):
-                
-                direction = command_class_object.rotate_direction
-                speed = command_class_object.rotate_speed
-                
-            elif isinstance(command_class_object, cc.ScaleBy):
-                direction = command_class_object.scale_rotation
-                speed = command_class_object.scale_by
+            match command_class_object:
+                case cc.FadeSpeed(sprite_name, speed, direction) | \
+                    cc.RotateSpeed(sprite_name, speed, direction) | \
+                    cc.ScaleBy(sprite_name, speed, direction):
         
-            # Show the alias in the entry widget
-            self.entry_general_alias.insert(0, sprite_name)
-
-            # Set the direction in the appropriate optionbutton widget
-            self.v_radio_button_selection.set(direction)
-            
-            try:
-                speed = int(speed)
-            except ValueError:
-                speed = 0
-
-            # Show the speed value in the spinbox widget
-            self.v_scale_value.set(speed)
+                    # Show the alias in the entry widget
+                    self.entry_general_alias.insert(0, sprite_name)
+        
+                    # Set the direction in the appropriate optionbutton widget
+                    self.v_radio_button_selection.set(direction)
+                    
+                    try:
+                        speed = int(speed)
+                    except ValueError:
+                        speed = 0
+        
+                    # Show the speed value in the spinbox widget
+                    self.v_scale_value.set(speed)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -5866,46 +5860,25 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the audio volume, which may look like this:
-            # '35'
-            if isinstance(command_class_object, cc.Volume):
-                scale_value = command_class_object.volume
+            match command_class_object:
+                # Get the audio volume, which may look like this:
+                # '35'                
+                case cc.Volume(scale_value) | cc.HaltAuto(scale_value) | \
+                    cc.FontTextDelay(scale_value) | \
+                    cc.FontTextFadeSpeed(scale_value) | \
+                    cc.Rest(scale_value):
+                    
+                    # We've extracted the scale value.
+                    pass
                 
-            elif isinstance(command_class_object, cc.HaltAuto):
-                scale_value = command_class_object.number_of_frames
-                
-            elif isinstance(command_class_object, cc.FontTextDelay):
-                scale_value = command_class_object.number_of_frames
-                
-            elif isinstance(command_class_object, cc.FontTextFadeSpeed):
-                scale_value = command_class_object.fade_speed
-                
-            elif isinstance(command_class_object, cc.Rest):
-                scale_value = command_class_object.number_of_frames
-                
-            elif isinstance(command_class_object, cc.SpriteFontFadeSpeed):
-                scale_value = command_class_object.fade_speed
-                
-                general_alias = command_class_object.sprite_name
-                sprite_type = command_class_object.sprite_type
-                
-                # Set the sprite type in the combobox
-                self.set_sprite_type(sprite_type)
-                
-                self.entry_sprite_alias.insert(0, general_alias)                
-                
-            elif isinstance(command_class_object, cc.SpriteTextDelay):
+                case cc.SpriteFontFadeSpeed(sprite_type, general_alias, scale_value) | \
+                    cc.SpriteTextDelay(sprite_type, general_alias, scale_value):
 
-                scale_value = command_class_object.number_of_frames
-                
-                sprite_type = command_class_object.sprite_type
-                general_alias = command_class_object.general_alias
-                
-                # Set the sprite type in the combobox
-                self.set_sprite_type(sprite_type)
-                
-                self.entry_sprite_alias.insert(0, general_alias)
-                
+                    # Set the sprite type in the combobox
+                    self.set_sprite_type(sprite_type)
+                    
+                    self.entry_sprite_alias.insert(0, general_alias)                
+
             try:
                 scale_value = int(scale_value)
             except ValueError:
@@ -6026,36 +5999,6 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # The entry widget will have a different name depending
-            # on the command class. So we use one variable to reference 
-            # the entry widget depending on the class.
-            entry_widget = None
-            
-            # SpriteText class uses 'general_alias' instead of 'sprite_text'.
-            # Used by commands such as <sprite_font_x>
-            if isinstance(command_class_object, cc.SpriteText):
-
-                sprite_name = command_class_object.general_alias
-                
-                entry_widget = self.entry_sprite_alias
-                
-                # Sprite type
-                sprite_type = command_class_object.sprite_type
-                
-                # Set the sprite type in the combobox
-                self.set_sprite_type(sprite_type)
-
-            # FontStartPosition (used by <font_x>, <font_y>)
-            # does not have sprite name.
-            elif not isinstance(command_class_object, cc.FontStartPosition):
-                # Get the alias
-                sprite_name = command_class_object.sprite_name
-                
-            # If a entry widget hasn't been specified by the time we reach here,
-            # then assume self.entry_general_alias
-            if entry_widget is None:
-                entry_widget = self.entry_general_alias
-            
             # Initialize
             numeric_value = 0
             
@@ -6064,38 +6007,38 @@ class SharedPages:
             # but sometimes it will be a float, depending on the command.
             numeric_class_type = int
             
-            # Fade value (as a string)
-            if isinstance(command_class_object, cc.FadeDelay):
-                numeric_value = command_class_object.fade_delay
-                
-            elif isinstance(command_class_object, cc.FadeCurrentValue):
-                numeric_value = command_class_object.current_fade_value
-                
-            elif isinstance(command_class_object, cc.RotateDelay):
-                numeric_value = command_class_object.rotate_delay
-                
-            elif isinstance(command_class_object, cc.ScaleDelay):
-                numeric_value = command_class_object.scale_delay
-                
-            elif isinstance(command_class_object, cc.FontStartPosition):
-                numeric_value = command_class_object.start_position
-                
-            elif isinstance(command_class_object, cc.SpriteText):
-                numeric_value = command_class_object.value
-                
-            elif isinstance(command_class_object, cc.ScaleCurrentValue):
-                numeric_value = command_class_object.scale_current_value
-                
-                # ScaleCurrentValue uses float instead of the usual int
-                # for use in commands such as: <character_scale_current_value>
-                numeric_class_type = float
+            if hasattr(command_class_object, "sprite_name"):
+                sprite_name = command_class_object.sprite_name
+                entry_widget = self.entry_general_alias
+            else:
+                sprite_name = None
+                entry_widget = None
             
-            # FontStartPosition (used by <font_x>, <font_y>)
-            # does not have sprite name.
-            if not isinstance(command_class_object, cc.FontStartPosition):
-                # Show the alias in the entry widget
+            # SpriteText class, used by commands such as <sprite_font_x>
+            match command_class_object:
+                case cc.SpriteText(sprite_type, _, _):
+
+                    # Set the sprite type in the combobox
+                    self.set_sprite_type(sprite_type)
+                    
+                case cc.FadeDelay(sprite_name, numeric_value) | \
+                    cc.FadeCurrentValue(sprite_name, numeric_value) | \
+                    cc.RotateDelay(sprite_name, numeric_value) | \
+                    cc.ScaleDelay(sprite_name, numeric_value):
+                    pass
+                
+                case cc.ScaleCurrentValue(sprite_name, numeric_value):
+                    
+                    # ScaleCurrentValue uses float instead of the usual int
+                    # for use in commands such as: <character_scale_current_value>
+                    numeric_class_type = float                       
+        
+                case cc.FontStartPosition(numeric_value):
+                    pass
+
+            if entry_widget:
                 entry_widget.insert(0, sprite_name)
-            
+
             try:
                 numeric_value = numeric_class_type(numeric_value)
             except:
@@ -6289,20 +6232,18 @@ class SharedPages:
             
             # Only <after> (with or without arguments) uses frames_elapse, 
             # not <after_cancel> or <call>
-            if isinstance(command_class_object, cc.AfterWithArguments) \
-               or isinstance(command_class_object, cc.AfterWithoutArguments):
-                
-                frames_elapse = command_class_object.frames_elapse
-                
-                # Verify that it's a valid numeric value.
-                try:
-                    frames_elapse = int(frames_elapse)
-                except ValueError:
-                    frames_elapse = self.spinbox_default_value
+            match command_class_object:
+                case cc.AfterWithArguments(frames_elapse, _, _) | \
+                    cc.AfterWithoutArguments(frames_elapse):
                     
-                self.sb_amount.set(frames_elapse)
+                    # Verify that it's a valid numeric value.
+                    try:
+                        frames_elapse = int(frames_elapse)
+                    except ValueError:
+                        frames_elapse = self.spinbox_default_value
+                        
+                    self.sb_amount.set(frames_elapse)
                 
-
             reusable_script_name = command_class_object.reusable_script_name
             self.cb_reusable_script.insert(0, reusable_script_name)
             
@@ -6830,12 +6771,11 @@ class SharedPages:
             # If the class is ConditionDefinition, it has the condition name.
             # If it's ConditionDefinitionNoConditionName, then it will have
             # no condition name. Check for it here.
-            if isinstance(command_class_object, cc.ConditionDefinition):
-                
-                # There is a condition name.
-                
-                condition_name = command_class_object.condition_name
-                self.entry_condition_name.insert(0, condition_name)
+            match command_class_object:
+                case cc.ConditionDefinition(_, _, _, condition_name):
+                    # There is a condition name.
+    
+                    self.entry_condition_name.insert(0, condition_name)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -7162,9 +7102,9 @@ class SharedPages:
             self.entry_general_alias.insert(0, sprite_name)
             self.cb_reusable_script.insert(0, reusable_script_name)
             
-            if isinstance(command_class_object, cc.MouseEventRunScriptWithArguments):
-                arguments = command_class_object.arguments
-                self.entry_arguments.insert(0, arguments)
+            match command_class_object:
+                case cc.MouseEventRunScriptWithArguments(_, _, arguments):
+                    self.entry_arguments.insert(0, arguments)
 
     class LoadSpriteNoAlias(WizardListing):
         """
@@ -7284,38 +7224,29 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the audio name, which may look like this: 'normal_music'
-            if isinstance(command_class_object, cc.PlayAudio) \
-               or isinstance(command_class_object, cc.DialogTextSound):
-                # Used with <load_audio> and <load_music> 
-                # and <dialog_text_sound>
+            match command_class_object:
                 
-                audio_name = command_class_object.audio_name.strip()         
-                self.cb_selections.insert(0, audio_name)
-            
-            elif isinstance(command_class_object, cc.SpriteLoad) \
-                 or isinstance(command_class_object, cc.SpriteShowHide):
-                # Used with <load_background>, <background_show>
-                
-                sprite_name = command_class_object.sprite_name
-                self.cb_selections.insert(0, sprite_name)
-                
-            elif isinstance(command_class_object, cc.SpriteText):
-                # Used with <sprite_font>
-                
-                sprite_type = command_class_object.sprite_type
-                general_alias = command_class_object.general_alias
-                font_name = command_class_object.value
+                # Get the audio name, which may look like this: 'normal_music'
+                case cc.PlayAudio(name) | \
+                    cc.DialogTextSound(name) | \
+                    cc.SpriteLoad(name, _) | \
+                    cc.SpriteShowHide(name):
+
+                    name = name.strip()
+                    self.cb_selections.insert(0, name)
                     
-                # Font name
-                WizardListing.set_combobox_readonly_text(cb_selections,
-                                                         font_name)                     
-            
-                # Set the sprite type in the combobox
-                self.set_sprite_type(sprite_type)                
+                case cc.SpriteText(sprite_type, alias, font_name):
+                    # Used with <sprite_font>
+
+                    # Font name
+                    WizardListing.set_combobox_readonly_text(self.cb_selections,
+                                                             font_name)                     
                 
-                # General alias of the sprite
-                self.entry_sprite_alias.insert(0, general_alias)
+                    # Set the sprite type in the combobox
+                    self.set_sprite_type(sprite_type)                
+                    
+                    # General alias of the sprite
+                    self.entry_sprite_alias.insert(0, alias)
                 
 
     class LoadSpriteWithAlias(LoadSpriteNoAlias):
@@ -7408,39 +7339,40 @@ class SharedPages:
             if not command_class_object:
                 return
                 
-            # For use with <variable_set>
-            if isinstance(command_class_object, cc.VariableSet):
+            match command_class_object:
                 
-                # variable name and variable value, but we use
-                # sprite name and general alias here for consistency.
-                sprite_name = command_class_object.variable_name
-                alias = command_class_object.variable_value
+                case cc.VariableSet(sprite_name, alias):
+                    # For use with <variable_set>
+          
+                    # variable name and variable value, but we use
+                    # sprite name and general alias here for consistency.
+                    pass
                 
-            else:
-                # For use with ie: <load_character>, etc.
-    
-                sprite_name = command_class_object.sprite_name
-                alias = command_class_object.sprite_general_alias
-                
-                # Should we sprite be loaded as a different name instead of
-                # the original name? Find out with the method below.            
-                preferred_name =\
-                    CommandHelper.get_preferred_sprite_name(sprite_name)
-                
-                if preferred_name:
-                    # The argument for this command has a 'load as' keyword
-                    # meaning that the sprite needs to be loaded using a different
-                    # name.
-                    # Example:
-                    # <load_character: akari_happy load as other_akari, akari>
+                case _:
+                    # For use with ie: <load_character>, etc.
+        
+                    sprite_name = command_class_object.sprite_name
+                    alias = command_class_object.sprite_general_alias
                     
-                    # Distinguish the two names so we can show them in
-                    # separate widgets.
-                    sprite_name = preferred_name.get("OriginalName")
-                    load_as_name = preferred_name.get("LoadAsName")
+                    # Should we sprite be loaded as a different name instead of
+                    # the original name? Find out with the method below.            
+                    preferred_name =\
+                        CommandHelper.get_preferred_sprite_name(sprite_name)
                     
-                    # Include a custom 'load as' name.
-                    self.entry_load_as.insert(0, load_as_name)
+                    if preferred_name:
+                        # The argument for this command has a 'load as' keyword
+                        # meaning that the sprite needs to be loaded using 
+                        # a different name.
+                        # Example:
+                        # <load_character: akari_happy load as other_akari, akari>
+                        
+                        # Distinguish the two names so we can show them in
+                        # separate widgets.
+                        sprite_name = preferred_name.get("OriginalName")
+                        load_as_name = preferred_name.get("LoadAsName")
+                        
+                        # Include a custom 'load as' name.
+                        self.entry_load_as.insert(0, load_as_name)
 
             self.cb_selections.insert(0, sprite_name)
             self.entry_general_alias.insert(0, alias)
@@ -7599,17 +7531,25 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Get the audio name
-            audio_name = command_class_object.audio_name
-
-            # The loop option is specific to <play_music> and is optional.
-            if isinstance(command_class_object, cc.PlayAudioLoop):
-                if command_class_object.loop == "loop":
-                    loop = True
-                else:
-                    loop = False
+            match command_class_object:
                 
-                self.v_loop_audio.set(loop)
+                case cc.PlayAudio(audio_name):
+                
+                    # We now have the audio name.
+                    pass
+                
+                case cc.PlayAudioLoop(audio_name, loop):
+                    
+                    # We now have the audio name
+                    
+                    # The loop option is specific to <play_music> 
+                    # and is optional.
+                    if loop == "loop":
+                        loop = True
+                    else:
+                        loop = False
+                    
+                    self.v_loop_audio.set(loop)
                 
             self.cb_selections.insert(0, audio_name)
             
@@ -8111,13 +8051,12 @@ class Font_TextDelayPunc(WizardListing):
         
         # SpriteTextDelayPunc has 2 additional widgets:
         # an entry widget and a combobox.
-        if isinstance(command_class_object, cc.SpriteTextDelayPunc):
-            # Used with <sprite_font_delay_punc>
-            alias = command_class_object.general_alias
-            self.entry_sprite_alias.insert(0, alias)
+        # Used with <sprite_font_delay_punc>
+        match command_class_object:
             
-            sprite_type = command_class_object.sprite_type
-            self.set_sprite_type(sprite_type)
+            case cc.SpriteTextDelayPunc(sprite_type, alias, _, _):
+                self.entry_sprite_alias.insert(0, alias)
+                self.set_sprite_type(sprite_type)
 
     def check_inputs(self) -> Dict:
         """
@@ -9277,10 +9216,14 @@ class TextDialogDefine(WizardListing):
         except ValueError:
             padding_x = self.text_define.default_padding_x
             
+        self.text_define.v_padding_x.set(padding_x)
+            
         try:
             padding_y = int(padding_y)
         except ValueError:
             padding_y = self.text_define.default_padding_y
+            
+        self.text_define.v_padding_y.set(padding_y)
             
         try:
             opacity = int(opacity)

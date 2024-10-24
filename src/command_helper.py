@@ -338,7 +338,7 @@ class CommandHelper:
         return CommandHelper.class_lookup.get(command_name)
     
     @staticmethod
-    def can_edit(script_line: str) -> bool:
+    def can_edit(script_line: str) -> bool | None:
         """
         Determine whether the given line is eligible to be edited or not.
         It does this by extracting the arguments and passing it to the
@@ -388,113 +388,122 @@ class CommandHelper:
         command_object = None
         if arguments:
             
-            # <load_background> has a special fixed alias, so we need
-            # to deal with this command a bit differently.
-            if command_name == "load_background":
-                if "," not in arguments:
-                    fixed_alias = "fixedalias"
-                    command_object = command_cls(arguments, fixed_alias)
-                    
-            # <character_stop_movement_condition> can have 2 or 3 arguments.
-            # If we have 2 arguments here, use the 2 argument version of the
-            # class instead of the 3 argument class.
-            elif command_name == "character_stop_movement_condition":
+            match command_name:
                 
-                if isinstance(arguments, list) and len(arguments) == 2:
-                    # Use the 2-argument version of the class.
-                    command_cls = cc.MovementStopConditionShorter
+                # <load_background> has a special fixed alias, so we need
+                # to deal with this command a bit differently.                
+                case "load_background":
                     
-            elif command_name == "play_music":
-                
-                # <play_music> can have two arguments.
-                # Example: <play_music: some name: loop>
-                # or <play_music: some name> (no loop)
-                if isinstance(arguments, list) and len(arguments) == 2:
-                    # Use the 2-argument version of the class.
-                    command_cls = cc.PlayAudioLoop
-                    
-            # <call> can have 1 argument or more.
-            elif command_name == "call":
-                if isinstance(arguments, str):
-                    # Use the 1-argument version of the class.
-                    command_cls = cc.CallWithNoArguments
-                    
-                else:
-                    # 2-argument version of the class, where the 2nd
-                    # argument is for multiple optional arguments.
-                    arguments =\
-                        CommandHelper._get_optional_arguments(arguments, 1)
-                    
-            # <after> can have optional arguments.
-            elif command_name == "after":
-                
-                # <after> commands must always be a list, because the
-                # minimum number of arguments is 2.
-                if isinstance(arguments, list):
-                    
-                    if len(arguments) == 2:
-                        # Use the regular 2-argument version of the class.
-                        command_cls = cc.AfterWithoutArguments
-                    
+                    # Make sure only 1 argument is supplied, which should be 
+                    # the background name. If it's a str, then it's 1 argument.
+                    if isinstance(arguments, str):
+                        fixed_alias = "fixedalias"
+                        command_object = command_cls(arguments, fixed_alias)
                     else:
+                        # A custom alias is not allowed when using 
+                        # <load_background>
+                        return
+                    
+                # <character_stop_movement_condition> can have 2 or 3 arguments.
+                # If we have 2 arguments here, use the 2 argument version of the
+                # class instead of the 3 argument class.
+                case "character_stop_movement_condition":
+                    
+                    if isinstance(arguments, list) and len(arguments) == 2:
+                        # Use the 2-argument version of the class.
+                        command_cls = cc.MovementStopConditionShorter
+                    
+                case "play_music":
+                    
+                    # <play_music> can have two arguments.
+                    # Example: <play_music: some name: loop>
+                    # or <play_music: some name> (no loop)
+                    if isinstance(arguments, list) and len(arguments) == 2:
+                        # Use the 2-argument version of the class.
+                        command_cls = cc.PlayAudioLoop
+                    
+                # <call> can have 1 argument or more.
+                case "call":
+                    if isinstance(arguments, str):
+                        # Use the 1-argument version of the class.
+                        command_cls = cc.CallWithNoArguments
+                        
+                    else:
+                        # 2-argument version of the class, where the 2nd
+                        # argument is for multiple optional arguments.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 1)
+                    
+                # <after> can have optional arguments.
+                case "after":
+                    
+                    # <after> commands must always be a list, because the
+                    # minimum number of arguments is 2.
+                    if isinstance(arguments, list):
+                        
+                        if len(arguments) == 2:
+                            # Use the regular 2-argument version of the class.
+                            command_cls = cc.AfterWithoutArguments
+                        
+                        else:
+                            # 3-argument version of the class, where the 3rd
+                            # argument is for multiple optional arguments.
+                            arguments =\
+                                CommandHelper._get_optional_arguments(arguments, 2)                
+                
+                    
+                # Mouse related commands such as <character_on_mouse_click> 
+                # can have 2 or 3 arguments. If we have 2 arguments here, use the 
+                # 2 argument class version.
+                case "dialog_sprite_on_mouse_enter" | \
+                    "object_on_mouse_enter" | \
+                    "character_on_mouse_enter" | \
+                    "dialog_sprite_on_mouse_leave" | \
+                    "object_on_mouse_leave" | \
+                    "character_on_mouse_leave" | \
+                    "dialog_sprite_on_mouse_click" | \
+                    "object_on_mouse_click" | \
+                    "character_on_mouse_click":
+                    
+                    if isinstance(arguments, list) and len(arguments) == 2:
+                        # Use the 2-argument version of the class.
+                        command_cls = cc.MouseEventRunScriptNoArguments
+                        
+                    elif isinstance(arguments, list) and len(arguments) >= 3:
                         # 3-argument version of the class, where the 3rd
                         # argument is for multiple optional arguments.
                         arguments =\
-                            CommandHelper._get_optional_arguments(arguments, 2)                
+                            CommandHelper._get_optional_arguments(arguments, 2)
+                    
+                case "wait_for_animation":
+                    # <wait_for_animation> can have 1 argument or 3 arguments.
+                    
+                    # Examples:
+                    # <wait_for_animation: fade screen>
+                    # <wait_for_animation: dialog_sprite, some rect, all>
+                    if isinstance(arguments, list):
+                        
+                        if len(arguments) == 3:
+                            # Use the 3-argument version of the class
+                            command_cls = cc.WaitForAnimation
+                    else:
+                        # Use the 1-argument version of the class
+                        command_cls = cc.WaitForAnimationFadeScreen
+                    
+                case "case":
+                    # <case> can have 3 arguments or 4 arguments.
+                    
+                    if isinstance(arguments, list) and len(arguments) == 3:
+                        
+                        # Use the 3-argument version of the class.
+                        command_cls = cc.ConditionDefinitionNoConditionName
+                        
+                    else:
+                        # 4-argument version of the class, where the 4th
+                        # argument is the conditon name.
+                        command_cls = cc.ConditionDefinition
                 
-                    
-            # Mouse related commands such as <character_on_mouse_click> 
-            # can have 2 or 3 arguments. If we have 2 arguments here, use the 
-            # 2 argument class version.
-            elif command_name in ("dialog_sprite_on_mouse_enter",
-                                  "object_on_mouse_enter",
-                                  "character_on_mouse_enter",
-                                  "dialog_sprite_on_mouse_leave",
-                                  "object_on_mouse_leave",
-                                  "character_on_mouse_leave",
-                                  "dialog_sprite_on_mouse_click", 
-                                  "object_on_mouse_click", 
-                                  "character_on_mouse_click"):
-                
-                if isinstance(arguments, list) and len(arguments) == 2:
-                    # Use the 2-argument version of the class.
-                    command_cls = cc.MouseEventRunScriptNoArguments
-                    
-                else:
-                    # 3-argument version of the class, where the 3rd
-                    # argument is for multiple optional arguments.
-                    arguments =\
-                        CommandHelper._get_optional_arguments(arguments, 2)
-                    
-            elif command_name == "wait_for_animation":
-                # <wait_for_animation> can have 1 argument or 3 arguments.
-                
-                # Examples:
-                # <wait_for_animation: fade screen>
-                # <wait_for_animation: dialog_sprite, some rect, all>
-                if isinstance(arguments, list):
-                    
-                    if len(arguments) == 3:
-                        # Use the 3-argument version of the class
-                        command_cls = cc.WaitForAnimation
-                else:
-                    # Use the 1-argument version of the class
-                    command_cls = cc.WaitForAnimationFadeScreen
-                    
-            elif command_name == "case":
-                # <case> can have 3 arguments or 4 arguments.
-                
-                if isinstance(arguments, list) and len(arguments) == 3:
-                    
-                    # Use the 3-argument version of the class.
-                    command_cls = cc.ConditionDefinitionNoConditionName
-                    
-                else:
-                    # 4-argument version of the class, where the 4th
-                    # argument is the conditon name.
-                    command_cls = cc.ConditionDefinition
-                
-            
+
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.
             if not command_object:
