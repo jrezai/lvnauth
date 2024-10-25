@@ -9618,7 +9618,7 @@ class CharacterRotateCurrentValue(WizardListing):
         angle = user_inputs.get("Angle")
         alias = user_inputs.get("Alias")
         
-        return f"<character_rotate_current_value: {alias}, {angle}>"
+        return f"<{self.command_name}: {alias}, {angle}>"
 
     def _edit_populate(self, command_class_object: cc.RotateCurrentValue):
         """
