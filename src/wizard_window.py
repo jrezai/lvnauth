@@ -987,7 +987,7 @@ class WizardWindow:
                                        from_value=0,
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
-                                       "(example: 2 means twice as big as the original size)\nDecimal numbers such as 1.2 can be used as well.",
+                                       "(example: 2 means twice as big as the original size)\nDecimal numbers such as 1.1 can be used as well.",
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
@@ -1663,7 +1663,7 @@ class WizardWindow:
                                            from_value=0,
                                            to_value=100,
                                            amount_usage_info="Scale value:\n"
-                                           "(example: 2 means twice as big as the original size)",
+                                           "(example: 2 means twice as big as the original size)\nDecimal values like 1.1 can be used as well.",
                                            amount_name="scale",
                                            group_name=GroupName.SCALE)
     
@@ -2254,7 +2254,7 @@ class WizardWindow:
                                        from_value=0,
                                        to_value=100,
                                        amount_usage_info="Scale value:\n"
-                                       "(example: 2 means twice as big as the original size)",
+                                       "(example: 2 means twice as big as the original size)\nDecimal values like 1.1 can be used as well.",
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
