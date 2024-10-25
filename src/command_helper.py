@@ -404,10 +404,12 @@ class CommandHelper:
                         # <load_background>
                         return
                     
-                # <character_stop_movement_condition> can have 2 or 3 arguments.
+                # <_stop_movement_condition> can have 2 or 3 arguments.
                 # If we have 2 arguments here, use the 2 argument version of the
                 # class instead of the 3 argument class.
-                case "character_stop_movement_condition":
+                case "character_stop_movement_condition" | \
+                    "dialog_sprite_stop_movement_condition" | \
+                    "object_stop_movement_condition":
                     
                     if isinstance(arguments, list) and len(arguments) == 2:
                         # Use the 2-argument version of the class.
