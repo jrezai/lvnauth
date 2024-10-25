@@ -120,7 +120,7 @@ class ParameterDescription:
                      "character_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
                      "character_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
-                     "character_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "character_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "character_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "character_start_moving": ("Alias",),
                      "character_stop_moving": ("Alias",),
@@ -167,7 +167,7 @@ class ParameterDescription:
                      "dialog_sprite_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
                      "dialog_sprite_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
-                     "dialog_sprite_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "dialog_sprite_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "dialog_sprite_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "dialog_sprite_start_moving": ("Alias",),
                      "dialog_sprite_stop_moving": ("Alias",),
@@ -211,7 +211,7 @@ class ParameterDescription:
                      "object_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
                      "object_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
-                     "object_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "object_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "object_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "object_start_moving": ("Alias",),
                      "object_stop_moving": ("Alias",),
