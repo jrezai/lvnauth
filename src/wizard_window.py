@@ -6010,13 +6010,18 @@ class SharedPages:
             if hasattr(command_class_object, "sprite_name"):
                 sprite_name = command_class_object.sprite_name
                 entry_widget = self.entry_general_alias
+                
+            elif hasattr(command_class_object, "general_alias"):
+                sprite_name = command_class_object.general_alias
+                entry_widget = self.entry_sprite_alias                
             else:
                 sprite_name = None
                 entry_widget = None
             
-            # SpriteText class, used by commands such as <sprite_font_x>
             match command_class_object:
-                case cc.SpriteText(sprite_type, _, _):
+                
+                # SpriteText class, used by commands such as <sprite_font_x>
+                case cc.SpriteText(sprite_type, sprite_name, numeric_value):
 
                     # Set the sprite type in the combobox
                     self.set_sprite_type(sprite_type)
@@ -6034,6 +6039,8 @@ class SharedPages:
                     numeric_class_type = float                       
         
                 case cc.FontStartPosition(numeric_value):
+                    
+                    # We have the numeric_value now.
                     pass
 
             if entry_widget:
@@ -6505,17 +6512,33 @@ class SharedPages:
             # Chapter name
             chapter_name = self.cb_chapters.get().strip()
             if not chapter_name:
+                
+                # If the chapter checkbox is read-only, don't ask the user 
+                # to 'type' a chapter name.
+                if "readonly" in self.cb_chapters.state():
+                    msg = "Select a chapter name."
+                else:
+                    msg = "Type or select a chapter name."                
+                
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title=f"No chapter selected.",
-                                       message=f"Type or select a chapter name.")
+                                       title="No chapter selected.",
+                                       message=msg)
                 return
             
             # Scene name
             scene_name = self.cb_scenes.get().strip()
             if not scene_name:
+                
+                # If the scene checkbox is read-only, don't ask the user 
+                # to 'type' a scene name.
+                if "readonly" in self.cb_scenes.state():
+                    msg = "Select a scene name."
+                else:
+                    msg = "Type or select a scene name."
+                
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title=f"No scene selected.",
-                                       message=f"Type or select a scene name.")
+                                       title="No scene selected.",
+                                       message=msg)
                 return            
 
             user_input = {"ChapterName": chapter_name,
