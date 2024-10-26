@@ -251,8 +251,8 @@ class ParameterDescription:
                      
                      "variable_set": ("Variable name", "Variable value"),
                      
-                     "case": ("Variable name", "Comparison operator", "Variable or value to check against", "(optional) Condition name"),
-                     "or_case": ("Variable name", "Comparison operator", "Variable or value to check against", "Condition name to compare with")
+                     "case": ("Value 1", "Comparison operator", "Value 2", "(optional) Condition name"),
+                     "or_case": ("Value 1", "Comparison operator", "Value 2", "Condition name to compare with")
                      
                      }
     
