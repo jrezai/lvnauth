@@ -28,6 +28,7 @@ Nov 16, 2023 (Jobin Rezai) - Add these commands to the wizard:
 Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 """
 
+import re
 import pathlib
 import tkinter as tk
 import pygubu
@@ -6714,10 +6715,15 @@ class SharedPages:
                 variable_names = tuple(dict_variables.keys())
 
             lbl_variable_name = ttk.Label(frame_content,
-                                          text=f"Variable name:")
+                                          text=f"Value 1 or variable name:")
             self.cb_variable_names = ttk.Combobox(frame_content,
                                                  width=25, 
                                                  values=variable_names)
+            
+            # We have this binding so that when a variable is selected,
+            # we surround it with ($) (ie: ($selection_here))
+            self.cb_variable_names.bind("<<ComboboxSelected>>",
+                                        self.on_combobox_selection_changed)
             
             lbl_operator = ttk.Label(frame_content,
                                      text="Comparison operator:")
@@ -6730,7 +6736,7 @@ class SharedPages:
             
             lbl_value_compare_with =\
                 ttk.Label(frame_content,
-                          text="Variable or value to check against:")
+                          text="Value 2 or variable name:")
             
             # Variable names (or manually typed value) to check against.
             self.cb_variable_names_check_against =\
@@ -6738,12 +6744,18 @@ class SharedPages:
                              width=25, 
                              values=variable_names)
             
+            # We have this binding so that when a variable is selected,
+            # we surround it with ($) (ie: ($selection_here))
+            self.cb_variable_names_check_against.\
+                bind("<<ComboboxSelected>>",
+                     self.on_combobox_selection_changed)            
+            
             # Set the instructions for the condition name
             # depending on whether it's a <case> command or <or_case> command.
             if self.command_name == "case":
                     
                 condition_name_text = "Condition name:\n" \
-                    "(mandatory if you want to use <or_case..> later, otherwise it's optional.)"
+                    "(mandatory if you want to use <or_case> later, otherwise it's optional.)"
                 
             elif self.command_name == "or_case":
                 condition_name_text = "Condition name to compare with:"
@@ -6766,6 +6778,18 @@ class SharedPages:
             self.entry_condition_name.grid(row=7, column=0, sticky=tk.W)
             
             return frame_content
+
+        def on_combobox_selection_changed(self, event):
+            """
+            A variable has been selected, so encapsulate the variable name
+            with ($). For example, if the combobox has 'my_var' as the selection,
+            change it to ($my_var), because a variable has been selected.
+            """
+            text = event.widget.get()
+            if text:
+                text = f"(${text})"
+                event.widget.delete(0, tk.END)
+                event.widget.insert(0, text)
 
         def _edit_populate(self, command_class_object: cc.ConditionDefinition):
             """
@@ -6799,7 +6823,33 @@ class SharedPages:
                     # There is a condition name.
     
                     self.entry_condition_name.insert(0, condition_name)
-
+                    
+        def contains_variable_syntax(self, text: str) -> bool:
+            """
+            Determine whether the given text contains a variable format
+            such as ($some_variable_name).
+            
+            Purpose: to know whether it's ok to not have ' and ' in value 2
+            when using the BETWEEN or NOT BETWEN operators without actually
+            having the word ' and ' in Value 2. If it's a variable in Value 2,
+            then the requirement for having ' and ' for a BETWEEN/NOT BETWEEN
+            operator doesn't apply and that's why we have this method.
+            
+            Return: True if the given text contains a variable format or
+            False if not.
+            """
+            
+            # Used for searching for ($variable_format) syntax in a string.
+            pattern = r"(?P<variable_name>[(][ ]*[\$][\w ]+[)])"
+            
+            # If a variable syntax was found in the string, then re.search()
+            # will return a value, or None if otherwise.
+            results = re.search(pattern, text)
+            if results:
+                return True
+            else:
+                return False
+            
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
@@ -6817,8 +6867,8 @@ class SharedPages:
             user_input = {}
 
             # Get the entered variable name value in the combobox.
-            variable_name = self.cb_variable_names.get()
-            if not variable_name:
+            value_1 = self.cb_variable_names.get()
+            if not value_1:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
                                        title="No variable name specified",
                                        message="Choose a variable from the drop-down menu or type a variable's name")
@@ -6838,12 +6888,49 @@ class SharedPages:
                 return
             
             # Get the variable that is going to be checked against.
-            compare_variable = self.cb_variable_names_check_against.get()
-            if not compare_variable:
+            value_2 = self.cb_variable_names_check_against.get()
+            if not value_2:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
                                        title="No variable name specified",
                                        message="Choose a variable or enter a value to check against.")
                 return
+            
+            """
+            When using the BETWEEN / NOT BETWEEN operators, it's important
+            that Value 1 be the source and Value 2 be like '1 and 10'.
+            It's not valid to have, for example, '1 and 10', in value 1.
+            '1 and 10' is only valid in value 2. Also, when using these two
+            operators, value 2 *must* have a syntax like '1 and 10', it can't
+            just be '10' (single value).
+            """
+            if operator in (ConditionOperator.BETWEEN,
+                            ConditionOperator.NOT_BETWEEN) :
+                
+                value_1_check = re.sub(r"\s+", " ", value_1).lower().strip()
+                value_2_check = re.sub(r"\s+", " ", value_2).lower().strip()
+                
+                msg = None
+                msg_title = None
+                
+                # Don't allow ' and ' in value 1
+                if " and " in value_1_check:
+                    
+                    msg_title = "Value 1"
+                    msg = "A range value using 'and' cannot be used in value 1.\n\nThat should be in value 2."
+                
+                # ' and ' must exist in value 2, if a variable hasn't been specified.
+                elif " and " not in (value_2_check) \
+                     and not self.contains_variable_syntax(value_2_check):
+                    
+                    msg_title = "Value 2"
+                    msg = "A range using 'and' has to be specified in value 2.\n\nFor example: 1 and 10"
+                
+                if msg:
+                    messagebox.showwarning(
+                        parent=self.treeview_commands.winfo_toplevel(), 
+                        title=msg_title,
+                        message=msg)
+                    return
             
             # Condition name (optional field for <case> but mandatory
             # for <or_case>)
@@ -6856,9 +6943,9 @@ class SharedPages:
                                            message="Enter a name for the condition.")
                     return                    
 
-            user_input = {"FirstValue": variable_name,
+            user_input = {"FirstValue": value_1,
                           "Operator": operator,
-                          "SecondValue": compare_variable,
+                          "SecondValue": value_2,
                           "ConditionName": condition_name}
 
             return user_input
@@ -6882,16 +6969,6 @@ class SharedPages:
             operator = user_inputs.get("Operator").value
             second_value = user_inputs.get("SecondValue")
             condition_name = user_inputs.get("ConditionName")
-            
-            # If the first value is a variable name that exists,
-            # then assume that it needs to be checked against a variable.
-            if first_value in ProjectSnapshot.variables:
-                first_value = rf"(${first_value})"                   
-            
-            # If what we're checking against is a variable name that exists,
-            # then assume that it needs to be checked against a variable.
-            if second_value in ProjectSnapshot.variables:
-                second_value = rf"(${second_value})"
                 
             if condition_name:
                 return f"<{self.command_name}: {first_value}, {operator}, {second_value}, {condition_name}>"
