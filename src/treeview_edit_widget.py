@@ -38,11 +38,14 @@ class TreeviewEdit(ttk.Treeview):
     def __init__(self, master, **kw):
         super().__init__(master, **kw)
         
-        # This will eventually be the instantiated entry widget
-        # for editing treeview cells. Only one entry widget (the variable below)
+        # This will eventually be the entry widget that will be used for 
+        # editing treeview cells. Only one entry widget (the variable below)
         # will be shown at a time.
-        self.entry_widget: EntryWithLimit
-        self.entry_widget = None
+        self.entry_widget = EntryWithLimit(self)
+        self.entry_widget.bind("<FocusOut>", self.on_focus_out)
+        self.entry_widget.bind("<Escape>", self.on_escape_key_pressed)
+        self.entry_widget.bind("<Return>", self.on_enter_pressed)
+        self.entry_widget.bind("<KP_Enter>", self.on_enter_pressed)        
         
         # A method that will check whether a value is valid
         # to be added to a specific column in the treeview widget.
@@ -166,6 +169,10 @@ class TreeviewEdit(ttk.Treeview):
         except IndexError:
             return
         
+        # Make sure the selected value is a string because numbers
+        # in the treeview widget are returned as int values.
+        selected_text = str(selected_text)
+        
         # Get the size/coordinates of the treeview cell.
         column_box = self.bbox(selected_iid, column)
         
@@ -179,9 +186,11 @@ class TreeviewEdit(ttk.Treeview):
         
         max_limit = self.column_value_length_limits.get(column_name)      
 
-        # Create an entry widget so we can show it on top of the
-        # treeview cell.
-        self.entry_widget = EntryWithLimit(self, max_length=max_limit)
+        # Set the length limit in the entry widget
+        self.entry_widget.configure(max_length=max_limit)
+        
+        # Delete any existing text from a possible previous edit.
+        self.entry_widget.delete(0, tk.END)
 
         # Record the column index and item iid
         # so we'll know which item and column index to update
@@ -199,11 +208,6 @@ class TreeviewEdit(ttk.Treeview):
         # If we don't focus on the entry widget, the user won't
         # be able to type right away.
         self.entry_widget.focus()
-
-        self.entry_widget.bind("<FocusOut>", self.on_focus_out)
-        self.entry_widget.bind("<Escape>", self.on_escape_key_pressed)
-        self.entry_widget.bind("<Return>", self.on_enter_pressed)
-        self.entry_widget.bind("<KP_Enter>", self.on_enter_pressed)
 
         self.entry_widget.place(x=column_box[0] + treeview_x,
                                 y=column_box[1] + treeview_y,
@@ -303,7 +307,7 @@ class TreeviewEdit(ttk.Treeview):
             self.is_dirty = True
 
         # Get it out of edit-mode.
-        self._destroy_entry_widget()
+        self._hide_entry_widget()
 
     def on_focus_out(self, event):
         """
@@ -318,9 +322,9 @@ class TreeviewEdit(ttk.Treeview):
         entry widget exists or not.
         """
         
-        # The entry widget may not be there, because this method
+        # The entry widget may not be visible, because this method
         # also runs when the scroll wheel is used on the mouse.
-        if not self.entry_widget:
+        if not self.entry_widget.winfo_viewable():
             return
             
         # Update the text on the cell being edited.
@@ -330,15 +334,15 @@ class TreeviewEdit(ttk.Treeview):
         """
         The ESC key was pressed on the keyboard, so cancel edit-mode.
         """
-        self._destroy_entry_widget()
+        self._hide_entry_widget()
 
-    def _destroy_entry_widget(self):
+    def _hide_entry_widget(self):
         """
-        Destroy the entry widget and clear the entry widget variable.
+        Remove the text and place-forget the entry widget so it hides from view.
         """
-        if self.entry_widget:
-            self.entry_widget.destroy()
-            self.entry_widget = None        
+        if self.entry_widget.winfo_viewable():
+            self.entry_widget.delete(0, tk.END)
+            self.entry_widget.place_forget()
         
 
 if __name__ == "__main__":
