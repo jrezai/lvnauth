@@ -65,6 +65,13 @@ class ParameterDescription:
         self.show_text_widget.configure(background=frame_bg_color,
                                         foreground=label_fg_color)
         
+        # Used for commands that end with '_stop_movement_condition',
+        # such as <character_stop_movement_condition>
+        # One variance of that command has 2 arguments instead of 3, which
+        # doesn't have a side-to-check argument. We use this to find
+        # the parameter description for that shorter version of the command.
+        self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL = "_no_side_to_check"
+        
         # The parameter descriptions are stored here.
         self.data = {"load_audio": ("Audio name",),
                      "load_music": ("Music name",), 
@@ -97,20 +104,23 @@ class ParameterDescription:
                      "character_after_rotating_stop": ("Alias", "Reusable script name"),
                      "character_rotate_current_value": ("Alias", "Angle (0 to 359)"),
                      "character_rotate_delay": ("Alias", "Number of frames to skip"),
-                     "character_rotate_speed": ("Alias", "Rotate direction", "Rotate speed (1 to 100)"),
-                     "character_rotate_until": ("Alias", "Stop at angle (0 to 359)", "(optional) Rotate forever"),
+                     "character_rotate_speed": ("Alias", "Rotate speed (1 to 100)", "Rotate direction"),
+                     "character_rotate_until": ("Alias", "Stop at angle (0 to 359)"),
                      "character_start_rotating": ("Alias", ),
                      "character_stop_rotating": ("Alias", ),
                      "character_after_scaling_stop": ("Alias", "Reusable script name"),
-                     "character_scale_by": ("Alias", "Scale direction", "Scale speed (1 to 100)"),
+                     "character_scale_by": ("Alias", "Scale speed (1 to 100)", "Scale direction"),
                      "character_scale_current_value": ("Alias", "Scale value"),
                      "character_scale_delay": ("Alias", "Number of frames to skip"),
                      "character_scale_until": ("Alias", "Stop at scale value"),
                      "character_start_scaling": ("Alias",),
                      "character_stop_scaling": ("Alias",),
                      "character_after_movement_stop": ("Alias", "Reusable script name"),
+                     
                      "character_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
-                     "character_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "character_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
+                     
+                     "character_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "character_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "character_start_moving": ("Alias",),
                      "character_stop_moving": ("Alias",),
@@ -141,27 +151,30 @@ class ParameterDescription:
                      "dialog_sprite_after_rotating_stop": ("Alias", "Reusable script name"),
                      "dialog_sprite_rotate_current_value": ("Alias", "Angle (0 to 359)"),
                      "dialog_sprite_rotate_delay": ("Alias", "Number of frames to skip"),
-                     "dialog_sprite_rotate_speed": ("Alias", "Rotate direction", "Rotate speed (1 to 100)"),
-                     "dialog_sprite_rotate_until": ("Alias", "Stop at angle (0 to 359)", "(optional) Rotate forever"),
+                     "dialog_sprite_rotate_speed": ("Alias", "Rotate speed (1 to 100)", "Rotate direction"),
+                     "dialog_sprite_rotate_until": ("Alias", "Stop at angle (0 to 359)"),
                      "dialog_sprite_start_rotating": ("Alias", ),
                      "dialog_sprite_stop_rotating": ("Alias", ),
                      "dialog_sprite_after_scaling_stop": ("Alias", "Reusable script name"),
-                     "dialog_sprite_scale_by": ("Alias", "Scale direction", "Scale speed (1 to 100)"),
+                     "dialog_sprite_scale_by": ("Alias", "Scale speed (1 to 100)", "Scale direction"),
                      "dialog_sprite_scale_current_value": ("Alias", "Scale value"),
                      "dialog_sprite_scale_delay": ("Alias", "Number of frames to skip"),
                      "dialog_sprite_scale_until": ("Alias", "Stop at scale value"),
                      "dialog_sprite_start_scaling": ("Alias",),
                      "dialog_sprite_stop_scaling": ("Alias",),
                      "dialog_sprite_after_movement_stop": ("Alias", "Reusable script name"),
+                     
                      "dialog_sprite_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
-                     "dialog_sprite_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "dialog_sprite_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
+                     
+                     "dialog_sprite_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "dialog_sprite_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "dialog_sprite_start_moving": ("Alias",),
                      "dialog_sprite_stop_moving": ("Alias",),
                      "dialog_sprite_set_position_x": ("Alias", "Horizontal position"),
                      "dialog_sprite_set_position_y": ("Alias", "Vertical position"),
                      "dialog_sprite_set_center": ("Alias", "Center of X (horizontal position)", "Center of Y (vertical position)"),
-                     "dialog_sprite_set_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
+                     "dialog_sprite_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
                      "dialog_sprite_on_mouse_click": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "dialog_sprite_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "dialog_sprite_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
@@ -182,27 +195,30 @@ class ParameterDescription:
                      "object_after_rotating_stop": ("Alias", "Reusable script name"),
                      "object_rotate_current_value": ("Alias", "Angle (0 to 359)"),
                      "object_rotate_delay": ("Alias", "Number of frames to skip"),
-                     "object_rotate_speed": ("Alias", "Rotate direction", "Rotate speed (1 to 100)"),
-                     "object_rotate_until": ("Alias", "Stop at angle (0 to 359)", "(optional) Rotate forever"),
+                     "object_rotate_speed": ("Alias", "Rotate speed (1 to 100)", "Rotate direction"),
+                     "object_rotate_until": ("Alias", "Stop at angle (0 to 359)"),
                      "object_start_rotating": ("Alias", ),
                      "object_stop_rotating": ("Alias", ),
                      "object_after_scaling_stop": ("Alias", "Reusable script name"),
-                     "object_scale_by": ("Alias", "Scale direction", "Scale speed (1 to 100)"),
+                     "object_scale_by": ("Alias", "Scale speed (1 to 100)", "Scale direction"),
                      "object_scale_current_value": ("Alias", "Scale value"),
                      "object_scale_delay": ("Alias", "Number of frames to skip"),
                      "object_scale_until": ("Alias", "Stop at scale value"),
                      "object_start_scaling": ("Alias",),
                      "object_stop_scaling": ("Alias",),
                      "object_after_movement_stop": ("Alias", "Reusable script name"),
+                     
                      "object_stop_movement_condition": ("Alias", "Side of sprite to check", "Stop location"),
-                     "object_move": ("Alias", "Vertical amount", "Vertical direction", "Horizontal amount", "Horizontal direction"),
+                     "object_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
+                     
+                     "object_move": ("Alias", "Horizontal amount", "Horizontal direction", "Vertical amount", "Vertical direction"),
                      "object_move_delay": ("Alias", "Number of frames to skip (horizontal)", "Number of frames to skip (vertical)"),
                      "object_start_moving": ("Alias",),
                      "object_stop_moving": ("Alias",),
                      "object_set_position_x": ("Alias", "Horizontal position"),
                      "object_set_position_y": ("Alias", "Vertical position"),
                      "object_set_center": ("Alias", "Center of X (horizontal position)", "Center of Y (vertical position)"),
-                     "object_set_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
+                     "object_center_x_with": ("Alias to move", "Sprite type to center with", "Sprite alias to center with"),
                      "object_on_mouse_click": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "object_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "object_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
@@ -235,8 +251,8 @@ class ParameterDescription:
                      
                      "variable_set": ("Variable name", "Variable value"),
                      
-                     "case": ("Variable name", "Comparison operator", "Variable or value to check against", "(optional) Condition name"),
-                     "or_case": ("Variable name", "Comparison operator", "Variable or value to check against", "Condition name to compare with")
+                     "case": ("Value 1", "Comparison operator", "Value 2", "(optional) Condition name"),
+                     "or_case": ("Value 1", "Comparison operator", "Value 2", "Condition name to compare with")
                      
                      }
     
@@ -261,6 +277,15 @@ class ParameterDescription:
         descriptions = self.data.get(command_name)
         if not descriptions:
             return
+        
+        # If the requested command name ends with a special string, that means
+        # it was for a command that can have multiple arguments (for example
+        # <character_stop_movement_condition>. Change it back to the normal
+        # command name so we can display it to the user.)
+        if command_name.endswith("_stop_movement_condition" + \
+                                self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL):
+            command_name = command_name.\
+                removesuffix(self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL)
         
         # Generate a single string from a tuple of parameter descriptions.
         # Remove the asterisk if it exists in the description. An asterisk
@@ -448,6 +473,31 @@ class ParameterDescription:
             command_name = result.groupdict().get("Command")
         else:
             self.hide_description_frame()
+            return
+        
+        # The 'stop movement condition' command, such as: 
+        # <character_stop_movement_condition> can have 3 arguments or 2.
+        # Check for the 2-argument version.
+        # The 3 argument version is the default.
+        if command_name.endswith("_stop_movement_condition"):
+            
+            # Get the whole line so we can count the number of commas.
+            entire_line_text = \
+                self.read_text_widget.get("insert linestart",
+                                          index2="insert lineend")
+            
+            # 1 comma means it's the non-default 2 argument version
+            # of the command.
+            if entire_line_text.count(",") == 1:
+             
+                # This is the non-default 2-argument version of the command.
+                # Add a special string so we can find the 2-argument description
+                # in the lookup dictionary.
+                command_name += self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL
+                
+        # Don't allow a special command name that's meant to be used internally 
+        # in-code, such as: <character_stop_movement_condition_no_side_to_check>
+        elif command_name.endswith(self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL):
             return
         
         comma_count = line_text.count(",")

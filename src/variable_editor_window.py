@@ -93,7 +93,7 @@ class VariableEditorWindow:
         scroll bar is being scrolled without a mouse wheel,
         although this method runs with a mouse wheel as well.
         """
-        self.treeviewedit1._destroy_entry_widget()
+        self.treeviewedit1._hide_entry_widget()
         self.sb_vertical.set(y, y1)
         
     def validate_variable_name(self,
@@ -266,7 +266,9 @@ class VariableEditorWindow:
             item_details = self.treeviewedit1.item(item_iid)
             variable_name, variable_value = item_details.get("values")
         
-            ProjectSnapshot.variables[variable_name] = variable_value
+            # Save the value while making sure the value is saved as a string.
+            # Numbers in the treeview widget are seen as int values.
+            ProjectSnapshot.variables[variable_name] = str(variable_value)
             
         # Sort the variables dictionary by key
         # so that it's sorted alphabetically when the treeview shows the 
