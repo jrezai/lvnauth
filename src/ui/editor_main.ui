@@ -1286,12 +1286,20 @@
     <property name="tearoff">false</property>
     <child>
       <object class="tk.Menuitem.Command" id="mnu_play_current_scene" named="True">
-        <property name="label" translatable="yes">Current Scene</property>
+        <property name="label" translatable="yes">Current scene</property>
       </object>
     </child>
     <child>
+      <object class="tk.Menuitem.Command" id="mnu_play_startup_scene" named="True">
+        <property name="label" translatable="yes">Startup scene</property>
+      </object>
+    </child>
+    <child>
+      <object class="tk.Menuitem.Separator" id="separator8" />
+    </child>
+    <child>
       <object class="tk.Menuitem.Command" id="mnu_play_first_scene" named="True">
-        <property name="label" translatable="yes">First Scene</property>
+        <property name="label" translatable="yes">Launch window</property>
       </object>
     </child>
   </object>

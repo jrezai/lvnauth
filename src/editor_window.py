@@ -174,7 +174,9 @@ class EditorMainApp:
 
         # Setup bindings for Play Current Script and Play from Beginning menus
         self.mnu_play.entryconfigure(index=0, command=self.on_play_current_scene)
-        self.mnu_play.entryconfigure(index=1, command=self.on_play_from_beginning)
+        self.mnu_play.entryconfigure(index=1, command=self.on_play_startup_scene)
+        # index 2 is a separator
+        self.mnu_play.entryconfigure(index=3, command=self.on_play_from_beginning)
         
         # Wizard button and image
         self.btn_wizard = builder.get_object("btn_wizard")
@@ -1097,14 +1099,17 @@ class EditorMainApp:
 
     def on_set_as_startup_clicked(self):
         """
-        Set the startup script, which will be the first script to run in the visual novel.
+        Set the startup script, which will be the first script to run in
+        the visual novel.
 
-        Set the scene's treeview item to a different colour, to show that it's the startup script.
+        Set the scene's treeview item to a different colour, to show that
+        it's the startup script.
 
-        :return: None
+        Return: None
         """
 
-        # Make sure the selected item in the treeview widget has a parent, because only scenes have parents.
+        # Make sure the selected item in the treeview widget has a parent, 
+        # because only scenes have parents.
         selected_item = self.treeview_scripts.focus()
 
         self.set_as_startup_script(selected_item)
@@ -1136,15 +1141,18 @@ class EditorMainApp:
                     item_tags.remove("startup_script")
                     self.treeview_scripts.item(item=c_item, tags=item_tags)
 
-        # Now set the selected item to contain a tag that shows it's the startup script.
+        # Now set the selected item to contain a tag that shows 
+        # it's the startup script.
         item_tags = list(self.treeview_scripts.item(item_iid).get("tags"))
         item_tags.append("startup_script")
         self.treeview_scripts.item(item=item_iid, tags=item_tags)
 
     def get_startup_chapter_and_scene(self) -> Tuple | None:
         """
-        Return the (chapter name, scene name) that is set as a default or None if none is set.
-        :return: Tuple (chapter name, scene name) both as strings.
+        Return the (chapter name, scene name) that is set as a default
+        or None if none is set.
+        
+        Return: Tuple (chapter name, scene name) both as strings.
         """
 
         startup_scene_item_iid = self.get_startup_scene_item_iid()
@@ -1152,7 +1160,8 @@ class EditorMainApp:
             return
 
         # Get the scene name (from the item iid)
-        scene_name = self.treeview_scripts.item(startup_scene_item_iid).get("text")
+        scene_name = \
+            self.treeview_scripts.item(startup_scene_item_iid).get("text")
 
         # Get the parent name (chapter name)
         parent_iid = self.treeview_scripts.parent(startup_scene_item_iid)
@@ -1167,9 +1176,10 @@ class EditorMainApp:
         """
         Get the treeview item iid of the startup scene.
 
-        We use this when saving a project file (.lvnap) and also when playing the script
-        from the beginning.
-        :return: item iid str
+        We use this when saving a project file (.lvnap) and also when
+        playing the script from the beginning.
+        
+        Return: item iid str
         """
 
         # Look for the sub-item that has a tag of 'startup_script'.
@@ -1211,6 +1221,52 @@ class EditorMainApp:
                                            font_sprite_name=item_text,
                                            font_file_name=file_name,
                                            font_sprite_details=font_properties)
+
+    def on_play_startup_scene(self):
+        """
+        Play the scene script that is marked as the startup.
+
+        Only scene scripts can be played directly.
+        Chapter scripts and reusable scripts cannot be played directly.
+        
+        We only include binary files (images, audio) that have a <load-..>
+        script for them in either a chapter script or scene script.
+        For example <load_character: rave_happy, Rave>
+
+        This method checks to make sure that a startup script
+        has been specified.
+        """
+
+        startup_info = self.get_startup_chapter_and_scene()
+        if not startup_info:
+            messagebox.showwarning(parent=self.mainwindow,
+                                   title="No Startup Scene",
+                                   message="There is currently no scene marked as a Startup script.\n\nSelect a scene and then click the 'Set as Startup' builder")
+            return
+
+        startup_chapter_name, startup_scene_name = startup_info
+
+
+        # Make sure there is an active scene selected.        
+        if startup_chapter_name and startup_scene_name:
+
+            # For playing/testing the story
+            draft_path = ContainerHandler.get_draft_path()
+            compile_path = Path(draft_path)              
+
+            compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
+                                     startup_scene_name=startup_scene_name,
+                                     startup_chapter_name=startup_chapter_name,
+                                     save_file_path=compile_path,
+                                     story_reusables_dict=ProjectSnapshot.reusables,
+                                     treeview_scripts=self.treeview_scripts)
+            success = compiler.compile(compile_mode=CompileMode.DRAFT)
+            if not success:
+                return
+
+            # Play the .lvna file
+            EditorMainApp.play_lvna_file(lvna_file_path=compile_path,
+                                         error_window_master=self.mainwindow)        
 
     def on_play_current_scene(self):
         """
