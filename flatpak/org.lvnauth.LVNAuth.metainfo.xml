@@ -58,15 +58,19 @@
   </screenshots>
 
   <releases>
-    <release version="0.6.1" date="2024-09-16">
-    <url type="details">https://lvnauth.org/blog/lvnauth-0.6.1-release.html</url>
+    <release version="0.7" date="2024-11-01">
+    <url type="details">https://lvnauth.org/blog/lvnauth-0.7.html</url>
       <description>
         <p>Release description</p>
           <ul>
-            <li>Added the new **load as** keyword (introduced in v0.6) to the Wizard window so that it's easier to spawn copies of sprites without needing to memorize the command.</li>
-            <li>The Wizard window's command list now contains a background color for each row. The colors are grouped by the category of each command. For example: commands related to fades will be in one color and commands related to rotation will be in a different color. This makes it easier and faster to find specific commands. Also, command category names are now listed on the same row as the command names.</li>
-            <li>Added a command helper near the bottom of the main window. If you place the blinking cursor over a command parameter, the name of the parameter that you're currently on, will be shown. This is especially useful for commands that contain many parameters, such as `text_dialog_define`.</li>
-            <li>Fixed a bug that caused a sprite's text animation to unnecessarily run again even if the text's animation had already finished, when swapping the sprite out with a different sprite.</li>
+            <li>Added a feature to edit existing commands by right-clicking and choosing the menu, 'Edit line'. This will allow you to change the values of commands using the Wizard window. Prior to this, the Wizard window was only able to generate new commands; but now the Wizard window can edit commands that are being used in a visual novel.</li>
+            <li>Added the ability to play from the Startup scene via the Play button, without the launch window. Before, it would show a Launch window first. Starting the visual novel from the Launch window is still an option, however.</li>
+            <li>Added optional arguments support for the call command in the Wizard window.</li>
+            <li>Added optional arguments support for the command: 'after'. This allows arguments to be passed to a reusable script.</li>
+            <li>Fixed bug with the 'case' command causing an error when no condition name was provided. The condition name is optional unless you want to use 'or_case' later on.</li>
+            <li>Fixed bug with the variables editor window not saving numeric values.</li>
+            <li>Cleaned up the command helper descriptions that show up near the bottom of the editor window. For example, instead of the description '*Character sprite to load (no extension)*', it now shows '*Character sprite name*'. Also, a few inaccurate parameter descriptions were corrected.</li>
+            <li>The visual novel project will now be saved automatically just before being played via the 'Play' button in the editor window. This way, the latest changes will be saved without needing to manually click the 'Save' button every time before playing your visual novel.</li>
           </ul>
       </description>
      </release>
