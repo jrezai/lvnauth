@@ -18,12 +18,14 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 
 import pathlib
 import pygubu
+import tkinter as tk
 from tkinter import filedialog, PhotoImage
 from tkinter import ttk, messagebox
 from typing import Dict
 from shutil import copy2
 from project_snapshot import ProjectSnapshot, SubPaths
 from pathlib import Path
+from web_handler import WebKeys
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -53,6 +55,12 @@ class StoryDetailsWindow:
         self.entry_version = builder.get_object("entry_version")
         self.entry_episode = builder.get_object("entry_episode")
         self.txt_description = builder.get_object("txt_description")
+        
+        # Web related
+        self.v_allow_web_access = builder.get_variable("v_allow_web_access")
+        self.v_license_key_type = builder.get_variable("v_license_key_type")
+        self.entry_shared_key = builder.get_object("entry_shared_key")
+        self.entry_web_address = builder.get_object("entry_web_address")
         
         # Connect the description's vertical scrollbar
         self.sb_vertical_description =\
@@ -100,7 +108,12 @@ class StoryDetailsWindow:
                                 "Genre": self.entry_genre,
                                 "Version": self.entry_version,
                                 "Episode": self.entry_episode,
-                                "Description": self.txt_description}
+                                "Description": self.txt_description,
+                                
+                                WebKeys.WEB_KEY.value: self.entry_shared_key,
+                                WebKeys.WEB_ADDRESS.value: self.entry_web_address,
+                                WebKeys.WEB_ACCESS.value: self.v_allow_web_access,
+                                WebKeys.WEB_LICENSE_TYPE.value: self.v_license_key_type}
 
         self._get_details()
 
@@ -164,8 +177,16 @@ class StoryDetailsWindow:
         if self.existing_details:
             for detail_name, widget in self.widget_mappings.items():
                 text_to_show = self.existing_details.get(detail_name, "")
+                
+                # string tk variable? set the text.
+                if isinstance(widget, tk.StringVar):
+                    widget.set(text_to_show)
+                    
+                # bool tk variable? set the bool flag from a string value.
+                elif isinstance(widget, tk.BooleanVar):
+                    widget.set(bool(text_to_show))
 
-                if widget.winfo_class() == "Text":
+                elif widget.winfo_class() == "Text":
                     widget.insert("1.0", text_to_show)
                 else:
                     widget.insert(0, text_to_show)
@@ -194,7 +215,8 @@ class StoryDetailsWindow:
 
         # Iterate through the entry widgets and the description text widget.
         for detail_name, widget in self.widget_mappings.items():
-            if widget.winfo_class() == "Text":
+
+            if hasattr(widget, "winfo_class") and widget.winfo_class() == "Text":
                 self.details[detail_name] = widget.get("1.0", "end-1c")
             else:
                 self.details[detail_name] = widget.get()
