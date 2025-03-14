@@ -26,6 +26,7 @@ from typing import Dict
 from PIL import ImageTk, Image
 from io import BytesIO
 from pathlib import Path
+from web_handler import WebKeys, WebHandler
 from shared_components import Passer
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
@@ -81,6 +82,10 @@ class LaunchWindow:
 
         self.lbl_poster = builder.get_object("lbl_poster")
 
+        # Used for web-enabled visual novels.
+        self.frame_license_key = builder.get_object("frame_license_key")
+        self.web_handler: WebHandler = None
+
         self.treeview_chapter_scenes = builder.get_object("treeview_chapter_scenes")
         self.btn_play_selection = builder.get_object("btn_play_selection")
         
@@ -119,7 +124,33 @@ class LaunchWindow:
 
         self.populate_story_info()
         
+        self.check_web_enabled()
         
+        
+    def check_web_enabled(self):
+        """
+        Initialize web_handler and show the license frame (so the viewer
+        can enter a license key), if the visual novel is web-enabled.
+        """
+        
+        # bool
+        web_enabled = self.story_info.get(WebKeys.WEB_ACCESS.value)
+        
+        web_address = self.story_info.get(WebKeys.WEB_ADDRESS.value)
+        web_key = self.story_info.get(WebKeys.WEB_KEY.value)
+        web_license_type = self.story_info.get(WebKeys.WEB_LICENSE_TYPE.value)
+        
+        # Initialize web_handler. This will be used throughout the visual
+        # novel for interacting with flask and the database.
+        Passer.web_handler = WebHandler(web_key,
+                                        web_address,
+                                        web_license_type,
+                                        web_enabled)
+        
+        # Don't show the license frame if the visual novel
+        # is not web-enabled.
+        if not web_enabled:
+            self.frame_license_key.grid_forget()
 
     def on_window_closing(self):
         """
@@ -134,15 +165,30 @@ class LaunchWindow:
 
     def on_play_selection_button_clicked(self):
         """
-        Get the selected chapter and scene in the treeview widget.
+        If it's a web-enabled visual novel, verify the license
+        and if it's valid, get the selected chapter and scene in the
+        treeview widget and run it.
         
-        Return: a dict (key: chapter name, value: scene name)
-        Example: {chapter_name: scene_name}
+        If it's not a web-enabled visual novel, get the selected chapter
+        and scene in the treeview widget and run it.
         """
 
         # Disable the button so the user doesn't repeatidly click it.
-        self.btn_play_selection.state(["disabled"])        
+        self.btn_play_selection.state(["disabled"])
         
+        if Passer.web_handler.web_enabled:
+            # It's a web-enabled visual novel, check if the license is valid.
+            Passer.web_handler.start_verify_license
+        else:
+            # It's not a web-enabled visual novel, play the selection now.
+            self._play_selection()
+        
+    def _play_selection(self):
+        """
+        Get the selected chapter and scene in the treeview widget and run it.
+        
+        """
+
         selection = self.treeview_chapter_scenes.selection()
 
         # If the user hasn't selected a chapter/scene to play,
@@ -222,7 +268,7 @@ class LaunchWindow:
             Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
 
         # Close the launch window so the story can start playing.
-        self.mainwindow.destroy()
+        self.mainwindow.destroy()        
 
     def populate_story_info(self):
         """
