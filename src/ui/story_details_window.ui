@@ -491,7 +491,7 @@
                               <property name="sticky">w</property>
                             </layout>
                             <child>
-                              <object class="ttk.Radiobutton" id="radiobutton1">
+                              <object class="ttk.Radiobutton" id="radiobutton_shared_license_key" named="True">
                                 <property name="text" translatable="yes">Use a shared license key</property>
                                 <property name="value">shared</property>
                                 <property name="variable">string:v_license_key_type</property>
@@ -522,7 +522,7 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="lvnauthwidgets.entrylimitwidget" id="entrylimitwidget1">
+                                  <object class="lvnauthwidgets.entrylimitwidget" id="entry_shared_key" named="True">
                                     <property name="width">40</property>
                                     <layout manager="grid">
                                       <property name="column">1</property>
@@ -546,7 +546,7 @@
                               <property name="sticky">w</property>
                             </layout>
                             <child>
-                              <object class="ttk.Radiobutton" id="radiobutton2">
+                              <object class="ttk.Radiobutton" id="radiobutton_private_license_key" named="True">
                                 <property name="text" translatable="yes">Use a private user key (each viewer must have their own license key)</property>
                                 <property name="value">private</property>
                                 <property name="variable">string:v_license_key_type</property>
@@ -591,7 +591,7 @@
                               <property type="row" id="0" name="weight">1</property>
                             </containerlayout>
                             <child>
-                              <object class="lvnauthwidgets.entrylimitwidget" id="entrylimitwidget3">
+                              <object class="lvnauthwidgets.entrylimitwidget" id="entry_web_address" named="True">
                                 <layout manager="grid">
                                   <property name="column">0</property>
                                   <property name="padx">5</property>
@@ -606,8 +606,9 @@
                       </object>
                     </child>
                     <child>
-                      <object class="ttk.Checkbutton" id="checkbutton1">
+                      <object class="ttk.Checkbutton" id="cb_allow_web_access" named="True">
                         <property name="text" translatable="yes">Allow web access</property>
+                        <property name="variable">boolean:v_allow_web_access</property>
                         <layout manager="grid">
                           <property name="column">0</property>
                           <property name="padx">10</property>
