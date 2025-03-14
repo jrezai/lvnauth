@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 import pygame
+from web_handler import WebHandler
 from typing import List
 from screeninfo import screeninfo
 
@@ -113,6 +114,11 @@ class MouseActionsAndCoordinates:
 
 class Passer:
     active_story = None
+    
+    # Used for verifying a license key.
+    # This variable will be used throughout the visual novel for 
+    # interacting with flask and the database (for web-enabled visual novels).    
+    web_handler: WebHandler = None
     
     # Used for specifying a custom chapter/scene
     # to play from the Launch window.
