@@ -22,12 +22,15 @@ import tkinter as tk
 from tkinter import messagebox
 
 import pygubu
+import queue_reader
 from typing import Dict
 from PIL import ImageTk, Image
 from io import BytesIO
 from pathlib import Path
-from web_handler import WebKeys, WebHandler
+from web_handler import WebKeys, WebHandler, WebLicenseType
 from shared_components import Passer
+from reply_post import ReplyPost
+from response_code import ServerResponseReceipt, ServerResponseCode
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
 
@@ -60,7 +63,7 @@ class LaunchWindow:
         - chapter_and_scene_names: a dict of chapter names and scene names.
         Example: {'My First Chapter': ['My First Scene', 'Second scene'],
                   'My second Chapter': ['My First Scene', 'Second scene']}
-        """
+        """     
 
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
@@ -68,6 +71,14 @@ class LaunchWindow:
         # Main widget
         self.mainwindow = builder.get_object("launch_window")
         builder.connect_callbacks(self)
+
+        # For reading secondary thread messages.
+        self.queue_msg_handler = \
+            queue_reader.QueueMsgReader(builder=self.builder)
+
+        # Continuously check the queue for secondary thread messages.
+        self.mainwindow: tk.Toplevel
+        self.mainwindow.after(300, self.check_queue)
 
         # Get references to the widgets
         self.lbl_story_title = builder.get_object("lbl_story_title")
@@ -84,10 +95,12 @@ class LaunchWindow:
 
         # Used for web-enabled visual novels.
         self.frame_license_key = builder.get_object("frame_license_key")
-        self.web_handler: WebHandler = None
 
         self.treeview_chapter_scenes = builder.get_object("treeview_chapter_scenes")
         self.btn_play_selection = builder.get_object("btn_play_selection")
+        
+        # For getting the user inputted license key.
+        self.entry_license_key = builder.get_object("entry_license_key")
         
         # So we know when the user has decided to 'X' out of the window.
         # That way, we can prevent the story from playing and exit the app.
@@ -125,7 +138,21 @@ class LaunchWindow:
         self.populate_story_info()
         
         self.check_web_enabled()
+
+    def check_queue(self):
+        """
+        Read the queue that was sent by a secondary thread.
+        This method will run in the main GUI thread.
+        """
         
+        self.mainwindow.after(300, self.check_queue)
+        
+        if ReplyPost.the_queue.empty():
+            return
+        
+        msg: ServerResponseReceipt = ReplyPost.the_queue.get()
+        
+        self.queue_msg_handler.read_msg(msg=msg)
         
     def check_web_enabled(self):
         """
@@ -137,20 +164,48 @@ class LaunchWindow:
         web_enabled = self.story_info.get(WebKeys.WEB_ACCESS.value)
         
         web_address = self.story_info.get(WebKeys.WEB_ADDRESS.value)
+        
+        # If it's a shared license key, get it here.
+        # If it's a private license key, we don't have it yet; this will be None
         web_key = self.story_info.get(WebKeys.WEB_KEY.value)
         web_license_type = self.story_info.get(WebKeys.WEB_LICENSE_TYPE.value)
+        if web_license_type == "private":
+            web_license_type = WebLicenseType.PRIVATE
+        else:
+            web_license_type = WebLicenseType.SHARED
         
         # Initialize web_handler. This will be used throughout the visual
         # novel for interacting with flask and the database.
         Passer.web_handler = WebHandler(web_key,
                                         web_address,
                                         web_license_type,
-                                        web_enabled)
+                                        web_enabled,
+                                        self.on_web_request_finished)
         
         # Don't show the license frame if the visual novel
         # is not web-enabled.
         if not web_enabled:
             self.frame_license_key.grid_forget()
+            
+    def on_web_request_finished(self, receipt: ServerResponseReceipt):
+        """
+        Read the response from the server.
+        This method is in the GUI thread.
+        """
+        response_code = receipt.get_response_code()
+        response_text = receipt.get_response_text()
+        
+        if response_code == ServerResponseCode.LICENSE_KEY_NOT_FOUND:
+            # The provided license key is not a valid/known license key.
+            try:
+                msgbox = messagebox.showerror(master=self.mainwindow,
+                                              title="License Key",
+                                              message="The provided license key is invalid.")
+            except tk.TclError:
+                # If the parent window closes while the msgbox is open,
+                # it'll raise a TclError, so we have this here to exit
+                # gracefully.
+                return
 
     def on_window_closing(self):
         """
@@ -177,8 +232,30 @@ class LaunchWindow:
         self.btn_play_selection.state(["disabled"])
         
         if Passer.web_handler.web_enabled:
+            
+            # Get the user-typed license key,
+            # if the license key type is private.
+            if Passer.web_handler.web_license_type == WebLicenseType.PRIVATE:
+                Passer.web_handler.web_key = self.entry_license_key.get().strip()
+                
+                # Make sure a license key was actually typed.
+                if not Passer.web_handler.web_key:
+                    try:
+                        messagebox.showwarning(master=self.mainwindow,
+                                               title="License Key",
+                                               message="This visual novel requires a license key.\n\nPlease enter a license key.")
+                        self.btn_play_selection.state(["!disabled"])
+                        self.entry_license_key.focus()
+                        return
+                    except tk.TclError:
+                        # Closing the parent window while a message box is open
+                        # will raise a TclError, so we have this error 
+                        # handler here.
+                        return
+                    
+            
             # It's a web-enabled visual novel, check if the license is valid.
-            Passer.web_handler.start_verify_license
+            Passer.web_handler.start_verify_license()
         else:
             # It's not a web-enabled visual novel, play the selection now.
             self._play_selection()
