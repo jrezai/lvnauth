@@ -180,7 +180,8 @@ It allows a specific scene to be played and also shows information about the vis
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="lvnauthwidgets.entrylimitwidget" id="entrylimitwidget1">
+                                  <object class="lvnauthwidgets.entrylimitwidget" id="entry_license_key" named="True">
+                                    <property name="textvariable">string:v_</property>
                                     <layout manager="grid">
                                       <property name="column">0</property>
                                       <property name="row">1</property>
