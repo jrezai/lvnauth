@@ -178,6 +178,12 @@ class StoryDetailsWindow:
             for detail_name, widget in self.widget_mappings.items():
                 text_to_show = self.existing_details.get(detail_name, "")
                 
+                # If the key was found with a value of None, it won't
+                # default to "" from the line above. We can't insert None
+                # into an entry widget.
+                if text_to_show is None:
+                    text_to_show = ""
+                
                 # string tk variable? set the text.
                 if isinstance(widget, tk.StringVar):
                     widget.set(text_to_show)
@@ -219,6 +225,18 @@ class StoryDetailsWindow:
             if hasattr(widget, "winfo_class") and widget.winfo_class() == "Text":
                 self.details[detail_name] = widget.get("1.0", "end-1c")
             else:
+                
+                # If the web license type is private (not shared), don't record 
+                # any typed-in shared web key, because the visual novel is set 
+                # to a private user key.
+                if self.v_license_key_type.get() == "private" and \
+                   detail_name == WebKeys.WEB_KEY.value:
+                    # Set the shared key to None, because the web license type
+                    # is private. Without this, we'll end up saving any
+                    # typed-in shared key, even if not in shared-key mode.
+                    self.details[detail_name] = None
+                    continue
+                
                 self.details[detail_name] = widget.get()
                 
         # Save the window size.
