@@ -893,6 +893,9 @@ class StoryReader:
             self.story: active_story.ActiveStory
             self.story.add_font(font_name=arguments,
                                 font_sprite=font_full_sprite_sheet_sprite)
+            
+        elif command_name == "remote":
+            self._remote(arguments=arguments)
 
         elif command_name in ("case", "or_case"):
             self._condition_read(command_name=command_name, arguments=arguments)
@@ -3755,6 +3758,52 @@ class StoryReader:
             
         return after_manager_method
     
+    def get_optional_arguments(self, unsorted_arguments_line: str) -> Dict | None:
+        """
+        Parse the parameter name(s) and argument value(s) from
+        the given line.
+
+        Example:
+            character name=theo,last name=test
+            will result to: {"character name": "theo",
+                             "last name": "test"}
+
+        return: Dict
+        """
+        if not unsorted_arguments_line:
+            return
+
+        pattern = r"^(?P<Parameter>[a-zA-Z\d]*[_]*[\w ]+)={1}(?P<Argument>.*)$"
+
+        # We need to evaluate multiple arguments separately,
+        # with each parameter/value pair on its own line.
+        argument_lines = unsorted_arguments_line.split(",")
+
+        parameters_and_arguments = {}
+
+        # Example: ["character=theo", "background=sky"]
+        for line in argument_lines:
+            result = search(pattern=pattern,
+                            string=line)
+
+            if result:
+                # Get the parameter name (ie: 'character name'
+                parameter = result.groupdict().get("Parameter")
+
+                # Get the argument value (after the = sign), ie: Theo
+                argument_value = result.groupdict().get("Argument")
+
+                # Strip spaces around the parameter and argument
+                # so that something like ' character =  theo ' will still work.
+                if parameter and argument_value:
+                    parameter = parameter.strip()
+                    argument_value = argument_value.strip()
+
+                # Add to dictionary which will be returned
+                parameters_and_arguments[parameter] = argument_value
+
+        return parameters_and_arguments    
+    
     def spawn_new_background_reader_auto_arguments(
         self, reusable_script_name_maybe_with_arguments: str):
         """
@@ -3807,7 +3856,8 @@ class StoryReader:
         else:
             call = \
                 self._get_arguments(class_namedtuple=cc.CallWithArguments,
-                                    given_arguments=reusable_script_name)
+                                    given_arguments=reusable_script_name,
+                                    unlimited_optional_arguments=True)
 
         # If a reusable script is calling another reusable script, spawn the new background reader
         # from the main story reader, not from the background reader that requested the reusable script.
@@ -3839,58 +3889,12 @@ class StoryReader:
         # Debugging
         # print("BG Reader:", call.reusable_script_name)
 
-        def get_reusable_script_arguments(unsorted_arguments_line: str) -> Dict | None:
-            """
-            Parse the parameter name(s) and argument value(s) from
-            the given line.
-
-            Example:
-                character name=theo,last name=test
-                will result to: {"character name": "theo",
-                                 "last name": "test"}
-
-            return: Dict
-            """
-            if not unsorted_arguments_line:
-                return
-
-            pattern = r"^(?P<Parameter>[a-zA-Z\d]*[_]*[\w ]+)={1}(?P<Argument>.*)$"
-
-            # We need to evaluate multiple arguments separately,
-            # with each parameter/value pair on its own line.
-            argument_lines = unsorted_arguments_line.split(",")
-
-            parameters_and_arguments = {}
-
-            # Example: ["character=theo", "background=sky"]
-            for line in argument_lines:
-                result = search(pattern=pattern,
-                                string=line)
-
-                if result:
-                    # Get the parameter name (ie: 'character name'
-                    parameter = result.groupdict().get("Parameter")
-
-                    # Get the argument value (after the = sign), ie: Theo
-                    argument_value = result.groupdict().get("Argument")
-
-                    # Strip spaces around the parameter and argument
-                    # so that something like ' character =  theo ' will still work.
-                    if parameter and argument_value:
-                        parameter = parameter.strip()
-                        argument_value = argument_value.strip()
-
-                    # Add to dictionary which will be returned
-                    parameters_and_arguments[parameter] = argument_value
-
-            return parameters_and_arguments
-
         # Was the reusable script called with parameters/arguments?
         # Then add those arguments to argument_handler for the new background reader.
         if with_arguments:
             # Get the parameter names and values by recording them in a dictionary.
             parameter_arguments = \
-                get_reusable_script_arguments(unsorted_arguments_line=call.arguments)
+                self.get_optional_arguments(unsorted_arguments_line=call.arguments)
 
             # Add the parameter names and argument values to
             # the argument handler's dictionary, so <call> reusable scripts
@@ -4080,7 +4084,9 @@ class StoryReader:
         sprite.movement_speed = movement_speed
 
     @staticmethod
-    def _get_arguments(class_namedtuple, given_arguments: str):
+    def _get_arguments(class_namedtuple,
+                       given_arguments: str,
+                       unlimited_optional_arguments: bool = False):
         """
         Take the given string arguments (comma separated) and turn them
         into a namedtuple class.
@@ -4107,16 +4113,35 @@ class StoryReader:
         # Get a tuple of types that the type-hint has for the given fields of the class.
         # We'll use this to find out what type of variables each argument field needs to be.
         expected_argument_types = tuple(class_namedtuple.__annotations__.values())
-
-        # Create a regex pattern to extract the correct number of arguments. The expected number of arguments
-        # will be dictated by the number of fields in the given class: len(class._fields).
+        
+        # Get the number of fields in the given class.
+        # Each field is an argument.
         field_count = len(class_namedtuple._fields)
-        pattern = ""
-        adder = r",([^,]*)"
-        pattern += adder * field_count
-        pattern = pattern.removeprefix(",")
-        pattern += "$"
-        pattern = "^" + pattern
+        
+        if unlimited_optional_arguments:
+            
+            # Variable number of arguments.
+            pattern = r"^([^,]+),\s*(.*)$"
+            
+            # Make sure the minimum number of arguments is satisfied.
+            if field_count > given_arguments.count(",") + 1:
+                
+                # Not enough arguments were provided for this command.
+                # field_count is the minimum number of required arguments.
+                return
+        
+        else:
+            # Fixed number of arguments (no optional arguments).
+    
+            # Create a regex pattern to extract the correct number of arguments. The expected number of arguments
+            # will be dictated by the number of fields in the given class: len(class._fields).
+            pattern = ""
+            adder = r",([^,]*)"
+            pattern += adder * field_count
+            pattern = pattern.removeprefix(",")
+            pattern += "$"
+            pattern = "^" + pattern
+
 
         results = search(pattern=pattern,
                          string=given_arguments)
@@ -4757,6 +4782,37 @@ class StoryReader:
             # so we can end it using <case_end> or give it another chance
             # with <or_case>.
             self.condition_name_false = condition.condition_name
+
+    def _remote(self, arguments: str):
+        """
+        Send a request to a remote lvnauth server to get a script.
+        """
+        
+        # Make sure the visual novel is web-enabled.
+        if not Passer.web_handler.web_enabled:
+            return
+        
+        remote: cc.RemoteWithArguments
+        
+        with_optional_arguments = "," in arguments
+        
+        if with_optional_arguments:
+            class_name = cc.RemoteWithArguments
+        else:
+            class_name = cc.RemoteWithNoArguments
+
+        remote = \
+            self._get_arguments(class_namedtuple=class_name,
+                                given_arguments=arguments)
+        
+        # Was the reusable script called with parameters/arguments?
+        # Then add those arguments to argument_handler for the new background reader.
+        if with_optional_arguments:
+            # Get the parameter names and values by recording them in a dictionary.
+            parameter_arguments = \
+                self.get_optional_arguments(unsorted_arguments_line=remote.arguments)        
+        
+            print(parameter_arguments)
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
