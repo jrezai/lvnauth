@@ -216,6 +216,15 @@ class CallWithNoArguments(NamedTuple):
     reusable_script_name: str
 
 
+class RemoteWithArguments(NamedTuple):
+    remote_command: str
+    arguments: str
+
+
+class RemoteWithNoArguments(NamedTuple):
+    remote_command: str
+    
+
 # Sprite classes
 
 
