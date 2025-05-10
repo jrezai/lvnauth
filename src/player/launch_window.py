@@ -29,7 +29,6 @@ from io import BytesIO
 from pathlib import Path
 from web_handler import WebKeys, WebHandler, WebLicenseType
 from shared_components import Passer
-from reply_post import ReplyPost
 from response_code import ServerResponseReceipt, ServerResponseCode
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
@@ -147,10 +146,10 @@ class LaunchWindow:
         
         self.mainwindow.after(300, self.check_queue)
         
-        if ReplyPost.the_queue.empty():
+        if WebHandler.the_queue.empty():
             return
         
-        msg: ServerResponseReceipt = ReplyPost.the_queue.get()
+        msg: ServerResponseReceipt = WebHandler.the_queue.get()
         
         self.queue_msg_handler.read_msg(msg=msg)
         
@@ -180,6 +179,7 @@ class LaunchWindow:
                                         web_address,
                                         web_license_type,
                                         web_enabled,
+                                        self.story_info.get("StoryTitle"), 
                                         self.on_web_request_finished)
         
         # Don't show the license frame if the visual novel
@@ -195,17 +195,65 @@ class LaunchWindow:
         response_code = receipt.get_response_code()
         response_text = receipt.get_response_text()
         
-        if response_code == ServerResponseCode.LICENSE_KEY_NOT_FOUND:
-            # The provided license key is not a valid/known license key.
-            try:
-                msgbox = messagebox.showerror(master=self.mainwindow,
-                                              title="License Key",
-                                              message="The provided license key is invalid.")
-            except tk.TclError:
-                # If the parent window closes while the msgbox is open,
-                # it'll raise a TclError, so we have this here to exit
-                # gracefully.
+        match response_code:
+            
+            case ServerResponseCode.SUCCESS:
+            
+                # The license key is valid. Play the visual novel.
+                self._play_selection()
+                
                 return
+            
+            case ServerResponseCode.LICENSE_KEY_NOT_FOUND:
+                # The provided license key is not a valid/known license key.
+                
+                msg_title = "License Key"
+                msg = "The provided license key is invalid."
+            
+            case ServerResponseCode.CONNECTION_ERROR:
+                # Could not connect to xml rpc
+                
+                msg_title = "Connection Error"
+                msg = "Could not connect to the server."
+                
+            case ServerResponseCode.LICENSE_KEY_ASSOCIATION_MISMATCH:
+                
+                msg_title = "License Key Mismatch"
+                msg = "The provided license key is not associated with this visual novel."
+                
+            case ServerResponseCode.UNKNOWN:
+                
+                msg_title = "Unknown Error"
+                msg = response_text
+            
+        try:
+            messagebox.showerror(master=self.mainwindow,
+                                 title=msg_title,
+                                 message=msg)
+            
+            self.entry_license_key.focus()
+            
+            # Enable the play button after 1 second.
+            self.mainwindow.after(1000, self.enable_play_button)
+            
+            
+            
+        except tk.TclError:
+            # If the parent window closes while the msgbox is open,
+            # it'll raise a TclError, so we have this here to exit
+            # gracefully.
+            return
+        
+
+            
+    def enable_play_button(self):
+        """
+        Enable the Play button.
+        
+        This method is used after an error message box is shown to the user,
+        and we want to enable the play button using an .after timer.
+        """
+        self.btn_play_selection.state(["!disabled"])
 
     def on_window_closing(self):
         """
@@ -255,7 +303,14 @@ class LaunchWindow:
                     
             
             # It's a web-enabled visual novel, check if the license is valid.
-            Passer.web_handler.start_verify_license()
+            data = {"Action": "verify-license",
+                    "LicenseKey": Passer.web_handler.web_key,
+                    "VisualNovelName": Passer.web_handler.vn_name}
+            
+            Passer.web_handler.\
+                send_request(data=data,
+                             callback_method=self.on_web_request_finished)
+            
         else:
             # It's not a web-enabled visual novel, play the selection now.
             self._play_selection()
