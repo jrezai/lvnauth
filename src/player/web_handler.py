@@ -15,6 +15,7 @@ more details.
 You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
+import ssl
 from xmlrpc.client import ServerProxy, Error
 from queue import Queue
 from threading import Thread
@@ -22,7 +23,8 @@ from enum import Enum, auto
 from dataclasses import dataclass
 from threading import Thread
 from response_code import ServerResponseReceipt, ServerResponseCode
-from typing import ClassVar, Callable, Tuple, Dict
+from typing import ClassVar, Callable, Tuple, Dict, Optional
+from pathlib import Path
 
 
 class WebLicenseType(Enum):
@@ -36,7 +38,8 @@ class WebKeys(Enum):
     WEB_KEY = "WebKey"
     WEB_ADDRESS = "WebAddress"
     WEB_LICENSE_TYPE = "WebLicenseType"
-
+    WEB_CA_CERT = "WebCertificate"
+    
 
 # Used for knowing whether a contact with a visual novel server
 # was successful or not.
@@ -54,6 +57,10 @@ class WebWorker(Thread):
     
     the_queue = Queue()
     
+    # Keep count of the number of web worker instances because
+    # if there are any running, the main script reader must be paused.
+    active_count = 0
+    
     def __init__(self,
                  address_and_port: Tuple, 
                  data: Dict,
@@ -61,7 +68,15 @@ class WebWorker(Thread):
         Thread.__init__(self, daemon=True)
         
         self.address_and_port = address_and_port
-        self.action_name = data.get("Action")
+        
+        # So we know which remote method to call.
+        self.request_purpose = data.get("RequestPurpose")
+        
+        # We only needed this key for the line above.
+        # The remote server doesn't need this key, so delete it so we
+        # don't send it to the remote server.
+        del data["RequestPurpose"]
+        
         self.data = data
         self.callback_method = callback_method
         
@@ -71,6 +86,52 @@ class WebWorker(Thread):
         # So even if this thread ends up completing successfully, it won't run 
         # the callback method.
         self.cancelled = False
+        
+    @classmethod
+    def increase_usage_count(cls):
+        """
+        Increment the counter variable that keeps track of the number
+        of web worker threads that are actively running.
+        
+        We have a method for this so we can more easily debug
+        when this value changes.
+        """
+        cls.active_count += 1
+        
+    @classmethod
+    def decrease_usage_count(cls):
+        """
+        Decrement the counter variable that keeps track of the number
+        of web worker threads that are actively running.
+        
+        We have a method for this so we can more easily debug
+        when this value changes.
+        """        
+        cls.active_count -= 1
+        
+    def create_secure_context(self) -> ssl.SSLContext:
+        """
+        Return a default SSL context for connecting to a TLS xml-rpc server.
+        
+        If there is a local 'server.pem' file, use it (typically for
+        a non-production work.)
+        """
+        context = ssl.create_default_context()
+        
+        # If there's a custom server.pem file data, use that.
+        server_pem_data = self.data.get(WebKeys.WEB_CA_CERT.value)
+        if server_pem_data:
+            context.load_verify_locations(cadata=server_pem_data)
+            
+            # Remove the web certificate from the data dictionary
+            # because the server doesn't need it. So remove it before
+            # we send a request.
+            del self.data[WebKeys.WEB_CA_CERT.value]
+        else:
+            # Load default certs from the operating system
+            context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+        
+        return context
 
     def run(self):
         """
@@ -84,26 +145,36 @@ class WebWorker(Thread):
         # from the server, because an outside thread has 
         # cancelled this thread.
         if self.cancelled:
+            
+            # Decrease the worker thread count.
+            self.active_count -= 1
+            
             return
         
         # This will hold the text response from the server, if any.
         result = None
         
+        # Get default values for connecting to a TLS xml-rpc server.
+        secure_context = self.create_secure_context()
+        
         try:
         
-            with ServerProxy(self.address_and_port) as proxy:
+            with ServerProxy(self.address_and_port,
+                             context=secure_context) as proxy:
                 
-                match self.action_name:
+                match self.request_purpose:
                     
                     case "verify-license":
-                
-                        vn_name = self.data.get("VisualNovelName")
-                        license_key = self.data.get("LicenseKey")
-                        result = proxy.verify_license(license_key, vn_name)
+
+                        result = proxy.verify_license(self.data)
+                        
+                    case "remote-request":
+                        
+                        result = proxy.remote_request(self.data)
                 
                     case _:
-                        
-                        raise ValueError(f"Unknown action name '{self.action_name}'")
+                        # Unknown action name
+                        pass
                     
         
                 response =\
@@ -114,9 +185,14 @@ class WebWorker(Thread):
         except ConnectionRefusedError:
             response = ServerResponseCode.CONNECTION_ERROR
             
-        
-            
         except Error:
+            response = ServerResponseCode.CONNECTION_ERROR
+            
+        except ValueError as e:
+            response = ServerResponseCode.UNKNOWN
+            result = e
+            
+        except ConnectionResetError:
             response = ServerResponseCode.CONNECTION_ERROR
             
         finally:
@@ -128,7 +204,7 @@ class WebWorker(Thread):
                     response_code=response,
                     response_text=result)
             WebHandler.the_queue.put(receipt)                
-
+            
 
 
 @dataclass
@@ -141,17 +217,25 @@ class WebHandler:
     web_key: str
     web_address: str
     web_license_type: WebLicenseType
+    web_certificate: str
     web_enabled: bool
     vn_name: str
+    vn_episode: str
     
     # The method to run after we receive a reply from the web.
     # This method will run in the GUI thread and a ServerResponseReceipt
     # object will be passed to it.
     # The type-hint here is saying that ServerResponseReceipt is taken as
     # an argument, and None is the return value.
-    callback_method_finished: [[ServerResponseReceipt], None]
+    # The Optional keyword is used to allow this to be unspecified during init,
+    # because when we're previewing a visual novel without the launch window,
+    # we need to set the callback method later on.
+    callback_method_finished: Optional[Callable[[ServerResponseReceipt], None]] = None
     
-    def send_request(self, data: Dict, callback_method: Callable):
+    def send_request(self,
+                     data: Dict,
+                     callback_method: Callable,
+                     increment_usage_count=True):
         """
         Send data to the remote xml rpc server and get a response back.
         This method is run from the main thread, but spawns a worker thread.
@@ -162,7 +246,40 @@ class WebHandler:
         
         - callback_method: the method to run when we receive a response
         from the xml rpc server.
+        
+        - increment_usage_count: we use this to know whether we need to
+        increment the count of web workers when a web worker thread is
+        created in this method.
+        
+        When using the <remote> command, we want this to be True, because
+        the main script (non-reusable scripts) will need to pause and wait
+        for a remote script when the thread count is more than zero.
+        
+        On the other hand, when the launch window is checking for a
+        valid license, so we don't want to increment the number of threads
+        during a license check.
         """
+        
+        # Required data to send to the xml-rpc server.
+        default_required_data =\
+            {"RequestPurpose": "remote-request",
+             "LicenseKey": self.web_key,
+             "VisualNovelName": self.vn_name,
+             "WebCertificate": self.web_certificate,}        
+
+        # Is there optional data to send? Combine it with the required data.
+        if data:
+            data = default_required_data | data
+            
+        else:
+            # Required data only, no optional data was provided.
+            data = default_required_data
+
+        # Increment the web worker thread count, because the main
+        # script reader must be paused if there are any web worker threads.
+        if increment_usage_count:
+            WebWorker.increase_usage_count()
+
         t = Thread(target=self._send_request,
                    daemon=True,
                    args=(data, callback_method))
