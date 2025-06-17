@@ -64,8 +64,8 @@ def extract_header_size_ranges(range_part: str):
 
 class FileReader:
     """
-    Reads a compiled .lvna file and stores the story's scripts, image names, general info
-    in dictionaries.
+    Reads a compiled .lvna file and stores the story's scripts,
+    image names, general info in dictionaries.
     """
     def __init__(self, full_path_lvna: str):
 
