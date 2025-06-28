@@ -38,6 +38,7 @@ import font_handler
 import audio_player
 import command_helper as ch
 import command_class as cc
+import web_handler
 from re import search, findall
 from typing import Tuple
 # from font_handler import ActiveFontHandler
@@ -47,7 +48,7 @@ from shared_components import Passer
 from rest_handler import RestHandler
 from variable_handler import VariableHandler
 from condition_handler import Condition
-
+from response_code import ServerResponseCode, ServerResponseReceipt
 
 
 class AfterCounter:
@@ -213,6 +214,7 @@ class AfterManager:
             # the reusable script that we're iterating on.
             self.method_spawn_background_reader(reusable_script_name,
                                                 with_arguments=with_arguments)
+
 
 
 class StoryReader:
@@ -397,7 +399,8 @@ class StoryReader:
                     main_reader.halt_main_script,
                     main_reader.rest_handler.pause_required(),
                     main_reader.wait_for_animation_handler.check_wait(),
-                    main_reader.pause_main_script))
+                    main_reader.pause_main_script,
+                    web_handler.WebWorker.active_count > 0))
 
     def clear_all_sprite_groups(self):
         """
@@ -630,7 +633,7 @@ class StoryReader:
         """
         If this is the main story reader and there are blocking animations
         (such as a dialog rectangle being animated), don't proceed with
-        the main script animation(s) is finished.
+        the main script until the animation(s) is finished.
         """
         if not self.background_reader_name:
             # We're in the main story reader (not a reusable script)
@@ -643,16 +646,18 @@ class StoryReader:
                 
                 # If the story is in rest-mode (the same as halt_auto,
                 # but not limited to dialog text), then elapse the counter.
-                # The method below will check fot his.
+                # The method below will check for this.
                 self.rest_handler.tick()
 
                 # Still pause? We quickly double-check here because
-                # elapse_halt_timer() just ran a few lines above, so it's possible that
-                # we won't need to pause anymore. If we don't check in this frame
-                # and wait for the next frame, in some cases, any text after <halt_auto> will
-                # be skipped if we're in sudden-mode.
-                # To elaborate, the quick check here will avoid not reading 'You look familiar'
-                # in this script, when in sudden-mode.
+                # elapse_halt_timer() just ran a few lines above, so it's 
+                # possible that we won't need to pause anymore. If we don't 
+                # check in this frame and wait for the next frame, in some 
+                # cases, any text after <halt_auto> will be skipped if we're 
+                # in sudden-mode.
+                # To elaborate, the quick check here will avoid not 
+                # reading 'You look familiar' in this script, when 
+                # in sudden-mode.
                 """
                 Hello
                 <no_clear>
@@ -712,7 +717,7 @@ class StoryReader:
             elif line == "<line>":
                 line = ""
 
-            # Replaced tokens with argument values (reusable scripts only)
+            # Replace tokens with argument values (reusable scripts only)
             # The method below will check if we are in a reusable script or not.
             line_with_replaced_tokens = self.replace_tokens_with_arguments(line)
             if line_with_replaced_tokens:
@@ -844,18 +849,23 @@ class StoryReader:
 
     def run_command(self, command_name, arguments=None):
         """
-        Perform an action based on the given command and its optional argument(s).
+        Perform an action based on the given command and its optional
+        argument(s).
+        
         If there are multiple arguments, they will be separate by commas.
 
+        Arguments:
+        - command_name: (str) example: load_character
+        
+        - arguments: (str) example: rave_normal
+        If there are multiple arguments, they will be delimited by commas
+        like this: "first argument, second argument, third argument..."
+        
+        Return: None
 
-        :param command_name: (str) example: load_character
-        :param arguments: (str) example: rave_normal
-               (if there are multiple arguments, they will be delimited by commas
-               like this: "first argument, second argument, third argument..."
-        :return:
-
-        Changes
-        Oct 13, 2023 - Process text_dialog_show only if the dialog isn't already visible (Jobin Rezai)
+        Changes:
+        Oct 13, 2023 - Process text_dialog_show only if the dialog isn't
+        already visible (Jobin Rezai)
         """
         if command_name in StoryReader.COMMANDS_REQUIRE_ARGUMENTS and not arguments:
             print(f"{command_name} was used without an argument.")
@@ -4803,16 +4813,99 @@ class StoryReader:
 
         remote = \
             self._get_arguments(class_namedtuple=class_name,
-                                given_arguments=arguments)
-        
-        # Was the reusable script called with parameters/arguments?
-        # Then add those arguments to argument_handler for the new background reader.
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=with_optional_arguments)
+
+        # Does the remote script need to be called with parameters/arguments?
         if with_optional_arguments:
-            # Get the parameter names and values by recording them in a dictionary.
+            # Get the parameter names and values by recording them 
+            # in a dictionary.
             parameter_arguments = \
-                self.get_optional_arguments(unsorted_arguments_line=remote.arguments)        
+                self.\
+                get_optional_arguments(unsorted_arguments_line=remote.arguments)        
+            
+            # Combine the optional arguments with the required data dictionary.
+            optional_data = parameter_arguments
+        else:
+            # No optional arguments
+            optional_data = None
+            
+        data = {"RemoteCommand": remote.remote_command,
+                "VisualNovelData": optional_data,}
+            
+        Passer.web_handler.\
+            send_request(data=data,
+                         callback_method=self.on_web_request_finished)
         
-            print(parameter_arguments)
+    def on_web_request_finished(self, receipt: ServerResponseReceipt):
+        """
+        Deal with the response from the xml-rpc server,
+        started from a <remote> command.
+        
+        This method is run on the main thread.
+        """
+        
+        # Decrease the remote web worker thread count.
+        # We keep track of this because if there are any remote threads,
+        # the main script reader must stay paused.
+        web_handler.WebWorker.decrease_usage_count()
+        
+        print("XML RPC response received:", receipt)
+        
+        response_text = receipt.get_response_text()
+        
+        # Did the rpc server return a non-success? Don't allow the visual
+        # novel to continue, because the remote web connection might be
+        # critical to the rest of the visual novel.
+        if receipt.get_response_code() != ServerResponseCode.SUCCESS:
+            
+            if receipt.get_response_code() == ServerResponseCode.REMOTE_SCRIPT_ERROR:
+                    # An error on the remote Python side.
+                    raise ValueError("Error in custom remote script (error-script).")            
+            else:
+                raise ConnectionError(f"Web connection failed: {response_text}")
+        
+        
+        match response_text:
+            
+            case "ok-script-":
+                # Remove the beginning ok-script- part, leaving only an lvnauth script.
+                web_script = response_text.removeprefix("ok-script-")
+                                                   
+                if web_script:
+                
+                    # The web script will always be inserted into the main script
+                    # (not a reusable script), because a web script might contain
+                    # dialogue text, which reusable scripts can't play.
+                    self.insert_script(web_script)
+                
+            case "ok-save":
+                # A 'save' remote command was used and was successful.
+                # There's nothing to do when a save was successful.
+                pass
+                
+            
+                
+            case _:
+                # Any other type of response is considered an error.
+                raise ValueError(f"Unexpected script from web: {response_text}")
+
+    def insert_script(self, text: str):
+        """
+        Insert text into the main reader's script list.
+        
+        Even if this method is run from a background reader, it will always
+        insert the text argument into the main script (non-reusable script).
+        
+        This is used for inserting a web script to the main reader
+        at index 0
+        """
+        if not text:
+            return
+        
+        self.story.reader.script_lines.insert(0, text)
+        
+        print("New list values", self.story.reader.script_lines)
 
     def _play_audio(self, arguments: str, audio_channel: audio_player.AudioChannel):
         """
