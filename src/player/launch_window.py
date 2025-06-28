@@ -142,6 +142,11 @@ class LaunchWindow:
         """
         Read the queue that was sent by a secondary thread.
         This method will run in the main GUI thread.
+        
+        This method polling check is for the Launch window-only.
+        
+        The in-pygame polling (for the <remote> command) gets checked in
+        pygame's own loop, not here.
         """
         
         self.mainwindow.after(300, self.check_queue)
@@ -155,36 +160,11 @@ class LaunchWindow:
         
     def check_web_enabled(self):
         """
-        Initialize web_handler and show the license frame (so the viewer
-        can enter a license key), if the visual novel is web-enabled.
+        Don't show the license frame if the visual novel
+        is not web-enabled.
         """
-        
-        # bool
-        web_enabled = self.story_info.get(WebKeys.WEB_ACCESS.value)
-        
-        web_address = self.story_info.get(WebKeys.WEB_ADDRESS.value)
-        
-        # If it's a shared license key, get it here.
-        # If it's a private license key, we don't have it yet; this will be None
-        web_key = self.story_info.get(WebKeys.WEB_KEY.value)
-        web_license_type = self.story_info.get(WebKeys.WEB_LICENSE_TYPE.value)
-        if web_license_type == "private":
-            web_license_type = WebLicenseType.PRIVATE
-        else:
-            web_license_type = WebLicenseType.SHARED
-        
-        # Initialize web_handler. This will be used throughout the visual
-        # novel for interacting with flask and the database.
-        Passer.web_handler = WebHandler(web_key,
-                                        web_address,
-                                        web_license_type,
-                                        web_enabled,
-                                        self.story_info.get("StoryTitle"), 
-                                        self.on_web_request_finished)
-        
-        # Don't show the license frame if the visual novel
-        # is not web-enabled.
-        if not web_enabled:
+
+        if not Passer.web_handler.web_enabled:
             self.frame_license_key.grid_forget()
             
     def on_web_request_finished(self, receipt: ServerResponseReceipt):
@@ -220,6 +200,21 @@ class LaunchWindow:
                 
                 msg_title = "License Key Mismatch"
                 msg = "The provided license key is not associated with this visual novel."
+                
+            case ServerResponseCode.LICENSE_KEY_LOCKED:
+                
+                msg_title = "License Key Locked"
+                msg = "The license key is currently locked and cannot be used."
+                
+            case ServerResponseCode.LICENSE_KEY_OWING_BALANCE:
+                
+                msg_title = "License Key Unpaid"
+                msg = "A payment is required to play this visual novel."
+                
+            case ServerResponseCode.SSL_ERROR:
+                
+                msg_title = "SSL Error"
+                msg = "Could not securly connect to the server."
                 
             case ServerResponseCode.UNKNOWN:
                 
@@ -302,14 +297,14 @@ class LaunchWindow:
                         return
                     
             
-            # It's a web-enabled visual novel, check if the license is valid.
-            data = {"Action": "verify-license",
-                    "LicenseKey": Passer.web_handler.web_key,
-                    "VisualNovelName": Passer.web_handler.vn_name}
+            # So the xml-rpc server knows what to do.
+            # In this case, we want to do a regular license lookup.
+            data = {"RemoteCommand": "verify"}
             
             Passer.web_handler.\
                 send_request(data=data,
-                             callback_method=self.on_web_request_finished)
+                             callback_method=self.on_web_request_finished,
+                             increment_usage_count=False)
             
         else:
             # It's not a web-enabled visual novel, play the selection now.
