@@ -20,6 +20,7 @@ import sys
 import pygame
 import argparse
 import sprite_definition as sd
+import web_handler
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
@@ -102,6 +103,53 @@ class Main:
         file_object = BytesIO(bytes_data)
 
         return file_object
+    
+    def initialize_web(self, data_requester: FileReader):
+        """
+        Initialize web_handler for handling xml rpc connections for
+        web-enabled visual novels. If it's not a web-enabled visual novel,
+        initialize to Passer.web_handler to None.
+        """
+        
+        story_details = data_requester.general_header
+
+        # Get the 'StoryInfo' dictionary, which contains details like
+        # author, copyright, description, etc.
+        story_info = story_details.get("StoryInfo")        
+        
+        # bool
+        web_enabled = story_info.get(web_handler.WebKeys.WEB_ACCESS.value)
+        
+        web_address = story_info.get(web_handler.WebKeys.WEB_ADDRESS.value)
+        
+        web_certificate = story_info.get(web_handler.WebKeys.WEB_CA_CERT.value)
+        
+        # If it's a shared license key, get it here.
+        # If it's a private license key, we don't have it yet; this will be None
+        web_key = story_info.get(web_handler.WebKeys.WEB_KEY.value)
+        web_license_type =\
+            story_info.get(web_handler.WebKeys.WEB_LICENSE_TYPE.value)
+        
+        if web_license_type == "private":
+            web_license_type = web_handler.WebLicenseType.PRIVATE
+        else:
+            web_license_type = web_handler.WebLicenseType.SHARED
+        
+        # Initialize web_handler. This will be used throughout the visual
+        # novel for interacting with flask and the database.
+        
+        # The callback method will be specified later, because the story reader
+        # object hasn't been initialized yet at this point, which is where
+        # the callback method is located.
+        Passer.web_handler =\
+            web_handler.WebHandler(
+                web_key,
+                web_address,
+                web_license_type,
+                web_certificate, 
+                web_enabled,
+                story_info.get("StoryTitle"),
+                story_info.get("Episode"))
 
     def begin(self):
 
@@ -119,6 +167,9 @@ class Main:
         compile_mode = data_requester.general_header.get("StoryCompileMode")
 
         draft_mode = compile_mode == "Draft"
+        
+        # Initialize web_handler for handling xml rpc connections
+        self.initialize_web(data_requester=data_requester)
 
         # Should we show the launch window?
         if show_launch:
@@ -161,6 +212,13 @@ class Main:
                             background_surface=background_surface,
                             draft_mode=draft_mode)
         Passer.active_story = story
+        
+        # Now that the story reader object has been initialized above, use
+        # on_web_request_finished() as the callback method for xml rpc
+        # replies. We couldn't specify the callback method earlier because
+        # the story reader object hadn't been initialized yet.
+        Passer.web_handler.callback_method_finished =\
+            Passer.active_story.reader.on_web_request_finished
 
         # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
@@ -189,6 +247,9 @@ class Main:
     
                 else:
                     story.on_event(event)
+                    
+            # Check for <remote> finished requests.
+            self.check_queue()
 
             # Handle movements
             story.on_loop()
@@ -198,7 +259,30 @@ class Main:
             
 
             # For debugging
-            pygame.display.flip()      
+            pygame.display.flip()
+            
+    def check_queue(self):
+        """
+        Read the queue that was sent by a secondary thread.
+        This method will run in the main pygame thread.
+        
+        This method for polling is for within pygame, not tkinter.
+        This method is used for reading responses from the <remote> command.
+        """
+        
+        if web_handler.WebHandler.the_queue.empty():
+            return
+        
+        msg = web_handler.WebHandler.the_queue.get()
+                
+        self.run_remote_finished_method(msg=msg)
+        
+    def run_remote_finished_method(self, msg):
+        """
+        Run the finished method from the ServerResponseReceipt msg,
+        initiated from a <remote> command.
+        """
+        msg.callback_method(msg)
 
     def on_key_down(self, key_pressed):
         """
