@@ -62,6 +62,15 @@ class StoryDetailsWindow:
         self.entry_shared_key = builder.get_object("entry_shared_key")
         self.entry_web_address = builder.get_object("entry_web_address")
         
+        self.text_cert = builder.get_object("text_cert")
+        self.sb_ca_horizontal = builder.get_object("sb_ca_horizontal")
+        self.sb_ca_horizontal.configure(command=self.text_cert.xview)
+        
+        self.sb_ca_vertical = builder.get_object("sb_ca_vertical")
+        self.sb_ca_vertical.configure(command=self.text_cert.yview)
+        self.text_cert.configure(xscrollcommand=self.sb_ca_horizontal.set,
+                                 yscrollcommand=self.sb_ca_vertical.set)
+        
         # Connect the description's vertical scrollbar
         self.sb_vertical_description =\
             builder.get_object("sb_vertical_description")
@@ -113,9 +122,13 @@ class StoryDetailsWindow:
                                 WebKeys.WEB_KEY.value: self.entry_shared_key,
                                 WebKeys.WEB_ADDRESS.value: self.entry_web_address,
                                 WebKeys.WEB_ACCESS.value: self.v_allow_web_access,
-                                WebKeys.WEB_LICENSE_TYPE.value: self.v_license_key_type}
+                                WebKeys.WEB_LICENSE_TYPE.value: self.v_license_key_type,
+                                WebKeys.WEB_CA_CERT.value: self.text_cert}
 
         self._get_details()
+        
+        # Set the certificate textbox to read-only.
+        self.text_cert.configure(state="disabled")
 
         self.story_details_window.transient(self.master)
         self.story_details_window.grab_set()
@@ -209,6 +222,47 @@ class StoryDetailsWindow:
         self.sb_width.insert(0, "640")
         self.sb_height.insert(0, "480")
 
+    def on_browse_ca_file(self):
+        """
+        Show the open file dialog so the user can select a server pem (ca) file.
+        """
+        file_types = [("Certificate file", ".pem")]
+        
+        selected_file =\
+            filedialog.askopenfilename(parent=self.story_details_window,
+                                       filetypes=file_types,
+                                       title="Select a certificate file")
+        
+        if not selected_file:
+            return
+        
+        file_path = Path(selected_file)
+        
+        # Make sure the word 'PRIVATE' is not in the certificate file,
+        # because private certificates are not meant to be shared with clients.
+        data_in_cert = file_path.read_text()
+        if data_in_cert:
+            data_in_cert_lower = data_in_cert.lower()
+            if "private" in data_in_cert_lower:
+                messagebox.showerror(parent=self.story_details_window,
+                                     title="Private",
+                                     message="This certificate appears to be private and is not meant to be shared with clients.\n\nThis certificate can not be used."
+                                    )
+                return
+            
+            else:
+                self.text_cert: tk.Text
+                self.text_cert.configure(state=tk.NORMAL)
+                self.text_cert.delete("1.0", tk.END)
+                self.text_cert.insert("1.0", data_in_cert)
+                self.text_cert.configure(state=tk.DISABLED)
+        else:
+            messagebox.showerror(parent=self.story_details_window,
+                                 title="Empty file",
+                                 message="The certificate appears to be empty.")
+            return
+        
+
     def on_cancel_button_clicked(self):
         self.story_details_window.destroy()
 
@@ -269,6 +323,10 @@ class StoryDetailsWindow:
                                      title="Window Size",
                                      message="The minimum window size is 320 pixels\n\n"
                                      "The maximum window size is 9999 pixels.")
+                
+                # By clearing this dictionary, the caller of this
+                # window will know not to modify the main details dictionary.
+                self.details.clear()                
                 
                 # Don't continue - the width or height is incorrect
                 return
