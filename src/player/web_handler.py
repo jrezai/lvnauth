@@ -15,6 +15,12 @@ more details.
 You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
+
+"""
+(Jobin Rezai) - July 12, 2025 - Always send xml-rpc requests using 
+proxy.verify_license() because each remote request will need the license key checked.
+"""
+
 import ssl
 from xmlrpc.client import ServerProxy, Error
 from queue import Queue
@@ -68,14 +74,6 @@ class WebWorker(Thread):
         Thread.__init__(self, daemon=True)
         
         self.address_and_port = address_and_port
-        
-        # So we know which remote method to call.
-        self.request_purpose = data.get("RequestPurpose")
-        
-        # We only needed this key for the line above.
-        # The remote server doesn't need this key, so delete it so we
-        # don't send it to the remote server.
-        del data["RequestPurpose"]
         
         self.data = data
         self.callback_method = callback_method
@@ -158,37 +156,23 @@ class WebWorker(Thread):
         secure_context = self.create_secure_context()
         
         try:
-        
+    
             with ServerProxy(self.address_and_port,
                              context=secure_context) as proxy:
                 
-                match self.request_purpose:
-                    
-                    case "verify-license":
+                # Send a remote request.
+                result = proxy.verify_license(self.data)
 
-                        result = proxy.verify_license(self.data)
-                        
-                    case "remote-request":
-                        
-                        result = proxy.remote_request(self.data)
-                
-                    case _:
-                        # Unknown action name
-                        pass
-                    
-        
                 response =\
                     ServerResponseCode.get_response_code_from_text(msg=result)
-                
 
-                
         except ConnectionRefusedError:
             response = ServerResponseCode.CONNECTION_ERROR
             
         except Error:
             response = ServerResponseCode.CONNECTION_ERROR
             
-        except ValueError as e:
+        except (ValueError, TypeError) as e:
             response = ServerResponseCode.UNKNOWN
             result = e
             
@@ -262,8 +246,7 @@ class WebHandler:
         
         # Required data to send to the xml-rpc server.
         default_required_data =\
-            {"RequestPurpose": "remote-request",
-             "LicenseKey": self.web_key,
+            {"LicenseKey": self.web_key,
              "VisualNovelName": self.vn_name,
              "WebCertificate": self.web_certificate,}        
 
