@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.4" author="PygubuDesigner 0.40">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
   <project>
     <settings>
       <setting id="name">Story Details Window</setting>
@@ -466,6 +466,7 @@
                     </layout>
                     <containerlayout manager="grid">
                       <property type="col" id="0" name="weight">1</property>
+                      <property type="row" id="3" name="weight">1</property>
                     </containerlayout>
                     <child>
                       <object class="ttk.Labelframe" id="labelframe2">
@@ -547,7 +548,7 @@
                             </layout>
                             <child>
                               <object class="ttk.Radiobutton" id="radiobutton_private_license_key" named="True">
-                                <property name="text" translatable="yes">Use a private user key (each viewer must have their own license key)</property>
+                                <property name="text" translatable="yes">Use a private license key (each viewer must have their own license key)</property>
                                 <property name="value">private</property>
                                 <property name="variable">string:v_license_key_type</property>
                                 <layout manager="grid">
@@ -592,12 +593,13 @@
                             </containerlayout>
                             <child>
                               <object class="lvnauthwidgets.entrylimitwidget" id="entry_web_address" named="True">
+                                <property name="width">50</property>
                                 <layout manager="grid">
                                   <property name="column">0</property>
                                   <property name="padx">5</property>
                                   <property name="pady">5</property>
                                   <property name="row">0</property>
-                                  <property name="sticky">ew</property>
+                                  <property name="sticky">w</property>
                                 </layout>
                               </object>
                             </child>
@@ -616,6 +618,122 @@
                           <property name="row">0</property>
                           <property name="sticky">nw</property>
                         </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Labelframe" id="labelframe3">
+                        <property name="height">200</property>
+                        <property name="text" translatable="yes">Certification Authority (CA)</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">5</property>
+                          <property name="pady">0 10</property>
+                          <property name="row">3</property>
+                          <property name="sticky">nsew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="0" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="ttk.Frame" id="frame8">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">nsew</property>
+                            </layout>
+                            <containerlayout manager="grid">
+                              <property type="row" id="0" name="weight">1</property>
+                            </containerlayout>
+                            <child>
+                              <object class="ttk.Frame" id="frame10">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="padx">5</property>
+                                  <property name="pady">5</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsw</property>
+                                </layout>
+                                <containerlayout manager="grid">
+                                  <property type="col" id="0" name="weight">1</property>
+                                  <property type="row" id="0" name="weight">1</property>
+                                </containerlayout>
+                                <child>
+                                  <object class="tk.Text" id="text_cert" named="True">
+                                    <property name="exportselection">false</property>
+                                    <property name="height">5</property>
+                                    <property name="width">50</property>
+                                    <property name="wrap">none</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">nsew</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Scrollbar" id="sb_ca_horizontal" named="True">
+                                    <property name="orient">horizontal</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">new</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Scrollbar" id="sb_ca_vertical" named="True">
+                                    <property name="orient">vertical</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">nsw</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Frame" id="frame11">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="padx">5</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nw</property>
+                                </layout>
+                                <child>
+                                  <object class="ttk.Button" id="btn_browse_ca" named="True">
+                                    <property name="command" type="command" cbtype="simple">on_browse_ca_file</property>
+                                    <property name="text" translatable="yes">Browse for file...</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="pady">8</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">nw</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Button" id="btn_remove_ca" named="True">
+                                    <property name="text" translatable="yes">Remove</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">nw</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
