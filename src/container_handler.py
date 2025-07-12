@@ -19,8 +19,12 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 """
 Changes:
 - Nov 23, 2023 (Jobin Rezai) - Added get_snap_user_data_folder()
+
 - February 24, 2024 (Jobin Rezai) - Renamed to container_handler.py,
 to begin Flatpak recognition.
+
+- July 12, 2025 (Jobin Rezai) - Use an absolute path when playing a draft visual 
+novel instead of a relative path.
 """
 
 import os
@@ -150,7 +154,7 @@ class ContainerHandler:
                 full_path = Path(draft_directory) / "draft" / "draft.lvna"
                 
         else:
-            full_path = Path(r"draft/draft.lvna")
+            full_path = Path(__file__).parent / "draft" / "draft.lvna"
             
         # Do we have a full path to draft.lvna?
         if full_path:
@@ -193,7 +197,7 @@ class ContainerHandler:
             return full_path            
         else:
             # Not in a Snap package; return a regular path.
-            return Path("player") / "main.py"
+            return Path(__file__).parent / "player" / "main.py"
 
     @staticmethod
     def get_lvnauth_editor_icon_path() -> Path | None:
