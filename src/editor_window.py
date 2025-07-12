@@ -1376,14 +1376,14 @@ class EditorMainApp:
         # subprocess.Popen(["python3", str(player_script_file), "--file", str(compile_path)],
                          # text=True)
         
-        result = subprocess.run([python_executable,
-                        player_script_file,
-                        "--file",
-                        lvna_file_path,
-                        "--show-launch",
-                        str(show_launch_window)],
-                       text=True,
-                       capture_output=True)
+        result = subprocess.run([python_executable, 
+                                player_script_file,
+                                "--file",
+                                lvna_file_path,
+                                "--show-launch",
+                                str(show_launch_window)],
+                                text=True,
+                                capture_output=True)
         
         # A return code of 0 means a success
         # 1 means an error occurred.
