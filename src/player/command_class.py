@@ -16,6 +16,12 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+"""
+Change logs
+
+- (Jobin Rezai - July 12, 2025) - Added RemoteWithGet class.
+"""
+
 from typing import NamedTuple
 
 
@@ -219,6 +225,26 @@ class CallWithNoArguments(NamedTuple):
 class RemoteWithArguments(NamedTuple):
     remote_command: str
     arguments: str
+    
+    
+class RemoteWithGet(NamedTuple):
+    # Remote with a single argument (key name)
+    
+    # Without get into
+    # ================
+    # Example: <remote: get, favcolor>
+    # 'get' is the command
+    # 'favcolor' is the single keyword
+    
+    # With get into
+    # ===============
+    # <remote: get into some variable name, favcolor>
+    # get into is the command (in-code known as getinto)
+    # 'some variable name' is the name of the variable that needs the value 
+    # of favcolor
+    # and 'favcolor' is the single keyword
+    remote_command: str
+    single_keyword: str
 
 
 class RemoteWithNoArguments(NamedTuple):
