@@ -65,6 +65,7 @@ class Purpose(Enum):
     REUSABLE_SCRIPT = auto() # such as <call> or <after>
     SCENE_SCRIPT = auto() # such as <scene>
     VARIABLE_SET = auto() # such as <variable_set>
+    REMOTE_WEB = auto() # such as <remote: get into myvar, somekey>
 
 
 class GroupName(Enum):
@@ -2952,6 +2953,7 @@ class WizardWindow:
                         command_name="case_end",
                         purpose_line="Ends a case command block.")
 
+
         self.pages["Home"] = default_page
 
         self.pages["load_audio"] = page_audio_load
@@ -3419,6 +3421,9 @@ class WizardListing:
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
             
+        elif command_name in ("remote", ):
+            self.purpose_type = Purpose.REMOTE_WEB
+            
         else:
             self.purpose_type = Purpose.ACTION
 
@@ -3533,7 +3538,8 @@ class WizardListing:
                         Purpose.MUSIC: ("music file", "music"),
                         Purpose.REUSABLE_SCRIPT: ("reusable script name", "reusable script names"),
                         Purpose.SCENE_SCRIPT: ("scene name", "scene names"),
-                        Purpose.VARIABLE_SET: ("variable", "variables")}
+                        Purpose.VARIABLE_SET: ("variable", "variables"),
+                        Purpose.REMOTE_WEB: ("variable", "variables")}
 
         name: str
         name = name_mapping.get(self.purpose_type)
@@ -3576,11 +3582,38 @@ class WizardListing:
                         Purpose.FONT_SPRITE: ProjectSnapshot.font_sprites,
                         Purpose.AUDIO: ProjectSnapshot.sounds,
                         Purpose.MUSIC: ProjectSnapshot.music,
-                        Purpose.VARIABLE_SET: ProjectSnapshot.variables}
+                        Purpose.VARIABLE_SET: ProjectSnapshot.variables,
+                        Purpose.REMOTE_WEB: ProjectSnapshot.variables,
+                        Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
 
         dict_ref = dict_mapping.get(self.purpose_type)
         
-        return dict_ref      
+        return dict_ref    
+
+    def populate(self, combobox_widget: ttk.Combobox, clear_entry: bool = False):
+        """
+        Populate the given combobox with a list of names.
+        
+        Arguments:
+        
+        - combobox_widget: the combobox widget that we want to populate
+        data with.
+        
+        - clear_entry: whether to clear the current text in the combobox or not.
+        """
+
+        # Get the appropriate dictionary for this purpose type,
+        # used for populating the combobox.
+        ref_dict = self.get_population_dictionary()
+
+        # Clear the existing combobox, just in case there are values in it.
+        combobox_widget.configure(values=())
+
+        names = [item for item in ref_dict]
+        combobox_widget.configure(values=names)  
+        
+        if clear_entry:
+            combobox_widget.delete(0, "end")
     
     def show(self):
         """
@@ -6142,7 +6175,7 @@ class SharedPages:
             self.frame_content = self.create_content_frame()
 
             # Populate reusable script names combobox
-            self.populate()
+            self.populate(combobox_widget=self.cb_reusable_script, clear_entry=True)
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -6211,21 +6244,6 @@ class SharedPages:
                 frame_additional_args.grid(row=4, column=0, sticky="w", pady=(15, 0))
 
             return frame_content
-
-        def populate(self):
-            """
-            Populate the reusables combobox with a list of
-            reusable script names.
-            """
-
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_reusable_script.configure(values=())
-
-            reusable_script_names = [item for item in ProjectSnapshot.reusables]
-
-            self.cb_reusable_script.configure(values=reusable_script_names)
-
-            self.cb_reusable_script.delete(0, "end")
 
         def _edit_populate(self,
                            command_class_object: cc.AfterWithArguments|cc.AfterWithoutArguments|cc.AfterCancel):
@@ -7019,16 +7037,6 @@ class SharedPages:
 
             return frame_content
 
-        def populate(self):
-            """
-            Populate the reusables combobox with a list of
-            reusable script names.
-            """
-
-            reusable_script_names = [item for item in ProjectSnapshot.reusables]
-
-            self.cb_reusable_script.configure(values=reusable_script_names)
-
         def _edit_populate(self, command_class_object: cc.FadeStopRunScript):
             """
             Populate the widgets with the arguments for editing.
@@ -7107,7 +7115,7 @@ class SharedPages:
             self.header_label.configure(text=self.command_name)
             self.purpose_label.configure(text=self.purpose_line)
 
-            self.populate()
+            self.populate(combobox_widget=self.cb_reusable_script)
 
             self.frame_content.grid(pady=5)
             
@@ -7222,7 +7230,7 @@ class SharedPages:
     
             self.frame_content = self.create_content_frame()
             
-            self.populate()
+            self.populate(combobox_widget=self.cb_selections)
     
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -7239,23 +7247,6 @@ class SharedPages:
             self.cb_selections.grid(row=1, column=0, sticky="w")
     
             return frame_content
-        
-        def populate(self):
-            """
-            Populate the selections combobox with a list of names.
-            """
-    
-            # Get the appropriate dictionary for this purpose type,
-            # used for populating the combobox.
-            ref_dict = self.get_population_dictionary()
-    
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_selections.configure(values=())
-    
-            names = [item for item in ref_dict]
-            self.cb_selections.configure(values=names)
-            
-            # self.cb_selections.delete(0, "end")
             
         def check_inputs(self) -> str | None:
             """
@@ -7311,7 +7302,7 @@ class SharedPages:
             self.header_label.configure(text=self.command_name)
             self.purpose_label.configure(text=self.purpose_line)
     
-            self.populate()
+            self.populate(combobox_widget=self.cb_selections)
     
             self.frame_content.grid()
             
@@ -7390,13 +7381,11 @@ class SharedPages:
             lbl_prompt = ttk.Label(frame_content, text=message)
             self.cb_selections = ttk.Combobox(frame_content)
             
-            purpose = self.get_purpose_name()
-            
             if "variable" in purpose:
                 message = "Variable value:"
             elif "dialog" in purpose:
-                message = f"Enter an alias for this dialog sprite below:\n" + \
-                f"(This alias can later be used to reference this dialog sprite\n" + \
+                message = "Enter an alias for this dialog sprite below:\n" + \
+                "(This alias can later be used to reference this dialog sprite\n" + \
                 "regardless of the image that's being shown for this sprite.)"
             else:
                 message = f"Enter an alias for this {self.get_purpose_name()} below:\n" + \
@@ -7407,10 +7396,16 @@ class SharedPages:
 
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
 
-            message = "(optional) - Load as a different name? Used for spawning copies.\n" \
-                      "Enter a new copy name below:"
-            lbl_load_as_prompt = ttk.Label(frame_content, text=message)
-            self.entry_load_as = ttk.Entry(frame_content, width=25)
+            # Without this, it will show widgets for 'Load as name...'
+            # which doesn't apply to <variable_set>, which is why we
+            # have 'hide_load_as_widgets' here.
+            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+
+            if not hide_load_as_widgets:
+                message = "(optional) - Load as a different name? Used for spawning copies.\n" \
+                          "Enter a new copy name below:"
+                lbl_load_as_prompt = ttk.Label(frame_content, text=message)
+                self.entry_load_as = ttk.Entry(frame_content, width=25)
 
             lbl_prompt.grid(row=0, column=0, sticky="w")
             self.cb_selections.grid(row=1, column=0, sticky="w")
@@ -7419,10 +7414,9 @@ class SharedPages:
                                         pady=(15, 0))
             self.entry_general_alias.grid(row=3, column=0, sticky="w")
 
-            # Without this, it will show widgets for 'Load as name...'
-            # which doesn't apply to <variable_set>, which is why we
-            # have 'hide_load_as_widgets' here.
-            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+
+            # We shouldn't show 'load as' widgets for
+            # the <variable_set>.
             if not hide_load_as_widgets:
                 lbl_load_as_prompt.grid(row=4, column=0, sticky="w",
                                         pady=(15, 0))
