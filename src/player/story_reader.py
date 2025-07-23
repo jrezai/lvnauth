@@ -5022,19 +5022,19 @@ class StoryReader:
         if not Passer.web_handler.web_enabled:
             return
 
-        remote: cc.RemoteWithArguments
+        remote: cc.RemoteSave
 
         with_optional_arguments = "," in arguments and "=" in arguments
         with_get_single_keyword_argument = "," in arguments and "=" not in arguments
 
         if with_optional_arguments:
-            class_name = cc.RemoteWithArguments
+            class_name = cc.RemoteSave
 
         elif with_get_single_keyword_argument:
-            class_name = cc.RemoteWithGet
+            class_name = cc.RemoteGet
 
         else:
-            class_name = cc.RemoteWithNoArguments
+            class_name = cc.RemoteCallNoArguments
 
         remote = self._get_arguments(
             class_namedtuple=class_name,
@@ -5071,7 +5071,7 @@ class StoryReader:
             
             # Did we find a 'get into' command?
             if get_into_match:
-                remote = cc.RemoteWithGet("get", remote.single_keyword)
+                remote = cc.RemoteGet("get", remote.single_keyword)
                 
                 # Get the variable name that we should put
                 # the value into once we receive it from the server.
