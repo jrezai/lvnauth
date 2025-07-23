@@ -51,7 +51,9 @@ PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
 WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
 SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
-
+REMOTE_GET_UI = PROJECT_PATH / "ui" / "remote_get_dialog.ui"
+REMOTE_SAVE_UI = PROJECT_PATH / "ui" / "remote_save_dialog.ui"
+REMOTE_CALL_UI = PROJECT_PATH / "ui" / "remote_call_dialog.ui"
 
 class Purpose(Enum):
     BACKGROUND = auto()
@@ -65,7 +67,7 @@ class Purpose(Enum):
     REUSABLE_SCRIPT = auto() # such as <call> or <after>
     SCENE_SCRIPT = auto() # such as <scene>
     VARIABLE_SET = auto() # such as <variable_set>
-    REMOTE_WEB = auto() # such as <remote: get into myvar, somekey>
+    REMOTE_GET = auto() # such as <remote_get: some_key, some variable>
 
 
 class GroupName(Enum):
@@ -2954,6 +2956,38 @@ class WizardWindow:
                         purpose_line="Ends a case command block.")
 
 
+        page_remote_get = \
+            RemoteGet(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_get",
+                        command_name="remote_get",
+                        purpose_line="Gets a previously saved value from the server's database.")
+
+        page_remote_save = \
+            RemoteSave(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_save",
+                        command_name="remote_save",
+                        purpose_line="Saves one or more values to the server's database.")
+
+        page_remote_call = \
+            RemoteCall(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_call",
+                        command_name="remote_call",
+                        purpose_line="Runs a custom script on the server.")
+
+
+
         self.pages["Home"] = default_page
 
         self.pages["load_audio"] = page_audio_load
@@ -3192,6 +3226,13 @@ class WizardWindow:
         self.pages["case_else"] = page_case_else
         self.pages["case_end"] = page_case_end
         
+        """
+        Web
+        """
+        self.pages["remote_get"] = page_remote_get
+        self.pages["remote_save"] = page_remote_save
+        self.pages["remote_call"] = page_remote_call
+        
 
         self.active_page = default_page
         default_page.show()
@@ -3421,8 +3462,8 @@ class WizardListing:
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
             
-        elif command_name in ("remote", ):
-            self.purpose_type = Purpose.REMOTE_WEB
+        elif command_name in ("remote_get", ):
+            self.purpose_type = Purpose.REMOTE_GET
             
         else:
             self.purpose_type = Purpose.ACTION
@@ -3538,8 +3579,7 @@ class WizardListing:
                         Purpose.MUSIC: ("music file", "music"),
                         Purpose.REUSABLE_SCRIPT: ("reusable script name", "reusable script names"),
                         Purpose.SCENE_SCRIPT: ("scene name", "scene names"),
-                        Purpose.VARIABLE_SET: ("variable", "variables"),
-                        Purpose.REMOTE_WEB: ("variable", "variables")}
+                        Purpose.VARIABLE_SET: ("variable", "variables")}
 
         name: str
         name = name_mapping.get(self.purpose_type)
@@ -3583,7 +3623,7 @@ class WizardListing:
                         Purpose.AUDIO: ProjectSnapshot.sounds,
                         Purpose.MUSIC: ProjectSnapshot.music,
                         Purpose.VARIABLE_SET: ProjectSnapshot.variables,
-                        Purpose.REMOTE_WEB: ProjectSnapshot.variables,
+                        Purpose.REMOTE_GET: ProjectSnapshot.variables,
                         Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
 
         dict_ref = dict_mapping.get(self.purpose_type)
@@ -3640,7 +3680,49 @@ class WizardListing:
         combobox.delete(0, tk.END)
         combobox.insert(0, text)
         combobox.state(["readonly"])     
-    
+        
+    def is_valid_key_value_arguments(self, 
+                                    arguments: str, 
+                                    is_arguments_required: bool = True) -> bool:
+        """
+        Check if the provided argument is a valid key/value pair syntax.
+        This is used for checking arguments.
+        
+        Example:
+        name=Bob,favcolor=Blue  <-- is OK
+        name=,favcolor=Blue <-- is not ok because name= doesn't have a value.
+        favcolor=Blue <-- is OK
+        
+        Arguments:
+        
+        - arguments: the key/value pair values (comma separated allowed).
+        
+        - is_arguments_required: whether arguments are required. If False then
+        an empty argument is allowed. If True, a messagebox will appear saying
+        that the arguments value is missing.
+        
+        Return: True if the key/value pair syntax is correct or False if not.
+        
+        
+        """
+        
+        if not arguments and is_arguments_required:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Missing key/value pairs",
+                   message="Please specify one or more arguments.")
+            return False
+        
+        pattern = r"^([^=,\s][^=,]*=[^=,]+)(\s*,\s*[^=,\s][^=,]*=[^=,]+)*$"
+        result = re.fullmatch(pattern, arguments)
+        
+        if not result:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Invalid Arguments",
+                   message="The format of the key/value pairs is incorrect.")
+            return False
+        else:
+            return True
+
     def edit(self, command_class_object):
         """
         Show the current wizard listing (frame) and populate
@@ -10088,7 +10170,354 @@ class CharacterHide(SharedPages.HideSpriteWithAlias):
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line, **kwargs)
 
+
+
+class RemoteCallFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_CALL_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_call", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_custom_action_name = builder.get_variable("v_custom_action_name")
+        self.v_custom_arguments = builder.get_variable("v_custom_arguments")
+
+
+
+class RemoteCall(WizardListing):
+    """
+    <remote_call>
+    
+    Example:
+    <remote_call: some custom action name, character_name=some name, time=daytime>
+    <remote_call: some custom action name>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteCallFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
         
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+        
+        # Custom action Name
+        action_name = self.remote_frame.v_custom_action_name.get()
+        if not action_name:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Missing Custom Action Name",
+                   message="Please specify a custom action name.")
+            return
+
+        # Get the save key/value pairs
+        save_key_value_pairs = self.remote_frame.v_custom_arguments.get().strip()
+
+            
+        # Make sure the key/value pair arguments are in the right format.
+        if not self.is_valid_key_value_arguments(save_key_value_pairs, 
+                                                 is_arguments_required=False):
+            return
+        
+        user_input = {"SaveKeyValuePairs": save_key_value_pairs}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # Example:
+        # <remote_save: mykey=myvalue, mykey2=myvalue>
+        
+        save_key_value_pairs = selection.get("SaveKeyValuePairs")
+        
+        return f"<{self.command_name}: {save_key_value_pairs}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteSave | cc.RemoteCallNoArguments):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the key/value pairs, which may look like this: 'name=Theo, favpet=Cat'
+            case cc.RemoteCallNoArguments(remote_command):
+                
+                self.remote_frame.v_custom_action_name.set(remote_command)
+                
+            case cc.RemoteCallWithArguments(remote_command, arguments):
+                
+                self.remote_frame.v_custom_action_name.set(remote_command)
+                self.remote_frame.v_custom_arguments.set(arguments)
+
+
+
+class RemoteSaveFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_SAVE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_save", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_save_multi_arguments = builder.get_variable("v_save_multi_arguments")
+
+
+
+class RemoteSave(WizardListing):
+    """
+    <remote_save>
+    
+    Example:
+    <remote_save: mykey=myvalue, mykey2=myvalue>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteSaveFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
+        
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the save key/value pairs
+        save_key_value_pairs = self.remote_frame.v_save_multi_arguments.get().strip()
+
+        # Make sure the key/value pair arguments are in the right format.
+        if not self.is_valid_key_value_arguments(save_key_value_pairs):
+            return
+        
+        user_input = {"SaveKeyValuePairs": save_key_value_pairs}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # Example:
+        # <remote_save: mykey=myvalue, mykey2=myvalue>
+        
+        save_key_value_pairs = selection.get("SaveKeyValuePairs")
+        
+        return f"<{self.command_name}: {save_key_value_pairs}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteSave | cc.RemoteCallNoArguments):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the key/value pairs, which may look like this: 'name=Theo, favpet=Cat'
+            case cc.RemoteSave(arguments):
+                
+                self.remote_frame.v_save_multi_arguments.set(arguments)
+
+
+class RemoteGetFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_GET_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_get", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        # get and getinto frame
+        self.frame_get: ttk.Frame
+        self.frame_get = builder.get_object("frame_get", self.mainframe)
+
+        self.v_get_save_slot = builder.get_variable("v_get_save_slot")
+        self.v_get_variable = builder.get_variable("v_get_variable")
+        
+        self.cb_variable_selection_get = builder.get_object("cb_variable_selection_get")
+        
+
+class RemoteGet(WizardListing):
+    """
+    <remote_get>
+    
+    Example:
+    <remote_get: some key>
+    <remote_get: some_key, some variable>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteGetFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
+        
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the save key
+        save_key = self.remote_frame.v_get_save_slot.get().strip()
+
+        if not save_key:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="No save slot name specified",
+                   message="Please specify a save slot name.")
+            return False
+        
+        # Get the value into a variable? (optional)
+        optional_variable_name = self.remote_frame.v_get_variable.get().strip()
+        
+        user_input = {"SaveKey": save_key,
+                    "VariableName": optional_variable_name}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # 'get' or 'getinto'
+        # Example:
+        # <remote_get: some key>
+        # <remote_get: some_key, some variable>
+        
+        save_key = selection.get("SaveKey")
+        get_into_variable = selection.get("VariableName")
+        
+        if get_into_variable:
+            return f"<{self.command_name}: {save_key}, {get_into_variable}>"
+        else:
+            return f"<{self.command_name}: {save_key}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.populate(combobox_widget=self.remote_frame.cb_variable_selection_get)
+       
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteGet | cc.RemoteGetWithVariable):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the audio name, which may look like this: 'normal_music'
+            case cc.RemoteGet(save_key):
+                
+                self.remote_frame.v_get_save_slot.set(save_key)
+                
+            case cc.RemoteGetWithVariable(save_key, variable_name):
+                
+                self.remote_frame.v_get_save_slot.set(save_key)
+                self.remote_frame.v_get_variable.set(variable_name)
+                
+                
+
 
 if __name__ == "__main__":
     app = WizardWindow()
