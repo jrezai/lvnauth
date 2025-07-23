@@ -201,6 +201,9 @@ class CommandHelper:
         "variable_set": cc.VariableSet,
         "case": cc.ConditionDefinition,
         "or_case": cc.ConditionDefinition,
+        "remote_get": cc.RemoteGet,
+        "remote_save": cc.RemoteSave,
+        "remote_call": cc.RemoteCallNoArguments
     }
     
     @staticmethod
@@ -436,6 +439,46 @@ class CommandHelper:
                         arguments =\
                             CommandHelper._get_optional_arguments(arguments, 1)
                     
+                case "remote_save":
+                    # <remote_save> can have 1 or more arguments 
+                    # (with no fixed arguments), which is why we specify zero
+                    # for the number of fixed arguments.
+                    
+                    # If there is more than 1 argument (ie: has a comma),
+                    # the arguments will be a list. If it's 1 argument (no comma),
+                    # then the argument will be a string.
+                    if isinstance(arguments, list):
+                        # Use the multi-argument version of the class.
+                        arguments =\
+                                CommandHelper._get_optional_arguments(arguments, 0)
+                    
+                    # If it's a single argument (ie: favcolor=Blue), then
+                    # it's already fine the way it is, no need to do anything else.
+                    
+                case "remote_get":
+                    # <remote_get: some key>
+                    # <remote_get: some_key, some variable>
+                    
+                    # We might have one argument or two, but not more than two.
+                    # <remote_get> already defaults to cc.RemoteGet, for 1 argument.
+                    # But if there 2 arguments, change it to cc.RemoteGetWithVariable
+                    if isinstance(arguments, list):
+                        if len(arguments) == 2:
+                            command_cls = cc.RemoteGetWithVariable
+                            
+                case "remote_call":
+                    # <remote_call: some custom action name, character_name=some name, time=daytime>
+                    # <remote_call: some custom action name>
+                    
+                    if isinstance(arguments, list):
+                        
+                        # Use the argument-version of the class.
+                        command_cls = cc.RemoteCallWithArguments
+                        
+                        # The 2nd argument is for multiple optional arguments.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 1)                
+            
                 # <after> can have optional arguments.
                 case "after":
                     
