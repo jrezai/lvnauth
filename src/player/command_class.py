@@ -222,33 +222,44 @@ class CallWithNoArguments(NamedTuple):
     reusable_script_name: str
 
 
-class RemoteWithArguments(NamedTuple):
-    remote_command: str
+
+class RemoteSave(NamedTuple):
+    # Example:
+    # <remote_save: favcolor=Blue, favpet=Cat>
     arguments: str
     
     
-class RemoteWithGet(NamedTuple):
-    # Remote with a single argument (key name)
+class RemoteGet(NamedTuple):
+    # Remote with a single argument (save key name)
     
-    # Without get into
-    # ================
-    # Example: <remote: get, favcolor>
-    # 'get' is the command
-    # 'favcolor' is the single keyword
-    
-    # With get into
-    # ===============
-    # <remote: get into some variable name, favcolor>
-    # get into is the command (in-code known as getinto)
-    # 'some variable name' is the name of the variable that needs the value 
-    # of favcolor
-    # and 'favcolor' is the single keyword
-    remote_command: str
-    single_keyword: str
+    # <remote_get: some key>
+    save_key: str
 
 
-class RemoteWithNoArguments(NamedTuple):
+
+class RemoteGetWithVariable(NamedTuple):
+    # Remote with two arguments.
+    # A save key and a variable to put the value into.
+    
+    # <remote_get: some_key, some variable>
+    save_key: str
+    variable_name: str
+
+
+
+class RemoteCallNoArguments(NamedTuple):
+    # Example:
+    # <remote_call: some custom action name>
     remote_command: str
+    
+    
+    
+class RemoteCallWithArguments(NamedTuple):
+    # Example:
+    # <remote_call: some custom action name, character_name=some name, time=daytime>
+    remote_command: str
+    arguments: str
+    
     
 
 # Sprite classes
