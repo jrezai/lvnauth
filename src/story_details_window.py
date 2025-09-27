@@ -59,18 +59,24 @@ class StoryDetailsWindow:
         # Web related
         self.v_allow_web_access = builder.get_variable("v_allow_web_access")
         self.v_license_key_type = builder.get_variable("v_license_key_type")
+        self.v_bypass_certificate = builder.get_variable("v_bypass_certificate")
         self.entry_shared_key = builder.get_object("entry_shared_key")
         self.entry_web_address = builder.get_object("entry_web_address")
         
-        self.text_cert = builder.get_object("text_cert")
-        self.sb_ca_horizontal = builder.get_object("sb_ca_horizontal")
-        self.sb_ca_horizontal.configure(command=self.text_cert.xview)
+        self.text_pem: tk.Text
+        self.text_pem = builder.get_object("text_pem")
         
-        self.sb_ca_vertical = builder.get_object("sb_ca_vertical")
-        self.sb_ca_vertical.configure(command=self.text_cert.yview)
-        self.text_cert.configure(xscrollcommand=self.sb_ca_horizontal.set,
-                                 yscrollcommand=self.sb_ca_vertical.set)
+        # Scrollbars for the .pem text widget.
+        self.sb_horizontal = builder.get_object("sb_horizontal")
+        self.sb_horizontal.configure(command=self.text_pem.xview)
         
+        self.sb_vertical = builder.get_object("sb_vertical")
+        self.sb_vertical.configure(command=self.text_pem.yview)
+        
+        # Connect the scrollbars to the .pem text widget.
+        self.text_pem.configure(xscrollcommand=self.sb_horizontal.set)
+        self.text_pem.configure(yscrollcommand=self.sb_vertical.set)
+
         # Connect the description's vertical scrollbar
         self.sb_vertical_description =\
             builder.get_object("sb_vertical_description")
@@ -123,12 +129,11 @@ class StoryDetailsWindow:
                                 WebKeys.WEB_ADDRESS.value: self.entry_web_address,
                                 WebKeys.WEB_ACCESS.value: self.v_allow_web_access,
                                 WebKeys.WEB_LICENSE_TYPE.value: self.v_license_key_type,
-                                WebKeys.WEB_CA_CERT.value: self.text_cert}
+                                WebKeys.WEB_PUBLIC_CERTIFICATE.value: self.text_pem,
+                                WebKeys.WEB_BYPASS_CERTIFICATE.value: self.v_bypass_certificate,}
 
         self._get_details()
         
-        # Set the certificate textbox to read-only.
-        self.text_cert.configure(state="disabled")
 
         self.story_details_window.transient(self.master)
         self.story_details_window.grab_set()
@@ -206,7 +211,9 @@ class StoryDetailsWindow:
                     widget.set(bool(text_to_show))
 
                 elif widget.winfo_class() == "Text":
+                    widget.configure(state="normal")
                     widget.insert("1.0", text_to_show)
+                    widget.configure(state="disabled")
                 else:
                     widget.insert(0, text_to_show)
                     
@@ -220,48 +227,33 @@ class StoryDetailsWindow:
         self.sb_height.delete(0, "end")
 
         self.sb_width.insert(0, "640")
-        self.sb_height.insert(0, "480")
+        self.sb_height.insert(0, "480")        
 
-    def on_browse_ca_file(self):
+    def on_browse_for_file_button_clicked(self):
         """
-        Show the open file dialog so the user can select a server pem (ca) file.
+        Show the open file dialog to allow the user to select a .pem file.
         """
-        file_types = [("Certificate file", ".pem")]
-        
+        file_types = [(".PEM certificate file", ".pem")]        
         selected_file =\
-            filedialog.askopenfilename(parent=self.story_details_window,
-                                       filetypes=file_types,
-                                       title="Select a certificate file")
-        
-        if not selected_file:
-            return
-        
-        file_path = Path(selected_file)
-        
-        # Make sure the word 'PRIVATE' is not in the certificate file,
-        # because private certificates are not meant to be shared with clients.
-        data_in_cert = file_path.read_text()
-        if data_in_cert:
-            data_in_cert_lower = data_in_cert.lower()
-            if "private" in data_in_cert_lower:
-                messagebox.showerror(parent=self.story_details_window,
-                                     title="Private",
-                                     message="This certificate appears to be private and is not meant to be shared with clients.\n\nThis certificate can not be used."
-                                    )
-                return
+            filedialog.askopenfilename(master=self.story_details_window,
+                                       filetypes=file_types)
+        if selected_file:
             
-            else:
-                self.text_cert: tk.Text
-                self.text_cert.configure(state=tk.NORMAL)
-                self.text_cert.delete("1.0", tk.END)
-                self.text_cert.insert("1.0", data_in_cert)
-                self.text_cert.configure(state=tk.DISABLED)
-        else:
-            messagebox.showerror(parent=self.story_details_window,
-                                 title="Empty file",
-                                 message="The certificate appears to be empty.")
-            return
-        
+            with open(selected_file, "r") as f:
+                contents = f.read()
+                
+            self.text_pem.configure(state="normal")
+            self.text_pem.delete("1.0", tk.END)
+            self.text_pem.insert("1.0", contents)
+            self.text_pem.configure(state="disabled")
+            
+    def on_clear_button_clicked(self):
+        """
+        Clear the certificate in the text widget.
+        """
+        self.text_pem.configure(state="normal")
+        self.text_pem.delete("1.0", tk.END)
+        self.text_pem.configure(state="disabled")        
 
     def on_cancel_button_clicked(self):
         self.story_details_window.destroy()
@@ -277,7 +269,23 @@ class StoryDetailsWindow:
         for detail_name, widget in self.widget_mappings.items():
 
             if hasattr(widget, "winfo_class") and widget.winfo_class() == "Text":
-                self.details[detail_name] = widget.get("1.0", "end-1c")
+                
+                text_content: str
+                text_content = widget.get("1.0", "end-1c")
+                
+                # Try to prevent private certificates from being used.
+                # Look for the word 'private' in the certificate.
+                if detail_name == WebKeys.WEB_PUBLIC_CERTIFICATE.value:
+                    if "private" in text_content.lower():
+                        messagebox.showerror(
+                            parent=self.story_details_window,
+                            title="Private Certificate",
+                            message="The provided certificate appears to be private.\n\nOnly a public certificate should be used here.")
+                        
+                        # The .pem certificate appears private, don't continue.
+                        return
+                    
+                self.details[detail_name] = text_content
             else:
                 
                 # If the web license type is private (not shared), don't record 
