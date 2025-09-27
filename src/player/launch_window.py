@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License along with
 LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
 """
 
+import traceback
 import sys
 import pathlib
 import tkinter as tk
@@ -27,7 +28,7 @@ from typing import Dict
 from PIL import ImageTk, Image
 from io import BytesIO
 from pathlib import Path
-from web_handler import WebKeys, WebHandler, WebLicenseType
+from web_handler import WebHandler, WebLicenseType, WebRequestPurpose
 from shared_components import Passer
 from response_code import ServerResponseReceipt, ServerResponseCode
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -70,6 +71,9 @@ class LaunchWindow:
         # Main widget
         self.mainwindow = builder.get_object("launch_window")
         builder.connect_callbacks(self)
+        
+        self.mainwindow.report_callback_exception =\
+            self.custom_tk_exception_handler
 
         # For reading secondary thread messages.
         self.queue_msg_handler = \
@@ -92,15 +96,26 @@ class LaunchWindow:
 
         self.lbl_poster = builder.get_object("lbl_poster")
 
-        # Used for web-enabled visual novels.
-        self.frame_license_key = builder.get_object("frame_license_key")
+        # Used for showing/hiding the 'License Key' tab for 
+        # web-enabled visual novels.
+        self.notebook_main = builder.get_object("notebook_main")
 
         self.treeview_chapter_scenes = builder.get_object("treeview_chapter_scenes")
         self.btn_play_selection = builder.get_object("btn_play_selection")
         
-        # For getting the user inputted license key.
+        # For focussing on the license key widget.
         self.entry_license_key = builder.get_object("entry_license_key")
         
+        # For getting/setting the license key in the entry widget.
+        self.v_license_key = builder.get_variable("v_license_key")
+        
+        # For getting a transaction ID from the user.
+        self.v_transaction_id = builder.get_variable("v_transaction_id")
+        
+        # For debugging
+        # TODO: Remove this license key, it's just for debugging.
+        self.v_license_key.set("ed3f88f4-8a91-4d26-8421-14db7736fc79")
+
         # So we know when the user has decided to 'X' out of the window.
         # That way, we can prevent the story from playing and exit the app.
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_closing)
@@ -137,6 +152,30 @@ class LaunchWindow:
         self.populate_story_info()
         
         self.check_web_enabled()
+        
+    def custom_tk_exception_handler(self, exception_class, exception_value,
+                                    traceback_object):
+        """
+        Custom handle Tkinter exceptions.
+        
+        Purpose: without this, any time there is a tkinter exception, it will
+        output the error to the console, but it won't close the app. We want it
+        to close the player when a Tkinter exception occurs.
+        
+        Example: if a web-connected visual novel can't connect to the server,
+        when the 'Play' button is clicked in tkinter, we want the visual novel
+        to close so it could output the error to an exceptions window for the
+        user to see.
+        """
+        
+        # This is required to output the exception to the console.
+        # Without this, the exception won't get outputted when the app closes.
+        traceback.print_exception(exception_class, exception_value,
+                                  traceback_object)
+        
+        # Close the player because a Tkinter exception has occurred.
+        # 1 means not successful.
+        sys.exit(1)  
 
     def check_queue(self):
         """
@@ -165,7 +204,7 @@ class LaunchWindow:
         """
 
         if not Passer.web_handler.web_enabled:
-            self.frame_license_key.grid_forget()
+            self.notebook_main.tab(tab_id=2, state=tk.HIDDEN)
             
     def on_web_request_finished(self, receipt: ServerResponseReceipt):
         """
@@ -191,7 +230,7 @@ class LaunchWindow:
                 msg = "The provided license key is invalid."
             
             case ServerResponseCode.CONNECTION_ERROR:
-                # Could not connect to xml rpc
+                # Could not connect to server
                 
                 msg_title = "Connection Error"
                 msg = "Could not connect to the server."
@@ -214,7 +253,7 @@ class LaunchWindow:
             case ServerResponseCode.SSL_ERROR:
                 
                 msg_title = "SSL Error"
-                msg = "Could not securly connect to the server."
+                msg = "Could not securely connect to the server."
                 
             case ServerResponseCode.UNKNOWN:
                 
@@ -261,6 +300,42 @@ class LaunchWindow:
         
         self.mainwindow.destroy()
 
+    def on_get_license_key_button_clicked(self):
+        """
+        If a license key is provided, attempt to associate the provided
+        transaction ID with the given license key.
+        
+        If no license key is provided, then it's probably the first time
+        the user is buying a license, so let the web server generate a new
+        license key based on the given transaction ID and put that license key
+        into the license_key entry widget.
+        """
+        
+        # Get the license key, if provided.
+        license_key = self.v_license_key.get().strip()
+        
+        # Get the transaction ID, which is mandatory.
+        transaction_id = self.v_transaction_id.get().strip()
+        
+        if not transaction_id:
+            messagebox.showerror(
+                parent=self.mainwindow,
+                title="Transaction ID",
+                message="Please enter your transaction ID.\nIt should be in the email that was sent to you.")
+            return
+        
+        # The license key and visual novel name will get added later
+        # (if a license key is available)
+        # in the web_handler itself, as part of keys that are always included
+        # in each request.
+        data = {"transaction_id": transaction_id}
+        
+        Passer.web_handler.\
+            send_request(data=data,
+                         purpose=WebRequestPurpose.REDEEM_OR_UPDATE_LICENSE_KEY,
+                         callback_method=self.on_web_request_finished,
+                         increment_usage_count=False)
+
     def on_play_selection_button_clicked(self):
         """
         If it's a web-enabled visual novel, verify the license
@@ -270,6 +345,7 @@ class LaunchWindow:
         If it's not a web-enabled visual novel, get the selected chapter
         and scene in the treeview widget and run it.
         """
+        
 
         # Disable the button so the user doesn't repeatidly click it.
         self.btn_play_selection.state(["disabled"])
@@ -279,7 +355,7 @@ class LaunchWindow:
             # Get the user-typed license key,
             # if the license key type is private.
             if Passer.web_handler.web_license_type == WebLicenseType.PRIVATE:
-                Passer.web_handler.web_key = self.entry_license_key.get().strip()
+                Passer.web_handler.web_key = self.v_license_key.get().strip()
                 
                 # Make sure a license key was actually typed.
                 if not Passer.web_handler.web_key:
@@ -297,12 +373,10 @@ class LaunchWindow:
                         return
                     
             
-            # So the xml-rpc server knows what to do.
-            # In this case, we want to do a regular license lookup.
-            data = {"RemoteCommand": "verify"}
             
             Passer.web_handler.\
-                send_request(data=data,
+                send_request(data=None,
+                             purpose=WebRequestPurpose.VERIFY_LICENSE,
                              callback_method=self.on_web_request_finished,
                              increment_usage_count=False)
             
