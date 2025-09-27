@@ -252,7 +252,11 @@ class ParameterDescription:
                      "variable_set": ("Variable name", "Variable value"),
                      
                      "case": ("Value 1", "Comparison operator", "Value 2", "(optional) Condition name"),
-                     "or_case": ("Value 1", "Comparison operator", "Value 2", "Condition name to compare with")
+                     "or_case": ("Value 1", "Comparison operator", "Value 2", "Condition name to compare with"), 
+                     
+                     "remote_get": ("Save slot name", "(optional) Variable name"),
+                     "remote_save": ("*Key=value arguments", ),
+                     "remote_call": ("Custom action name", "*(optional) Key=value arguments", )
                      
                      }
     
