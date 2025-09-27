@@ -936,8 +936,8 @@ class StoryReader:
                 font_name=arguments, font_sprite=font_full_sprite_sheet_sprite
             )
 
-        elif command_name == "remote":
-            self._remote(arguments=arguments)
+        elif command_name in ("remote_save", "remote_get", "remote_call"):
+            self._remote(command_name=command_name, arguments=arguments)
 
         elif command_name in ("case", "or_case"):
             self._condition_read(command_name=command_name, arguments=arguments)
@@ -4312,34 +4312,49 @@ class StoryReader:
     def _get_arguments(
         class_namedtuple,
         given_arguments: str,
-        unlimited_optional_arguments: bool = False,
-    ):
+        unlimited_optional_arguments: bool = False):
         """
         Take the given string arguments (comma separated) and turn them
         into a namedtuple class.
 
         For example: if 'given_arguments' contains '5, 4'
         then this method will return an object in the given class in 'class_namedtuple'.
-        That object may be something like: MovementSpeed and its fields, X and Y will be set
-        to int (based on the arguments example '5, 4').
+        That object may be something like: MovementSpeed and its fields, X and Y 
+        will be set to int (based on the arguments example '5, 4').
 
         For example; MovementSpeed.x = 5 (int)  , MovementSpeed.y = 4 (int)
 
-        This method will convert numeric types to int and will keep string types as strings.
-        For example, if the given argument is: 'Bob, 100' (str argument), then 'Bob' will end up becoming a field
-        in the class object as a string, and 100 will be another field as an integer.
-        This method will handle int types and str types automatically by making the class object fields match
-        the expected type of variable.
+        This method will convert numeric types to int and will keep string types 
+        as strings.
+        
+        For example, if the given argument is: 'Bob, 100' (str argument), then 'Bob' 
+        will end up becoming a field in the class object as a string, and 100 will be 
+        another field as an integer.
+        This method will handle int types and str types automatically by making the 
+        class object fields match the expected type of variable.
+        
+        Arguments:
 
-        :param class_namedtuple: the class to use when returning an object in this method.
-                                 One example of a class is: MovementSpeed
-        :param given_arguments: string-based argument separated by commas. For example: '5, 4' or 'Bob, 100'.
-        :return: an object based on the class provided in 'class_namedtuple'.
+        - class_namedtuple: the class to use when returning an object in this method.
+        One example of a class is: MovementSpeed
+        
+        - given_arguments: string-based argument separated by commas.
+        For example: '5, 4' or 'Bob, 100'.
+        
+        - unlimited_optional_arguments: used for indicating that there will be a
+        variable number of arguments. If this is set to False, it will expect the 
+        arguments to match the fixed variable types in the class' namedtuple.
+        
+        Example of variable number of arguments:
+        <remote_save: favpet=cat, favcolour=blue, ......>
+        
+        Return: an object based on the class provided in 'class_namedtuple'.
         """
 
-        # Get a tuple of types that the type-hint has for the given fields of the class.
-        # We'll use this to find out what type of variables each argument field needs to be.
-        expected_argument_types = tuple(class_namedtuple.__annotations__.values())
+        # Get a list of types that the type-hint has for the given fields of the class.
+        # We'll use this to find out what type of variables each argument field 
+        # needs to be.
+        expected_argument_types = list(class_namedtuple.__annotations__.values())
 
         # Get the number of fields in the given class.
         # Each field is an argument.
@@ -4360,8 +4375,9 @@ class StoryReader:
         else:
             # Fixed number of arguments (no optional arguments).
 
-            # Create a regex pattern to extract the correct number of arguments. The expected number of arguments
-            # will be dictated by the number of fields in the given class: len(class._fields).
+            # Create a regex pattern to extract the correct number of arguments.
+            # The expected number of arguments will be dictated by the number of fields 
+            # in the given class: len(class._fields).
             pattern = ""
             adder = r",([^,]*)"
             pattern += adder * field_count
@@ -4382,11 +4398,27 @@ class StoryReader:
         # If it's a numeric argument, it will be added to this list as an int.
         # If it's a str argument, it will be added to this list as a str.
         converted_arguments = []
+        
+        # If the class contains a single string field named 'arguments', then
+        # that means a variable number of arguments are to be expected.
+        # For example, with the <remote_save> command, which only takes on argument
+        # string. Treat that as one argument string.
+        # For example: "favcolor=Blue, favpet=Cat" as one string.
+        if field_count == 1 and expected_argument_types[0] is str and \
+        tuple(class_namedtuple.__annotations__.keys())[0] == "arguments":
+            
+            # Record the arguments as one string as part of a namedtuple,
+            # for easier access by the caller.
+            generate_class = class_namedtuple(given_arguments)
 
-        # Combine the expected type (ie: class 'int') with each individual argument value (ie: '5')
+            return generate_class
+            
+            
+        # Combine the expected type (ie: class 'int') with each individual 
+        # argument value (ie: '5')
         for expected_type, argument_value in zip(
-            expected_argument_types, individual_arguments
-        ):
+            expected_argument_types, individual_arguments):
+                
             argument_value = argument_value.strip()
 
             if expected_type is str:
@@ -4398,8 +4430,9 @@ class StoryReader:
                     converted_arguments.append(expected_type(argument_value))
                 except ValueError:
                     return
-
-        # Convert the list of arguments to a namedtuple for easier access by the caller.
+                    
+        # Convert the list of arguments to a namedtuple for easier access 
+        # by the caller.
         generate_class = class_namedtuple(*converted_arguments)
 
         return generate_class
@@ -5013,7 +5046,7 @@ class StoryReader:
             # with <or_case>.
             self.condition_name_false = condition.condition_name
 
-    def _remote(self, arguments: str):
+    def _remote(self, command_name: str, arguments: str):
         """
         Send a request to a remote lvnauth server to get a script.
         """
@@ -5021,100 +5054,114 @@ class StoryReader:
         # Make sure the visual novel is web-enabled.
         if not Passer.web_handler.web_enabled:
             return
-
-        remote: cc.RemoteSave
-
-        with_optional_arguments = "," in arguments and "=" in arguments
-        with_get_single_keyword_argument = "," in arguments and "=" not in arguments
-
-        if with_optional_arguments:
-            class_name = cc.RemoteSave
-
-        elif with_get_single_keyword_argument:
-            class_name = cc.RemoteGet
-
+            
+        # Single or multiple arguments provided?
+        if arguments:
+            multiple_arguments = "," in arguments and "=" in arguments
+            single_argument = "," not in arguments and "=" not in arguments
+            
         else:
-            class_name = cc.RemoteCallNoArguments
+            multiple_arguments = False
+            single_argument = False
+            
+        if command_name == "remote_save":
+            # Example:
+            # <remote_save: favcolor=Blue, favpet=Cat>
+            class_name = cc.RemoteSave
+            
+            # So we know which URL to use.
+            purpose = web_handler.WebRequestPurpose.REMOTE_SAVE
+            
+        elif command_name == "remote_get":
+            if single_argument:
+                class_name = cc.RemoteGet
+            else:
+                class_name = cc.RemoteGetWithVariable
+                
+            # So we know which URL to use.
+            purpose = web_handler.WebRequestPurpose.REMOTE_GET
+
+        elif command_name == "remote_call":
+            if single_argument or multiple_arguments:
+                class_name = cc.RemoteCallWithArguments
+            else:
+                class_name = cc.RemoteCallNoArguments
+
+            # So we know which URL to use.
+            purpose = web_handler.WebRequestPurpose.REMOTE_CALL
 
         remote = self._get_arguments(
             class_namedtuple=class_name,
             given_arguments=arguments,
-            unlimited_optional_arguments=with_optional_arguments,
+            unlimited_optional_arguments=multiple_arguments,
         )
         
         # Assume the callback method will run with default arguments,
-        # without a 'get into' variable name.
+        # without a 'put_into_variable' argument variable name.
         # This might change later in this method.
-        on_xml_rpc_callback_method = self.on_web_request_finished
+        on_server_callback_method = self.on_web_request_finished
+
 
         # Does the remote script need to be called with parameters/arguments?
-        if with_optional_arguments:
+        
+        if multiple_arguments:
+        
+            # Used for key/value pair arguments.
+            # Used for <remote_save> and <remote_call>
+            # Example:
+            # <remote_save: favcolor=Blue, favpet=Cat>
+            
             # Get the parameter names and values by recording them
             # in a dictionary.
             parameter_arguments = self.get_optional_arguments(
                 unsorted_arguments_line=remote.arguments
             )
 
-            # Combine the optional arguments with the required data dictionary.
-            optional_data = parameter_arguments
+        elif class_name == cc.RemoteGet:
+            # Single argument
+            # Example:
+            # <remote_get: some key>
+            parameter_arguments = {"GetKeyValue": remote.save_key}
             
-        elif with_get_single_keyword_argument:
-            # <remote> was used with get or get into, and a single argument.
-            # such as <remote: get, favcolor>
-            # or <remote: get into some variable, favcolor>
+        elif class_name == cc.RemoteGetWithVariable:
+            # Two arguments, a save key and a variable to the put value into.
+            # Example:
+            # <remote_get: some_key, some variable>
             
-            # Check for pattern like 'get into some variable name, somekey'
-            pattern_get_into = r"^\s*get\s+into\s*(?P<VariableName>.*?),\s*(?=.*[a-zA-Z0-9])"
-            get_into_match = re.search(pattern=pattern_get_into, 
-                                       string=arguments)
-                                      
+            parameter_arguments = {"GetKeyValue": remote.save_key}
             
-            # Did we find a 'get into' command?
-            if get_into_match:
-                remote = cc.RemoteGet("get", remote.single_keyword)
-                
-                # Get the variable name that we should put
-                # the value into once we receive it from the server.
-                variable_name = get_into_match.groupdict().get("VariableName")                
-                
-                on_xml_rpc_callback_method =\
-                partial(self.on_web_request_finished, put_into_variable=variable_name)
-
-            if remote.remote_command == "get":
-                optional_data = {"GetKeyValue": remote.single_keyword}
-            else:
-                # Future single argument remote commands can go here, if any.
-                pass
+            # We need to put the value into a variable when a response
+            # is received from the server.
+            on_server_callback_method = \
+                partial(on_server_callback_method, put_into_variable=remote.variable_name)
                 
         else:
-            # No optional arguments
-            optional_data = None
+            # No arguments
+            parameter_arguments = None
 
-        data = {
-            "RemoteCommand": remote.remote_command,
-            "VisualNovelData": optional_data,
-        }
+        data = {"vn_data": parameter_arguments}
 
+        Passer.web_hander: web_handler.WebHandler
         Passer.web_handler.send_request(
-            data=data, callback_method=on_xml_rpc_callback_method
+            data=data, purpose=purpose, callback_method=on_server_callback_method
         )
 
     def on_web_request_finished(self, 
                                 receipt: ServerResponseReceipt, 
                                 put_into_variable: str = None):
         """
-        Deal with the response from the xml-rpc server,
+        Deal with the response from the FastAPI server,
         started from a <remote> command.
 
         This method is run on the main thread.
         
         Arguments:
         
-        - receipt: the response from the xml-rpc server.
+        - receipt: the response from the FastAPI server.
         
         - put_into_variable: the variable name to put the the value into.
-        This is used only with 'get into', for example:
-        <remote: get into some variable here, favcolor>
+        This is used only with '<remote_get>' along with a variable name.
+        For example: <remote_get: some key, some_variable_to_put_data_into>
         """
 
         # Decrease the remote web worker thread count.
@@ -5122,11 +5169,11 @@ class StoryReader:
         # the main script reader must stay paused.
         web_handler.WebWorker.decrease_usage_count()
 
-        print("XML RPC response received:", receipt)
+        print("FastAPI response received:", receipt)
 
         response_text = receipt.get_response_text()
 
-        # Did the rpc server return a non-success? Don't allow the visual
+        # Did the server return a non-success? Don't allow the visual
         # novel to continue, because the remote web connection might be
         # critical to the rest of the visual novel.
         if receipt.get_response_code() != ServerResponseCode.SUCCESS:
