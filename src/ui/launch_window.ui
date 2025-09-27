@@ -126,76 +126,6 @@ It allows a specific scene to be played and also shows information about the vis
                       </object>
                     </child>
                     <child>
-                      <object class="ttk.Frame" id="frame_license_key" named="True">
-                        <property name="height">200</property>
-                        <property name="width">200</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="pady">5</property>
-                          <property name="row">1</property>
-                          <property name="sticky">ew</property>
-                        </layout>
-                        <containerlayout manager="grid">
-                          <property type="col" id="0" name="weight">1</property>
-                          <property type="row" id="0" name="weight">1</property>
-                        </containerlayout>
-                        <child>
-                          <object class="ttk.Labelframe" id="labelframe1">
-                            <property name="height">200</property>
-                            <property name="text" translatable="yes">This visual novel requires a license key</property>
-                            <property name="width">200</property>
-                            <layout manager="grid">
-                              <property name="column">0</property>
-                              <property name="padx">5</property>
-                              <property name="row">0</property>
-                              <property name="sticky">ew</property>
-                            </layout>
-                            <containerlayout manager="grid">
-                              <property type="col" id="0" name="weight">1</property>
-                              <property type="row" id="0" name="weight">1</property>
-                            </containerlayout>
-                            <child>
-                              <object class="ttk.Frame" id="frame10">
-                                <property name="height">200</property>
-                                <property name="width">200</property>
-                                <layout manager="grid">
-                                  <property name="column">0</property>
-                                  <property name="padx">5</property>
-                                  <property name="pady">5</property>
-                                  <property name="row">0</property>
-                                  <property name="sticky">ew</property>
-                                </layout>
-                                <containerlayout manager="grid">
-                                  <property type="col" id="0" name="weight">1</property>
-                                  <property type="row" id="1" name="weight">1</property>
-                                </containerlayout>
-                                <child>
-                                  <object class="ttk.Label" id="label9">
-                                    <property name="text" translatable="yes">Enter a license key:</property>
-                                    <layout manager="grid">
-                                      <property name="column">0</property>
-                                      <property name="row">0</property>
-                                      <property name="sticky">w</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="lvnauthwidgets.entrylimitwidget" id="entry_license_key" named="True">
-                                    <property name="textvariable">string:v_</property>
-                                    <layout manager="grid">
-                                      <property name="column">0</property>
-                                      <property name="row">1</property>
-                                      <property name="sticky">ew</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
                       <object class="ttk.Frame" id="frame12">
                         <property name="height">200</property>
                         <property name="width">200</property>
@@ -237,7 +167,7 @@ It allows a specific scene to be played and also shows information about the vis
                       <property type="row" id="0" name="weight">1</property>
                     </containerlayout>
                     <child>
-                      <object class="ttk.Notebook" id="notebook1">
+                      <object class="ttk.Notebook" id="notebook_main" named="True">
                         <property name="height">200</property>
                         <property name="width">200</property>
                         <layout manager="grid">
@@ -487,6 +417,145 @@ It allows a specific scene to be played and also shows information about the vis
                                       <property name="row">6</property>
                                       <property name="sticky">nw</property>
                                     </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Notebook.Tab" id="tab3">
+                            <property name="text" translatable="yes">License Key</property>
+                            <child>
+                              <object class="ttk.Frame" id="frame8">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsew</property>
+                                </layout>
+                                <containerlayout manager="grid">
+                                  <property type="col" id="0" name="weight">1</property>
+                                </containerlayout>
+                                <child>
+                                  <object class="ttk.Labelframe" id="labelframe1">
+                                    <property name="height">200</property>
+                                    <property name="text" translatable="yes">Already have a license key for this visual novel?</property>
+                                    <property name="width">200</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="padx">15</property>
+                                      <property name="pady">15</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">nw</property>
+                                    </layout>
+                                    <containerlayout manager="grid">
+                                      <property type="col" id="0" name="weight">1</property>
+                                      <property type="row" id="0" name="weight">1</property>
+                                    </containerlayout>
+                                    <child>
+                                      <object class="ttk.Frame" id="frame10">
+                                        <property name="height">200</property>
+                                        <property name="width">200</property>
+                                        <layout manager="grid">
+                                          <property name="column">0</property>
+                                          <property name="padx">5</property>
+                                          <property name="pady">5</property>
+                                          <property name="row">0</property>
+                                          <property name="sticky">ew</property>
+                                        </layout>
+                                        <containerlayout manager="grid">
+                                          <property type="col" id="0" name="weight">1</property>
+                                          <property type="row" id="1" name="weight">1</property>
+                                        </containerlayout>
+                                        <child>
+                                          <object class="ttk.Label" id="label9">
+                                            <property name="text" translatable="yes">Enter a license key:</property>
+                                            <layout manager="grid">
+                                              <property name="column">0</property>
+                                              <property name="row">0</property>
+                                              <property name="sticky">w</property>
+                                            </layout>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="lvnauthwidgets.entrylimitwidget" id="entry_license_key" named="True">
+                                            <property name="textvariable">string:v_license_key</property>
+                                            <layout manager="grid">
+                                              <property name="column">0</property>
+                                              <property name="row">1</property>
+                                              <property name="sticky">ew</property>
+                                            </layout>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Labelframe" id="labelframe2">
+                                    <property name="height">200</property>
+                                    <property name="text" translatable="yes">Redeem a license key</property>
+                                    <property name="width">200</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="padx">15</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">nw</property>
+                                    </layout>
+                                    <containerlayout manager="grid">
+                                      <property type="col" id="0" name="weight">1</property>
+                                    </containerlayout>
+                                    <child>
+                                      <object class="ttk.Frame" id="frame9">
+                                        <property name="height">200</property>
+                                        <property name="width">200</property>
+                                        <layout manager="grid">
+                                          <property name="column">0</property>
+                                          <property name="padx">5</property>
+                                          <property name="pady">5</property>
+                                          <property name="row">0</property>
+                                          <property name="sticky">ew</property>
+                                        </layout>
+                                        <containerlayout manager="grid">
+                                          <property type="col" id="0" name="weight">1</property>
+                                          <property type="row" id="1" name="weight">1</property>
+                                        </containerlayout>
+                                        <child>
+                                          <object class="ttk.Label" id="label10">
+                                            <property name="text" translatable="yes">Enter a payment transaction ID:</property>
+                                            <layout manager="grid">
+                                              <property name="column">0</property>
+                                              <property name="row">1</property>
+                                              <property name="sticky">w</property>
+                                            </layout>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="lvnauthwidgets.entrylimitwidget" id="entry_transaction_id" named="True">
+                                            <property name="textvariable">string:v_transaction_id</property>
+                                            <property name="width">50</property>
+                                            <layout manager="grid">
+                                              <property name="column">0</property>
+                                              <property name="row">2</property>
+                                              <property name="sticky">ew</property>
+                                            </layout>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="ttk.Button" id="btn_get_license" named="True">
+                                            <property name="command" type="command" cbtype="simple">on_get_license_key_button_clicked</property>
+                                            <property name="text" translatable="yes">Get License Key</property>
+                                            <layout manager="grid">
+                                              <property name="column">0</property>
+                                              <property name="pady">3</property>
+                                              <property name="row">3</property>
+                                            </layout>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
                                   </object>
                                 </child>
                               </object>
