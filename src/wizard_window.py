@@ -1294,12 +1294,36 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
-                           purpose_line="Pause the dialog text for a specific number of frames.\n\n",
+                           purpose_line="Pause the dialog text for a specific number of frames.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of frames have\nelapsed (specified below).",
                            scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
                            scale_from_value=1,
                            scale_to_value=600,
                            scale_default_value=120,
                            group_name=GroupName.PAUSE)
+        
+        page_dialog_halt_and_pause = \
+                CommandOnly(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Dialog",
+                            sub_display_text="halt_and_pause_main_script",
+                            command_name="halt_and_pause_main_script",
+                            purpose_line="Pause the main script until the <unpause_main_script>\ncommand is used to unpause the visual novel manually.",
+                            when_to_use="When you want the viewer to click a sprite button to\nadvance the story instead of clicking anywhere to advance the story.",
+                            group_name=GroupName.PAUSE)
+        
+        page_dialog_unpause = \
+                CommandOnly(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Dialog",
+                            sub_display_text="unpause_main_script",
+                            command_name="unpause_main_script",
+                            purpose_line="Unpause the main script that was previously paused with\nthe <halt_and_pause_main_script> command.",
+                            when_to_use="If you use sprites to allow your viewer to advance the story, you need\nto unpause the story using this command after your sprite(s) are clicked.",
+                            group_name=GroupName.PAUSE)
 
         page_dialog_no_clear = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -3142,6 +3166,8 @@ class WizardWindow:
         self.pages["text_dialog_close"] = page_dialog_close
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
+        self.pages["halt_and_pause_main_script"] = page_dialog_halt_and_pause
+        self.pages["unpause_main_script"] = page_dialog_unpause
         self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
@@ -7485,7 +7511,7 @@ class SharedPages:
 
             if not hide_load_as_widgets:
                 message = "(optional) - Load as a different name? Used for spawning copies.\n" \
-                          "Enter a new copy name below:"
+                    "Enter a new copy name below:"
                 lbl_load_as_prompt = ttk.Label(frame_content, text=message)
                 self.entry_load_as = ttk.Entry(frame_content, width=25)
 
