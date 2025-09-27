@@ -21,31 +21,29 @@ LVNAuth. If not, see <https://www.gnu.org/licenses/>.
 proxy.verify_license() because each remote request will need the license key checked.
 """
 
-import ssl
-from xmlrpc.client import ServerProxy, Error
+import niquests as requests
 from queue import Queue
 from threading import Thread
 from enum import Enum, auto
 from dataclasses import dataclass
-from threading import Thread
 from response_code import ServerResponseReceipt, ServerResponseCode
-from typing import ClassVar, Callable, Tuple, Dict, Optional
-from pathlib import Path
+from typing import ClassVar, Callable, Dict, Optional
+
 
 
 class WebLicenseType(Enum):
     SHARED = auto()
     PRIVATE = auto()
     
-    
-# The values are used for keys in a dictionary
+
 class WebKeys(Enum):
     WEB_ACCESS = "WebAccess"
     WEB_KEY = "WebKey"
     WEB_ADDRESS = "WebAddress"
     WEB_LICENSE_TYPE = "WebLicenseType"
-    WEB_CA_CERT = "WebCertificate"
-    
+    WEB_PUBLIC_CERTIFICATE = "WebPublicCertificate"
+    WEB_BYPASS_CERTIFICATE = "WebBypassCertificate"
+
 
 # Used for knowing whether a contact with a visual novel server
 # was successful or not.
@@ -53,7 +51,15 @@ class WebResponse(Enum):
     SERVER_NOT_REACHABLE = auto()
     LICENSE_INVALID = auto()
     SUCCESSFUL = auto()
-
+    
+    
+class WebRequestPurpose(Enum):
+    VERIFY_LICENSE = "VERIFY"
+    REMOTE_SAVE = "SAVE"
+    REMOTE_GET = "GET"
+    REMOTE_CALL = "CALL"
+    REDEEM_OR_UPDATE_LICENSE_KEY = "REDEEM"
+    
 
 class WebWorker(Thread):
     """
@@ -68,12 +74,12 @@ class WebWorker(Thread):
     active_count = 0
     
     def __init__(self,
-                 address_and_port: Tuple, 
+                 uri: str, 
                  data: Dict,
                  callback_method: Callable):
         Thread.__init__(self, daemon=True)
         
-        self.address_and_port = address_and_port
+        self.uri = uri
         
         self.data = data
         self.callback_method = callback_method
@@ -107,29 +113,6 @@ class WebWorker(Thread):
         """        
         cls.active_count -= 1
         
-    def create_secure_context(self) -> ssl.SSLContext:
-        """
-        Return a default SSL context for connecting to a TLS xml-rpc server.
-        
-        If there is a local 'server.pem' file, use it (typically for
-        a non-production work.)
-        """
-        context = ssl.create_default_context()
-        
-        # If there's a custom server.pem file data, use that.
-        server_pem_data = self.data.get(WebKeys.WEB_CA_CERT.value)
-        if server_pem_data:
-            context.load_verify_locations(cadata=server_pem_data)
-            
-            # Remove the web certificate from the data dictionary
-            # because the server doesn't need it. So remove it before
-            # we send a request.
-            del self.data[WebKeys.WEB_CA_CERT.value]
-        else:
-            # Load default certs from the operating system
-            context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
-        
-        return context
 
     def run(self):
         """
@@ -149,46 +132,58 @@ class WebWorker(Thread):
             
             return
         
-        # This will hold the text response from the server, if any.
-        result = None
-        
-        # Get default values for connecting to a TLS xml-rpc server.
-        secure_context = self.create_secure_context()
-        
+        # Send the request to the server.
         try:
-    
-            with ServerProxy(self.address_and_port,
-                             context=secure_context) as proxy:
                 
-                # Send a remote request.
-                result = proxy.verify_license(self.data)
+            web_public_certificate = self.data.pop("web_public_certificate")
+            bypass_certificate = self.data.pop("web_bypass_certificate")
+            
+            if bypass_certificate:
+                # Don't verify the certificate.
+                # For local testing purposes, not for distributing
+                # the visual novel to others.
+                verify = False
+                
+            elif web_public_certificate:
+                # Use a custom private certificate
+                verify = web_public_certificate
+                
+            else:
+                # Attempt to verify using regular/stock certificates.
+                verify = True
+            
+            result = requests.post(self.uri, verify=verify, json=self.data)
+        
+        except requests.exceptions.SSLError:
+            
+            result = None
+            response = ServerResponseCode.SSL_ERROR
+            
+        except requests.exceptions.ConnectionError:
+            
+            result = None
+            response = ServerResponseCode.CONNECTION_ERROR
+        
+        else:
+        
+            # We're only interested in the text represetation.
+            result = result.json()
+    
+            # Send a remote request.
+            # result = proxy.verify_license(self.data)
+    
+            response =\
+                ServerResponseCode.get_response_code_from_text(msg=result)
+    
 
-                response =\
-                    ServerResponseCode.get_response_code_from_text(msg=result)
-
-        except ConnectionRefusedError:
-            response = ServerResponseCode.CONNECTION_ERROR
-            
-        except Error:
-            response = ServerResponseCode.CONNECTION_ERROR
-            
-        except (ValueError, TypeError) as e:
-            response = ServerResponseCode.UNKNOWN
-            result = e
-            
-        except ConnectionResetError:
-            response = ServerResponseCode.CONNECTION_ERROR
-            
-        finally:
-            # Send the response to the main GUI thread, regardless
-            # if there was an error or not.
-            receipt =\
-                ServerResponseReceipt(
-                    callback_method=self.callback_method,
-                    response_code=response,
-                    response_text=result)
-            WebHandler.the_queue.put(receipt)                
-            
+        # Send the response to the main GUI thread
+        receipt =\
+            ServerResponseReceipt(
+                callback_method=self.callback_method,
+                response_code=response,
+                response_text=result)
+        WebHandler.the_queue.put(receipt)                
+    
 
 
 @dataclass
@@ -200,8 +195,9 @@ class WebHandler:
     # Instance variables
     web_key: str
     web_address: str
+    web_public_certificate: str
+    web_bypass_certificate: bool
     web_license_type: WebLicenseType
-    web_certificate: str
     web_enabled: bool
     vn_name: str
     vn_episode: str
@@ -219,23 +215,26 @@ class WebHandler:
     def send_request(self,
                      data: Dict,
                      callback_method: Callable,
+                     purpose: WebRequestPurpose,
                      increment_usage_count=True):
         """
-        Send data to the remote xml rpc server and get a response back.
+        Send data to the remote server and get a response back.
         This method is run from the main thread, but spawns a worker thread.
         
         Arguments:
         
-        - data: arguments to send to xml rpc
+        - data: dictionary data to send to FastAPI
         
         - callback_method: the method to run when we receive a response
-        from the xml rpc server.
+        from the server.
+        
+        - purpose: so we know which URL to request data from.
         
         - increment_usage_count: we use this to know whether we need to
         increment the count of web workers when a web worker thread is
         created in this method.
         
-        When using the <remote> command, we want this to be True, because
+        When using the <remote_> command, we want this to be True, because
         the main script (non-reusable scripts) will need to pause and wait
         for a remote script when the thread count is more than zero.
         
@@ -244,11 +243,12 @@ class WebHandler:
         during a license check.
         """
         
-        # Required data to send to the xml-rpc server.
+        # Required data to send to the remote server.
         default_required_data =\
-            {"LicenseKey": self.web_key,
-             "VisualNovelName": self.vn_name,
-             "WebCertificate": self.web_certificate,}        
+            {"license_key": self.web_key,
+             "vn_name": self.vn_name,
+             "web_public_certificate": self.web_public_certificate,
+             "web_bypass_certificate": self.web_bypass_certificate,}        
 
         # Is there optional data to send? Combine it with the required data.
         if data:
@@ -265,15 +265,32 @@ class WebHandler:
 
         t = Thread(target=self._send_request,
                    daemon=True,
-                   args=(data, callback_method))
+                   args=(data, purpose, callback_method))
         t.start()
         
-    def _send_request(self, data: Dict, callback_method: Callable):
+    def _send_request(self, data: Dict, purpose: WebRequestPurpose,
+                      callback_method: Callable):
         """
-        Send a request to the xml rpc server. This method is run in a
+        Send a request to the server. This method is run in a
         worker thread.
         """
-        reader = WebWorker(address_and_port=self.web_address,
+        
+        if purpose == WebRequestPurpose.VERIFY_LICENSE:
+            address = self.web_address + "/verify"
+            
+        elif purpose == WebRequestPurpose.REMOTE_GET:
+            address = self.web_address + "/remote_get"
+            
+        elif purpose == WebRequestPurpose.REMOTE_SAVE:
+            address = self.web_address + "/remote_save"
+            
+        elif purpose == WebRequestPurpose.REMOTE_CALL:
+            address = self.web_address + "/remote_call"
+            
+        elif purpose == WebRequestPurpose.REDEEM_OR_UPDATE_LICENSE_KEY:
+            address = self.web_address + "/redeem_process"
+        
+        reader = WebWorker(uri=address,
                            data=data,
                            callback_method=callback_method)     
         
