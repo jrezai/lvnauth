@@ -31,6 +31,8 @@ from typing import Dict
 from pathlib import Path
 from pygame import scrap
 
+  
+
 # We need to add the parent directory so
 # the container_handler module will be seen.
 this_module_path = Path(__file__)
@@ -67,12 +69,14 @@ class Main:
         # Get the BytesIO of the poster image.
         # We're going to use this to show the poster image later.
         image_file_object = self._get_poster_image(data_requester=data_requester)
+           
 
         # Instantiate the launch window
         self.launch_window = \
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
+        
         
         # Center the launch window
         Passer.center_window_active_monitor(self.launch_window.mainwindow)
@@ -121,9 +125,7 @@ class Main:
         web_enabled = story_info.get(web_handler.WebKeys.WEB_ACCESS.value)
         
         web_address = story_info.get(web_handler.WebKeys.WEB_ADDRESS.value)
-        
-        web_certificate = story_info.get(web_handler.WebKeys.WEB_CA_CERT.value)
-        
+
         # If it's a shared license key, get it here.
         # If it's a private license key, we don't have it yet; this will be None
         web_key = story_info.get(web_handler.WebKeys.WEB_KEY.value)
@@ -134,6 +136,12 @@ class Main:
             web_license_type = web_handler.WebLicenseType.PRIVATE
         else:
             web_license_type = web_handler.WebLicenseType.SHARED
+            
+        web_public_certificate =\
+            story_info.get(web_handler.WebKeys.WEB_PUBLIC_CERTIFICATE.value)
+        
+        web_bypass_certificate =\
+            story_info.get(web_handler.WebKeys.WEB_BYPASS_CERTIFICATE.value)
         
         # Initialize web_handler. This will be used throughout the visual
         # novel for interacting with flask and the database.
@@ -145,8 +153,9 @@ class Main:
             web_handler.WebHandler(
                 web_key,
                 web_address,
+                web_public_certificate,
+                web_bypass_certificate, 
                 web_license_type,
-                web_certificate, 
                 web_enabled,
                 story_info.get("StoryTitle"),
                 story_info.get("Episode"))
@@ -214,7 +223,7 @@ class Main:
         Passer.active_story = story
         
         # Now that the story reader object has been initialized above, use
-        # on_web_request_finished() as the callback method for xml rpc
+        # on_web_request_finished() as the callback method for the server
         # replies. We couldn't specify the callback method earlier because
         # the story reader object hadn't been initialized yet.
         Passer.web_handler.callback_method_finished =\
@@ -360,8 +369,7 @@ class Main:
                 # Show a 'copied' text in the draft rectangle
                 # so that the user knows it's been copied to the clipboard.
                 Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
-
-
+ 
 
 if __name__ == "__main__":
 
@@ -397,5 +405,5 @@ if __name__ == "__main__":
 
     # print(f"{args.file=},{args.show_menu=}")
 
-    main = Main()
+    main = Main()    
     main.begin()
