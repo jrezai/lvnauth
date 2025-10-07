@@ -107,7 +107,18 @@ class LaunchWindow:
         self.entry_license_key = builder.get_object("entry_license_key")
         
         # For getting/setting the license key in the entry widget.
+        self.v_license_key: tk.Variable
         self.v_license_key = builder.get_variable("v_license_key")
+        self.v_license_key.trace_add("write", self.on_license_key_changed)
+        
+        # So we can change the text of the 'Get License Key' button
+        # to 'Update License Key' if needed.
+        self.btn_get_license = builder.get_object("btn_get_license")
+        
+        # So we can update the text of the labelframe, similar to the button
+        # above.
+        self.frame_redeem_or_update_license_key =\
+            builder.get_object("frame_redeem_or_update_license_key")
         
         # For getting a transaction ID from the user.
         self.v_transaction_id = builder.get_variable("v_transaction_id")
@@ -152,6 +163,23 @@ class LaunchWindow:
         self.populate_story_info()
         
         self.check_web_enabled()
+        
+    def on_license_key_changed(self, name, index, mode):
+        """
+        If a license key is present (any text) in the entry widget,
+        update the text to show 'Update License Key'.
+        
+        If there is no license key entered in the entry widget,
+        update the text to show 'Redeem License Key'.
+        """
+        license_key = self.v_license_key.get()
+        
+        if license_key:
+            self.btn_get_license.configure(text="Update License Key")
+            self.frame_redeem_or_update_license_key.configure(text="Update the license key above")
+        else:
+            self.btn_get_license.configure(text="Get License Key")
+            self.frame_redeem_or_update_license_key.configure(text="Redeem a new license key")
         
     def custom_tk_exception_handler(self, exception_class, exception_value,
                                     traceback_object):
@@ -214,6 +242,8 @@ class LaunchWindow:
         response_code = receipt.get_response_code()
         response_text = receipt.get_response_text()
         
+        msgbox_func = messagebox.showerror
+        
         match response_code:
             
             case ServerResponseCode.SUCCESS:
@@ -222,6 +252,17 @@ class LaunchWindow:
                 self._play_selection()
                 
                 return
+            
+            case ServerResponseCode.UPDATED_LICENSE:
+                # The given license key was updated using a transaction ID.
+                
+                msg_title = "Success!"
+                msg = "Success!\n\nThe provided license key has been updated."
+                
+                # Disable the 'Update License' button because it's finished.
+                self.btn_get_license.state(["disabled"])
+                
+                msgbox_func = messagebox.showinfo
             
             case ServerResponseCode.LICENSE_KEY_NOT_FOUND:
                 # The provided license key is not a valid/known license key.
@@ -255,16 +296,37 @@ class LaunchWindow:
                 msg_title = "SSL Error"
                 msg = "Could not securely connect to the server."
                 
+            case ServerResponseCode.ALREADY_REDEEMED:
+                
+                msg_title = "Already Redeemed"
+                msg = "The license key has already been redeemed or updated using the provided transaction ID."
+                
+            case ServerResponseCode.LICENSE_KEY_NOT_PRIVATE:
+                
+                # The user is trying to update a public license key with a transaction ID.
+                msg_title = "Private License Key"
+                msg = "The provided license key is public. Only a private license key can be updated."
+                
+            case ServerResponseCode.TRANSACTION_ID_NOT_FOUND:
+                
+                msg_title = "Transaction ID Not Found"
+                msg = "The provided transaction ID was not found.\n\nThe transaction ID should have been emailed to you after making a payment."
+                
+            case ServerResponseCode.VN_NOT_PART_OF_PACKAGE:
+                
+                msg_title = "Visual Novel Package"
+                msg = "This visual novel is not part of the package (tier) that was paid for."
+                
             case ServerResponseCode.UNKNOWN:
                 
                 msg_title = "Unknown Error"
                 msg = response_text
             
         try:
-            messagebox.showerror(master=self.mainwindow,
-                                 title=msg_title,
-                                 message=msg)
-            
+            msgbox_func(master=self.mainwindow,
+                        title=msg_title,
+                        message=msg)
+   
             self.entry_license_key.focus()
             
             # Enable the play button after 1 second.
@@ -312,7 +374,7 @@ class LaunchWindow:
         """
         
         # Get the license key, if provided.
-        license_key = self.v_license_key.get().strip()
+        Passer.web_handler.web_key = self.v_license_key.get().strip()
         
         # Get the transaction ID, which is mandatory.
         transaction_id = self.v_transaction_id.get().strip()
@@ -325,6 +387,7 @@ class LaunchWindow:
             return
         
         # The license key and visual novel name will get added later
+        # from Passer.web_handler.web_key
         # (if a license key is available)
         # in the web_handler itself, as part of keys that are always included
         # in each request.
