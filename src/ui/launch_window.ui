@@ -144,6 +144,15 @@ It allows a specific scene to be played and also shows information about the vis
                             </layout>
                           </object>
                         </child>
+                        <child>
+                          <object class="ttk.Label" id="lbl_certificate_warning" named="True">
+                            <property name="text" translatable="yes">lbl_certificate_warning</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -494,9 +503,9 @@ It allows a specific scene to be played and also shows information about the vis
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="ttk.Labelframe" id="labelframe2">
+                                  <object class="ttk.Labelframe" id="frame_redeem_or_update_license_key" named="True">
                                     <property name="height">200</property>
-                                    <property name="text" translatable="yes">Redeem a license key</property>
+                                    <property name="text" translatable="yes">Redeem a new license key</property>
                                     <property name="width">200</property>
                                     <layout manager="grid">
                                       <property name="column">0</property>
