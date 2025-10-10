@@ -7620,52 +7620,82 @@ class SharedPages:
                                        message=f"Enter {entry_type_preposition} {entry_type} for the {self.get_purpose_name()}.")
                 return
 
-            # Load the sprite using a different name? (load as).
-            load_as_name = self.entry_load_as.get().strip()
-
-            # Make sure the copy/load as name is different
-            # from the original name.
-            if load_as_name and load_as_name.lower() == selection.lower():
-                messagebox.showwarning(
-                    parent=self.treeview_commands.winfo_toplevel(),
-                    title="Load As Name",
-                    message=f"The name of the copy must be different from the original name: '{selection}'")
-                return
-
-            elif not load_as_name:
-                # So we don't end up with an empty string.
-                load_as_name = None
+            # This page is used for multiple purposes.
+            # Are we using it for <variable_set> ?
+            if self.purpose_type == Purpose.VARIABLE_SET:
+                # This page is being used for the command: <variable_set>
+                
+                user_input = {"VariableName": selection,
+                              "VariableValue": alias}
+        
+                return user_input
             
-            user_input = {"Selection": selection,
-                          "LoadAsName": load_as_name,
-                          "Alias": alias}
+            else:
+                # This page is used for multiple purposes.
+                # It's currently being used for loading a sprite.
     
-            return user_input
+                # Load the sprite using a different name? (load as).
+                load_as_name = self.entry_load_as.get().strip()
+  
+                # Make sure the copy/load as name is different
+                # from the original name.
+                if load_as_name and load_as_name.lower() == selection.lower():
+                    messagebox.showwarning(
+                        parent=self.treeview_commands.winfo_toplevel(),
+                        title="Load As Name",
+                        message=f"The name of the copy must be different from the original name: '{selection}'")
+                    return
+    
+                elif not load_as_name:
+                    # So we don't end up with an empty string.
+                    load_as_name = None
+                
+                user_input = {"Selection": selection,
+                              "LoadAsName": load_as_name,
+                              "Alias": alias}
+        
+                return user_input
         
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
             """
     
-            # The user input will be a dictionary like this:
+            # The user input will be a dictionary like this if we're
+            # loading a sprite:
             # {"Selection": "rave_normal",
             # "LoadAsName": None,
             # "Alias": "Rave"}
+            
+            # Or it'll look like this if it's being used for <variable_set>
+            # {"VariableName": "some_variable_name",
+            # "VariableValue": "some variable value"}            
             user_inputs = self.check_inputs()
             
             if not user_inputs:
                 return
-    
-            sprite_name = user_inputs.get("Selection")
-            load_as_name = user_inputs.get("LoadAsName")
-            alias = user_inputs.get("Alias")
-
-            if load_as_name:
-                # Using 'load as'
-                return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+            
+            # This page is used for multiple purposes.
+            # 1) Either for <variable_set> or
+            # 2) for loading a sprite, such as with <load_dialog_sprite>
+            if self.purpose_type == Purpose.VARIABLE_SET:
+                variable_name = user_inputs.get("VariableName")
+                variable_value = user_inputs.get("VariableValue")
+                
+                return_value = f"<{self.command_name}: {variable_name}, {variable_value}>"
+                
             else:
-                # Not using 'load as'
-                return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
+        
+                sprite_name = user_inputs.get("Selection")
+                load_as_name = user_inputs.get("LoadAsName")
+                alias = user_inputs.get("Alias")
+    
+                if load_as_name:
+                    # Using 'load as'
+                    return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+                else:
+                    # Not using 'load as'
+                    return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
 
             return return_value
 
