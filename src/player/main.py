@@ -26,6 +26,7 @@ from file_reader import FileReader
 from shared_components import Passer
 from datetime import datetime
 from launch_window import LaunchWindow
+from player_config_handler import PlayerConfigHandler
 from io import BytesIO
 from typing import Dict
 from pathlib import Path
@@ -165,6 +166,14 @@ class Main:
         # Read the .lvna file from the provided argument command switch.
         # The path to the .lvna file will be in args.file
         data_requester = FileReader(args.file)
+        
+        # Visual novel name and lvna full path.
+        # We need both of these for the config file.        
+        vn_name = data_requester.general_header.get("StoryInfo").get("StoryTitle")
+        lvna_full_path = Path(args.file)
+        
+        # For loading and saving visual novel config data.
+        Passer.player_config = PlayerConfigHandler(vn_name, lvna_full_path)        
 
         # Get the story's requestes window size
         # in pixels (width, height)
@@ -174,7 +183,7 @@ class Main:
         # To know whether to show the draft rectangle or not, and
         # whether to allow some keyboard shortcuts or not.
         compile_mode = data_requester.general_header.get("StoryCompileMode")
-
+        
         draft_mode = compile_mode == "Draft"
         
         # Initialize web_handler for handling xml rpc connections
@@ -212,13 +221,9 @@ class Main:
 
         main_surface.fill((0, 0, 0))
 
-        background_surface = pygame.Surface(size=screen_size)
-        background_surface.fill((0, 0, 0))
-
         story = ActiveStory(screen_size=screen_size,
                             data_requester=data_requester,
                             main_surface=main_surface,
-                            background_surface=background_surface,
                             draft_mode=draft_mode)
         Passer.active_story = story
         

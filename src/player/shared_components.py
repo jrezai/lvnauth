@@ -19,6 +19,7 @@ import pygame
 from web_handler import WebHandler
 from typing import List
 from screeninfo import screeninfo
+from player_config_handler import PlayerConfigHandler
 
 
 class ManualUpdate:
@@ -114,6 +115,9 @@ class MouseActionsAndCoordinates:
 
 class Passer:
     active_story = None
+    
+    # Used for saving and loading visual novel data, such as the license key.
+    player_config: PlayerConfigHandler = None
     
     # Used for verifying a license key.
     # This variable will be used throughout the visual novel for 

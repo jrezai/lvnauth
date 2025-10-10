@@ -6077,8 +6077,6 @@ class StoryReader:
 
             sprite.movement_add_stop(rect_area=rect_section, reaches_where=stop_where)
 
-        #   self.story.change_background(background_surface=background_surface)
-
 
 class WaitForAnimationHandler:
     """
