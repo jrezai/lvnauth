@@ -135,6 +135,17 @@ class Main:
         
         if web_license_type == "private":
             web_license_type = web_handler.WebLicenseType.PRIVATE
+            
+            """
+            If the user tries to play the visual novel from the current scene
+            or from the startup scene, there won't be a chance to enter a
+            license key. So try to get the license key from the last time the
+            config file was populated.
+            """
+            # We won't have a license key yet, but try to get the license key 
+            # from the config file in case the launch window is not used.
+            web_key = Passer.player_config.get_data("LicenseKey")          
+            
         else:
             web_license_type = web_handler.WebLicenseType.SHARED
             
@@ -186,7 +197,7 @@ class Main:
         
         draft_mode = compile_mode == "Draft"
         
-        # Initialize web_handler for handling xml rpc connections
+        # Initialize web_handler for handling web connections
         self.initialize_web(data_requester=data_requester)
 
         # Should we show the launch window?
