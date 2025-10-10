@@ -21,7 +21,7 @@ import sys
 import pathlib
 import tkinter as tk
 from tkinter import messagebox
-
+from tkinter import ttk
 import pygubu
 import queue_reader
 from typing import Dict
@@ -29,6 +29,7 @@ from PIL import ImageTk, Image
 from io import BytesIO
 from pathlib import Path
 from web_handler import WebHandler, WebLicenseType, WebRequestPurpose
+from player_config_handler import PlayerConfigHandler
 from shared_components import Passer
 from response_code import ServerResponseReceipt, ServerResponseCode
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -82,6 +83,11 @@ class LaunchWindow:
         # Continuously check the queue for secondary thread messages.
         self.mainwindow: tk.Toplevel
         self.mainwindow.after(300, self.check_queue)
+        
+        self.style = ttk.Style()
+        self.style.configure("Warning.TLabel",
+                             background="red",
+                             foreground="white")
 
         # Get references to the widgets
         self.lbl_story_title = builder.get_object("lbl_story_title")
@@ -123,9 +129,13 @@ class LaunchWindow:
         # For getting a transaction ID from the user.
         self.v_transaction_id = builder.get_variable("v_transaction_id")
         
-        # For debugging
-        # TODO: Remove this license key, it's just for debugging.
-        self.v_license_key.set("ed3f88f4-8a91-4d26-8421-14db7736fc79")
+        # Used for showing a warning if bypassing certificate verification.
+        self.lbl_certificate_warning =\
+            builder.get_object("lbl_certificate_warning")
+        self.lbl_certificate_warning.configure(style="Warning.TLabel")
+        
+        # Load and show the license key from the config file (if available).
+        self.populate_license_key()
 
         # So we know when the user has decided to 'X' out of the window.
         # That way, we can prevent the story from playing and exit the app.
@@ -152,6 +162,9 @@ class LaunchWindow:
         # copyright, etc.
         self.story_info: Dict
         self.story_info = story_info
+        
+        # Show a warning if bypassing certificate verification.
+        self.show_certificate_warning()        
 
         # Dict of chapter and scene names.
         # We'll populate the treeview from this dict later.
@@ -163,6 +176,17 @@ class LaunchWindow:
         self.populate_story_info()
         
         self.check_web_enabled()
+        
+    def show_certificate_warning(self):
+        """
+        Show a certificate warning message to the viewer of the visual novel
+        if the certificate check is set to be bypassed.
+        """
+        bypass_certificate_check = self.story_info.get("WebBypassCertificate")
+        if bypass_certificate_check:
+            self.lbl_certificate_warning.configure(text="Warning: the SSL certificate will not be verified.\nThis visual novel is for TESTING only.")
+        else:
+            self.lbl_certificate_warning.grid_forget()
         
     def on_license_key_changed(self, name, index, mode):
         """
@@ -399,6 +423,32 @@ class LaunchWindow:
                          callback_method=self.on_web_request_finished,
                          increment_usage_count=False)
 
+    def save_license_key(self):
+        """
+        Get the license from from the entry widget and save it to the local
+        config file. The purpose is to prevent having to enter a license key
+        again after the visual novel is closed and re-opened.
+        """
+        
+        # Get the license key.
+        license_key = self.v_license_key.get().strip()
+        
+        Passer.player_config.save_data("LicenseKey", license_key)
+        
+    def populate_license_key(self):
+        """
+        Get the license key from the config file, if it's there.
+        Show the license key in the entry widget if the license key is found.
+        """
+        
+        license_key = Passer.player_config.get_data("LicenseKey")
+        if not license_key:
+            return
+        
+        license_key = license_key.strip()
+        
+        self.v_license_key.set(license_key)
+
     def on_play_selection_button_clicked(self):
         """
         If it's a web-enabled visual novel, verify the license
@@ -434,8 +484,10 @@ class LaunchWindow:
                         # will raise a TclError, so we have this error 
                         # handler here.
                         return
-                    
             
+            # Save the license key to the config file so when the visual novel
+            # is restarted, the license key will be pre-populated.
+            self.save_license_key()            
             
             Passer.web_handler.\
                 send_request(data=None,
