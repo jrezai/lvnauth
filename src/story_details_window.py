@@ -132,6 +132,7 @@ class StoryDetailsWindow:
                                 WebKeys.WEB_PUBLIC_CERTIFICATE.value: self.text_pem,
                                 WebKeys.WEB_BYPASS_CERTIFICATE.value: self.v_bypass_certificate,}
 
+        # Show the current details to the user by populating the widgets.
         self._get_details()
         
 
@@ -190,7 +191,6 @@ class StoryDetailsWindow:
     def _get_details(self):
         """
         Show the current details to the user by populating the widgets.
-        :return: None
         """
         if self.existing_details:
             for detail_name, widget in self.widget_mappings.items():
@@ -264,6 +264,19 @@ class StoryDetailsWindow:
         dictionary for the project will be updated from the instance
         dictionary later.
         """
+        
+        # Don't allow square brackets in the visual novel name,
+        # because the config file section uses them.
+        entry_story_title = self.widget_mappings.get("StoryTitle")
+        vn_name = entry_story_title.get()
+        if any(letter in vn_name for letter in ["[", "]"]):
+            messagebox.showerror(
+                parent=self.story_details_window,
+                title="Square Bracket",
+                message="Square brackets [] cannot be used in the visual novel name.")
+            entry_story_title.focus()
+            
+            return
 
         # Iterate through the entry widgets and the description text widget.
         for detail_name, widget in self.widget_mappings.items():
