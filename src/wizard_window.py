@@ -44,6 +44,8 @@ from entry_limit import EntryWithLimit
 from functools import partial
 from re import search, IGNORECASE
 from command_helper import CommandHelper, ContextEditRun
+from variable_editor_window import VariableEditorWindow
+
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -7624,6 +7626,15 @@ class SharedPages:
             # Are we using it for <variable_set> ?
             if self.purpose_type == Purpose.VARIABLE_SET:
                 # This page is being used for the command: <variable_set>
+                
+                # Make sure the provided variable name doesn't contain
+                # invalid characters (ie: no spaces allowed)
+                is_variable_name_valid =\
+                    VariableEditorWindow.is_variable_name_allowed(
+                        selection, self.treeview_commands.winfo_toplevel())
+                
+                if not is_variable_name_valid:
+                    return
                 
                 user_input = {"VariableName": selection,
                               "VariableValue": alias}
