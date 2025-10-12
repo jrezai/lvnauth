@@ -162,9 +162,6 @@ class LaunchWindow:
         # copyright, etc.
         self.story_info: Dict
         self.story_info = story_info
-        
-        # Show a warning if bypassing certificate verification.
-        self.show_certificate_warning()        
 
         # Dict of chapter and scene names.
         # We'll populate the treeview from this dict later.
@@ -177,13 +174,18 @@ class LaunchWindow:
         
         self.check_web_enabled()
         
-    def show_certificate_warning(self):
+    def show_certificate_warning(self, web_enabled: bool):
         """
         Show a certificate warning message to the viewer of the visual novel
         if the certificate check is set to be bypassed.
+        
+        Arguments:
+        
+        - web_enabled: bool to indicate whether it's a web-enabled
+        visual novel or not.
         """
         bypass_certificate_check = self.story_info.get("WebBypassCertificate")
-        if bypass_certificate_check:
+        if bypass_certificate_check and web_enabled:
             self.lbl_certificate_warning.configure(text="Warning: the SSL certificate will not be verified.\nThis visual novel is for TESTING only.")
         else:
             self.lbl_certificate_warning.grid_forget()
@@ -251,12 +253,19 @@ class LaunchWindow:
         
     def check_web_enabled(self):
         """
-        Don't show the license frame if the visual novel
-        is not web-enabled.
+        Don't show the license frame and the certificate warning label
+        if the visual novel is not web-enabled.
+        
+        If it is web-enabled, consider showing the certificate warning label
+        if the certificate is being bypassed.
         """
 
         if not Passer.web_handler.web_enabled:
             self.notebook_main.tab(tab_id=2, state=tk.HIDDEN)
+            
+        # Show a warning if bypassing certificate verification
+        # if it's a web-connected visual novel
+        self.show_certificate_warning(Passer.web_handler.web_enabled)               
             
     def on_web_request_finished(self, receipt: ServerResponseReceipt):
         """
