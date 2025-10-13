@@ -5181,6 +5181,11 @@ class StoryReader:
             if receipt.get_response_code() == ServerResponseCode.REMOTE_SCRIPT_ERROR:
                 # An error on the remote Python side.
                 raise ValueError("Error in custom remote script (error-script).")
+            
+            elif receipt.get_response_code() == ServerResponseCode.CUSTOM_REMOTE_SCRIPT_NOT_FOUND:
+                # The custom VN script file was not found on the server.
+                raise ValueError("Custom vn script file (custom_vn.py) not found on the server.")
+            
             else:
                 raise ConnectionError(f"Web connection failed: {response_text}")
 

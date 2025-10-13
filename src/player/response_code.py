@@ -36,6 +36,7 @@ class ServerResponseCode(Enum):
     LICENSE_KEY_LOCKED = auto()
     LICENSE_KEY_OWING_BALANCE = auto()
     REMOTE_SCRIPT_ERROR = auto()
+    CUSTOM_REMOTE_SCRIPT_NOT_FOUND = auto()
     OK_HEADER_NOT_RECEIVED = auto()
     
     # For redeeming a license key or updating a license key
@@ -90,6 +91,9 @@ class ServerResponseCode(Enum):
                 
             case "error-script":
                 result = ServerResponseCode.REMOTE_SCRIPT_ERROR
+                
+            case "error-custom_script_file_not_found":
+                result = ServerResponseCode.CUSTOM_REMOTE_SCRIPT_NOT_FOUND
                 
             case "error-transaction_id_not_found":
                 result = ServerResponseCode.TRANSACTION_ID_NOT_FOUND
