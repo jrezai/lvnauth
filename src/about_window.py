@@ -1,19 +1,20 @@
 """
-Copyright 2023, 2024, 2025 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pathlib
@@ -170,9 +171,15 @@ class AboutWindow:
         
         # LVNAuth license
         text_license = self.builder.get_object("text_license")
+        
         sb_vertical = self.builder.get_object("sb_vertical")
         sb_vertical.configure(command=text_license.yview)
-        text_license.configure(yscrollcommand=sb_vertical.set)  
+        
+        sb_horizontal = self.builder.get_object("sb_horizontal")
+        sb_horizontal.configure(command=text_license.xview)
+        
+        text_license.configure(yscrollcommand=sb_vertical.set,
+                               xscrollcommand=sb_horizontal.set)  
         
     def on_ok_button_clicked(self, *args):
         self.mainwindow.destroy()
