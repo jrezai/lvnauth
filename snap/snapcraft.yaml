@@ -51,6 +51,7 @@ parts:
        - pygame-ce == 2.5.3
        - pygubu == 0.36.3
        - screeninfo == 0.8.1
+       - niquests == 3.13.1
     source: .
     stage-packages:
        - python3-tk
