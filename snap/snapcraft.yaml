@@ -15,7 +15,7 @@ license: LGPL-3.0-or-later
 donation: https://lvnauth.org/pages/donate.html
 website: https://lvnauth.org
 
-architectures:
+platforms:
   - build-on: [amd64]
     build-for: [amd64]
 
