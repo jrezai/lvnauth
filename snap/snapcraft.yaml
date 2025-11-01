@@ -16,8 +16,11 @@ donation: https://lvnauth.org/pages/donate.html
 website: https://lvnauth.org
 
 platforms:
-  - build-on: [amd64]
-    build-for: [amd64]
+  amd64:
+    build-on:
+      - amd64
+    build-for:
+      - amd64
 
 apps:
   lvnauth:
