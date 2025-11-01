@@ -1,19 +1,20 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pathlib
@@ -31,6 +32,10 @@ PROJECT_UI = PROJECT_PATH / "ui" / "variable_editor_window.ui"
 
 
 class VariableEditorWindow:
+    
+    # Characters that are not allowed in a variable name
+    invalid_variable_characters = r"\/,()$:<> "
+    
     def __init__(self, master):
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
@@ -96,6 +101,35 @@ class VariableEditorWindow:
         self.treeviewedit1._hide_entry_widget()
         self.sb_vertical.set(y, y1)
         
+    @classmethod
+    def is_variable_name_allowed(cls, 
+        variable_name: str,
+        parent_window: tk.Toplevel) -> bool:
+        """
+        Check whether the given variable name contains invalid
+        characters or not.
+        
+        Return True if the name is OK or False if it contains an invalid
+        character, along with a messagebox showing the reason.
+        """
+        
+        for letter_disallowed in cls.invalid_variable_characters:
+            if letter_disallowed in variable_name:
+                
+                # For the sentence.
+                if letter_disallowed == " ":
+                    letter_disallowed = "A space"
+                else:
+                    letter_disallowed = f"'{letter_disallowed}'"
+                
+                messagebox.showwarning(parent=parent_window, 
+                                       title="Invalid Value",
+                                       message=f"{letter_disallowed} cannot be used in a variable name.")
+                
+                return False
+        
+        return True
+            
     def validate_variable_name(self,
                                column_name: str,
                                variable_name: str,
@@ -131,25 +165,18 @@ class VariableEditorWindow:
         
         # Key: internal column name, such as "#0" or "products"
         # Value: string of characters to disallow or None
-        columns_disallow_characters = {"variable_name": r"\/,()$:<> "}        
+        columns_disallow_characters =\
+            {"variable_name": VariableEditorWindow.invalid_variable_characters}        
         
         # Any letters to disallow in the given column?
         disallow_in_column = columns_disallow_characters.get(column_name)
-
         if disallow_in_column:
-            for letter_disallowed in disallow_in_column:
-                if letter_disallowed in variable_name:
+            
+            if column_name == "variable_name":
+                # Make sure the variable name is allowed.
+                if not VariableEditorWindow.\
+                   is_variable_name_allowed(variable_name, self.mainwindow):
                     
-                    # For the sentence.
-                    if letter_disallowed == " ":
-                        letter_disallowed = "A space"
-                    else:
-                        letter_disallowed = f"'{letter_disallowed}'"
-                    
-                    messagebox.showwarning(parent=self.mainwindow, 
-                                           title="Invalid Value",
-                                           message=f"{letter_disallowed} cannot be used in a variable name.")
-    
                     return False
         
         # Does the variable name already exist in the treeview widget?

@@ -1,29 +1,32 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pathlib
 import pygubu
+import tkinter as tk
 from tkinter import filedialog, PhotoImage
 from tkinter import ttk, messagebox
 from typing import Dict
 from shutil import copy2
 from project_snapshot import ProjectSnapshot, SubPaths
 from pathlib import Path
+from web_handler import WebKeys
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -54,6 +57,27 @@ class StoryDetailsWindow:
         self.entry_episode = builder.get_object("entry_episode")
         self.txt_description = builder.get_object("txt_description")
         
+        # Web related
+        self.v_allow_web_access = builder.get_variable("v_allow_web_access")
+        self.v_license_key_type = builder.get_variable("v_license_key_type")
+        self.v_bypass_certificate = builder.get_variable("v_bypass_certificate")
+        self.entry_shared_key = builder.get_object("entry_shared_key")
+        self.entry_web_address = builder.get_object("entry_web_address")
+        
+        self.text_pem: tk.Text
+        self.text_pem = builder.get_object("text_pem")
+        
+        # Scrollbars for the .pem text widget.
+        self.sb_horizontal = builder.get_object("sb_horizontal")
+        self.sb_horizontal.configure(command=self.text_pem.xview)
+        
+        self.sb_vertical = builder.get_object("sb_vertical")
+        self.sb_vertical.configure(command=self.text_pem.yview)
+        
+        # Connect the scrollbars to the .pem text widget.
+        self.text_pem.configure(xscrollcommand=self.sb_horizontal.set)
+        self.text_pem.configure(yscrollcommand=self.sb_vertical.set)
+
         # Connect the description's vertical scrollbar
         self.sb_vertical_description =\
             builder.get_object("sb_vertical_description")
@@ -100,9 +124,18 @@ class StoryDetailsWindow:
                                 "Genre": self.entry_genre,
                                 "Version": self.entry_version,
                                 "Episode": self.entry_episode,
-                                "Description": self.txt_description}
+                                "Description": self.txt_description,
+                                
+                                WebKeys.WEB_KEY.value: self.entry_shared_key,
+                                WebKeys.WEB_ADDRESS.value: self.entry_web_address,
+                                WebKeys.WEB_ACCESS.value: self.v_allow_web_access,
+                                WebKeys.WEB_LICENSE_TYPE.value: self.v_license_key_type,
+                                WebKeys.WEB_PUBLIC_CERTIFICATE.value: self.text_pem,
+                                WebKeys.WEB_BYPASS_CERTIFICATE.value: self.v_bypass_certificate,}
 
+        # Show the current details to the user by populating the widgets.
         self._get_details()
+        
 
         self.story_details_window.transient(self.master)
         self.story_details_window.grab_set()
@@ -159,14 +192,29 @@ class StoryDetailsWindow:
     def _get_details(self):
         """
         Show the current details to the user by populating the widgets.
-        :return: None
         """
         if self.existing_details:
             for detail_name, widget in self.widget_mappings.items():
                 text_to_show = self.existing_details.get(detail_name, "")
+                
+                # If the key was found with a value of None, it won't
+                # default to "" from the line above. We can't insert None
+                # into an entry widget.
+                if text_to_show is None:
+                    text_to_show = ""
+                
+                # string tk variable? set the text.
+                if isinstance(widget, tk.StringVar):
+                    widget.set(text_to_show)
+                    
+                # bool tk variable? set the bool flag from a string value.
+                elif isinstance(widget, tk.BooleanVar):
+                    widget.set(bool(text_to_show))
 
-                if widget.winfo_class() == "Text":
+                elif widget.winfo_class() == "Text":
+                    widget.configure(state="normal")
                     widget.insert("1.0", text_to_show)
+                    widget.configure(state="disabled")
                 else:
                     widget.insert(0, text_to_show)
                     
@@ -180,7 +228,33 @@ class StoryDetailsWindow:
         self.sb_height.delete(0, "end")
 
         self.sb_width.insert(0, "640")
-        self.sb_height.insert(0, "480")
+        self.sb_height.insert(0, "480")        
+
+    def on_browse_for_file_button_clicked(self):
+        """
+        Show the open file dialog to allow the user to select a .pem file.
+        """
+        file_types = [(".PEM certificate file", ".pem")]        
+        selected_file =\
+            filedialog.askopenfilename(master=self.story_details_window,
+                                       filetypes=file_types)
+        if selected_file:
+            
+            with open(selected_file, "r") as f:
+                contents = f.read()
+                
+            self.text_pem.configure(state="normal")
+            self.text_pem.delete("1.0", tk.END)
+            self.text_pem.insert("1.0", contents)
+            self.text_pem.configure(state="disabled")
+            
+    def on_clear_button_clicked(self):
+        """
+        Clear the certificate in the text widget.
+        """
+        self.text_pem.configure(state="normal")
+        self.text_pem.delete("1.0", tk.END)
+        self.text_pem.configure(state="disabled")        
 
     def on_cancel_button_clicked(self):
         self.story_details_window.destroy()
@@ -191,12 +265,54 @@ class StoryDetailsWindow:
         dictionary for the project will be updated from the instance
         dictionary later.
         """
+        
+        # Don't allow square brackets in the visual novel name,
+        # because the config file section uses them.
+        entry_story_title = self.widget_mappings.get("StoryTitle")
+        vn_name = entry_story_title.get()
+        if any(letter in vn_name for letter in ["[", "]"]):
+            messagebox.showerror(
+                parent=self.story_details_window,
+                title="Square Bracket",
+                message="Square brackets [] cannot be used in the visual novel name.")
+            entry_story_title.focus()
+            
+            return
 
         # Iterate through the entry widgets and the description text widget.
         for detail_name, widget in self.widget_mappings.items():
-            if widget.winfo_class() == "Text":
-                self.details[detail_name] = widget.get("1.0", "end-1c")
+
+            if hasattr(widget, "winfo_class") and widget.winfo_class() == "Text":
+                
+                text_content: str
+                text_content = widget.get("1.0", "end-1c")
+                
+                # Try to prevent private certificates from being used.
+                # Look for the word 'private' in the certificate.
+                if detail_name == WebKeys.WEB_PUBLIC_CERTIFICATE.value:
+                    if "private" in text_content.lower():
+                        messagebox.showerror(
+                            parent=self.story_details_window,
+                            title="Private Certificate",
+                            message="The provided certificate appears to be private.\n\nOnly a public certificate should be used here.")
+                        
+                        # The .pem certificate appears private, don't continue.
+                        return
+                    
+                self.details[detail_name] = text_content
             else:
+                
+                # If the web license type is private (not shared), don't record 
+                # any typed-in shared web key, because the visual novel is set 
+                # to a private user key.
+                if self.v_license_key_type.get() == "private" and \
+                   detail_name == WebKeys.WEB_KEY.value:
+                    # Set the shared key to None, because the web license type
+                    # is private. Without this, we'll end up saving any
+                    # typed-in shared key, even if not in shared-key mode.
+                    self.details[detail_name] = None
+                    continue
+                
                 self.details[detail_name] = widget.get()
                 
         # Save the window size.
@@ -229,6 +345,10 @@ class StoryDetailsWindow:
                                      title="Window Size",
                                      message="The minimum window size is 320 pixels\n\n"
                                      "The maximum window size is 9999 pixels.")
+                
+                # By clearing this dictionary, the caller of this
+                # window will know not to modify the main details dictionary.
+                self.details.clear()                
                 
                 # Don't continue - the width or height is incorrect
                 return

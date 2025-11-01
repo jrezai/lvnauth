@@ -1,26 +1,31 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 """
 Changes:
 - Nov 23, 2023 (Jobin Rezai) - Added get_snap_user_data_folder()
+
 - February 24, 2024 (Jobin Rezai) - Renamed to container_handler.py,
 to begin Flatpak recognition.
+
+- July 12, 2025 (Jobin Rezai) - Use an absolute path when playing a draft visual 
+novel instead of a relative path.
 """
 
 import os
@@ -150,7 +155,7 @@ class ContainerHandler:
                 full_path = Path(draft_directory) / "draft" / "draft.lvna"
                 
         else:
-            full_path = Path(r"draft/draft.lvna")
+            full_path = Path(__file__).parent / "draft" / "draft.lvna"
             
         # Do we have a full path to draft.lvna?
         if full_path:
@@ -193,7 +198,7 @@ class ContainerHandler:
             return full_path            
         else:
             # Not in a Snap package; return a regular path.
-            return Path("player") / "main.py"
+            return Path(__file__).parent / "player" / "main.py"
 
     @staticmethod
     def get_lvnauth_editor_icon_path() -> Path | None:

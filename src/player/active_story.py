@@ -1,19 +1,20 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pygame
@@ -26,7 +27,9 @@ from file_reader import ContentType
 from audio_player import AudioPlayer
 from typing import Tuple, List
 from shared_components import MouseActionsAndCoordinates
+from player_config_handler import PlayerConfigHandler
 from enum import Enum, auto
+from pathlib import Path
 from dialog_rectangle import DialogRectangle, \
      RectangleIntroAnimation, \
      RectangleOutroAnimation, \
@@ -44,12 +47,23 @@ class ActiveStory:
                  screen_size: Tuple,
                  data_requester: file_reader.FileReader,
                  main_surface: pygame.Surface,
-                 background_surface: pygame.Surface,
                  draft_mode: bool = False):
+        
+        """
+        Arguments:
+        
+        - screen_size: the width/height of the player window.
+        
+        - data_requester: so we can load sprites and audio.
+        
+        - main_surface: the main pygame surface
+        
+        - draft_mode: used for knowing whether to show the draft rectangle
+        or not, and whether to allow some keyboard shortcuts or not.
+        """
         
         # For example: (640, 480)
         self.screen_size = screen_size
-        self.background_surface = background_surface
         
         # Keeps track of the current pygame Event in
         # the current frame so any part of the project can read it if needed.
@@ -212,9 +226,6 @@ class ActiveStory:
 
         self.font_sprite_sheets[font_name] = font_sprite
 
-    def change_background(self, background_surface: pygame.Surface):
-        self.background_surface = background_surface
-
     def draw_draft_rectangle(self):
         """
         Draw draft rectangle text, if it's set to be visible.
@@ -305,9 +316,6 @@ class ActiveStory:
         Handle drawing
         :return:
         """
-
-        # self.main_surface.fill((0, 0, 0))
-        #        self.main_surface.blit(self.background_surface, (0, 0))
 
         sd.Groups.background_group.draw(self.main_surface)
         sd.Groups.object_group.draw(self.main_surface)

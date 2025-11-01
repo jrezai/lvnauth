@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings>
+      <setting id="name">Dialog for the remote save command</setting>
+      <setting id="description">This window is used for the command: &lt;remote_save&gt;</setting>
+      <setting id="module_name">remote_save</setting>
+      <setting id="template">widget</setting>
+      <setting id="main_widget">frame_save</setting>
+      <setting id="main_classname">RemoteSaveWindow</setting>
+      <setting id="main_menu" />
+      <setting id="output_dir" />
+      <setting id="output_dir2" />
+      <setting id="import_tkvariables">False</setting>
+      <setting id="use_ttk_styledefinition_file">False</setting>
+      <setting id="use_i18n">False</setting>
+      <setting id="all_ids_attributes">False</setting>
+      <setting id="generate_code_onsave">False</setting>
+      <setting id="use_window_centering_code">False</setting>
+      <setting id="ttk_style_definition_file" />
+    </settings>
+    <customwidgets>
+      <customwidget path="../custom_pygubu_widgets.py" />
+    </customwidgets>
+  </project>
+  <object class="ttk.Frame" id="frame_save" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">1</property>
+      <property name="sticky">w</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame_save_arguments" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">ew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_save_instructions" named="True">
+            <property name="text" translatable="yes">Arguments (separated by commas):
+Example:
+decision=yes, favfruit=orange, coins=100</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="lvnauthwidgets.entrylimitwidget" id="entry_save_arguments" named="True">
+            <property name="textvariable">string:v_save_multi_arguments</property>
+            <property name="width">40</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="tk.Toplevel" id="about_window" named="True">
     <property name="geometry">480x480</property>
     <property name="height">200</property>
@@ -110,15 +114,22 @@
               <object class="tk.Text" id="text_license" named="True">
                 <property name="height">10</property>
                 <property name="state">disabled</property>
-                <property name="text" translatable="yes">Copyright 2023, 2024 Jobin Rezai
+                <property name="text" translatable="yes">Copyright 2023-2025 Jobin Rezai
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with LVNAuth. If not, see &lt;https://www.gnu.org/licenses/&gt;. </property>
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see &lt;https://www.gnu.org/licenses/&gt;.</property>
                 <property name="width">50</property>
-                <property name="wrap">word</property>
+                <property name="wrap">none</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">0</property>
@@ -133,6 +144,16 @@ You should have received a copy of the GNU General Public License along with LVN
                   <property name="column">1</property>
                   <property name="row">0</property>
                   <property name="sticky">nsw</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Scrollbar" id="sb_horizontal" named="True">
+                <property name="orient">horizontal</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                  <property name="sticky">new</property>
                 </layout>
               </object>
             </child>

@@ -1,19 +1,26 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
+Change logs
+
+- (Jobin Rezai - July 12, 2025) - Added RemoteWithGet class.
 """
 
 from typing import NamedTuple
@@ -215,6 +222,46 @@ class CallWithArguments(NamedTuple):
 class CallWithNoArguments(NamedTuple):
     reusable_script_name: str
 
+
+
+class RemoteSave(NamedTuple):
+    # Example:
+    # <remote_save: favcolor=Blue, favpet=Cat>
+    arguments: str
+    
+    
+class RemoteGet(NamedTuple):
+    # Remote with a single argument (save key name)
+    
+    # <remote_get: some key>
+    save_key: str
+
+
+
+class RemoteGetWithVariable(NamedTuple):
+    # Remote with two arguments.
+    # A save key and a variable to put the value into.
+    
+    # <remote_get: some_key, some variable>
+    save_key: str
+    variable_name: str
+
+
+
+class RemoteCallNoArguments(NamedTuple):
+    # Example:
+    # <remote_call: some custom action name>
+    remote_command: str
+    
+    
+    
+class RemoteCallWithArguments(NamedTuple):
+    # Example:
+    # <remote_call: some custom action name, character_name=some name, time=daytime>
+    remote_command: str
+    arguments: str
+    
+    
 
 # Sprite classes
 

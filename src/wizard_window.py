@@ -1,19 +1,20 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 """
@@ -44,6 +45,8 @@ from entry_limit import EntryWithLimit
 from functools import partial
 from re import search, IGNORECASE
 from command_helper import CommandHelper, ContextEditRun
+from variable_editor_window import VariableEditorWindow
+
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -51,7 +54,9 @@ PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
 WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
 SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
-
+REMOTE_GET_UI = PROJECT_PATH / "ui" / "remote_get_dialog.ui"
+REMOTE_SAVE_UI = PROJECT_PATH / "ui" / "remote_save_dialog.ui"
+REMOTE_CALL_UI = PROJECT_PATH / "ui" / "remote_call_dialog.ui"
 
 class Purpose(Enum):
     BACKGROUND = auto()
@@ -65,6 +70,7 @@ class Purpose(Enum):
     REUSABLE_SCRIPT = auto() # such as <call> or <after>
     SCENE_SCRIPT = auto() # such as <scene>
     VARIABLE_SET = auto() # such as <variable_set>
+    REMOTE_GET = auto() # such as <remote_get: some_key, some variable>
 
 
 class GroupName(Enum):
@@ -1291,12 +1297,36 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
-                           purpose_line="Pause the dialog text for a specific number of frames.\n\n",
+                           purpose_line="Pause the dialog text for a specific number of frames.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of frames have\nelapsed (specified below).",
                            scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
                            scale_from_value=1,
                            scale_to_value=600,
                            scale_default_value=120,
                            group_name=GroupName.PAUSE)
+        
+        page_dialog_halt_and_pause = \
+                CommandOnly(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Dialog",
+                            sub_display_text="halt_and_pause_main_script",
+                            command_name="halt_and_pause_main_script",
+                            purpose_line="Pause the main script until the <unpause_main_script>\ncommand is used to unpause the visual novel manually.",
+                            when_to_use="When you want the viewer to click a sprite button to\nadvance the story instead of clicking anywhere to advance the story.",
+                            group_name=GroupName.PAUSE)
+        
+        page_dialog_unpause = \
+                CommandOnly(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Dialog",
+                            sub_display_text="unpause_main_script",
+                            command_name="unpause_main_script",
+                            purpose_line="Unpause the main script that was previously paused with\nthe <halt_and_pause_main_script> command.",
+                            when_to_use="If you use sprites to allow your viewer to advance the story, you need\nto unpause the story using this command after your sprite(s) are clicked.",
+                            group_name=GroupName.PAUSE)
 
         page_dialog_no_clear = \
             CommandOnly(parent_frame=self.frame_contents_outer,
@@ -2952,6 +2982,39 @@ class WizardWindow:
                         command_name="case_end",
                         purpose_line="Ends a case command block.")
 
+
+        page_remote_get = \
+            RemoteGet(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_get",
+                        command_name="remote_get",
+                        purpose_line="Gets a previously saved value from the server's database.")
+
+        page_remote_save = \
+            RemoteSave(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_save",
+                        command_name="remote_save",
+                        purpose_line="Saves one or more values to the server's database.")
+
+        page_remote_call = \
+            RemoteCall(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_call",
+                        command_name="remote_call",
+                        purpose_line="Runs a custom script on the server.")
+
+
+
         self.pages["Home"] = default_page
 
         self.pages["load_audio"] = page_audio_load
@@ -3106,6 +3169,8 @@ class WizardWindow:
         self.pages["text_dialog_close"] = page_dialog_close
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
+        self.pages["halt_and_pause_main_script"] = page_dialog_halt_and_pause
+        self.pages["unpause_main_script"] = page_dialog_unpause
         self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
@@ -3189,6 +3254,13 @@ class WizardWindow:
         self.pages["or_case"] = page_or_case_condition
         self.pages["case_else"] = page_case_else
         self.pages["case_end"] = page_case_end
+        
+        """
+        Web
+        """
+        self.pages["remote_get"] = page_remote_get
+        self.pages["remote_save"] = page_remote_save
+        self.pages["remote_call"] = page_remote_call
         
 
         self.active_page = default_page
@@ -3419,6 +3491,9 @@ class WizardListing:
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
             
+        elif command_name in ("remote_get", ):
+            self.purpose_type = Purpose.REMOTE_GET
+            
         else:
             self.purpose_type = Purpose.ACTION
 
@@ -3576,11 +3651,38 @@ class WizardListing:
                         Purpose.FONT_SPRITE: ProjectSnapshot.font_sprites,
                         Purpose.AUDIO: ProjectSnapshot.sounds,
                         Purpose.MUSIC: ProjectSnapshot.music,
-                        Purpose.VARIABLE_SET: ProjectSnapshot.variables}
+                        Purpose.VARIABLE_SET: ProjectSnapshot.variables,
+                        Purpose.REMOTE_GET: ProjectSnapshot.variables,
+                        Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
 
         dict_ref = dict_mapping.get(self.purpose_type)
         
-        return dict_ref      
+        return dict_ref    
+
+    def populate(self, combobox_widget: ttk.Combobox, clear_entry: bool = False):
+        """
+        Populate the given combobox with a list of names.
+        
+        Arguments:
+        
+        - combobox_widget: the combobox widget that we want to populate
+        data with.
+        
+        - clear_entry: whether to clear the current text in the combobox or not.
+        """
+
+        # Get the appropriate dictionary for this purpose type,
+        # used for populating the combobox.
+        ref_dict = self.get_population_dictionary()
+
+        # Clear the existing combobox, just in case there are values in it.
+        combobox_widget.configure(values=())
+
+        names = [item for item in ref_dict]
+        combobox_widget.configure(values=names)  
+        
+        if clear_entry:
+            combobox_widget.delete(0, "end")
     
     def show(self):
         """
@@ -3607,7 +3709,49 @@ class WizardListing:
         combobox.delete(0, tk.END)
         combobox.insert(0, text)
         combobox.state(["readonly"])     
-    
+        
+    def is_valid_key_value_arguments(self, 
+                                    arguments: str, 
+                                    is_arguments_required: bool = True) -> bool:
+        """
+        Check if the provided argument is a valid key/value pair syntax.
+        This is used for checking arguments.
+        
+        Example:
+        name=Bob,favcolor=Blue  <-- is OK
+        name=,favcolor=Blue <-- is not ok because name= doesn't have a value.
+        favcolor=Blue <-- is OK
+        
+        Arguments:
+        
+        - arguments: the key/value pair values (comma separated allowed).
+        
+        - is_arguments_required: whether arguments are required. If False then
+        an empty argument is allowed. If True, a messagebox will appear saying
+        that the arguments value is missing.
+        
+        Return: True if the key/value pair syntax is correct or False if not.
+        
+        
+        """
+        
+        if not arguments and is_arguments_required:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Missing key/value pairs",
+                   message="Please specify one or more arguments.")
+            return False
+        
+        pattern = r"^([^=,\s][^=,]*=[^=,]+)(\s*,\s*[^=,\s][^=,]*=[^=,]+)*$"
+        result = re.fullmatch(pattern, arguments)
+        
+        if not result:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Invalid Arguments",
+                   message="The format of the key/value pairs is incorrect.")
+            return False
+        else:
+            return True
+
     def edit(self, command_class_object):
         """
         Show the current wizard listing (frame) and populate
@@ -6142,7 +6286,7 @@ class SharedPages:
             self.frame_content = self.create_content_frame()
 
             # Populate reusable script names combobox
-            self.populate()
+            self.populate(combobox_widget=self.cb_reusable_script, clear_entry=True)
 
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -6211,21 +6355,6 @@ class SharedPages:
                 frame_additional_args.grid(row=4, column=0, sticky="w", pady=(15, 0))
 
             return frame_content
-
-        def populate(self):
-            """
-            Populate the reusables combobox with a list of
-            reusable script names.
-            """
-
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_reusable_script.configure(values=())
-
-            reusable_script_names = [item for item in ProjectSnapshot.reusables]
-
-            self.cb_reusable_script.configure(values=reusable_script_names)
-
-            self.cb_reusable_script.delete(0, "end")
 
         def _edit_populate(self,
                            command_class_object: cc.AfterWithArguments|cc.AfterWithoutArguments|cc.AfterCancel):
@@ -7019,16 +7148,6 @@ class SharedPages:
 
             return frame_content
 
-        def populate(self):
-            """
-            Populate the reusables combobox with a list of
-            reusable script names.
-            """
-
-            reusable_script_names = [item for item in ProjectSnapshot.reusables]
-
-            self.cb_reusable_script.configure(values=reusable_script_names)
-
         def _edit_populate(self, command_class_object: cc.FadeStopRunScript):
             """
             Populate the widgets with the arguments for editing.
@@ -7107,7 +7226,7 @@ class SharedPages:
             self.header_label.configure(text=self.command_name)
             self.purpose_label.configure(text=self.purpose_line)
 
-            self.populate()
+            self.populate(combobox_widget=self.cb_reusable_script)
 
             self.frame_content.grid(pady=5)
             
@@ -7222,7 +7341,7 @@ class SharedPages:
     
             self.frame_content = self.create_content_frame()
             
-            self.populate()
+            self.populate(combobox_widget=self.cb_selections)
     
         def create_content_frame(self) -> ttk.Frame:
             """
@@ -7239,23 +7358,6 @@ class SharedPages:
             self.cb_selections.grid(row=1, column=0, sticky="w")
     
             return frame_content
-        
-        def populate(self):
-            """
-            Populate the selections combobox with a list of names.
-            """
-    
-            # Get the appropriate dictionary for this purpose type,
-            # used for populating the combobox.
-            ref_dict = self.get_population_dictionary()
-    
-            # Clear the existing combobox, just in case there are values in it.
-            self.cb_selections.configure(values=())
-    
-            names = [item for item in ref_dict]
-            self.cb_selections.configure(values=names)
-            
-            # self.cb_selections.delete(0, "end")
             
         def check_inputs(self) -> str | None:
             """
@@ -7311,7 +7413,7 @@ class SharedPages:
             self.header_label.configure(text=self.command_name)
             self.purpose_label.configure(text=self.purpose_line)
     
-            self.populate()
+            self.populate(combobox_widget=self.cb_selections)
     
             self.frame_content.grid()
             
@@ -7390,13 +7492,11 @@ class SharedPages:
             lbl_prompt = ttk.Label(frame_content, text=message)
             self.cb_selections = ttk.Combobox(frame_content)
             
-            purpose = self.get_purpose_name()
-            
             if "variable" in purpose:
                 message = "Variable value:"
             elif "dialog" in purpose:
-                message = f"Enter an alias for this dialog sprite below:\n" + \
-                f"(This alias can later be used to reference this dialog sprite\n" + \
+                message = "Enter an alias for this dialog sprite below:\n" + \
+                "(This alias can later be used to reference this dialog sprite\n" + \
                 "regardless of the image that's being shown for this sprite.)"
             else:
                 message = f"Enter an alias for this {self.get_purpose_name()} below:\n" + \
@@ -7407,10 +7507,16 @@ class SharedPages:
 
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
 
-            message = "(optional) - Load as a different name? Used for spawning copies.\n" \
-                      "Enter a new copy name below:"
-            lbl_load_as_prompt = ttk.Label(frame_content, text=message)
-            self.entry_load_as = ttk.Entry(frame_content, width=25)
+            # Without this, it will show widgets for 'Load as name...'
+            # which doesn't apply to <variable_set>, which is why we
+            # have 'hide_load_as_widgets' here.
+            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+
+            if not hide_load_as_widgets:
+                message = "(optional) - Load as a different name? Used for spawning copies.\n" \
+                    "Enter a new copy name below:"
+                lbl_load_as_prompt = ttk.Label(frame_content, text=message)
+                self.entry_load_as = ttk.Entry(frame_content, width=25)
 
             lbl_prompt.grid(row=0, column=0, sticky="w")
             self.cb_selections.grid(row=1, column=0, sticky="w")
@@ -7419,10 +7525,9 @@ class SharedPages:
                                         pady=(15, 0))
             self.entry_general_alias.grid(row=3, column=0, sticky="w")
 
-            # Without this, it will show widgets for 'Load as name...'
-            # which doesn't apply to <variable_set>, which is why we
-            # have 'hide_load_as_widgets' here.
-            hide_load_as_widgets = self.kwargs.get("hide_load_as_widgets")
+
+            # We shouldn't show 'load as' widgets for
+            # the <variable_set>.
             if not hide_load_as_widgets:
                 lbl_load_as_prompt.grid(row=4, column=0, sticky="w",
                                         pady=(15, 0))
@@ -7518,52 +7623,91 @@ class SharedPages:
                                        message=f"Enter {entry_type_preposition} {entry_type} for the {self.get_purpose_name()}.")
                 return
 
-            # Load the sprite using a different name? (load as).
-            load_as_name = self.entry_load_as.get().strip()
-
-            # Make sure the copy/load as name is different
-            # from the original name.
-            if load_as_name and load_as_name.lower() == selection.lower():
-                messagebox.showwarning(
-                    parent=self.treeview_commands.winfo_toplevel(),
-                    title="Load As Name",
-                    message=f"The name of the copy must be different from the original name: '{selection}'")
-                return
-
-            elif not load_as_name:
-                # So we don't end up with an empty string.
-                load_as_name = None
+            # This page is used for multiple purposes.
+            # Are we using it for <variable_set> ?
+            if self.purpose_type == Purpose.VARIABLE_SET:
+                # This page is being used for the command: <variable_set>
+                
+                # Make sure the provided variable name doesn't contain
+                # invalid characters (ie: no spaces allowed)
+                is_variable_name_valid =\
+                    VariableEditorWindow.is_variable_name_allowed(
+                        selection, self.treeview_commands.winfo_toplevel())
+                
+                if not is_variable_name_valid:
+                    return
+                
+                user_input = {"VariableName": selection,
+                              "VariableValue": alias}
+        
+                return user_input
             
-            user_input = {"Selection": selection,
-                          "LoadAsName": load_as_name,
-                          "Alias": alias}
+            else:
+                # This page is used for multiple purposes.
+                # It's currently being used for loading a sprite.
     
-            return user_input
+                # Load the sprite using a different name? (load as).
+                load_as_name = self.entry_load_as.get().strip()
+  
+                # Make sure the copy/load as name is different
+                # from the original name.
+                if load_as_name and load_as_name.lower() == selection.lower():
+                    messagebox.showwarning(
+                        parent=self.treeview_commands.winfo_toplevel(),
+                        title="Load As Name",
+                        message=f"The name of the copy must be different from the original name: '{selection}'")
+                    return
+    
+                elif not load_as_name:
+                    # So we don't end up with an empty string.
+                    load_as_name = None
+                
+                user_input = {"Selection": selection,
+                              "LoadAsName": load_as_name,
+                              "Alias": alias}
+        
+                return user_input
         
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
             """
     
-            # The user input will be a dictionary like this:
+            # The user input will be a dictionary like this if we're
+            # loading a sprite:
             # {"Selection": "rave_normal",
             # "LoadAsName": None,
             # "Alias": "Rave"}
+            
+            # Or it'll look like this if it's being used for <variable_set>
+            # {"VariableName": "some_variable_name",
+            # "VariableValue": "some variable value"}            
             user_inputs = self.check_inputs()
             
             if not user_inputs:
                 return
-    
-            sprite_name = user_inputs.get("Selection")
-            load_as_name = user_inputs.get("LoadAsName")
-            alias = user_inputs.get("Alias")
-
-            if load_as_name:
-                # Using 'load as'
-                return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+            
+            # This page is used for multiple purposes.
+            # 1) Either for <variable_set> or
+            # 2) for loading a sprite, such as with <load_dialog_sprite>
+            if self.purpose_type == Purpose.VARIABLE_SET:
+                variable_name = user_inputs.get("VariableName")
+                variable_value = user_inputs.get("VariableValue")
+                
+                return_value = f"<{self.command_name}: {variable_name}, {variable_value}>"
+                
             else:
-                # Not using 'load as'
-                return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
+        
+                sprite_name = user_inputs.get("Selection")
+                load_as_name = user_inputs.get("LoadAsName")
+                alias = user_inputs.get("Alias")
+    
+                if load_as_name:
+                    # Using 'load as'
+                    return_value = f"<{self.command_name}: {sprite_name} load as {load_as_name}, {alias}>"
+                else:
+                    # Not using 'load as'
+                    return_value = f"<{self.command_name}: {sprite_name}, {alias}>"
 
             return return_value
 
@@ -10094,7 +10238,354 @@ class CharacterHide(SharedPages.HideSpriteWithAlias):
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line, **kwargs)
 
+
+
+class RemoteCallFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_CALL_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_call", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_custom_action_name = builder.get_variable("v_custom_action_name")
+        self.v_custom_arguments = builder.get_variable("v_custom_arguments")
+
+
+
+class RemoteCall(WizardListing):
+    """
+    <remote_call>
+    
+    Example:
+    <remote_call: some custom action name, character_name=some name, time=daytime>
+    <remote_call: some custom action name>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteCallFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
         
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+        
+        # Custom action Name
+        action_name = self.remote_frame.v_custom_action_name.get()
+        if not action_name:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="Missing Custom Action Name",
+                   message="Please specify a custom action name.")
+            return
+
+        # Get the save key/value pairs
+        save_key_value_pairs = self.remote_frame.v_custom_arguments.get().strip()
+
+            
+        # Make sure the key/value pair arguments are in the right format.
+        if not self.is_valid_key_value_arguments(save_key_value_pairs, 
+                                                 is_arguments_required=False):
+            return
+        
+        user_input = {"SaveKeyValuePairs": save_key_value_pairs}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # Example:
+        # <remote_save: mykey=myvalue, mykey2=myvalue>
+        
+        save_key_value_pairs = selection.get("SaveKeyValuePairs")
+        
+        return f"<{self.command_name}: {save_key_value_pairs}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteSave | cc.RemoteCallNoArguments):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the key/value pairs, which may look like this: 'name=Theo, favpet=Cat'
+            case cc.RemoteCallNoArguments(remote_command):
+                
+                self.remote_frame.v_custom_action_name.set(remote_command)
+                
+            case cc.RemoteCallWithArguments(remote_command, arguments):
+                
+                self.remote_frame.v_custom_action_name.set(remote_command)
+                self.remote_frame.v_custom_arguments.set(arguments)
+
+
+
+class RemoteSaveFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_SAVE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_save", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_save_multi_arguments = builder.get_variable("v_save_multi_arguments")
+
+
+
+class RemoteSave(WizardListing):
+    """
+    <remote_save>
+    
+    Example:
+    <remote_save: mykey=myvalue, mykey2=myvalue>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteSaveFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
+        
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the save key/value pairs
+        save_key_value_pairs = self.remote_frame.v_save_multi_arguments.get().strip()
+
+        # Make sure the key/value pair arguments are in the right format.
+        if not self.is_valid_key_value_arguments(save_key_value_pairs):
+            return
+        
+        user_input = {"SaveKeyValuePairs": save_key_value_pairs}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # Example:
+        # <remote_save: mykey=myvalue, mykey2=myvalue>
+        
+        save_key_value_pairs = selection.get("SaveKeyValuePairs")
+        
+        return f"<{self.command_name}: {save_key_value_pairs}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteSave | cc.RemoteCallNoArguments):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the key/value pairs, which may look like this: 'name=Theo, favpet=Cat'
+            case cc.RemoteSave(arguments):
+                
+                self.remote_frame.v_save_multi_arguments.set(arguments)
+
+
+class RemoteGetFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(REMOTE_GET_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_get", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        # get and getinto frame
+        self.frame_get: ttk.Frame
+        self.frame_get = builder.get_object("frame_get", self.mainframe)
+
+        self.v_get_save_slot = builder.get_variable("v_get_save_slot")
+        self.v_get_variable = builder.get_variable("v_get_variable")
+        
+        self.cb_variable_selection_get = builder.get_object("cb_variable_selection_get")
+        
+
+class RemoteGet(WizardListing):
+    """
+    <remote_get>
+    
+    Example:
+    <remote_get: some key>
+    <remote_get: some_key, some variable>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line,
+                         **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.remote_frame = RemoteGetFrame(self.frame_content)
+        self.remote_frame.mainframe.pack()
+        
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+        
+        Return: a dict of keys/values if there is sufficient information;
+        otherwise, None.
+        """
+
+        # Get the save key
+        save_key = self.remote_frame.v_get_save_slot.get().strip()
+
+        if not save_key:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                   title="No save slot name specified",
+                   message="Please specify a save slot name.")
+            return False
+        
+        # Get the value into a variable? (optional)
+        optional_variable_name = self.remote_frame.v_get_variable.get().strip()
+        
+        user_input = {"SaveKey": save_key,
+                    "VariableName": optional_variable_name}
+                    
+        return user_input
+    
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        # 'get' or 'getinto'
+        # Example:
+        # <remote_get: some key>
+        # <remote_get: some_key, some variable>
+        
+        save_key = selection.get("SaveKey")
+        get_into_variable = selection.get("VariableName")
+        
+        if get_into_variable:
+            return f"<{self.command_name}: {save_key}, {get_into_variable}>"
+        else:
+            return f"<{self.command_name}: {save_key}>"
+
+    def show(self):
+        """
+        Set the text of the purpose labels to indicate to the user
+        what this command does.
+        
+        Also, grid the frame so the user can see its contents.
+        """
+
+        self.header_label.configure(text=self.command_name)
+        self.purpose_label.configure(text=self.purpose_line)
+
+        self.populate(combobox_widget=self.remote_frame.cb_variable_selection_get)
+       
+
+        self.frame_content.grid()
+        
+    def _edit_populate(self, command_class_object: cc.RemoteGet | cc.RemoteGetWithVariable):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        match command_class_object:
+            
+            # Get the audio name, which may look like this: 'normal_music'
+            case cc.RemoteGet(save_key):
+                
+                self.remote_frame.v_get_save_slot.set(save_key)
+                
+            case cc.RemoteGetWithVariable(save_key, variable_name):
+                
+                self.remote_frame.v_get_save_slot.set(save_key)
+                self.remote_frame.v_get_variable.set(variable_name)
+                
+                
+
 
 if __name__ == "__main__":
     app = WizardWindow()

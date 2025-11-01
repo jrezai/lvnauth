@@ -1,32 +1,38 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import traceback
 import sys
 import pathlib
 import tkinter as tk
 from tkinter import messagebox
-
+from tkinter import ttk
 import pygubu
+import queue_reader
 from typing import Dict
 from PIL import ImageTk, Image
 from io import BytesIO
 from pathlib import Path
+from web_handler import WebHandler, WebLicenseType, WebRequestPurpose
+from player_config_handler import PlayerConfigHandler
 from shared_components import Passer
+from response_code import ServerResponseReceipt, ServerResponseCode
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
 
@@ -59,7 +65,7 @@ class LaunchWindow:
         - chapter_and_scene_names: a dict of chapter names and scene names.
         Example: {'My First Chapter': ['My First Scene', 'Second scene'],
                   'My second Chapter': ['My First Scene', 'Second scene']}
-        """
+        """     
 
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
@@ -67,6 +73,22 @@ class LaunchWindow:
         # Main widget
         self.mainwindow = builder.get_object("launch_window")
         builder.connect_callbacks(self)
+        
+        self.mainwindow.report_callback_exception =\
+            self.custom_tk_exception_handler
+
+        # For reading secondary thread messages.
+        self.queue_msg_handler = \
+            queue_reader.QueueMsgReader(builder=self.builder)
+
+        # Continuously check the queue for secondary thread messages.
+        self.mainwindow: tk.Toplevel
+        self.mainwindow.after(300, self.check_queue)
+        
+        self.style = ttk.Style()
+        self.style.configure("Warning.TLabel",
+                             background="red",
+                             foreground="white")
 
         # Get references to the widgets
         self.lbl_story_title = builder.get_object("lbl_story_title")
@@ -81,9 +103,41 @@ class LaunchWindow:
 
         self.lbl_poster = builder.get_object("lbl_poster")
 
+        # Used for showing/hiding the 'License Key' tab for 
+        # web-enabled visual novels.
+        self.notebook_main = builder.get_object("notebook_main")
+
         self.treeview_chapter_scenes = builder.get_object("treeview_chapter_scenes")
         self.btn_play_selection = builder.get_object("btn_play_selection")
         
+        # For focussing on the license key widget.
+        self.entry_license_key = builder.get_object("entry_license_key")
+        
+        # For getting/setting the license key in the entry widget.
+        self.v_license_key: tk.Variable
+        self.v_license_key = builder.get_variable("v_license_key")
+        self.v_license_key.trace_add("write", self.on_license_key_changed)
+        
+        # So we can change the text of the 'Get License Key' button
+        # to 'Update License Key' if needed.
+        self.btn_get_license = builder.get_object("btn_get_license")
+        
+        # So we can update the text of the labelframe, similar to the button
+        # above.
+        self.frame_redeem_or_update_license_key =\
+            builder.get_object("frame_redeem_or_update_license_key")
+        
+        # For getting a transaction ID from the user.
+        self.v_transaction_id = builder.get_variable("v_transaction_id")
+        
+        # Used for showing a warning if bypassing certificate verification.
+        self.lbl_certificate_warning =\
+            builder.get_object("lbl_certificate_warning")
+        self.lbl_certificate_warning.configure(style="Warning.TLabel")
+        
+        # Load and show the license key from the config file (if available).
+        self.populate_license_key()
+
         # So we know when the user has decided to 'X' out of the window.
         # That way, we can prevent the story from playing and exit the app.
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_closing)
@@ -119,7 +173,217 @@ class LaunchWindow:
 
         self.populate_story_info()
         
+        self.check_web_enabled()
         
+    def show_certificate_warning(self, web_enabled: bool):
+        """
+        Show a certificate warning message to the viewer of the visual novel
+        if the certificate check is set to be bypassed.
+        
+        Arguments:
+        
+        - web_enabled: bool to indicate whether it's a web-enabled
+        visual novel or not.
+        """
+        bypass_certificate_check = self.story_info.get("WebBypassCertificate")
+        if bypass_certificate_check and web_enabled:
+            self.lbl_certificate_warning.configure(text="Warning: the SSL certificate will not be verified.\nThis visual novel is for TESTING only.")
+        else:
+            self.lbl_certificate_warning.grid_forget()
+        
+    def on_license_key_changed(self, name, index, mode):
+        """
+        If a license key is present (any text) in the entry widget,
+        update the text to show 'Update License Key'.
+        
+        If there is no license key entered in the entry widget,
+        update the text to show 'Redeem License Key'.
+        """
+        license_key = self.v_license_key.get()
+        
+        if license_key:
+            self.btn_get_license.configure(text="Update License Key")
+            self.frame_redeem_or_update_license_key.configure(text="Update the license key above")
+        else:
+            self.btn_get_license.configure(text="Get License Key")
+            self.frame_redeem_or_update_license_key.configure(text="Redeem a new license key")
+        
+    def custom_tk_exception_handler(self, exception_class, exception_value,
+                                    traceback_object):
+        """
+        Custom handle Tkinter exceptions.
+        
+        Purpose: without this, any time there is a tkinter exception, it will
+        output the error to the console, but it won't close the app. We want it
+        to close the player when a Tkinter exception occurs.
+        
+        Example: if a web-connected visual novel can't connect to the server,
+        when the 'Play' button is clicked in tkinter, we want the visual novel
+        to close so it could output the error to an exceptions window for the
+        user to see.
+        """
+        
+        # This is required to output the exception to the console.
+        # Without this, the exception won't get outputted when the app closes.
+        traceback.print_exception(exception_class, exception_value,
+                                  traceback_object)
+        
+        # Close the player because a Tkinter exception has occurred.
+        # 1 means not successful.
+        sys.exit(1)  
+
+    def check_queue(self):
+        """
+        Read the queue that was sent by a secondary thread.
+        This method will run in the main GUI thread.
+        
+        This method polling check is for the Launch window-only.
+        
+        The in-pygame polling (for the <remote> command) gets checked in
+        pygame's own loop, not here.
+        """
+        
+        self.mainwindow.after(300, self.check_queue)
+        
+        if WebHandler.the_queue.empty():
+            return
+        
+        msg: ServerResponseReceipt = WebHandler.the_queue.get()
+        
+        self.queue_msg_handler.read_msg(msg=msg)
+        
+    def check_web_enabled(self):
+        """
+        Don't show the license frame and the certificate warning label
+        if the visual novel is not web-enabled.
+        
+        If it is web-enabled, consider showing the certificate warning label
+        if the certificate is being bypassed.
+        """
+
+        if not Passer.web_handler.web_enabled:
+            self.notebook_main.tab(tab_id=2, state=tk.HIDDEN)
+            
+        # Show a warning if bypassing certificate verification
+        # if it's a web-connected visual novel
+        self.show_certificate_warning(Passer.web_handler.web_enabled)               
+            
+    def on_web_request_finished(self, receipt: ServerResponseReceipt):
+        """
+        Read the response from the server.
+        This method is in the GUI thread.
+        """
+        response_code = receipt.get_response_code()
+        response_text = receipt.get_response_text()
+        
+        msgbox_func = messagebox.showerror
+        
+        match response_code:
+            
+            case ServerResponseCode.SUCCESS:
+            
+                # The license key is valid. Play the visual novel.
+                self._play_selection()
+                
+                return
+            
+            case ServerResponseCode.UPDATED_LICENSE:
+                # The given license key was updated using a transaction ID.
+                
+                msg_title = "Success!"
+                msg = "Success!\n\nThe provided license key has been updated."
+                
+                # Disable the 'Update License' button because it's finished.
+                self.btn_get_license.state(["disabled"])
+                
+                msgbox_func = messagebox.showinfo
+            
+            case ServerResponseCode.LICENSE_KEY_NOT_FOUND:
+                # The provided license key is not a valid/known license key.
+                
+                msg_title = "License Key"
+                msg = "The provided license key is invalid."
+            
+            case ServerResponseCode.CONNECTION_ERROR:
+                # Could not connect to server
+                
+                msg_title = "Connection Error"
+                msg = "Could not connect to the server."
+                
+            case ServerResponseCode.LICENSE_KEY_ASSOCIATION_MISMATCH:
+                
+                msg_title = "License Key Mismatch"
+                msg = "The provided license key is not associated with this visual novel."
+                
+            case ServerResponseCode.LICENSE_KEY_LOCKED:
+                
+                msg_title = "License Key Locked"
+                msg = "The license key is currently locked and cannot be used."
+                
+            case ServerResponseCode.LICENSE_KEY_OWING_BALANCE:
+                
+                msg_title = "License Key Unpaid"
+                msg = "A payment is required to play this visual novel."
+                
+            case ServerResponseCode.SSL_ERROR:
+                
+                msg_title = "SSL Error"
+                msg = "Could not securely connect to the server."
+                
+            case ServerResponseCode.ALREADY_REDEEMED:
+                
+                msg_title = "Already Redeemed"
+                msg = "The license key has already been redeemed or updated using the provided transaction ID."
+                
+            case ServerResponseCode.LICENSE_KEY_NOT_PRIVATE:
+                
+                # The user is trying to update a public license key with a transaction ID.
+                msg_title = "Private License Key"
+                msg = "The provided license key is public. Only a private license key can be updated."
+                
+            case ServerResponseCode.TRANSACTION_ID_NOT_FOUND:
+                
+                msg_title = "Transaction ID Not Found"
+                msg = "The provided transaction ID was not found.\n\nThe transaction ID should have been emailed to you after making a payment."
+                
+            case ServerResponseCode.VN_NOT_PART_OF_PACKAGE:
+                
+                msg_title = "Visual Novel Package"
+                msg = "This visual novel is not part of the package (tier) that was paid for."
+                
+            case ServerResponseCode.UNKNOWN:
+                
+                msg_title = "Unknown Error"
+                msg = response_text
+            
+        try:
+            msgbox_func(master=self.mainwindow,
+                        title=msg_title,
+                        message=msg)
+   
+            self.entry_license_key.focus()
+            
+            # Enable the play button after 1 second.
+            self.mainwindow.after(1000, self.enable_play_button)
+            
+            
+            
+        except tk.TclError:
+            # If the parent window closes while the msgbox is open,
+            # it'll raise a TclError, so we have this here to exit
+            # gracefully.
+            return
+        
+
+            
+    def enable_play_button(self):
+        """
+        Enable the Play button.
+        
+        This method is used after an error message box is shown to the user,
+        and we want to enable the play button using an .after timer.
+        """
+        self.btn_play_selection.state(["!disabled"])
 
     def on_window_closing(self):
         """
@@ -132,17 +396,125 @@ class LaunchWindow:
         
         self.mainwindow.destroy()
 
+    def on_get_license_key_button_clicked(self):
+        """
+        If a license key is provided, attempt to associate the provided
+        transaction ID with the given license key.
+        
+        If no license key is provided, then it's probably the first time
+        the user is buying a license, so let the web server generate a new
+        license key based on the given transaction ID and put that license key
+        into the license_key entry widget.
+        """
+        
+        # Get the license key, if provided.
+        Passer.web_handler.web_key = self.v_license_key.get().strip()
+        
+        # Get the transaction ID, which is mandatory.
+        transaction_id = self.v_transaction_id.get().strip()
+        
+        if not transaction_id:
+            messagebox.showerror(
+                parent=self.mainwindow,
+                title="Transaction ID",
+                message="Please enter your transaction ID.\nIt should be in the email that was sent to you.")
+            return
+        
+        # The license key and visual novel name will get added later
+        # from Passer.web_handler.web_key
+        # (if a license key is available)
+        # in the web_handler itself, as part of keys that are always included
+        # in each request.
+        data = {"transaction_id": transaction_id}
+        
+        Passer.web_handler.\
+            send_request(data=data,
+                         purpose=WebRequestPurpose.REDEEM_OR_UPDATE_LICENSE_KEY,
+                         callback_method=self.on_web_request_finished,
+                         increment_usage_count=False)
+
+    def save_license_key(self):
+        """
+        Get the license from from the entry widget and save it to the local
+        config file. The purpose is to prevent having to enter a license key
+        again after the visual novel is closed and re-opened.
+        """
+        
+        # Get the license key.
+        license_key = self.v_license_key.get().strip()
+        
+        Passer.player_config.save_data("LicenseKey", license_key)
+        
+    def populate_license_key(self):
+        """
+        Get the license key from the config file, if it's there.
+        Show the license key in the entry widget if the license key is found.
+        """
+        
+        license_key = Passer.player_config.get_data("LicenseKey")
+        if not license_key:
+            return
+        
+        license_key = license_key.strip()
+        
+        self.v_license_key.set(license_key)
+
     def on_play_selection_button_clicked(self):
         """
-        Get the selected chapter and scene in the treeview widget.
+        If it's a web-enabled visual novel, verify the license
+        and if it's valid, get the selected chapter and scene in the
+        treeview widget and run it.
         
-        Return: a dict (key: chapter name, value: scene name)
-        Example: {chapter_name: scene_name}
+        If it's not a web-enabled visual novel, get the selected chapter
+        and scene in the treeview widget and run it.
         """
+        
 
         # Disable the button so the user doesn't repeatidly click it.
-        self.btn_play_selection.state(["disabled"])        
+        self.btn_play_selection.state(["disabled"])
         
+        if Passer.web_handler.web_enabled:
+            
+            # Get the user-typed license key,
+            # if the license key type is private.
+            if Passer.web_handler.web_license_type == WebLicenseType.PRIVATE:
+                Passer.web_handler.web_key = self.v_license_key.get().strip()
+                
+                # Make sure a license key was actually typed.
+                if not Passer.web_handler.web_key:
+                    try:
+                        messagebox.showwarning(master=self.mainwindow,
+                                               title="License Key",
+                                               message="This visual novel requires a license key.\n\nPlease enter a license key.")
+                        self.btn_play_selection.state(["!disabled"])
+                        self.entry_license_key.focus()
+                        return
+                    except tk.TclError:
+                        # Closing the parent window while a message box is open
+                        # will raise a TclError, so we have this error 
+                        # handler here.
+                        return
+            
+            # Save the license key to the config file so when the visual novel
+            # is restarted, the license key will be pre-populated.
+            self.save_license_key()            
+            
+            Passer.web_handler.\
+                send_request(data=None,
+                             purpose=WebRequestPurpose.VERIFY_LICENSE,
+                             callback_method=self.on_web_request_finished,
+                             increment_usage_count=False)
+            
+        else:
+            # It's not a web-enabled visual novel, play the selection now.
+            self._play_selection()
+        
+    def _play_selection(self):
+        """
+        Get the selected chapter and scene in the treeview widget and run it.
+        
+        """
+
         selection = self.treeview_chapter_scenes.selection()
 
         # If the user hasn't selected a chapter/scene to play,
@@ -222,7 +594,7 @@ class LaunchWindow:
             Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
 
         # Close the launch window so the story can start playing.
-        self.mainwindow.destroy()
+        self.mainwindow.destroy()        
 
     def populate_story_info(self):
         """

@@ -1,34 +1,39 @@
 """
-Copyright 2023, 2024 Jobin Rezai
+Copyright 2023-2025 Jobin Rezai
 
 This file is part of LVNAuth.
 
-LVNAuth is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
+LVNAuth is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-LVNAuth is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-more details.
+LVNAuth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with
-LVNAuth. If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU Lesser General Public License
+along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
 import pygame
 import argparse
 import sprite_definition as sd
+import web_handler
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
 from datetime import datetime
 from launch_window import LaunchWindow
+from player_config_handler import PlayerConfigHandler
 from io import BytesIO
 from typing import Dict
 from pathlib import Path
 from pygame import scrap
+
+  
 
 # We need to add the parent directory so
 # the container_handler module will be seen.
@@ -66,12 +71,14 @@ class Main:
         # Get the BytesIO of the poster image.
         # We're going to use this to show the poster image later.
         image_file_object = self._get_poster_image(data_requester=data_requester)
+           
 
         # Instantiate the launch window
         self.launch_window = \
             LaunchWindow(story_info=story_info,
                          poster_file_object=image_file_object,
                          chapter_and_scene_names=chapters_and_scenes)
+        
         
         # Center the launch window
         Passer.center_window_active_monitor(self.launch_window.mainwindow)
@@ -102,12 +109,83 @@ class Main:
         file_object = BytesIO(bytes_data)
 
         return file_object
+    
+    def initialize_web(self, data_requester: FileReader):
+        """
+        Initialize web_handler for handling xml rpc connections for
+        web-enabled visual novels. If it's not a web-enabled visual novel,
+        initialize to Passer.web_handler to None.
+        """
+        
+        story_details = data_requester.general_header
+
+        # Get the 'StoryInfo' dictionary, which contains details like
+        # author, copyright, description, etc.
+        story_info = story_details.get("StoryInfo")        
+        
+        # bool
+        web_enabled = story_info.get(web_handler.WebKeys.WEB_ACCESS.value)
+        
+        web_address = story_info.get(web_handler.WebKeys.WEB_ADDRESS.value)
+
+        # If it's a shared license key, get it here.
+        # If it's a private license key, we don't have it yet; this will be None
+        web_key = story_info.get(web_handler.WebKeys.WEB_KEY.value)
+        web_license_type =\
+            story_info.get(web_handler.WebKeys.WEB_LICENSE_TYPE.value)
+        
+        if web_license_type == "private":
+            web_license_type = web_handler.WebLicenseType.PRIVATE
+            
+            """
+            If the user tries to play the visual novel from the current scene
+            or from the startup scene, there won't be a chance to enter a
+            license key. So try to get the license key from the last time the
+            config file was populated.
+            """
+            # We won't have a license key yet, but try to get the license key 
+            # from the config file in case the launch window is not used.
+            web_key = Passer.player_config.get_data("LicenseKey")          
+            
+        else:
+            web_license_type = web_handler.WebLicenseType.SHARED
+            
+        web_public_certificate =\
+            story_info.get(web_handler.WebKeys.WEB_PUBLIC_CERTIFICATE.value)
+        
+        web_bypass_certificate =\
+            story_info.get(web_handler.WebKeys.WEB_BYPASS_CERTIFICATE.value)
+        
+        # Initialize web_handler. This will be used throughout the visual
+        # novel for interacting with flask and the database.
+        
+        # The callback method will be specified later, because the story reader
+        # object hasn't been initialized yet at this point, which is where
+        # the callback method is located.
+        Passer.web_handler =\
+            web_handler.WebHandler(
+                web_key,
+                web_address,
+                web_public_certificate,
+                web_bypass_certificate, 
+                web_license_type,
+                web_enabled,
+                story_info.get("StoryTitle"),
+                story_info.get("Episode"))
 
     def begin(self):
 
         # Read the .lvna file from the provided argument command switch.
         # The path to the .lvna file will be in args.file
         data_requester = FileReader(args.file)
+        
+        # Visual novel name and lvna full path.
+        # We need both of these for the config file.        
+        vn_name = data_requester.general_header.get("StoryInfo").get("StoryTitle")
+        lvna_full_path = Path(args.file)
+        
+        # For loading and saving visual novel config data.
+        Passer.player_config = PlayerConfigHandler(vn_name, lvna_full_path)        
 
         # Get the story's requestes window size
         # in pixels (width, height)
@@ -117,8 +195,11 @@ class Main:
         # To know whether to show the draft rectangle or not, and
         # whether to allow some keyboard shortcuts or not.
         compile_mode = data_requester.general_header.get("StoryCompileMode")
-
+        
         draft_mode = compile_mode == "Draft"
+        
+        # Initialize web_handler for handling web connections
+        self.initialize_web(data_requester=data_requester)
 
         # Should we show the launch window?
         if show_launch:
@@ -152,15 +233,18 @@ class Main:
 
         main_surface.fill((0, 0, 0))
 
-        background_surface = pygame.Surface(size=screen_size)
-        background_surface.fill((0, 0, 0))
-
         story = ActiveStory(screen_size=screen_size,
                             data_requester=data_requester,
                             main_surface=main_surface,
-                            background_surface=background_surface,
                             draft_mode=draft_mode)
         Passer.active_story = story
+        
+        # Now that the story reader object has been initialized above, use
+        # on_web_request_finished() as the callback method for the server
+        # replies. We couldn't specify the callback method earlier because
+        # the story reader object hadn't been initialized yet.
+        Passer.web_handler.callback_method_finished =\
+            Passer.active_story.reader.on_web_request_finished
 
         # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
@@ -189,6 +273,9 @@ class Main:
     
                 else:
                     story.on_event(event)
+                    
+            # Check for <remote> finished requests.
+            self.check_queue()
 
             # Handle movements
             story.on_loop()
@@ -198,7 +285,30 @@ class Main:
             
 
             # For debugging
-            pygame.display.flip()      
+            pygame.display.flip()
+            
+    def check_queue(self):
+        """
+        Read the queue that was sent by a secondary thread.
+        This method will run in the main pygame thread.
+        
+        This method for polling is for within pygame, not tkinter.
+        This method is used for reading responses from the <remote> command.
+        """
+        
+        if web_handler.WebHandler.the_queue.empty():
+            return
+        
+        msg = web_handler.WebHandler.the_queue.get()
+                
+        self.run_remote_finished_method(msg=msg)
+        
+    def run_remote_finished_method(self, msg):
+        """
+        Run the finished method from the ServerResponseReceipt msg,
+        initiated from a <remote> command.
+        """
+        msg.callback_method(msg)
 
     def on_key_down(self, key_pressed):
         """
@@ -276,8 +386,7 @@ class Main:
                 # Show a 'copied' text in the draft rectangle
                 # so that the user knows it's been copied to the clipboard.
                 Passer.active_story.draft_rectangle.temporary_text = "Copied sprite locations!"
-
-
+ 
 
 if __name__ == "__main__":
 
@@ -313,5 +422,5 @@ if __name__ == "__main__":
 
     # print(f"{args.file=},{args.show_menu=}")
 
-    main = Main()
+    main = Main()    
     main.begin()
