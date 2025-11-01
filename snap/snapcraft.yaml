@@ -6,7 +6,7 @@ description: |
      It includes a built-in editor for creating chapters, scenes,
      and for managing sprite images and simple animations.
 version: '1.0'
-base: core22
+base: core24
 grade: stable
 confinement: strict
 issues: https://github.com/jrezai/lvnauth/issues
