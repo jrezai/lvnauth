@@ -32,6 +32,7 @@ apps:
       - audio-playback
       - home
       - removable-media
+      - network
     environment:
       PYTHONPATH: "$PYTHONPATH:$SNAP/src:$SNAP/src/player:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.12:$SNAP/usr/lib/python3.12/lib-dynload"
 
