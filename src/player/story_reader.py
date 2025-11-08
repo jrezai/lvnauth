@@ -46,6 +46,7 @@ from typing import Tuple
 # from font_handler import ActiveFontHandler
 from typing import Dict
 from shared_components import Passer
+from animation_speed import AnimationSpeed
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -3032,8 +3033,8 @@ class StoryReader:
     def _sprite_scale_by(self, sprite_type: file_reader.ContentType, arguments):
         """
         Set the scale speed of a sprite.
-        Example: 0.00050  (2 means twice as big)
-        A positive value will scale up the sprite. A negative value (such as -0.00050)
+        Example: 0.0602  (2 means twice as big)
+        A positive value will scale up the sprite. A negative value (such as -0.0602)
         will scale down a sprite.
 
         Arguments:
@@ -3060,13 +3061,29 @@ class StoryReader:
         if not sprite:
             return
 
-        # Convert the user-provided percent value speed (1 to 100)
-        # from scale_by.scale_by to a float that pygame can use.
-        # Depending on the scale direction, the float will either be a positive
-        # float or a negative float.
-        scale_by_float_value = self._sprite_scale_by_get_value_from_percent(
-            scale_by.scale_by, scale_by.scale_rotation
-        )
+        """
+        Convert the user-provided convenient value speed (1 to 300000)
+        from scale_by.scale_by to a value that pygame can use.
+        Depending on the scale direction, the float will either be a positive
+        value or a negative value.
+        """
+        # Make sure the user has specified a proper scale direction
+        scale_direction = scale_by.scale_rotation.lower()
+        if not scale_direction in ("scale up", "scale down"):
+            return
+        
+        # Get the calculable animation speed value.
+        scale_by_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.0002,
+                increment_by=0.0002,
+                max_convenient_row=300000, 
+                convenient_row_number=scale_by.scale_by)
+        
+        if scale_direction == "scale down":
+            # A positive value will scale up the sprite.
+            # A negative value(such as -0.00050) will scale down a sprite.            
+            scale_by_float_value = -abs(scale_by_float_value)
 
         # Make sure we have a float value, otherwise stop here.
         if not scale_by_float_value:
@@ -3410,161 +3427,6 @@ class StoryReader:
         if rotate_direction == "clockwise":
             # A positive value will rotate the sprite counterclockwise.
             # A negative value(such as -0.50) will rotate the sprite clockwise.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
-
-    def _sprite_scale_by_get_value_from_percent(
-        self, percent, scale_direction: str
-    ) -> float | None:
-        """
-        Take a percent value from 1 to 100 and convert it to a float
-        that we can use for the scale-by value in pygame.
-
-        Purpose: the percentage 1-100 is only a convenience value for the user
-        when using the editor. We need to take that percent value and
-        convert it to something real that pygame can use.
-
-        Arguments:
-
-        - percent: the user-friendly value (between 1 and 100) that the editor
-        has provided us which we need to convert to a float so that it makes
-        sense for pygame.
-
-        - scale_direction: (str) "scale up" or "scale down".
-        Internally, a positive value will scale up the sprite.
-        A negative value (such as -0.00050) will scale down a sprite.
-        We use "scale up" and "scale down" in the editor for convenience.
-        """
-
-        if not scale_direction and not percent:
-            return
-
-        if percent > 100:
-            percent = 100
-        elif percent < 1:
-            return
-
-        scale_direction = scale_direction.lower()
-        if not scale_direction in ("scale up", "scale down"):
-            return
-
-        # The scale speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.0001
-0.0003
-0.0005
-0.0007
-0.0009
-0.0011
-0.0013
-0.0015
-0.0017
-0.0019
-0.0021
-0.0023
-0.0025
-0.0027
-0.0029
-0.0031
-0.0033
-0.0035
-0.0037
-0.0039
-0.0041
-0.0043
-0.0045
-0.0047
-0.0049
-0.0051
-0.0053
-0.0055
-0.0057
-0.0059
-0.0061
-0.0063
-0.0065
-0.0067
-0.0069
-0.0071
-0.0073
-0.0075
-0.0077
-0.0079
-0.0081
-0.0083
-0.0085
-0.0087
-0.0089
-0.0091
-0.0093
-0.0095
-0.0097
-0.0099
-0.0101
-0.0103
-0.0105
-0.0107
-0.0109
-0.0111
-0.0113
-0.0115
-0.0117
-0.0119
-0.0121
-0.0123
-0.0125
-0.0127
-0.0129
-0.0131
-0.0133
-0.0135
-0.0137
-0.0139
-0.0141
-0.0143
-0.0145
-0.0147
-0.0149
-0.0151
-0.0153
-0.0155
-0.0157
-0.0159
-0.0161
-0.0163
-0.0165
-0.0167
-0.0169
-0.0171
-0.0173
-0.0175
-0.0177
-0.0179
-0.0194
-0.0209
-0.0224
-0.0239
-0.0259
-0.0344
-0.0429
-0.0514
-0.0599
-0.0684
-"""
-
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-
-        if scale_direction == "scale down":
-            # A positive value will scale up the sprite.
-            # A negative value(such as -0.00050) will scale down a sprite.
             percent_to_float = -abs(percent_to_float)
         return percent_to_float
 
@@ -5170,7 +5032,7 @@ class StoryReader:
         # the main script reader must stay paused.
         web_handler.WebWorker.decrease_usage_count()
 
-        print("FastAPI response received:", receipt)
+        # print("FastAPI response received:", receipt)
 
         response_text = receipt.get_response_text()
 

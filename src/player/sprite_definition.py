@@ -25,6 +25,7 @@ from typing import Tuple
 from enum import Enum, auto
 from datetime import datetime
 from time import perf_counter
+from animation_speed import AnimationSpeed
 
 
 
@@ -1119,7 +1120,10 @@ class SpriteObject:
                     reached_destination_scale = True
                 else:
                     # Increment scaling
-                    new_scale_value = self.scale_current_value.scale_current_value + self.scale_by.scale_by
+                    new_scale_value =\
+                        self.scale_current_value.scale_current_value \
+                        + self.scale_by.scale_by \
+                        * AnimationSpeed.delta
 
                     self.scale_current_value = self.scale_current_value._replace(scale_current_value=new_scale_value)
 
@@ -1130,7 +1134,11 @@ class SpriteObject:
                     reached_destination_scale = True
                 else:
                     # Decrease scaling
-                    new_scale_value = self.scale_current_value.scale_current_value + self.scale_by.scale_by
+                    new_scale_value =\
+                        self.scale_current_value.scale_current_value \
+                        + self.scale_by.scale_by \
+                        * AnimationSpeed.delta
+                    
                     if new_scale_value <= 0:
                         new_scale_value = 0
 

@@ -118,10 +118,6 @@ class MouseActionsAndCoordinates:
 class Passer:
     active_story = None
     
-    # Delta is time in seconds since last frame.
-    # Used for FPS setting independent physics.
-    delta = 0
-    
     # Used for saving and loading visual novel data, such as the license key.
     player_config: PlayerConfigHandler = None
     

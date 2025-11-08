@@ -977,8 +977,8 @@ class WizardWindow:
                              default_radio_button_value="scale up",
                              scale_default_value=5,
                              scale_from_value=1,
-                             scale_to_value=100,
-                             scale_instructions="Scale speed (1 to 100):",
+                             scale_to_value=300000,
+                             scale_instructions="Scale speed (1 to 300000):",
                              group_name=GroupName.SCALE)
 
         page_character_scale_current_value =\

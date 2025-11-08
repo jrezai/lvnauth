@@ -25,6 +25,7 @@ import web_handler
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
+from animation_speed import AnimationSpeed
 from datetime import datetime
 from launch_window import LaunchWindow
 from player_config_handler import PlayerConfigHandler
@@ -248,13 +249,10 @@ class Main:
         # the story reader object hadn't been initialized yet.
         Passer.web_handler.callback_method_finished =\
             Passer.active_story.reader.on_web_request_finished
-
-        # Holds the number of milliseconds elapsed in each frame
-        milliseconds_elapsed = 0
         
         # Delta is time in seconds since last frame.
         # Used for FPS setting independent physics.
-        Passer.delta = 0
+        AnimationSpeed.delta = 0
 
         while story.story_running:
 
@@ -291,7 +289,7 @@ class Main:
             pygame.display.flip()
             
             # The number of milliseconds elapsed in this frame
-            Passer.delta = clock.tick(60) / 1000       
+            AnimationSpeed.delta = clock.tick(60) / 1000       
             
     def check_queue(self):
         """
