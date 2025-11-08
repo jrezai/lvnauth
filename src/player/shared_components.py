@@ -118,12 +118,16 @@ class MouseActionsAndCoordinates:
 class Passer:
     active_story = None
     
+    # Delta is time in seconds since last frame.
+    # Used for FPS setting independent physics.
+    delta = 0
+    
     # Used for saving and loading visual novel data, such as the license key.
     player_config: PlayerConfigHandler = None
     
     # Used for verifying a license key.
     # This variable will be used throughout the visual novel for 
-    # interacting with flask and the database (for web-enabled visual novels).    
+    # interacting with FastAPI and the database (for web-enabled visual novels).    
     web_handler: WebHandler = None
     
     # Used for specifying a custom chapter/scene

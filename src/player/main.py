@@ -174,7 +174,10 @@ class Main:
                 story_info.get("Episode"))
 
     def begin(self):
-
+        """
+        Start the pygame loop.
+        """
+        
         # Read the .lvna file from the provided argument command switch.
         # The path to the .lvna file will be in args.file
         data_requester = FileReader(args.file)
@@ -248,11 +251,12 @@ class Main:
 
         # Holds the number of milliseconds elapsed in each frame
         milliseconds_elapsed = 0
+        
+        # Delta is time in seconds since last frame.
+        # Used for FPS setting independent physics.
+        Passer.delta = 0
 
         while story.story_running:
-
-            # The number of milliseconds elapsed in this frame
-            milliseconds_elapsed = clock.tick(60)
 
             main_surface.fill((0, 0, 0))
 
@@ -282,10 +286,12 @@ class Main:
 
             # Handle drawing
             story.on_render()
-            
 
             # For debugging
             pygame.display.flip()
+            
+            # The number of milliseconds elapsed in this frame
+            Passer.delta = clock.tick(60) / 1000       
             
     def check_queue(self):
         """
