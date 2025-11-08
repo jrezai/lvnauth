@@ -231,118 +231,117 @@ class DialogRectangle:
 
         self._prepare_outro_animation()
 
-    def convenient_animation_speed_to_float(self,
+    def convenient_animation_speed_to_value(self,
                                             int_speed: int,
-                                            animation_type: str) -> float:
+                                            animation_type: str) -> int:
         """
-        Convert a regular convenient value, such as 5, to a float
-        value that can be used for incremental animation speeds
-        such as 1.5
+        Convert a regular convenient value, such as 5, to a value
+        that can be used for incremental animation speeds.
         """
 
-        fade_float_value_speeds = """0.5
-0.6
-0.7
-0.8
-0.9
-1
-1.1
-1.2
-1.3
-1.4
-1.5
-1.6
-1.7
-1.8
-1.9
-2
-2.1
-2.2
-2.3
-2.4
-2.5
-2.6
-2.7
-2.8
-2.9
-3
-3.1
-3.2
-3.3
-3.4
-3.5
-3.6
-3.7
-3.8
-3.9
-4
-4.1
-4.2
-4.3
-4.4
-4.5
-4.6
-4.7
-4.8
-4.9
-5
-5.1
-5.2
-5.3
-5.4
-5.5
-5.6
-5.7
-5.8
-5.9
-6
-6.09
-6.19
-6.29
-6.39
-6.49
-6.59
-6.69
-6.79
-6.89
-6.99
-7.09
-7.19
-7.29
-7.39
-7.49
-7.59
-7.69
-7.79
-7.89
-7.99
-8.09
-8.19
-8.29
-8.39
-8.49
-8.59
-8.69
-8.79
-8.89
-8.99
-9.09
-9.19
-9.29
-9.39
-9.49
-9.59
-9.69
-9.79
-9.89
-9.99
-10.1
-10.2
-10.3
-10.4"""
+        fade_value_speeds = """20
+30
+40
+50
+60
+70
+80
+90
+100
+110
+120
+130
+140
+150
+160
+170
+180
+190
+200
+210
+220
+230
+240
+250
+260
+270
+280
+290
+300
+310
+320
+330
+340
+350
+360
+370
+380
+390
+400
+410
+420
+430
+440
+450
+460
+470
+480
+490
+500
+510
+520
+530
+540
+550
+560
+570
+580
+590
+600
+610
+620
+630
+640
+650
+660
+670
+680
+690
+700
+710
+720
+730
+740
+750
+760
+770
+780
+790
+800
+810
+820
+830
+840
+850
+860
+870
+880
+890
+900
+910
+920
+930
+940
+950
+960
+970
+980
+990
+1000
+1010"""
             
 
-        movement_float_value_speeds = """70
+        movement_value_speeds = """70
 95
 120
 145
@@ -444,31 +443,31 @@ class DialogRectangle:
 2545"""
 
         # Key: int convenient value (1 to 100)
-        # Value: float value used in animation math.
+        # Value: int value used in animation math.
         speed_mapping = {}
 
-        # Get the float speeds depending on the type of animation
+        # Get the int value speeds depending on the type of animation
         # because the animation speeds will differ for fade vs non-fade.
         if "fade" in animation_type:
-            float_values = fade_float_value_speeds
+            speed_values = fade_value_speeds
         else:
-            float_values = movement_float_value_speeds
+            speed_values = movement_value_speeds
         
         # Get a list of float values.
-        float_values = float_values.split()
+        speed_values = speed_values.split()
         
         # Set the default speed to convenient value 10
-        default_speed = float(float_values[9])
+        default_speed = float(speed_values[9])
 
         # Populate the speed_mapping dictionary.
-        for idx, f in enumerate(float_values):
+        for idx, f in enumerate(speed_values):
             speed_mapping[idx + 1] = float(f)
 
         # Get the requested speed and if the speed isn't available,
         # use the default speed.
-        float_speed = speed_mapping.get(int_speed, default_speed)
+        animation_speed = speed_mapping.get(int_speed, default_speed)
         
-        return float_speed
+        return animation_speed
 
     def _prepare_intro_animation(self):
 
@@ -500,9 +499,9 @@ class DialogRectangle:
         self.fade_current_value = initial_alpha
 
         # Set the intro animation speed by converting the convenient speed
-        # value (1-100) into a float value that we can use.
+        # value (1-100) into a value that we can use.
         self.animation_speed =\
-            self.convenient_animation_speed_to_float(
+            self.convenient_animation_speed_to_value(
                 self.animation_speed_convenient,
                 self.intro_animation.name.lower())
 
@@ -649,9 +648,9 @@ class DialogRectangle:
             #StorySettings.active_scene.unload_script(StorySettings.waiting_arrow_script_alias)
 
         # Set the outro animation speed by converting the convenient speed
-        # value (1-100) into a float value that we can use.
+        # value (1-100) into a value that we can use.
         self.animation_speed =\
-            self.convenient_animation_speed_to_float(
+            self.convenient_animation_speed_to_value(
                 self.animation_speed_convenient,
                 self.outro_animation.name.lower())
 
