@@ -795,8 +795,8 @@ class WizardWindow:
                                default_radio_button_value="fade in",
                                scale_default_value=5,
                                scale_from_value=1,
-                               scale_to_value=100,
-                               scale_instructions="Fade speed (1 to 100):",
+                               scale_to_value=15000,
+                               scale_instructions="Fade speed (1 to 15000):",
                                group_name=GroupName.FADE)
 
         page_character_fade_until =\
@@ -902,8 +902,8 @@ class WizardWindow:
                                  default_radio_button_value="clockwise",
                                  scale_default_value=5,
                                  scale_from_value=1,
-                                 scale_to_value=100,
-                                 scale_instructions="Rotation speed (1 to 100):",
+                                 scale_to_value=220000,
+                                 scale_instructions="Rotation speed (1 to 220000):",
                                  group_name=GroupName.ROTATE)
 
         page_character_rotate_until =\
@@ -1485,7 +1485,7 @@ class WizardWindow:
                                    parent_display_text="Dialog",
                                    sub_display_text="dialog_sprite_fade_speed",
                                    command_name="dialog_sprite_fade_speed",
-                                   purpose_line="Set the fade-speed of an dialog sprite.\n"
+                                   purpose_line="Set the fade-speed of a dialog sprite.\n"
                                    "Note: the dialog sprite must already be visible.",
                                    radio_button_instructions="Fade direction:",
                                    radio_button_text_1="Fade in",
@@ -1496,7 +1496,7 @@ class WizardWindow:
                                    scale_default_value=5,
                                    scale_from_value=1,
                                    scale_to_value=100,
-                                   scale_instructions="Fade speed (1 to 100):",
+                                   scale_instructions="Fade speed (1 to 15000):",
                                    group_name=GroupName.FADE)
     
         page_dialog_fade_until =\
@@ -1602,8 +1602,8 @@ class WizardWindow:
                                      default_radio_button_value="clockwise",
                                      scale_default_value=5,
                                      scale_from_value=1,
-                                     scale_to_value=100,
-                                     scale_instructions="Rotation speed (1 to 100):",
+                                     scale_to_value=220000,
+                                     scale_instructions="Rotation speed (1 to 220000):",
                                      group_name=GroupName.ROTATE)
     
         page_dialog_rotate_until =\
@@ -2086,8 +2086,8 @@ class WizardWindow:
                                default_radio_button_value="fade in",
                                scale_default_value=5,
                                scale_from_value=1,
-                               scale_to_value=100,
-                               scale_instructions="Fade speed (1 to 100):",
+                               scale_to_value=15000,
+                               scale_instructions="Fade speed (1 to 15000):",
                                group_name=GroupName.FADE)
 
         page_object_fade_until =\
@@ -2193,8 +2193,8 @@ class WizardWindow:
                                  default_radio_button_value="clockwise",
                                  scale_default_value=5,
                                  scale_from_value=1,
-                                 scale_to_value=100,
-                                 scale_instructions="Rotation speed (1 to 100):",
+                                 scale_to_value=220000,
+                                 scale_instructions="Rotation speed (1 to 220000):",
                                  group_name=GroupName.ROTATE)
 
         page_object_rotate_until =\

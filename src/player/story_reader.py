@@ -2746,14 +2746,26 @@ class StoryReader:
         if not sprite:
             return
 
-        # Convert the user-provided percent value speed (1 to 100)
-        # from sprite.rotate_speed to a float that pygame can use.
-        # Depending on the rotation direction, the float will either be a positive
-        # float or a negative float.
-        rotate_float_value = self._sprite_rotate_speed_get_value_from_percent(
-            rotate_speed.rotate_speed, rotate_speed.rotate_direction
-        )
+        rotate_direction = rotate_speed.rotate_direction.lower()
+        if not rotate_direction in ("clockwise", "counterclockwise"):
+            return        
 
+        # Convert the user-provided speed value from sprite.rotate_speed 
+        # to a float that pygame can use.
+        # Depending on the rotation direction, the float will either be a 
+        # positive float or a negative float.
+        rotate_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.1,
+                increment_by=0.01, 
+                max_convenient_row=220000,
+                convenient_row_number=rotate_speed.rotate_speed)
+        
+        if rotate_direction == "clockwise":
+            # A positive value will rotate the sprite counterclockwise.
+            # A negative value(such as -0.50) will rotate the sprite clockwise.
+            rotate_float_value = -abs(rotate_float_value)        
+        
         # Make sure we have a float value, otherwise stop here.
         if not rotate_float_value:
             return
@@ -3280,156 +3292,6 @@ class StoryReader:
             percent_to_float = -abs(percent_to_float)
         return percent_to_float
 
-    def _sprite_rotate_speed_get_value_from_percent(
-        self, percent, rotate_direction: str
-    ) -> float | None:
-        """
-        Take a percent value from 1 to 100 and convert it to a float
-        that we can use for the rotation speed in pygame.
-
-        Purpose: the percentage 1-100 is only a convenience value for the user
-        when using the editor. We need to take that percent value and
-        convert it to something real that pygame can use.
-
-        Arguments:
-
-        - percent: the user-friendly value (between 1 and 100) that the editor
-        has provided us which we need to convert to a float so that it makes
-        sense for pygame.
-        """
-
-        if not rotate_direction and not percent:
-            return
-
-        # Has to be between 1 and 100 %
-        if percent > 100:
-            percent = 100
-        elif percent < 1:
-            percent = 1
-
-        rotate_direction = rotate_direction.lower()
-        if not rotate_direction in ("clockwise", "counterclockwise"):
-            return
-
-        # The rotation speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.02
-0.07
-0.12
-0.17
-0.22
-0.27
-0.32
-0.37
-0.42
-0.47
-0.52
-0.57
-0.62
-0.67
-0.72
-0.77
-0.82
-0.87
-0.92
-0.97
-1.02
-1.07
-1.12
-1.17
-1.22
-1.27
-1.32
-1.37
-1.42
-1.47
-1.52
-1.57
-1.62
-1.67
-1.72
-1.77
-1.82
-1.87
-1.92
-1.97
-2.02
-2.07
-2.12
-2.17
-2.22
-2.27
-2.32
-2.37
-2.42
-2.47
-2.52
-2.57
-2.62
-2.67
-2.72
-2.77
-2.82
-2.87
-2.92
-2.97
-3.02
-3.07
-3.12
-3.17
-3.22
-3.27
-3.32
-3.37
-3.42
-3.47
-3.52
-3.57
-3.62
-3.67
-3.72
-3.77
-3.82
-3.87
-3.92
-3.97
-4.02
-4.07
-4.12
-4.17
-4.22
-4.27
-4.32
-4.37
-4.42
-4.47
-4.72
-4.97
-5.22
-5.47
-5.92
-6.37
-6.82
-8.27
-10.72
-20.17"""
-
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-
-        if rotate_direction == "clockwise":
-            # A positive value will rotate the sprite counterclockwise.
-            # A negative value(such as -0.50) will rotate the sprite clockwise.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
-
     def _sprite_fade_speed(self, sprite_type: file_reader.ContentType, arguments):
         """
         Set the fade-speed of a sprite.
@@ -3461,13 +3323,16 @@ class StoryReader:
         if not sprite:
             return
 
-        # Convert the user-provided percent value speed (1 to 100)
+        # Convert the user-provided convenient speed value
         # from fade_speed.fade_speed to a float that pygame can use.
         # Depending on the fade direction, the float will either be a positive
         # float or a negative float.
-        fade_float_value = self._sprite_fade_speed_get_value_from_percent(
-            fade_speed.fade_speed, fade_speed.fade_direction
-        )
+        fade_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.1,
+                increment_by=0.1,
+                max_convenient_row=15000,
+                convenient_row_number=fade_speed.fade_speed)        
 
         # Make sure we have a float value, otherwise stop here.
         if not fade_float_value:

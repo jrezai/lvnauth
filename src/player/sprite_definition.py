@@ -995,7 +995,10 @@ class SpriteObject:
                     reached_destination_rotate = True
                 else:
                     # Rotate counterclockwise
-                    new_rotate_value = self.rotate_current_value.rotate_current_value + self.rotate_speed.rotate_speed
+                    new_rotate_value =\
+                        self.rotate_current_value.rotate_current_value \
+                        + self.rotate_speed.rotate_speed \
+                        * AnimationSpeed.delta
 
                     if new_rotate_value >= 360:
                         new_rotate_value = 0
@@ -1024,7 +1027,10 @@ class SpriteObject:
                     reached_destination_rotate = True
                 else:
                     # Rotate clockwise
-                    new_rotate_value = self.rotate_current_value.rotate_current_value + self.rotate_speed.rotate_speed
+                    new_rotate_value =\
+                        self.rotate_current_value.rotate_current_value \
+                        + self.rotate_speed.rotate_speed \
+                        * AnimationSpeed.delta
 
                     if new_rotate_value < 0:
                         new_rotate_value = 360
@@ -1304,8 +1310,23 @@ class SpriteObject:
         """
         # Is fade enabled on this sprite?
         if self.current_fade_value is not None:
-            if self.current_fade_value.current_fade_value:
+            
+            # If there's a current fade value (even zero or 255) and the 
+            # sprite is still fading, then proceed to evaluate if a fade
+            # is still needed.
+            if self.current_fade_value.current_fade_value or self.is_fading:
                 
+                # Proceed to check if a fade is still needed or not.
+                
+                # If the current fade value is set to 255 for the sprite
+                # but no fade has been applied to the sprite yet, then
+                # no fade needs to be applied, because the fade value wants
+                # to set the sprite to 255, but it already is.
+                if self.current_fade_value.current_fade_value == 255 \
+                   and self.applied_fade_value is None:
+                    return
+                
+    
                 # Is the applied fade amount the same
                 # as the expected fade amount?
                 if self.current_fade_value.current_fade_value != self.applied_fade_value:
@@ -1426,7 +1447,10 @@ class SpriteObject:
                     reached_destination_fade = True
                 else:
                     # Increment fade
-                    new_fade_value = self.current_fade_value.current_fade_value + self.fade_speed.fade_speed
+                    new_fade_value = self.current_fade_value.current_fade_value \
+                        + self.fade_speed.fade_speed \
+                        * AnimationSpeed.delta
+                    
                     if new_fade_value > 255:
                         new_fade_value = 255
 
@@ -1445,7 +1469,10 @@ class SpriteObject:
 
                 else:
                     # Decrease fade
-                    new_fade_value = self.current_fade_value.current_fade_value + self.fade_speed.fade_speed
+                    new_fade_value = self.current_fade_value.current_fade_value \
+                        - self.fade_speed.fade_speed \
+                        * AnimationSpeed.delta
+                    
                     if new_fade_value < 0:
                         new_fade_value = 0
 
