@@ -994,8 +994,14 @@ class StoryReader:
         elif command_name == "sprite_font_delay_punc":
             self._sprite_text_font_delay_punc(arguments=arguments)
 
-        elif command_name == "sprite_font_fade_speed":
-            self._sprite_text_font_fade_speed(arguments=arguments)
+        elif command_name == "sprite_font_fade_all_speed":
+            self._sprite_text_font_fade_speed(arguments=arguments,
+                                              max_speed=10)
+            
+        elif command_name == "sprite_font_fade_letter_speed":
+            self._sprite_text_font_fade_speed(
+                arguments=arguments,
+                max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
         elif command_name == "sprite_font_intro_animation":
             self._sprite_text_font_intro(arguments=arguments)
@@ -1019,11 +1025,21 @@ class StoryReader:
             # relative to the dialog rectangle.
             self._font_start_position(x=False, arguments=arguments)
 
-        elif command_name == "font_text_fade_speed":
-            # Set the speed of letter by letter fade-in and
-            # overall fade-in dialog text.
+        elif command_name == "font_text_fade_all_speed":
+            # Set the speed of the overall fade-in dialog text.
+            # This is not for letter by letter fade-ins.
             # The speed range is 1 (slowest) to 10 (fastest)
-            self._font_text_fade_speed(arguments=arguments)
+            self._font_text_fade_speed(arguments=arguments,
+                                       max_speed=10)
+            
+        elif command_name == "font_text_fade_letter_speed":
+            # Set the speed of the letter-by-letter fade-in dialog text.
+            # This is not for all letter fade-ins.
+            # The speed range is 1 (slowest) 
+            # to AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
+            self._font_text_fade_speed(
+                arguments=arguments,
+                max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
         elif command_name == "font_text_delay":
             # Set the number of frames to skip when applying
@@ -2419,13 +2435,23 @@ class StoryReader:
 
         # because if we're in a reusable script, it won't
         # have a FontAnimation object.
-        font_animation = self.get_main_story_reader().active_font_handler.font_animation
+        font_animation = \
+            self.get_main_story_reader().active_font_handler.font_animation
 
         # This will be True if the dialog text is being animated.
         if font_animation.is_start_animating:
 
             # The dialog text is being animated/shown, so speed it up.
-            font_animation.faster_text_mode = True
+            
+            # Is it already sped up?
+            if font_animation.faster_text_mode:
+                
+                # It's already sped up, so set the opacity to 255
+                # on all the letters.
+                font_animation.make_all_letters_opaque()
+                
+            else:
+                font_animation.faster_text_mode = True
 
             # So the caller can know that the text has been sped up.
             return True
@@ -4165,15 +4191,23 @@ class StoryReader:
 
         return generate_class
 
-    def _font_text_fade_speed(self, arguments, sprite_object: sd.SpriteObject = None):
+    def _font_text_fade_speed(self,
+                              arguments,
+                              max_speed: int,
+                              sprite_object: sd.SpriteObject = None):
         """
-        Set the gradual text fade speed of the dialog text.
-        It applies to both letter by letter fade-in and overall fade-in.
+        Set the text fade speed of the dialog text.
+        It applies to both a letter by letter text fade in and a full fade-in
+        text.
 
         Arguments:
 
-        - arguments: an int between 1 and 10.
-        1 is the slowest speed, 10 is the fastest speed.
+        - arguments: an int between 1 and 10 (full text fade in) or 1 to 1200
+        (gradual letter by letter fade in)
+        
+        - max_speed: if it's for a full text fade-in (all letters at the
+        same time), then the max is 10. If it's for gradual letter by letter
+        fade in, the max is 1200.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4188,9 +4222,9 @@ class StoryReader:
 
         fade_speed = fade_speed.fade_speed
 
-        # Don't allow the speed to be less than 1 or more than 10
-        if fade_speed > 10:
-            fade_speed = 10
+        # Don't allow the speed to be less than 1 or more than the max.
+        if fade_speed > max_speed:
+            fade_speed = max_speed
         elif fade_speed < 1:
             fade_speed = 1
 
@@ -4493,10 +4527,21 @@ class StoryReader:
             arguments=command_arguments.value, sprite_object=sprite
         )
 
-    def _sprite_text_font_fade_speed(self, arguments: str):
+    def _sprite_text_font_fade_speed(self,
+                                     arguments: str,
+                                     max_speed: int):
         """
         Set the gradual text fade speed of the dialog text.
         It applies to both letter by letter fade-in and overall fade-in.
+        
+        Arguments:
+        
+        - arguments: a string in the format: sprite type, general alias, value
+        
+        - max_speed: if the fade in is for all the text fading in at the same
+        time, then the max speed is 10. If it's for letter-by-letter fade-in,
+        then the max speed will be in
+        AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
         """
 
         # Type-hints
@@ -4515,7 +4560,9 @@ class StoryReader:
         # Set the gradual text fade speed of the dialog text.
         # It applies to both letter by letter fade-in and overall fade-in.
         self._font_text_fade_speed(
-            arguments=command_arguments.value, sprite_object=sprite
+            arguments=command_arguments.value,
+            max_speed=max_speed,
+            sprite_object=sprite
         )
 
     def _sprite_text_font_delay(self, arguments: str):

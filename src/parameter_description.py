@@ -21,6 +21,7 @@ import re
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
+from animation_speed import AnimationSpeed
 
 """
 Used for showing parameter descriptions based on where the caret is
@@ -230,14 +231,16 @@ class ParameterDescription:
                      "font_y": ("Vertical position (y)", ),
                      "font_text_delay": ("Number of frames to delay (0 to 600)", ),
                      "font_text_delay_punc": ("Previous letter", "Number of frames to skip (0 to 120)"),
-                     "font_text_fade_speed": ("Fade speed (1 to 10)",),
+                     "font_text_fade_all_speed": ("Fade speed (1 to 10)",),
+                     "font_text_fade_letter_speed": (f"Fade speed (1 to {AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN})",),
                      "font_intro_animation": ("Animation type",),
                      "sprite_font": ("Sprite type", "Sprite alias", "Font name"),
                      "sprite_font_x": ("Sprite type", "Sprite alias", "Horizontal position value (x)"),
                      "sprite_font_y": ("Sprite type", "Sprite alias", "Vertical position value (x)"),
                      "sprite_font_delay": ("Sprite type", "Sprite alias", "Delay frames (0 to 600)"),
                      "sprite_font_delay_punc": ("Sprite type", "Sprite alias", "Previous letter", "Number of frames to skip (0 to 120)"),
-                     "sprite_font_fade_speed": ("Sprite type", "Sprite alias", "Fade speed (1 to 10)"),
+                     "sprite_font_fade_all_speed": ("Sprite type", "Sprite alias", "Fade speed (1 to 10)"),
+                     "sprite_font_fade_letter_speed": ("Sprite type", "Sprite alias", f"Fade speed (1 to {AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN})"),
                      "sprite_font_intro_animation": ("Sprite type", "Sprite alias", "Starting animation type"),
                      "sprite_text": ("Sprite type", "Sprite alias", "Sprite text"),
                      "sprite_text_clear": ("Sprite type", "Sprite alias"),

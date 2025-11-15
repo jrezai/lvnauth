@@ -824,9 +824,11 @@ class DialogRectangle:
         
             elif self.outro_animation == RectangleOutroAnimation.FADE_OUT:
                 # Calculate the animation
-                self.fade_current_value -= self.animation_speed * AnimationSpeed.delta
+                self.fade_current_value -= \
+                    self.animation_speed * AnimationSpeed.delta
     
-                # Clear the rectangle surface because we're going to draw a new rectangle.
+                # Clear the rectangle surface because we're going to 
+                # draw a new rectangle.
                 # self.surface.fill((0, 0, 0, 0))
 
                 # Is the animation satisfied?

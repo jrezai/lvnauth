@@ -46,6 +46,7 @@ from functools import partial
 from re import search, IGNORECASE
 from command_helper import CommandHelper, ContextEditRun
 from variable_editor_window import VariableEditorWindow
+from animation_speed import AnimationSpeed
 
 
 
@@ -1178,8 +1179,7 @@ class WizardWindow:
                                parent_display_text="Character",
                                sub_display_text="character_set_center",
                                command_name="character_set_center",
-                               purpose_line="Set the center point of the sprite.\n"
-                               "corner of the sprite.\n\n"
+                               purpose_line="Set the center point of the sprite.\n\n"
                                "Note: the character sprite must already be visible.",
                                spinbox_1_instructions="Center of X (horizontal position):",
                                spinbox_2_instructions="Center of Y (vertical position):",
@@ -1878,8 +1878,7 @@ class WizardWindow:
                                    parent_display_text="Dialog",
                                    sub_display_text="dialog_sprite_set_center",
                                    command_name="dialog_sprite_set_center",
-                                   purpose_line="Set the center point of the sprite.\n"
-                                   "corner of the sprite.\n\n"
+                                   purpose_line="Set the center point of the sprite.\n\n"
                                    "Note: the dialog sprite must already be visible.",
                                    spinbox_1_instructions="Center of X (horizontal position):",
                                    spinbox_2_instructions="Center of Y (vertical position):",
@@ -2469,8 +2468,7 @@ class WizardWindow:
                                parent_display_text="Object",
                                sub_display_text="object_set_center",
                                command_name="object_set_center",
-                               purpose_line="Set the center point of the sprite.\n"
-                               "corner of the sprite.\n\n"
+                               purpose_line="Set the center point of the sprite.\n\n"
                                "Note: the object sprite must already be visible.",
                                spinbox_1_instructions="Center of X (horizontal position):",
                                spinbox_2_instructions="Center of Y (vertical position):",
@@ -2625,22 +2623,38 @@ class WizardWindow:
                            group_name=GroupName.SPEED)
     
 
-        page_font_text_fade_speed =\
+        page_font_text_fade_all_speed =\
             Font_TextFadeSpeed(parent_frame=self.frame_contents_outer,
                                header_label=self.lbl_header,
                                purpose_label=self.lbl_purpose,
                                treeview_commands=self.treeview_commands,
                                parent_display_text="Font",
-                               sub_display_text="font_text_fade_speed",
-                               command_name="font_text_fade_speed",
-                               purpose_line="Sets the fade speed of gradually-shown dialog text\n" +
-                               "(letter-by-letter fade speed) and also the overall fade-in speed\n" +
+                               sub_display_text="font_text_fade_all_speed",
+                               command_name="font_text_fade_all_speed",
+                               purpose_line="Sets the fade speed of fade-in text\n" +
                                "(non letter-by-letter)",
                                scale_from_value=1,
                                scale_to_value=10,
                                scale_instructions="Set the fade speed (1-10):\n"
                                "1 = slowest  10 = fastest",
                                scale_default_value=5,
+                               group_name=GroupName.SPEED)
+        
+        page_font_text_fade_letter_speed =\
+            Font_TextFadeSpeed(parent_frame=self.frame_contents_outer,
+                               header_label=self.lbl_header,
+                               purpose_label=self.lbl_purpose,
+                               treeview_commands=self.treeview_commands,
+                               parent_display_text="Font",
+                               sub_display_text="font_text_fade_letter_speed",
+                               command_name="font_text_fade_letter_speed",
+                               purpose_line="Sets the fade speed of gradually-shown dialog text.\n" +
+                               "(letter-by-letter fade speed)",
+                               scale_from_value=1,
+                               scale_to_value=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN,
+                               scale_instructions=f"Set the fade speed (1-{AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN}):\n"
+                               f"1 = slowest  {AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN} = fastest",
+                               scale_default_value=500,
                                group_name=GroupName.SPEED)
 
         page_font_intro_animation =\
@@ -2743,22 +2757,39 @@ class WizardWindow:
                                      scale_default_value=2,
                                      group_name=GroupName.SPEED)
 
-        page_sprite_font_fade_speed =\
+        page_sprite_font_fade_all_speed =\
             Font_SpriteTextFadeSpeed(parent_frame=self.frame_contents_outer,
                                      header_label=self.lbl_header,
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
                                      parent_display_text="Font",
-                                     sub_display_text="sprite_font_fade_speed",
-                                     command_name="sprite_font_fade_speed",
-                                     purpose_line="Sets the fade speed of gradually-shown sprite text\n" +
-                                     "(letter-by-letter fade speed) and also the overall fade-in speed\n" +
+                                     sub_display_text="sprite_font_fade_all_speed",
+                                     command_name="sprite_font_fade_all_speed",
+                                     purpose_line="Sets the fade speed of overall fade-in speed\n" +
                                      "(non letter-by-letter)\n\n"
                                      "Note: the sprite must already be visible.",
                                      scale_from_value=1,
                                      scale_to_value=10,
                                      scale_instructions="Set the fade speed (1-10):\n"
                                      "1 = slowest  10 = fastest",
+                                     scale_default_value=5,
+                                     group_name=GroupName.SPEED)
+        
+        page_sprite_font_fade_letter_speed =\
+            Font_SpriteTextFadeSpeed(parent_frame=self.frame_contents_outer,
+                                     header_label=self.lbl_header,
+                                     purpose_label=self.lbl_purpose,
+                                     treeview_commands=self.treeview_commands,
+                                     parent_display_text="Font",
+                                     sub_display_text="sprite_font_fade_letter_speed",
+                                     command_name="sprite_font_fade_letter_speed",
+                                     purpose_line="Sets the fade speed of gradually-shown dialog text.\n" +
+                                     "(letter-by-letter fade speed)\n\n"
+                                     "Note: the sprite must already be visible.",
+                                     scale_from_value=1,
+                                     scale_to_value=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN,
+                                     scale_instructions=f"Set the fade speed (1-{AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN}):\n"
+                                     f"1 = slowest  {AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN} = fastest",
                                      scale_default_value=5,
                                      group_name=GroupName.SPEED)
         
@@ -3230,7 +3261,8 @@ class WizardWindow:
         self.pages["font"] = page_font
         self.pages["font_x"] = page_font_x
         self.pages["font_y"] = page_font_y
-        self.pages["font_text_fade_speed"] = page_font_text_fade_speed
+        self.pages["font_text_fade_all_speed"] = page_font_text_fade_all_speed
+        self.pages["font_text_fade_letter_speed"] = page_font_text_fade_letter_speed
         self.pages["font_text_delay"] = page_font_text_delay
         self.pages["font_text_delay_punc"] = page_font_text_delay_punc
         self.pages["font_intro_animation"] = page_font_intro_animation
@@ -3240,7 +3272,8 @@ class WizardWindow:
         self.pages["sprite_font_y"] = page_sprite_font_y       
         self.pages["sprite_font_delay"] = page_sprite_font_delay
         self.pages["sprite_font_delay_punc"] = page_sprite_font_delay_punc
-        self.pages["sprite_font_fade_speed"] = page_sprite_font_fade_speed
+        self.pages["sprite_font_fade_all_speed"] = page_sprite_font_fade_all_speed
+        self.pages["sprite_font_fade_letter_speed"] = page_sprite_font_fade_letter_speed
         self.pages["sprite_font_intro_animation"] = page_sprite_font_intro_animation
         self.pages["sprite_text"] = page_sprite_text
         self.pages["sprite_text_clear"] = page_sprite_text_clear

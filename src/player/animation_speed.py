@@ -21,7 +21,10 @@ class AnimationSpeed:
     
     # Delta is time in seconds since last frame.
     # Used for FPS setting independent physics.
-    delta = 0    
+    delta = 0
+    
+    # The max convenient speed for letter by letter text fade in.
+    MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN = 1200
 
     @staticmethod
     def get_sequence_value(initial_value: float,
