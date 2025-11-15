@@ -443,8 +443,12 @@ class FontAnimation:
         if letter_number not in (1, 2, 3):
             return
 
-        # We'll start with this speed as the starting point
-        base_start = (24, 4, 8)
+        # We'll start with this opacity boost as the starting point.
+        # It helps to avoid a 'catterpillar' fade-in effect. This causes 
+        # the fade-in to last longer near the end of the text, making it 
+        # look nicer.
+        # base_start = (24, 4, 8)
+        base_start = (24, 8, 4)
         
         # Initialize
         increase_opacity_by = 0
