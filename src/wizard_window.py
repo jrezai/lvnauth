@@ -8316,15 +8316,15 @@ class Font_TextDelayPunc(WizardListing):
             return
         
         previous_letter = command_class_object.previous_letter
-        number_of_frames = command_class_object.number_of_frames
+        number_of_milliseconds = command_class_object.number_of_milliseconds
         
         try:
-            number_of_frames = int(number_of_frames)
+            number_of_milliseconds = int(number_of_milliseconds)
         except ValueError:
-            number_of_frames = 1
+            number_of_milliseconds = 1
 
         self.entry_letter.insert(0, previous_letter)
-        self.v_scale_value.set(number_of_frames)
+        self.v_scale_value.set(number_of_milliseconds)
         
         # SpriteTextDelayPunc has 2 additional widgets:
         # an entry widget and a combobox.

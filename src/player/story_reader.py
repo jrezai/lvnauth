@@ -4263,26 +4263,27 @@ class StoryReader:
         )
 
         previous_letter = delay_punc.previous_letter
-        delay_frame_count = delay_punc.number_of_frames
+        delay_milliseconds = delay_punc.number_of_milliseconds
 
-        # Don't allow the speed to be less than 0 or more than 150
-        if delay_frame_count > 150:
-            delay_frame_count = 150
-        elif delay_frame_count < 0:
-            delay_frame_count = 0
+        # Don't allow the delay to be less than 0 or more than 5000 milliseconds
+        if delay_milliseconds > 5000:
+            delay_milliseconds = 1000
+        elif delay_milliseconds < 0:
+            delay_milliseconds = 0
 
-        # Get the font handler of either the sprite object (dialog sprite, object, character)
-        # or the dialog rectangle.
+        # Get the font handler of either the sprite object (dialog sprite, 
+        # object, character) or the dialog rectangle.
         if sprite_object:
             # Sprite object font handler
             subject_font_handler = sprite_object.active_font_handler
         else:
             # Dialog rectangle font handler
-            subject_font_handler = self.get_main_story_reader().active_font_handler
+            subject_font_handler =\
+                self.get_main_story_reader().active_font_handler
 
         # Add the after-previous-letter delay setting.
-        subject_font_handler.font_animation.set_letter_delay(
-            previous_letter, delay_frame_count
+        subject_font_handler.font_animation.letter_delay_handler.set_letter_delay(
+            previous_letter, delay_milliseconds
         )
 
     def get_main_story_reader(self):
@@ -4307,14 +4308,16 @@ class StoryReader:
 
     def _font_text_delay(self, arguments, sprite_object: sd.SpriteObject = None):
         """
-        Set the number of frames to skip when animating letter-by-letter dialog text.
+        Set the number of milliseconds to skip when animating letter-by-letter
+        dialog text.
         Does not apply to letter fade-ins.
 
         Arguments:
 
-        - arguments: an int between 0 and 600.
-        For example: a value of 2 means: apply the letter by letter animation
-        every 2 frames. A value of 0 means apply the animation at every frame.
+        - arguments: a float for milliseconds.
+        For example: a value of 1000 means: apply the letter by letter animation
+        every 1 second (so each second will display a letter).
+        The minimum value is 
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4331,14 +4334,14 @@ class StoryReader:
             class_namedtuple=cc.FontTextDelay, given_arguments=arguments
         )
 
-        text_speed_delay = text_speed_delay.number_of_frames
+        text_wait_milliseconds = text_speed_delay.number_of_milliseconds
 
-        # Don't allow the speed to be less than 0 or more than 600
-        # 600 means 10 seconds (60 frames X 10).
-        if text_speed_delay > 600:
-            text_speed_delay = 600
-        elif text_speed_delay < 0:
-            text_speed_delay = 0
+        # Don't allow the wait time to be less than 0 or more than 10000
+        # 10000 milliseconds means 10 seconds.
+        if text_wait_milliseconds > 10000:
+            text_wait_milliseconds = 10000
+        elif text_wait_milliseconds < 0:
+            text_wait_milliseconds = 0
 
         # Type-hint
         subject_font_handler: font_handler.ActiveFontHandler
@@ -4353,10 +4356,10 @@ class StoryReader:
         # Record the delay value
         subject_font_handler.font_animation.font_text_delay = text_speed_delay
 
-        # For the initial text frame, consider the text delay limit having been reached,
-        # so that the delay doesn't occur before the first letter has been shown.
-        # Without this, the text delay will apply before the first letter has been shown.
-        subject_font_handler.font_animation.gradual_delay_counter = text_speed_delay
+        ## For the initial text frame, consider the text delay limit having been reached,
+        ## so that the delay doesn't occur before the first letter has been shown.
+        ## Without this, the text delay will apply before the first letter has been shown.
+        #subject_font_handler.font_animation.gradual_delay_counter = text_speed_delay
 
     def _font_start_position(
         self, x: bool, arguments: str, sprite_object: sd.SpriteObject = None

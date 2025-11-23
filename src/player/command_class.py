@@ -174,12 +174,12 @@ class FontTextFadeSpeed(NamedTuple):
 
 
 class FontTextDelay(NamedTuple):
-    number_of_frames: int
+    number_of_milliseconds: float
 
     
 class FontTextDelayPunc(NamedTuple):
     previous_letter: str
-    number_of_frames: int
+    number_of_milliseconds: float
 
 
 class FontStartPosition(NamedTuple):
