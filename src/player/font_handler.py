@@ -228,7 +228,8 @@ class FontLetterDelayHandler:
     def update(self,
                delta: float,
                letter_cursor_position: int,
-               letters: List[Letter]) -> List[int] | None | bool:
+               letters: List[Letter],
+               fast_mode: bool = False) -> List[int] | None | bool:
         """
         Advances the text index using delta time. Uses a while loop to ensure 
         the index catches up if the frame rate is slow.
@@ -254,10 +255,18 @@ class FontLetterDelayHandler:
         FontAnimation's self.letters, not a copy. So any changes we make to
         this list inside this method affects the caller of this method's
         list instance too.
+        
+        - fast_mode: whether the dialogue text animation is in fast-mode.
+        Fast-mode is when the viewer has clicked on the visual novel to
+        accelerate the text animation.
         """
         
         # Is there a punctuation delay we need to enforce?
-        if self.punct_wait_milliseconds > 0:
+        # Enforce a punctuation delay if:
+        # 1) The VN is not in fast-mode
+        # 2) The VN has been told to wait for a punctuation delay
+        # since the last letter was shown.
+        if not fast_mode and self.punct_wait_milliseconds > 0:
             
             # Yes, we need to wait. The previous letter had a punct delay.
             
@@ -297,11 +306,18 @@ class FontLetterDelayHandler:
         # This gets set to True if there are no more letters to show.
         is_finished = False
         
-        # print("Elapsed:", self.time_since_last_letter_shown)        
+        # print("Elapsed:", self.time_since_last_letter_shown)
+        
+        # If we're in fast-mode, set the delay speed to a fast value.
+        if fast_mode:
+            delay = 0.004
+        else:
+            # Regular delay (not fast-mode), as defined by the visual novel.
+            delay = self.font_text_delay
 
         
         # Keep looping until we've caught up with the wait-time delay.
-        while self.time_since_last_letter_shown >= self.font_text_delay:
+        while self.time_since_last_letter_shown >= delay:
                
             # Check if we have more text to display
             # (Notice we don't use letter_cursor_position + 1 here, because
@@ -364,7 +380,7 @@ class FontLetterDelayHandler:
                     letter_position_advanced = True
                 
                 # Spend one unit of delay time from the accumulator
-                self.time_since_last_letter_shown -= self.font_text_delay
+                self.time_since_last_letter_shown -= delay # self.font_text_delay
                 
                 # Does the previous letter require a punctuation delay?
                 # If so, self.punct_wait_milliseconds will be set 
@@ -965,7 +981,8 @@ class FontAnimation:
             new_cursor_position = self.letter_delay_handler.update(\
                 delta=AnimationSpeed.delta,
                 letter_cursor_position=self.gradual_letter_cursor_position,
-                letters=self.letters)
+                letters=self.letters,
+                fast_mode=self.faster_text_mode)
             
             if new_cursor_position is None:
                 # We shouldn't display any letters in this frame, due to
