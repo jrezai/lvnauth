@@ -17,6 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 from __future__ import annotations
 from animation_speed import AnimationSpeed
 
@@ -36,6 +37,7 @@ from typing import Dict, List, Tuple, TYPE_CHECKING
 from enum import Enum, auto
 from shared_components import Passer
 from datetime import datetime
+import time
 
 if TYPE_CHECKING:
     # Only gets imported for type checking
@@ -128,7 +130,11 @@ class FontLetterDelayHandler:
         # Key: (str) letter
         # Value: (float) number of milliseconds to delay
         # Used for gradual letter text displays (not gradual letter fading)
-        self.letter_delays = {}        
+        self.letter_delays = {}
+        
+        # For measuring the speed of gradual letter by letter (non-fade)
+        # at different frame rates. Used for development-only.
+        self.start_time = None
 
         # The number of milliseconds to delay when applying gradual text 
         # animation.
@@ -142,11 +148,11 @@ class FontLetterDelayHandler:
         # The number of characters that should be visible based on time.
         self.count_letters_should_be_visible:int = 0
         
-        # The number of milliseconds to wait due to reaching a punctuation 
-        # letter. This is separate from the regular gradual millisecond delay.
-        self.punct_wait_milliseconds:float = 0
+        # The number of seconds to wait due to reaching a punctuation 
+        # letter. This is separate from the regular gradual text delay.
+        self.punct_wait_seconds:float = 0
         
-        # How many milliseconds have been waited so far on a punctuation pause.
+        # How many seconds have been waited so far on a punctuation pause.
         self.punct_waited_so_far:float = 0
         
         self.sprite_mode = sprite_mode
@@ -211,12 +217,12 @@ class FontLetterDelayHandler:
         # Was the previous letter a letter that should 
         # cause this new letter to delay for X number of milliseconds?
         # (ie: if the previous letter was a ".")
-        self.punct_wait_milliseconds =\
+        self.punct_wait_seconds =\
             self.get_font_after_letter_delay(previous_letter)
         
         # Should we wait a few milliseconds because the last letter
         # was a punctuation letter?
-        if self.punct_wait_milliseconds > 0:
+        if self.punct_wait_seconds > 0:
             # Yes, we should wait before showing the current letter
             # because the last letter had a punctuation delay.
             # Check again in the next frame to find out if enough
@@ -225,25 +231,35 @@ class FontLetterDelayHandler:
         
         return False
     
-    def update(self,
-               delta: float,
-               letter_cursor_position: int,
-               letters: List[Letter],
-               fast_mode: bool = False) -> List[int] | None | bool:
+    def update(self, 
+               delta: float, 
+               letter_cursor_position: int, 
+               letters: List[Letter], 
+               fast_mode: bool = False) -> Tuple[int, bool] | int | None:
         """
         Advances the text index using delta time. Uses a while loop to ensure 
-        the index catches up if the frame rate is slow.
+        the cursor letter index catches up by making multiple letters opaque
+        if needed, if the frame rate is slow. The purpose is to ensure
+        the making-letters-opaque process finishes making all the letters
+        opaque at the roughly the same time, regardless of the frame rate.
         
-        Return: a list of indexes of letters that should be made opaque
-        by the caller.
-        or return None if no letters should be shown in the current frame
-        by the caller.
-        or return False is there are no more letters to show. The letters
-        are now exhausted.
+        It prioritizes time-accuracy rather than making sure it's always one
+        letter per frame.
+        
+        Return: a tuple (int, bool) to indicate where the letter cursor
+        has stopped/finished, and True to indiciate that all the letters
+        have been made opaque so the caller should stop animating the text.
+        
+        Return: None if no letters should be shown in the current frame
+        by the caller due to an unfinished punctuation delay.
+        
+        Return: an int that represents the letter cursor position, to let
+        the caller of this method know how far the letters have been made
+        opaque, ready to be passed in again to this method in the next frame.
         
         Arguments:
         
-        - delta: the number of milliseconds elapsed since the last frame.
+        - delta: the number of seconds elapsed since the last frame.
         
         - letter_cursor_position: where we are in the visibility cursor
         when showing letter-by-letter non-fading letters. This is a reference
@@ -260,160 +276,174 @@ class FontLetterDelayHandler:
         Fast-mode is when the viewer has clicked on the visual novel to
         accelerate the text animation.
         """
+    
+        ### 1. Handle Punctuation Delays (seconds-based, not milliseconds) ---
         
         # Is there a punctuation delay we need to enforce?
         # Enforce a punctuation delay if:
         # 1) The VN is not in fast-mode
         # 2) The VN has been told to wait for a punctuation delay
         # since the last letter was shown.
-        if not fast_mode and self.punct_wait_milliseconds > 0:
-            
-            # Yes, we need to wait. The previous letter had a punct delay.
-            
-            # print("Punct waiting:", str(self.punct_waited_so_far) + " out of " + str(self.punct_wait_milliseconds))
+        if not fast_mode and self.punct_wait_seconds > 0:
             
             # Check if we've waited long enough for the punct delay.
-            if self.punct_waited_so_far < self.punct_wait_milliseconds:
+            if self.punct_waited_so_far < self.punct_wait_seconds:
                 
-                # No, we haven't waited long enough.
+                # No, we have not waited long enough.
                 
                 # Increment the punctuation delay counter.
                 self.punct_waited_so_far += delta
                 
                 # We haven't waited long enough for a punctuation delay.
-                # Return and check again in the next frame.
+                # Return and check again in the next frame.                
                 return
-            
             else:
                 # Yes, we've waited long enough for a punctuation delay.
-                # Reset the millisecond wait variable.
-                self.punct_wait_milliseconds = 0
+                # Reset the wait variables.                
+                self.punct_wait_seconds = 0
                 self.punct_waited_so_far = 0
                 
         """
         At this point, no punctuation delay waiting is needed because
         the checks have already been done at the top.
-        """
+        """        
+    
+        ### Time Accumulation
         
         # Accumulate the time elapsed since the last frame
         self.time_since_last_letter_shown += delta
-                
+    
+        # Target delay in seconds
+        # If we're in fast-mode, set the delay speed to a fast value.
+        target_delay = 0.008 if fast_mode else 0.38 # self.font_text_delay
+    
+        # Calculate how many letters we're allowed to show to keep sync 
+        # with time.
+        chars_to_process =\
+            int(self.time_since_last_letter_shown // target_delay)
+    
+        # Too soon to display another letter? Return.
+        # This way, if the frame rate is really fast, it should return 
+        # here often.
+        if chars_to_process == 0:
+            return
+
+        # print(f"{chars_to_process=}")
+    
         # To let this method know to return the current latest cursor position
         # after it's finished, so the caller knows which letter needs to be
-        # shown next in the next frame.
+        # shown next in the next frame.    
         letter_position_advanced = False
         
         # This gets set to True if there are no more letters to show.
         is_finished = False
-        
-        # print("Elapsed:", self.time_since_last_letter_shown)
-        
-        # If we're in fast-mode, set the delay speed to a fast value.
-        if fast_mode:
-            delay = 0.004
-        else:
-            # Regular delay (not fast-mode), as defined by the visual novel.
-            delay = self.font_text_delay
+    
+        # Make opaque as many letters as we're allowed in this frame.
+        for _ in range(chars_to_process):
 
-        
-        # Keep looping until we've caught up with the wait-time delay.
-        while self.time_since_last_letter_shown >= delay:
-               
-            # Check if we have more text to display
-            # (Notice we don't use letter_cursor_position + 1 here, because
-            # we still need to show the last character.)
-            if letter_cursor_position >= len(letters):
-
-                # All the letters are fully displayed, 
-                # exit the loop and mark as finished.
-                is_finished = True
-                break
+            ### Handle Spaces Quickly
             
- 
-            # Make the regular letter opaque.
-            
-            # If we're on a regular, non-space letter, make it opaque now.
-            if not letters[letter_cursor_position].is_space:
+            # If we're on a space letter, make it opaque now.
+            # Make all consecutive spaces opaque.
+            while letters[letter_cursor_position].is_space:
                 
-                # Make the current non-space letter opaque now.
+                # The current letter is a space, so quickly show it.
                 letters[letter_cursor_position].set_opacity(255)
                 
-                # Play a sound for this letter, if configured to do so.
-                # Space letters ' ' don't play a sound and neither
-                # does sprite text.
-                if not self.sprite_mode:
-                    Passer.active_story.audio_player.play_audio(
-                        audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
-                        audio_channel=audio_player.AudioChannel.TEXT)                
-                                
+                # No more letters to advance? Consider it done.
+                if letter_cursor_position + 1 >= len(letters):
+                    is_finished = True
+                    break
+                else:
+                    # Advance by one letter, because this letter was 
+                    # just a space.
+                    letter_cursor_position += 1
+                    letter_position_advanced = True
                 
-            else:
-                # We have a space ' ' letter.
+                
+            # No more letters to show? Finish the letter for-loop now.
+            if is_finished:
+                break
 
-                # The current letter is a space, so just show it and don't 
-                # consider the elapsed time. Show consecutive spaces quickly.
-                while letters[letter_cursor_position].is_space:
-        
-                    # The current letter is a space, so quickly show it.
-                    letters[letter_cursor_position].set_opacity(255)
-    
-                    # No more letters to advance? Consider it done.
-                    if letter_cursor_position + 1 >= len(letters):
-                        is_finished = True
-                        break
-                    else:
-                        # Advance by one letter, because this letter was 
-                        # just a space. 
-                        letter_cursor_position += 1
-                        letter_position_advanced = True
+            # Make the current non-space letter opaque now.
+            letters[letter_cursor_position].set_opacity(255)
+          
+            # Play a sound for this letter, if configured to do so. 
+            # Play a sound for every 3rd letter in fast-mode to help prevent 
+            # audio problems.
+            if not self.sprite_mode:
+                should_play = not fast_mode or (letter_cursor_position % 3 == 0)
+                if should_play:
+                    Passer.active_story.audio_player.play_audio(
+                            audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
+                            audio_channel=audio_player.AudioChannel.TEXT)
+
 
             # No more letters to advance? Consider it done.
             if letter_cursor_position + 1 >= len(letters):
                 is_finished = True
                 break
             else:
-                
                 # Yes, there are more letters to advance.
                 # Advance the cursor by 1 letter if we haven't already done so.
-                if not letter_position_advanced:
-                    letter_cursor_position += 1
-                    letter_position_advanced = True
+                letter_cursor_position += 1
+                letter_position_advanced = True              
+    
+            # Spend one unit of delay time from the accumulator
+            self.time_since_last_letter_shown -= target_delay
+    
+            # Does the previous letter require a punctuation delay?
+            # If so, self.punct_wait_milliseconds will be set 
+            # automatically (by the method below) to the number of 
+            # milliseconds that should be waited.
+            prev_letter = letters[letter_cursor_position].previous_letter
+            if self.check_wait_punctuation(prev_letter):
+                # Yes, the previous letter needs a punctuation delay.
                 
-                # Spend one unit of delay time from the accumulator
-                self.time_since_last_letter_shown -= delay # self.font_text_delay
-                
-                # Does the previous letter require a punctuation delay?
-                # If so, self.punct_wait_milliseconds will be set 
-                # automatically (by the method below) to the number of 
-                # milliseconds that should be waited.
-                if not self.check_wait_punctuation(letters[letter_cursor_position].previous_letter):
-                    # Yes, the previous letter needs a punctuation delay.
-                    
-                    # Return the current letter's position, for use in the 
-                    # next frame.
-                    return letter_cursor_position
-                
-                
+                # Reset the leftover time so the text does not "sprint" 
+                # unnaturally immediately after the punctuation pause finishes.
+                self.time_since_last_letter_shown = 0
+    
+                # Return the current letter's position, for use in the 
+                # next frame.       
+                return letter_cursor_position
+    
+        ### Cleanup
+    
         # Have all the letters finished showing? Reset the variables so
-        # we're ready for the next batch of letters if needed.
+        # we're ready for the next batch of letters if needed.    
         if is_finished:
             
             # Reset variables, making them ready for the next batch
-            # of letters. There are currently no more letters to show.
+            # of letters. There are currently no more letters to show.            
             self.count_letters_should_be_visible = 0
-            self.time_since_last_letter_shown = 0
-            self.punct_wait_milliseconds = 0    
+            self.time_since_last_letter_shown = 0.0
+            self.punct_wait_seconds = 0
             
-            # Return the cursor position and True. True tells the caller
-            # to stop the text intro animation.
-            # The reason we return the cursor position even though we're done
-            # showing all the letters is because more text might be needed
-            # to be shown where we left off, using <no_clear>, which resumes
-            # the cursor position and appends text to where we left off.
-            # So the caller still needs to know where the cursor was stopped.
+            """
+            For debugging, to measure how long it took to make all
+            the letters in the batch opaque (letter by letter, non fade). 
+            This is useful when trying to make sure all the letters are 
+            finished showing at roughly the same time regardless of 
+            the frame rate.
+            """
+            end_time = time.perf_counter()
+            duration = end_time - self.start_time
+            # print(f"Time taken to show all letters: {duration*1000:.3f} milliseconds")
+            
+            """
+            Return the cursor position and True. True tells the caller
+            to stop the text intro animation.
+            The reason we return the cursor position even though we're done
+            showing all the letters is because more text might be needed
+            to be shown where we left off, using <no_clear>, which resumes
+            the cursor position and appends text to where we left off.
+            So the caller still needs to know where the cursor was stopped.    
+            """
             return (letter_cursor_position, True)
-            
+    
         elif letter_position_advanced:
+            
             """
             At this point, we're not done showing all the letters yet.
             But we need to delay a bit before showing the next letter,
@@ -424,9 +454,9 @@ class FontLetterDelayHandler:
             # The actual cursor position gets updated by the caller of this
             # method. We just use a copy of the position in this method,
             # which is why we return an updated copy of the position (so the
-            # caller of this method can update the real cursor position).
+            # caller of this method can update the real cursor position).            
             return letter_cursor_position
-
+    
 
 
 class FontAnimation:
@@ -975,6 +1005,11 @@ class FontAnimation:
             """
             Non-fading letter by letter animation.
             """
+            
+            # For debugging the gradual letter displays at different 
+            # frame rates.
+            if not self.letter_delay_handler.start_time:
+                self.letter_delay_handler.start_time = time.perf_counter()
 
             # Advance the dialogue by 1 or more letters to catch up with
             # the wait-time delay.
@@ -1001,6 +1036,7 @@ class FontAnimation:
                 # record the current letter position. We'll need this
                 # in the next frame so we can resume the animation again.
                 self.gradual_letter_cursor_position = new_cursor_position
+                
 
             ## Don't skip this frame if:
             ## 1. There is no delay set.
@@ -1018,8 +1054,10 @@ class FontAnimation:
                 # Process the letter-by-letter animation, we don't need
                 # to delay in this frame.
 
-            self.letter_delay_handler.time_since_last_letter_shown = 0
-
+            ############
+            # self.letter_delay_handler.time_since_last_letter_shown = 0
+            ############
+            
             ## Show the letter
             # self.letters[self.gradual_letter_cursor_position].set_opacity(255)
 
