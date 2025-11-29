@@ -2584,23 +2584,26 @@ class WizardWindow:
                           amount_name="vertical position",
                           group_name=GroupName.POSITION)
         
-        page_font_text_delay =\
+        page_font_text_letter_delay =\
             Font_TextDelay(parent_frame=self.frame_contents_outer,
                            header_label=self.lbl_header,
                            purpose_label=self.lbl_purpose,
                            treeview_commands=self.treeview_commands,
                            parent_display_text="Font",
-                           sub_display_text="font_text_delay",
-                           command_name="font_text_delay",
-                           purpose_line="Sets the number of frames to skip when applying\n"
-                           "gradual dialog text animation (letter-by-letter).\n"
+                           sub_display_text="font_text_letter_delay",
+                           command_name="font_text_letter_delay",
+                           purpose_line="Sets the gradual letter-by-letter\n"
+                           "animation delay in seconds.\n"
                            "Does not apply to letter fade-ins",
                            scale_from_value=0,
-                           scale_to_value=600,
-                           scale_instructions="Delay (frames) (0-600):\n\n"
-                           "For example: a value of 2 means: apply the letter by letter animation\n"
-                           "every 2 frames. A value of 0 means apply the animation at every frame.",
-                           scale_default_value=2,
+                           scale_to_value=10,
+                           scale_instructions="Letter animation delay (seconds) (0-10):\n\n"
+                           "For example: a value of 1 means: show a letter every 1 second.\n"
+                           "0.50 means show a letter every half a second.\n"
+                           "A value of 0 defaults to a fast speed.",
+                           scale_default_value=0.2,
+                           scale_increment_by=0.01,
+                           scale_type=float, 
                            group_name=GroupName.SPEED)
         
         page_font_text_delay_punc =\
@@ -3263,7 +3266,7 @@ class WizardWindow:
         self.pages["font_y"] = page_font_y
         self.pages["font_text_fade_all_speed"] = page_font_text_fade_all_speed
         self.pages["font_text_fade_letter_speed"] = page_font_text_fade_letter_speed
-        self.pages["font_text_delay"] = page_font_text_delay
+        self.pages["font_text_letter_delay"] = page_font_text_letter_delay
         self.pages["font_text_delay_punc"] = page_font_text_delay_punc
         self.pages["font_intro_animation"] = page_font_intro_animation
         
@@ -5974,11 +5977,11 @@ class SharedPages:
         """
         <font_text_speed: speed amount>
         
-        Shows a LabelScale, with no alias entry widget.
+        Shows a Spinbox.
         Used for font speed.
         
         1 Label
-        1 LabelScale
+        1 Spinbox
         """
 
         def __init__(self, parent_frame, header_label, purpose_label,
@@ -6003,29 +6006,42 @@ class SharedPages:
             # The text before the LabelScale widget, for the user to see.
             # Example: "Font speed (1 to 10):"
             self.scale_instructions = self.kwargs.get("scale_instructions")
+            
+            # Whether the spinbox will be used for showing int values or float.
+            # The default is int.
+            self.scale_type = self.kwargs.get("scale_type", int)
 
             # The default int value of the LabelScale to set.
             self.scale_default_value = self.kwargs.get("scale_default_value")
-            self.v_scale_value = tk.IntVar()
+            
+            if self.scale_type is int:
+                self.v_scale_value = tk.IntVar()
+            else:
+                self.v_scale_value = tk.DoubleVar()
 
             # Scale range
             self.scale_from_value = self.kwargs.get("scale_from_value")
             self.scale_to_value = self.kwargs.get("scale_to_value")
             
+            # Scale increment
+            self.scale_increment_by = self.kwargs.get("scale_increment_by", 1)
 
             self.lbl_scale = ttk.Label(frame_content,
                                   text=self.scale_instructions)
 
-            self.scale = ttk.LabeledScale(frame_content,
-                                          from_=self.scale_from_value,
-                                          to=self.scale_to_value,
-                                          variable=self.v_scale_value)
+            self.spinbox = ttk.Spinbox(frame_content,
+                                       from_=self.scale_from_value,
+                                       to=self.scale_to_value,
+                                       textvariable=self.v_scale_value,
+                                       increment=self.scale_increment_by)
 
             # Set the default value of the scale.
             self.v_scale_value.set(self.scale_default_value)
+            
+            
 
             self.lbl_scale.grid(row=0, column=0, sticky="w", columnspan=2)
-            self.scale.grid(row=1, column=0, sticky="w", pady=(5, 0), columnspan=2)
+            self.spinbox.grid(row=1, column=0, sticky="w", pady=(5, 0), columnspan=2)
 
             return frame_content
 
@@ -6058,7 +6074,8 @@ class SharedPages:
                     self.entry_sprite_alias.insert(0, general_alias)                
 
             try:
-                scale_value = int(scale_value)
+                # Attempt to convert the value to an int or float.
+                scale_value = self.scale_type(scale_value)
             except ValueError:
                 scale_value = 1
 
@@ -6075,8 +6092,26 @@ class SharedPages:
             """
             user_input = {}
 
-            scale_value = self.v_scale_value.get()
-
+            # Make sure the value can be parsed as a float or int,
+            # depending on the value type of v_scale_value.
+            try:
+                scale_value = self.v_scale_value.get()
+                
+                
+            except tk.TclError:
+                
+                if self.scale_type is int:
+                    # int
+                    msg = "Enter a numeric value."
+                else:
+                    # float
+                    msg = "Enter a numeric value, such as 0.5 or 1."
+                    
+                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                       title="No numeric value",
+                                       message=msg)
+                return
+            
             user_input = {"ScaleValue": scale_value}
 
             return user_input

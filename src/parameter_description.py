@@ -229,7 +229,7 @@ class ParameterDescription:
                      "font": ("Font name", ),
                      "font_x": ("Horizontal position (x)", ),
                      "font_y": ("Vertical position (y)", ),
-                     "font_text_delay": ("Number of frames to delay (0 to 600)", ),
+                     "font_text_letter_delay": ("Number of seconds to delay (0 to 10)", ),
                      "font_text_delay_punc": ("Previous letter", "Number of frames to skip (0 to 120)"),
                      "font_text_fade_all_speed": ("Fade speed (1 to 10)",),
                      "font_text_fade_letter_speed": (f"Fade speed (1 to {AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN})",),

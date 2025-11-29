@@ -179,7 +179,7 @@ class CommandHelper:
         "font": cc.SpriteShowHide,
         "font_x": cc.FontStartPosition,
         "font_y": cc.FontStartPosition,
-        "font_text_delay": cc.FontTextDelay,
+        "font_text_letter_delay": cc.FontTextDelay,
         "font_text_delay_punc": cc.FontTextDelayPunc,
         "font_text_fade_all_speed": cc.FontTextFadeSpeed,
         "font_text_fade_letter_speed": cc.FontTextFadeSpeed,

@@ -1041,7 +1041,7 @@ class StoryReader:
                 arguments=arguments,
                 max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
-        elif command_name == "font_text_delay":
+        elif command_name == "font_text_letter_delay":
             # Set the number of frames to skip when applying
             # the gradual dialog text animation (letter by letter).
             self._font_text_delay(arguments=arguments)
@@ -4334,14 +4334,16 @@ class StoryReader:
             class_namedtuple=cc.FontTextDelay, given_arguments=arguments
         )
 
-        text_wait_milliseconds = text_speed_delay.number_of_milliseconds
+        text_wait_seconds = text_speed_delay.number_of_seconds
 
         # Don't allow the wait time to be less than 0 or more than 10000
         # 10000 milliseconds means 10 seconds.
-        if text_wait_milliseconds > 10000:
-            text_wait_milliseconds = 10000
-        elif text_wait_milliseconds < 0:
-            text_wait_milliseconds = 0
+        
+        # Minimum 0 seconds
+        text_wait_seconds = max(text_wait_seconds, 0)
+        
+        # Maximum 10 seconds per letter
+        text_wait_seconds = min(text_wait_seconds, 10)
 
         # Type-hint
         subject_font_handler: font_handler.ActiveFontHandler
@@ -4354,7 +4356,8 @@ class StoryReader:
             subject_font_handler = self.get_main_story_reader().active_font_handler
 
         # Record the delay value
-        subject_font_handler.font_animation.font_text_delay = text_speed_delay
+        subject_font_handler.font_animation.\
+            letter_delay_handler.font_text_delay = text_speed_delay.number_of_seconds
 
         ## For the initial text frame, consider the text delay limit having been reached,
         ## so that the delay doesn't occur before the first letter has been shown.
