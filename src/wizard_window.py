@@ -4070,21 +4070,47 @@ class SharedPages:
                     self.set_sprite_type(sprite_type)
                     
                     # General alias
-                    self.entry_sprite_alias.insert(0, alias)              
+                    self.entry_sprite_alias.insert(0, alias)
+                    
+                    # Select the given font intro animation in the combobox.
+                    self._set_combobox_selection(animation_type=animation_type)
+                    
+                case cc.FontIntroAnimation(animation_type):
+                    
+                    # Select the given font intro animation in the combobox.
+                    self._set_combobox_selection(animation_type=animation_type)
+                    
             
-                    # Set to lowercase so we can compare it in lowercase.
-                    if animation_type:
-                        animation_type = animation_type.lower()
-                            
-                        # Default to the first selection if an invalid
-                        # value was provided.
-                        if animation_type not in self.values_to_choose:
-                            # Default to the first index
-                            self.cb_selection.current(newindex=0)
-                        else:
-                            WizardListing.set_combobox_readonly_text(
-                                self.cb_selection,
-                                animation_type)
+        def _set_combobox_selection(self, animation_type: str):
+            """
+            Set the combobox selection item based on the animation type.
+            
+            For example: if "sudden" is provided, then select "sudden" in
+            the combobox.
+            
+            Arguments:
+            
+            - animation_type: the name of the font intro animation to select
+            in the combobox widget, such as: sudden, gradual letter, etc.
+            """
+            
+            # This part applies to <font_intro_animation> as well as
+            # <sprite_font_intro_animation>
+            # Set to lowercase so we can compare it in lowercase.
+            if animation_type:
+                animation_type = animation_type.lower()
+                    
+                # Default to the first selection if an invalid
+                # value was provided.
+                if animation_type not in self.values_to_choose:
+                    # Default to the first index
+                    self.cb_selection.current(newindex=0)
+                else:
+                    WizardListing.set_combobox_readonly_text(
+                        self.cb_selection,
+                        animation_type)
+                    
+                    
 
         def check_inputs(self) -> Dict | None:
             """
