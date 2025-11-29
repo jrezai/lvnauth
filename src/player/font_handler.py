@@ -36,7 +36,6 @@ import audio_player
 from typing import Dict, List, Tuple, TYPE_CHECKING
 from enum import Enum, auto
 from shared_components import Passer
-from datetime import datetime
 import time
 
 if TYPE_CHECKING:
@@ -314,8 +313,12 @@ class FontLetterDelayHandler:
         self.time_since_last_letter_shown += delta
     
         # Target delay in seconds
-        # If we're in fast-mode, set the delay speed to a fast value.
-        target_delay = 0.008 if fast_mode else 0.38 # self.font_text_delay
+        # If we're in fast-mode or if no delay has been set (0 zero),
+        # then set the delay speed to a fast value.
+        if fast_mode or not self.font_text_delay:
+            target_delay = 0.012
+        else:
+            target_delay = self.font_text_delay
     
         # Calculate how many letters we're allowed to show to keep sync 
         # with time.
