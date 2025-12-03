@@ -234,6 +234,27 @@ class SpriteObject:
         # Will be based on the FadeUntilValue class
         self.fade_until = None
 
+        """
+        There are 3 variables for sprite fading.
+        
+        1) self.calculated_fade_value - This holds the float value of what
+        the opacity should be, using the delta/time calculation since the
+        last frame, for smooth fade transitioning regardless of the FPS.
+        This is only used for time-fade calculations. The int() version of
+        this variable's value is put into self.current_fade_value.
+        
+        2) self.current_fade_value - This holds what the fade value *should*
+        be after a calculation, as an integer.
+        
+        3) self.applied_fade_value - This holds what fade value has actually
+        been *applied* to the image. So self.current_fade_value holds what 
+        opacity the image should be, and after each frame,
+        self.applied_fade_value checks if it's the same value as
+        self.current_fade_value, and if it's not, it applies the opacity
+        to the original image and updates self.applied_fade_value.
+        
+
+        """
         # Will be based on the FadeCurrentValue class
         self.current_fade_value = None
         # For time-accuracy with delta calculations for each frame.
@@ -1501,10 +1522,7 @@ class SpriteObject:
 
                 else:
                     # Decrease fade
-                    #new_fade_value = (self.current_fade_value.current_fade_value \
-                        #- self.fade_speed.fade_speed) \
-                        #* AnimationSpeed.delta
-                    
+
                     # Calculate the change in fade value that occurred in the 
                     # time delta
                     fade_change_this_frame =\
@@ -1514,13 +1532,18 @@ class SpriteObject:
                     # the new fade value
                     self.calculated_fade_value -= fade_change_this_frame
                     
+                    # Clamp the opacity to a min of 0 and a max of 255
                     if self.calculated_fade_value < 0:
                         self.calculated_fade_value = 0
                     elif self.calculated_fade_value > 255:
                         self.calculated_fade_value = 255
                     
+                    # Convert the float fade value to an int, because
+                    # pygame uses the int value to set the opacity, not a float.
                     new_fade_value = int(self.calculated_fade_value)
 
+                    # Set what the new int fade value should be so that it gets
+                    # applied to the sprite later on.
                     self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
                     
 
