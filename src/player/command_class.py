@@ -62,6 +62,13 @@ class HaltAuto(NamedTuple):
     number_of_frames: int
 
 
+
+class CenterSprite(NamedTuple):
+    sprite_name: str
+    x: int
+    y: int
+
+
 class Rest(NamedTuple):
     number_of_frames: int
 
@@ -127,14 +134,14 @@ class SpriteText(NamedTuple):
 class SpriteTextDelay(NamedTuple):
     sprite_type: str
     general_alias: str
-    number_of_frames: int
+    number_of_seconds: int
     
     
 class SpriteTextDelayPunc(NamedTuple):
     sprite_type: str
     general_alias: str
     previous_letter: str
-    number_of_frames: int
+    number_of_seconds: int
     
 
 class SpriteFontIntroAnimation(NamedTuple):
@@ -179,7 +186,7 @@ class FontTextDelay(NamedTuple):
     
 class FontTextDelayPunc(NamedTuple):
     previous_letter: str
-    number_of_milliseconds: float
+    number_of_seconds: float
 
 
 class FontStartPosition(NamedTuple):
@@ -274,11 +281,6 @@ class MovementSpeed(NamedTuple):
     y_direction: str
 
 
-class MovementDelay(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
 
 class MovementStopRunScript(NamedTuple):
     sprite_name: str
@@ -347,19 +349,6 @@ class FadeStopRunScript(NamedTuple):
     reusable_script_name: str
 
 
-class FadeDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    fade_delay: int
-
-
-class ScaleDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    scale_delay: int
-
 
 class ScaleBy(NamedTuple):
     sprite_name: str
@@ -401,10 +390,3 @@ class RotateStopRunScript(NamedTuple):
 class RotateUntil(NamedTuple):
     sprite_name: str
     rotate_until: str  # str because the word 'forever' can be used.
-
-
-class RotateDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip when rotating a sprite.
-    rotate_delay: int

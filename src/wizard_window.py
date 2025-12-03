@@ -760,23 +760,6 @@ class WizardWindow:
                                       amount_name="opacity level",
                                       group_name=GroupName.FADE)
 
-        page_character_fade_delay =\
-            CharacterFadeDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Character",
-                               sub_display_text="character_fade_delay",
-                               command_name="character_fade_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's fade animation.\n"
-                               "This is used to create an extra-slow fade effect.\n\n"
-                               "Example: a value of 30 (frames) will delay the fade every 1 second.\n"
-                               "Note: the character sprite must already be visible.",
-                               from_value=1,
-                               to_value=120,
-                               amount_usage_info="Number of frames to skip:",
-                               amount_name="number of frames to skip",
-                               group_name=GroupName.FADE)
 
         page_character_fade_speed =\
             CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -865,24 +848,6 @@ class WizardWindow:
                                         "Note: the character sprite must already be visible.",
                                         group_name=GroupName.ROTATE)
 
-        page_character_rotate_delay =\
-            CharacterRotateDelay(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Character",
-                                 sub_display_text="character_rotate_delay",
-                                 command_name="character_rotate_delay",
-                                 purpose_line="Specify the number of frames to skip for this sprite's rotate animation.\n"
-                                 "This is used to create an extra-slow rotating effect.\n\n"
-                                 "Example: a value of 2 means to delay the rotation animation\n"
-                                 "by 2 frames each time.\n\n"
-                                 "Note: the character sprite must already be visible.",
-                                 from_value=1,
-                                 to_value=120,
-                                 amount_usage_info="Number of frames to skip:",
-                                 amount_name="number of frames to skip",
-                                 group_name=GroupName.ROTATE)
 
         page_character_rotate_speed =\
             CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -999,24 +964,6 @@ class WizardWindow:
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
-        page_character_scale_delay =\
-            CharacterScaleDelay(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Character",
-                                sub_display_text="character_scale_delay",
-                                command_name="character_scale_delay",
-                                purpose_line="Specify the number of frames to skip for this sprite's scale animation.\n"
-                                "This is used to create an extra-slow scaling effect.\n\n"
-                                "Example: a value of 2 means to delay the scaling animation\n"
-                                "by 2 frames each time.\n\n"
-                                "Note: the character sprite must already be visible.",
-                                from_value=1,
-                                to_value=120,
-                                amount_usage_info="Number of frames to skip:",
-                                amount_name="number of frames to skip",
-                                group_name=GroupName.SCALE)
 
         page_character_scale_until =\
             CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -1095,31 +1042,12 @@ class WizardWindow:
                           parent_display_text="Character",
                           sub_display_text="character_move",
                           command_name="character_move",
-                          purpose_line="Sets the movement amount and direction of a character sprite.",
+                          purpose_line="Sets the movement speed and direction of a character sprite.",
+                          scale_default_value=5,
+                          scale_from_value=0,
+                          scale_to_value=1500,                          
                           group_name=GroupName.MOVE)
 
-        page_character_move_delay =\
-            CharacterMoveDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Character",
-                               sub_display_text="character_move_delay",
-                               command_name="character_move_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's movement animation.\n"
-                               "This is used to create an extra-slow movement.\n\n"
-                               "The higher the values, the slower the animation.",
-                               spinbox_1_instructions="Number of frames to skip\n"
-                               "(horizontal movement):",
-                               spinbox_2_instructions="Number of frames to skip\n"
-                               "(vertical movement):",
-                               spinbox_1_subject="horizontal",
-                               spinbox_2_subject="vertical",
-                               subject_sentence_1="the number of frames to skip for horizontal movements",
-                               subject_sentence_2="the number of frames to skip for vertical movements",
-                               spinbox_from_value=1,
-                               spinbox_to_value=120,
-                               group_name=GroupName.MOVE)
 
         page_character_start_moving =\
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -1459,23 +1387,6 @@ class WizardWindow:
                                           amount_name="opacity level",
                                           group_name=GroupName.FADE)
     
-        page_dialog_fade_delay =\
-                CharacterFadeDelay(parent_frame=self.frame_contents_outer,
-                                   header_label=self.lbl_header,
-                                   purpose_label=self.lbl_purpose,
-                                   treeview_commands=self.treeview_commands,
-                                   parent_display_text="Dialog",
-                                   sub_display_text="dialog_sprite_fade_delay",
-                                   command_name="dialog_sprite_fade_delay",
-                                   purpose_line="Specify the number of frames to skip for a sprite's fade animation.\n"
-                                   "This is used to create an extra-slow fade effect.\n\n"
-                                   "Example: a value of 30 (frames) will delay the fade every 1 second.\n"
-                                   "Note: the dialog sprite must already be visible.",
-                                   from_value=1,
-                                   to_value=120,
-                                   amount_usage_info="Number of frames to skip:",
-                                   amount_name="number of frames to skip",
-                                   group_name=GroupName.FADE)
     
         page_dialog_fade_speed =\
                 CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -1563,25 +1474,7 @@ class WizardWindow:
                                             purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
                                             "Note: the dialog sprite must already be visible.",
                                             group_name=GroupName.ROTATE)
-    
-        page_dialog_rotate_delay =\
-                CharacterRotateDelay(parent_frame=self.frame_contents_outer,
-                                     header_label=self.lbl_header,
-                                     purpose_label=self.lbl_purpose,
-                                     treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_rotate_delay",
-                                     command_name="dialog_sprite_rotate_delay",
-                                     purpose_line="Specify the number of frames to skip for this sprite's rotate animation.\n"
-                                     "This is used to create an extra-slow rotating effect.\n\n"
-                                     "Example: a value of 2 means to delay the rotation animation\n"
-                                     "by 2 frames each time.\n\n"
-                                     "Note: the dialog sprite must already be visible.",
-                                     from_value=1,
-                                     to_value=120,
-                                     amount_usage_info="Number of frames to skip:",
-                                     amount_name="number of frames to skip",
-                                     group_name=GroupName.ROTATE)
+
     
         page_dialog_rotate_speed =\
                 CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -1698,24 +1591,6 @@ class WizardWindow:
                                            amount_name="scale",
                                            group_name=GroupName.SCALE)
     
-        page_dialog_scale_delay =\
-                CharacterScaleDelay(parent_frame=self.frame_contents_outer,
-                                    header_label=self.lbl_header,
-                                    purpose_label=self.lbl_purpose,
-                                    treeview_commands=self.treeview_commands,
-                                    parent_display_text="Dialog",
-                                    sub_display_text="dialog_sprite_scale_delay",
-                                    command_name="dialog_sprite_scale_delay",
-                                    purpose_line="Specify the number of frames to skip for this sprite's scale animation.\n"
-                                    "This is used to create an extra-slow scaling effect.\n\n"
-                                    "Example: a value of 2 means to delay the scaling animation\n"
-                                    "by 2 frames each time.\n\n"
-                                    "Note: the dialog sprite must already be visible.",
-                                    from_value=1,
-                                    to_value=120,
-                                    amount_usage_info="Number of frames to skip:",
-                                    amount_name="number of frames to skip",
-                                    group_name=GroupName.SCALE)
     
         page_dialog_scale_until =\
                 CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -1794,31 +1669,9 @@ class WizardWindow:
                               parent_display_text="Dialog",
                               sub_display_text="dialog_sprite_move",
                               command_name="dialog_sprite_move",
-                              purpose_line="Sets the movement amount and direction of an dialog sprite.",
+                              purpose_line="Sets the movement speed and direction of an dialog sprite.",
                               group_name=GroupName.MOVE)
     
-        page_dialog_move_delay =\
-                CharacterMoveDelay(parent_frame=self.frame_contents_outer,
-                                   header_label=self.lbl_header,
-                                   purpose_label=self.lbl_purpose,
-                                   treeview_commands=self.treeview_commands,
-                                   parent_display_text="Dialog",
-                                   sub_display_text="dialog_sprite_move_delay",
-                                   command_name="dialog_sprite_move_delay",
-                                   purpose_line="Specify the number of frames to skip for a sprite's movement animation.\n"
-                                   "This is used to create an extra-slow movement.\n\n"
-                                   "The higher the values, the slower the animation.",
-                                   spinbox_1_instructions="Number of frames to skip\n"
-                                   "(horizontal movement):",
-                                   spinbox_2_instructions="Number of frames to skip\n"
-                                   "(vertical movement):",
-                                   spinbox_1_subject="horizontal",
-                                   spinbox_2_subject="vertical",
-                                   subject_sentence_1="the number of frames to skip for horizontal movements",
-                                   subject_sentence_2="the number of frames to skip for vertical movements",
-                                   spinbox_from_value=1,
-                                   spinbox_to_value=120,
-                                   group_name=GroupName.MOVE)
     
         page_dialog_start_moving =\
                 CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -2049,23 +1902,6 @@ class WizardWindow:
                                       amount_name="opacity level",
                                       group_name=GroupName.FADE)
 
-        page_object_fade_delay =\
-            CharacterFadeDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_delay",
-                               command_name="object_fade_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's fade animation.\n"
-                               "This is used to create an extra-slow fade effect.\n\n"
-                               "Example: a value of 30 (frames) will delay the fade every 1 second.\n"
-                               "Note: the character sprite must already be visible.",
-                               from_value=1,
-                               to_value=120,
-                               amount_usage_info="Number of frames to skip:",
-                               amount_name="number of frames to skip",
-                               group_name=GroupName.FADE)
 
         page_object_fade_speed =\
             CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
@@ -2154,24 +1990,6 @@ class WizardWindow:
                                         "Note: the object sprite must already be visible.",
                                         group_name=GroupName.ROTATE)
 
-        page_object_rotate_delay =\
-            CharacterRotateDelay(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_delay",
-                                 command_name="object_rotate_delay",
-                                 purpose_line="Specify the number of frames to skip for this sprite's rotate animation.\n"
-                                 "This is used to create an extra-slow rotating effect.\n\n"
-                                 "Example: a value of 2 means to delay the rotation animation\n"
-                                 "by 2 frames each time.\n\n"
-                                 "Note: the object sprite must already be visible.",
-                                 from_value=1,
-                                 to_value=120,
-                                 amount_usage_info="Number of frames to skip:",
-                                 amount_name="number of frames to skip",
-                                 group_name=GroupName.ROTATE)
 
         page_object_rotate_speed =\
             CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
@@ -2288,24 +2106,6 @@ class WizardWindow:
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
-        page_object_scale_delay =\
-            CharacterScaleDelay(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Object",
-                                sub_display_text="object_scale_delay",
-                                command_name="object_scale_delay",
-                                purpose_line="Specify the number of frames to skip for this sprite's scale animation.\n"
-                                "This is used to create an extra-slow scaling effect.\n\n"
-                                "Example: a value of 2 means to delay the scaling animation\n"
-                                "by 2 frames each time.\n\n"
-                                "Note: the object sprite must already be visible.",
-                                from_value=1,
-                                to_value=120,
-                                amount_usage_info="Number of frames to skip:",
-                                amount_name="number of frames to skip",
-                                group_name=GroupName.SCALE)
 
         page_object_scale_until =\
             CharacterScaleUntil(parent_frame=self.frame_contents_outer,
@@ -2384,31 +2184,8 @@ class WizardWindow:
                           parent_display_text="Object",
                           sub_display_text="object_move",
                           command_name="object_move",
-                          purpose_line="Sets the movement amount and direction of an object sprite.",
+                          purpose_line="Sets the movement speed and direction of an object sprite.",
                           group_name=GroupName.MOVE)
-
-        page_object_move_delay =\
-            CharacterMoveDelay(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_move_delay",
-                               command_name="object_move_delay",
-                               purpose_line="Specify the number of frames to skip for a sprite's movement animation.\n"
-                               "This is used to create an extra-slow movement.\n\n"
-                               "The higher the values, the slower the animation.",
-                               spinbox_1_instructions="Number of frames to skip\n"
-                               "(horizontal movement):",
-                               spinbox_2_instructions="Number of frames to skip\n"
-                               "(vertical movement):",
-                               spinbox_1_subject="horizontal",
-                               spinbox_2_subject="vertical",
-                               subject_sentence_1="the number of frames to skip for horizontal movements",
-                               subject_sentence_2="the number of frames to skip for vertical movements",
-                               spinbox_from_value=1,
-                               spinbox_to_value=120,
-                               group_name=GroupName.MOVE)
 
         page_object_start_moving =\
             CharacterStartMoving(parent_frame=self.frame_contents_outer,
@@ -2614,15 +2391,15 @@ class WizardWindow:
                            parent_display_text="Font",
                            sub_display_text="font_text_delay_punc",
                            command_name="font_text_delay_punc",
-                           purpose_line="Sets the number of frames to skip *after* a specific letter is shown.\n"
+                           purpose_line="Sets the number of seconds to delay *after* a specific letter is shown.\n"
                            "Only applies to gradual letter-by-letter text (not fade-ins).\n\n"
                            "This command can be used to cause a short delay\n"
                            "after punctuation marks, such as periods.\n\n"
                            "Note: this command only works with letters on the same line.",
                            scale_from_value=0,
-                           scale_to_value=120,
-                           scale_instructions="The number of frames to skip (0 to 120):",
-                           scale_default_value=2,
+                           scale_to_value=10,
+                           scale_instructions="The number of seconds to skip (0 to 10):",
+                           scale_default_value=1,
                            group_name=GroupName.SPEED)
     
 
@@ -2726,18 +2503,20 @@ class WizardWindow:
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
                                  parent_display_text="Font",
-                                 sub_display_text="sprite_font_delay",
-                                 command_name="sprite_font_delay",
-                                 purpose_line="Sets the number of frames to skip when applying\n"
-                                 "gradual sprite text animation (letter-by-letter).\n"
-                                 "Does not apply to letter fade-ins\n\n"
-                                 "Note: the sprite must already be visible.",
+                                 sub_display_text="sprite_font_text_letter_delay",
+                                 command_name="sprite_font_text_letter_delay",
+                                 purpose_line="Sets a sprite's gradual letter-by-letter\n"
+                                 "animation delay in seconds.\n"
+                                 "Does not apply to letter fade-ins",
                                  scale_from_value=0,
-                                 scale_to_value=600,
-                                 scale_instructions="Delay (frames) (0-600):\n\n"
-                                 "For example: a value of 2 means: apply the letter by letter animation\n"
-                                 "every 2 frames. A value of 0 means apply the animation at every frame.",
-                                 scale_default_value=2,
+                                 scale_to_value=10,
+                                 scale_instructions="Letter animation delay (seconds) (0-10):\n\n"
+                                 "For example: a value of 1 means: show a letter every 1 second.\n"
+                                 "0.50 means show a letter every half a second.\n"
+                                 "A value of 0 defaults to a fast speed.",
+                                 scale_default_value=0.2,
+                                 scale_increment_by=0.01,
+                                 scale_type=float, 
                                  group_name=GroupName.SPEED)
         
         page_sprite_font_delay_punc =\
@@ -2746,18 +2525,18 @@ class WizardWindow:
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
                                      parent_display_text="Font",
-                                     sub_display_text="sprite_font_delay_punc",
-                                     command_name="sprite_font_delay_punc",
-                                     purpose_line="Sets the number of frames to skip *after* a specific letter is shown.\n"
+                                     sub_display_text="sprite_font_text_delay_punc",
+                                     command_name="sprite_font_text_delay_punc",
+                                     purpose_line="Sets the number of seconds to delay *after* a specific letter is shown.\n"
                                      "Only applies to gradual letter-by-letter text (not fade-ins).\n\n"
                                      "This command can be used to cause a short delay\n"
                                      "after punctuation marks, such as periods.\n\n"
                                      "Note: this command only works with letters on the same line.\n\n"
                                      "Note: the sprite must already be visible.",
                                      scale_from_value=0,
-                                     scale_to_value=120,
-                                     scale_instructions="The number of frames to skip (0 to 120):",
-                                     scale_default_value=2,
+                                     scale_to_value=10,
+                                     scale_instructions="The number of seconds to skip (0 to 10):",
+                                     scale_default_value=1,
                                      group_name=GroupName.SPEED)
 
         page_sprite_font_fade_all_speed =\
@@ -3086,7 +2865,6 @@ class WizardWindow:
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
         self.pages["character_fade_current_value"] = page_character_fade_current_value
-        self.pages["character_fade_delay"] = page_character_fade_delay
         self.pages["character_fade_speed"] = page_character_fade_speed
         self.pages["character_fade_until"] = page_character_fade_until
         self.pages["character_start_fading"] = page_character_start_fading
@@ -3094,7 +2872,6 @@ class WizardWindow:
         
         self.pages["character_after_rotating_stop"] = page_character_after_rotating_stop
         self.pages["character_rotate_current_value"] = page_character_rotate_current_value
-        self.pages["character_rotate_delay"] = page_character_rotate_delay
         self.pages["character_rotate_speed"] = page_character_rotate_speed
         self.pages["character_rotate_until"] = page_character_rotate_until
         self.pages["character_start_rotating"] = page_character_start_rotating
@@ -3103,16 +2880,13 @@ class WizardWindow:
         self.pages["character_after_scaling_stop"] = page_character_after_scaling_stop
         self.pages["character_scale_by"] = page_character_scale_by
         self.pages["character_scale_current_value"] = page_character_scale_current_value
-        self.pages["character_scale_delay"] = page_character_scale_delay
         self.pages["character_scale_until"] = page_character_scale_until
-        self.pages["character_scale_delay"] = page_character_scale_delay
         self.pages["character_start_scaling"] = page_character_start_scaling
         self.pages["character_stop_scaling"] = page_character_stop_scaling
 
         self.pages["character_after_movement_stop"] = page_character_after_movement_stop
         self.pages["character_stop_movement_condition"] = page_character_stop_movement_condition
         self.pages["character_move"] = page_character_move
-        self.pages["character_move_delay"] = page_character_move_delay
         self.pages["character_start_moving"] = page_character_start_moving
         self.pages["character_stop_moving"] = page_character_stop_moving
         self.pages["character_set_position_x"] = page_character_set_position_x
@@ -3157,7 +2931,6 @@ class WizardWindow:
         
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
         self.pages["object_fade_current_value"] = page_object_fade_current_value
-        self.pages["object_fade_delay"] = page_object_fade_delay
         self.pages["object_fade_speed"] = page_object_fade_speed
         self.pages["object_fade_until"] = page_object_fade_until
         self.pages["object_start_fading"] = page_object_start_fading
@@ -3165,7 +2938,6 @@ class WizardWindow:
         
         self.pages["object_after_rotating_stop"] = page_object_after_rotating_stop
         self.pages["object_rotate_current_value"] = page_object_rotate_current_value
-        self.pages["object_rotate_delay"] = page_object_rotate_delay
         self.pages["object_rotate_speed"] = page_object_rotate_speed
         self.pages["object_rotate_until"] = page_object_rotate_until
         self.pages["object_start_rotating"] = page_object_start_rotating
@@ -3174,16 +2946,13 @@ class WizardWindow:
         self.pages["object_after_scaling_stop"] = page_object_after_scaling_stop
         self.pages["object_scale_by"] = page_object_scale_by
         self.pages["object_scale_current_value"] = page_object_scale_current_value
-        self.pages["object_scale_delay"] = page_object_scale_delay
         self.pages["object_scale_until"] = page_object_scale_until
-        self.pages["object_scale_delay"] = page_object_scale_delay
         self.pages["object_start_scaling"] = page_object_start_scaling
         self.pages["object_stop_scaling"] = page_object_stop_scaling
 
         self.pages["object_after_movement_stop"] = page_object_after_movement_stop
         self.pages["object_stop_movement_condition"] = page_object_stop_movement_condition
         self.pages["object_move"] = page_object_move
-        self.pages["object_move_delay"] = page_object_move_delay
         self.pages["object_start_moving"] = page_object_start_moving
         self.pages["object_stop_moving"] = page_object_stop_moving
         self.pages["object_set_position_x"] = page_object_set_position_x
@@ -3219,7 +2988,6 @@ class WizardWindow:
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
         self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value
-        self.pages["dialog_sprite_fade_delay"] = page_dialog_fade_delay
         self.pages["dialog_sprite_fade_speed"] = page_dialog_fade_speed
         self.pages["dialog_sprite_fade_until"] = page_dialog_fade_until
         self.pages["dialog_sprite_start_fading"] = page_dialog_start_fading
@@ -3227,7 +2995,6 @@ class WizardWindow:
         
         self.pages["dialog_sprite_after_rotating_stop"] = page_dialog_after_rotating_stop
         self.pages["dialog_sprite_rotate_current_value"] = page_dialog_rotate_current_value
-        self.pages["dialog_sprite_rotate_delay"] = page_dialog_rotate_delay
         self.pages["dialog_sprite_rotate_speed"] = page_dialog_rotate_speed
         self.pages["dialog_sprite_rotate_until"] = page_dialog_rotate_until
         self.pages["dialog_sprite_start_rotating"] = page_dialog_start_rotating
@@ -3236,16 +3003,13 @@ class WizardWindow:
         self.pages["dialog_sprite_after_scaling_stop"] = page_dialog_after_scaling_stop
         self.pages["dialog_sprite_scale_by"] = page_dialog_scale_by
         self.pages["dialog_sprite_scale_current_value"] = page_dialog_scale_current_value
-        self.pages["dialog_sprite_scale_delay"] = page_dialog_scale_delay
         self.pages["dialog_sprite_scale_until"] = page_dialog_scale_until
-        self.pages["dialog_sprite_scale_delay"] = page_dialog_scale_delay
         self.pages["dialog_sprite_start_scaling"] = page_dialog_start_scaling
         self.pages["dialog_sprite_stop_scaling"] = page_dialog_stop_scaling
 
         self.pages["dialog_sprite_after_movement_stop"] = page_dialog_after_movement_stop
         self.pages["dialog_sprite_stop_movement_condition"] = page_dialog_stop_movement_condition
         self.pages["dialog_sprite_move"] = page_dialog_move
-        self.pages["dialog_sprite_move_delay"] = page_dialog_move_delay
         self.pages["dialog_sprite_start_moving"] = page_dialog_start_moving
         self.pages["dialog_sprite_stop_moving"] = page_dialog_stop_moving
         self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
@@ -3273,8 +3037,8 @@ class WizardWindow:
         self.pages["sprite_font"] = page_sprite_font
         self.pages["sprite_font_x"] = page_sprite_font_x        
         self.pages["sprite_font_y"] = page_sprite_font_y       
-        self.pages["sprite_font_delay"] = page_sprite_font_delay
-        self.pages["sprite_font_delay_punc"] = page_sprite_font_delay_punc
+        self.pages["sprite_font_text_letter_delay"] = page_sprite_font_delay
+        self.pages["sprite_font_text_delay_punc"] = page_sprite_font_delay_punc
         self.pages["sprite_font_fade_all_speed"] = page_sprite_font_fade_all_speed
         self.pages["sprite_font_fade_letter_speed"] = page_sprite_font_fade_letter_speed
         self.pages["sprite_font_intro_animation"] = page_sprite_font_intro_animation
@@ -4411,20 +4175,19 @@ class SharedPages:
 
             return f"<{self.command_name}: {alias}, {position}>"    
     
-    class MoveDelay(WizardListing):
-        """
-        <character_move_delay: general alias, x delay, y delay>
-        """
-    
+
+    class SetCenter(WizardListing):
+        # <character_set_center> 
+
         def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line, **kwargs):
+                         treeview_commands, parent_display_text, sub_display_text,
+                        command_name, purpose_line, **kwargs):
     
             super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name,
-                             purpose_line, **kwargs)
-            
+                                 treeview_commands, parent_display_text,
+                                 sub_display_text, command_name,
+                                 purpose_line, **kwargs)
+    
             self.frame_content = self.create_content_frame()
     
         def create_content_frame(self) -> ttk.Frame:
@@ -4432,19 +4195,19 @@ class SharedPages:
             Create the widgets needed for this command
             and return a frame that contains the widgets.
             """
-            
+    
             # For example: "Number of frames to skip:"
             spinbox_1_instructions = self.kwargs.get("spinbox_1_instructions")
             spinbox_2_instructions = self.kwargs.get("spinbox_2_instructions")
-
+    
             # For example: "horizontal", "vertical"
             # Used for display purposes.
             self.spinbox_1_subject = self.kwargs.get("spinbox_1_subject")
             self.spinbox_2_subject = self.kwargs.get("spinbox_2_subject")
-
+    
             self.spinbox_from_value = self.kwargs.get("spinbox_from_value")
             self.spinbox_to_value = self.kwargs.get("spinbox_to_value")
-
+    
             # For example: "number of frames to skip"
             # Used in a messagebox missing-field sentence.
             self.subject_sentence_1 = self.kwargs.get("subject_sentence_1")
@@ -4453,62 +4216,62 @@ class SharedPages:
             frame_content = ttk.Frame(self.parent_frame)
     
             lbl_general_alias =\
-                ttk.Label(frame_content,
-                          text=f"{self.get_purpose_name(title_casing=True)} alias:")
-
+                    ttk.Label(frame_content,
+                              text=f"{self.get_purpose_name(title_casing=True)} alias:")
+    
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
     
             lbl_frames_to_skip_horizontal = ttk.Label(frame_content,
-                                           text=spinbox_1_instructions)
-            
+                                                          text=spinbox_1_instructions)
+    
             self.sb_horizontal =\
-                ttk.Spinbox(frame_content,
-                            from_=self.spinbox_from_value,
-                            to=self.spinbox_to_value)
+                    ttk.Spinbox(frame_content,
+                                from_=self.spinbox_from_value,
+                                to=self.spinbox_to_value)
     
             lbl_frames_to_skip_vertical = ttk.Label(frame_content,
-                                           text=spinbox_2_instructions)
-            
+                                                        text=spinbox_2_instructions)
+    
             self.sb_vertical =\
-                ttk.Spinbox(frame_content,
-                            from_=self.spinbox_from_value,
-                            to=self.spinbox_to_value)
+                    ttk.Spinbox(frame_content,
+                                from_=self.spinbox_from_value,
+                                to=self.spinbox_to_value)
     
             lbl_general_alias.grid(row=0, column=0, sticky="w")
             self.entry_general_alias.grid(row=1, column=0, sticky="w")
     
             lbl_frames_to_skip_horizontal.grid(row=2, column=0, sticky="w", pady=(15, 0))
             self.sb_horizontal.grid(row=3, column=0, sticky="w")
-            
+    
             lbl_frames_to_skip_vertical.grid(row=4, column=0, sticky="w", pady=(15, 0))
             self.sb_vertical.grid(row=5, column=0, sticky="w")
     
             return frame_content
-
-        def _edit_populate(self, command_class_object: cc.MovementDelay):
+    
+        def _edit_populate(self, command_class_object: cc.CenterSprite):
             """
             Populate the widgets with the arguments for editing.
             """
-            
+    
             # No arguments? return.
             if not command_class_object:
                 return
-            
+    
             sprite_name = command_class_object.sprite_name
             x_skip_frames_amount = command_class_object.x
             y_skip_frames_amount = command_class_object.y
-            
+    
             self.entry_general_alias.insert(0, sprite_name)
-            
+    
             # Set skip frame x/y amounts
             self.sb_horizontal.set(x_skip_frames_amount)
             self.sb_vertical.set(y_skip_frames_amount)
-
+    
         def check_inputs(self) -> Dict | None:
             """
             Check whether the user has inputted sufficient information
             to use this command.
-            
+    
             Return: a dict with the general alias and the number
             of frames to skip to create a delay effect.
             Example:
@@ -4519,35 +4282,35 @@ class SharedPages:
             """
     
             user_input = {}
-            
+    
             # Get the number from the spinbox.
             skip_frames_count_horizontal = self.sb_horizontal.get()
             if not skip_frames_count_horizontal:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title=f"No {self.spinbox_1_subject} value",
-                                       message=f"Please specify {self.subject_sentence_1}.")
+                                           title=f"No {self.spinbox_1_subject} value",
+                                           message=f"Please specify {self.subject_sentence_1}.")
                 return
-            
+    
             skip_frames_count_vertical = self.sb_vertical.get()
             if not skip_frames_count_vertical:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title=f"No {self.spinbox_2_subject} value",
-                                       message=f"Please specify {self.subject_sentence_2}.")
+                                           title=f"No {self.spinbox_2_subject} value",
+                                           message=f"Please specify {self.subject_sentence_2}.")
                 return        
     
             alias = self.entry_general_alias.get().strip()
             if not alias:
                 messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No alias provided",
-                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
+                                           title="No alias provided",
+                                           message=f"Enter an alias for the {self.get_purpose_name()}.")
                 return
-            
+    
             user_input = {"Alias": alias,
-                          "Spinbox1Value": skip_frames_count_horizontal,
-                          "Spinbox2Value": skip_frames_count_vertical}
+                              "Spinbox1Value": skip_frames_count_horizontal,
+                              "Spinbox2Value": skip_frames_count_vertical}
     
             return user_input
-        
+    
         def generate_command(self) -> str | None:
             """
             Return the command based on the user's configuration/selection.
@@ -4558,7 +4321,7 @@ class SharedPages:
             # "Spinbox1Value": "120",
             # "Spinbox2Value": "120"}
             user_inputs = self.check_inputs()
-            
+    
             if not user_inputs:
                 return
     
@@ -4567,17 +4330,7 @@ class SharedPages:
             skip_frames_count_vertical = user_inputs.get("Spinbox2Value")
     
             return f"<{self.command_name}: {alias}, {skip_frames_count_horizontal}, {skip_frames_count_vertical}>"
-            
-    class SetCenter(MoveDelay):
 
-        def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line, **kwargs):
-    
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name,
-                             purpose_line, **kwargs)
         
     class Move(WizardListing):
         """
@@ -4612,6 +4365,9 @@ class SharedPages:
                           text=f"{self.get_purpose_name(title_casing=True)} alias:")
 
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
+            
+            self.scale_from_value = self.kwargs.get("scale_from_value")
+            self.scale_to_value = self.kwargs.get("scale_to_value")
     
             """
             Horizontal frame
@@ -4634,7 +4390,7 @@ class SharedPages:
             
             self.lbl_horizontal_amount =\
                 ttk.Label(self.frame_horizontal,
-                          text="Horizontal movement (x):")
+                          text=f"Horizontal movement speed (x) {self.scale_from_value} to {self.scale_to_value}:")
             
             self.chk_move_horizontally =\
                 ttk.Checkbutton(self.frame_horizontal,
@@ -4643,9 +4399,10 @@ class SharedPages:
                         
             
             self.sb_horizontal_amount = ttk.Spinbox(self.frame_horizontal,
-                                                    from_=0, to=8000,
                                                     width=7,
-                                                    textvariable=self.v_horizontal_amount)
+                                                    textvariable=self.v_horizontal_amount,
+                                                    from_=self.scale_from_value,
+                                                    to=self.scale_to_value)
           
             self.radio_left = ttk.Radiobutton(self.frame_horizontal,
                                               text="Move left",
@@ -4676,7 +4433,7 @@ class SharedPages:
             self.frame_vertical.grid_rowconfigure(1, weight=1)
             self.frame_vertical.grid_columnconfigure(1, weight=1)
             self.frame_vertical.grid_columnconfigure(2, weight=1)
-            self.lbl_vertical_amount = ttk.Label(self.frame_vertical, text="Vertical movement (y):")
+            self.lbl_vertical_amount = ttk.Label(self.frame_vertical, text=f"Vertical movement speed (y) {self.scale_from_value} to {self.scale_to_value}:")
             
             
             self.chk_move_vertically =\
@@ -4685,9 +4442,10 @@ class SharedPages:
                                 variable=self.v_move_vertically)
             
             self.sb_vertical_amount = ttk.Spinbox(self.frame_vertical,
-                                                  from_=0, to=8000,
                                                   width=7,
-                                                  textvariable=self.v_vertical_amount)
+                                                  textvariable=self.v_vertical_amount,
+                                                  from_=self.scale_from_value,
+                                                  to=self.scale_to_value                                                  )
             
             self.radio_up = ttk.Radiobutton(self.frame_vertical,
                                               text="Move up",
@@ -6226,7 +5984,7 @@ class SharedPages:
 
             return frame_content
 
-        def _edit_populate(self, command_class_object: cc.FadeCurrentValue | cc.FadeDelay):
+        def _edit_populate(self, command_class_object: cc.FadeCurrentValue):
             """
             Populate the widgets with the arguments for editing.
             
@@ -6265,10 +6023,9 @@ class SharedPages:
                     # Set the sprite type in the combobox
                     self.set_sprite_type(sprite_type)
                     
-                case cc.FadeDelay(sprite_name, numeric_value) | \
-                    cc.FadeCurrentValue(sprite_name, numeric_value) | \
-                    cc.RotateDelay(sprite_name, numeric_value) | \
-                    cc.ScaleDelay(sprite_name, numeric_value):
+                case cc.FadeCurrentValue(sprite_name, numeric_value):
+                    
+                    # We have the sprite name and numeric_value now.
                     pass
                 
                 case cc.ScaleCurrentValue(sprite_name, numeric_value):
@@ -6892,15 +6649,15 @@ class SharedPages:
 
 
 
-    class Delay(CurrentValue):
-        def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
+    #class Delay(CurrentValue):
+        #def __init__(self, parent_frame, header_label, purpose_label,
+                #treeview_commands, parent_display_text, sub_display_text,
+                #command_name, purpose_line, **kwargs):
 
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name,
-                             purpose_line, **kwargs)
+            #super().__init__(parent_frame, header_label, purpose_label,
+                             #treeview_commands, parent_display_text,
+                             #sub_display_text, command_name,
+                             #purpose_line, **kwargs)
 
 
     class Case(WizardListing):
@@ -8091,19 +7848,6 @@ class CharacterFadeSpeed(SharedPages.Speed):
                          sub_display_text, command_name,
                          purpose_line, **kwargs)
 
-class CharacterFadeDelay(SharedPages.Delay):
-    """
-    <character_fade_delay: general alias, number of frames to skip>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
 
 
 class CharacterFadeCurrentValue(SharedPages.CurrentValue):
@@ -8377,7 +8121,7 @@ class Font_TextDelayPunc(WizardListing):
             return
         
         previous_letter = command_class_object.previous_letter
-        number_of_milliseconds = command_class_object.number_of_milliseconds
+        number_of_milliseconds = command_class_object.number_of_seconds
         
         try:
             number_of_milliseconds = int(number_of_milliseconds)
@@ -8389,7 +8133,7 @@ class Font_TextDelayPunc(WizardListing):
         
         # SpriteTextDelayPunc has 2 additional widgets:
         # an entry widget and a combobox.
-        # Used with <sprite_font_delay_punc>
+        # Used with <sprite_font_text_delay_punc>
         match command_class_object:
             
             case cc.SpriteTextDelayPunc(sprite_type, alias, _, _):
@@ -10005,20 +9749,6 @@ class CharacterRotateCurrentValue(WizardListing):
         self.frame_content.grid()
 
 
-class CharacterRotateDelay(SharedPages.Delay):
-    """
-    <character_rotate_delay: general alias, number of frames to skip>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
 
 class CharacterRotateSpeed(SharedPages.Speed):
     """
@@ -10130,20 +9860,6 @@ class CharacterScaleCurrentValue(SharedPages.CurrentValue):
                          sub_display_text, command_name, purpose_line, **kwargs)
 
 
-class CharacterScaleDelay(SharedPages.Delay):
-    """
-    <character_scale_delay: general alias, number of frames to skip>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
 
 class CharacterScaleUntil(SharedPages.Until):
     """
@@ -10250,20 +9966,6 @@ class CharacterStartMoving(SharedPages.StartStop):
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line, **kwargs)
 
-
-class CharacterMoveDelay(SharedPages.MoveDelay):
-    """
-    <character_move_delay: general alias, x delay, y delay>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
 
 
 class CharacterSetPositionX(SharedPages.Position):

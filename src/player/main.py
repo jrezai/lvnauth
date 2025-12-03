@@ -288,7 +288,7 @@ class Main:
             # For debugging
             pygame.display.flip()
             
-            # The number of milliseconds elapsed in this frame
+            # The number of seconds elapsed in this frame
             AnimationSpeed.delta = clock.tick(60) / 1000       
             
     def check_queue(self):

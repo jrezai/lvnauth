@@ -248,7 +248,6 @@ class StoryReader:
         "character_stop_movement_condition",
         "character_move",
         "character_start_moving",
-        "character_move_delay",
         "call",
     )
 
@@ -988,7 +987,7 @@ class StoryReader:
         elif command_name == "sprite_font_y":
             self._sprite_text_start_position(False, arguments)
 
-        elif command_name == "sprite_font_delay":
+        elif command_name == "sprite_font_text_letter_delay":
             self._sprite_text_font_delay(arguments=arguments)
 
         elif command_name == "sprite_font_delay_punc":
@@ -1472,21 +1471,6 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "character_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "call":
 
             if "," in arguments:
@@ -1566,21 +1550,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_after_fading_stop":
             self._sprite_after_fading_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_fade_delay":
-            self._sprite_fade_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_delay":
-            self._sprite_fade_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_delay":
-            self._sprite_fade_delay(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -1686,21 +1655,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
-        elif command_name == "character_scale_delay":
-            self._sprite_scale_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_scale_delay":
-            self._sprite_scale_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_scale_delay":
-            self._sprite_scale_delay(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_start_scaling":
             self._sprite_start_or_stop_scaling(
                 sprite_type=file_reader.ContentType.CHARACTER,
@@ -1800,21 +1754,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_after_rotating_stop":
             self._sprite_after_rotating_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_rotate_delay":
-            self._sprite_rotate_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_delay":
-            self._sprite_rotate_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_delay":
-            self._sprite_rotate_delay(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -2704,43 +2643,6 @@ class StoryReader:
             # Set the property for the character sprite to know when to stop the rotating animation.
             sprite.rotate_until = rotate_until
 
-    def _sprite_rotate_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's rotate animation.
-        This is used to create an extra-slow rotating effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite general alias, number of frames to skip (int)
-
-        Return: None
-        """
-
-        rotate_delay: cc.RotateDelay
-        rotate_delay = self._get_arguments(
-            class_namedtuple=cc.RotateDelay, given_arguments=arguments
-        )
-
-        if not rotate_delay:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        rotate_delay_main = sd.RotateDelayMain(rotate_delay=rotate_delay)
-
-        # Set the property for the sprite so when the rotate animation
-        # is working, it'll read this variable value and delay the rotate effect.
-        sprite.rotate_delay_main = rotate_delay_main
-
     def _sprite_rotate_speed(self, sprite_type: file_reader.ContentType, arguments):
         """
         Set the rotation speed of a sprite.
@@ -2884,43 +2786,6 @@ class StoryReader:
 
             elif start_or_stop == sd.StartOrStop.STOP:
                 sprite.stop_rotating()
-
-    def _sprite_scale_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's scaling animation.
-        This is used to create an extra-slow scale effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite name, number of frames to skip (int)
-
-        return: None
-        """
-
-        scale_delay: cc.ScaleDelay
-        scale_delay = self._get_arguments(
-            class_namedtuple=cc.ScaleDelay, given_arguments=arguments
-        )
-
-        if not scale_delay:
-            return
-
-        # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        scale_delay_main = sd.ScaleDelayMain(scale_delay=scale_delay)
-
-        # Set the property for the sprite so when the scaling animation
-        # is working, it'll read this variable value and delay the scale effect.
-        sprite.scale_delay_main = scale_delay_main
 
     def _sprite_start_or_stop_scaling(
         self,
@@ -3388,6 +3253,10 @@ class StoryReader:
                 sprite_name=fade_speed.sprite_name,
                 current_fade_value=initial_fade_value,
             )
+            
+            # Record the float fade value because we'll use this for
+            # time-accurate delta fade calculations in each frame.
+            sprite.calculated_fade_value = float(initial_fade_value)
 
         # Set the fade speed.
         # A positive value will fade-in the sprite.
@@ -3460,43 +3329,6 @@ class StoryReader:
 
         # Set the property for the sprite to know when a fade animation should stop.
         sprite.fade_until = fade_until
-
-    def _sprite_fade_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's fade animation.
-        This is used to create an extra-slow fade effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite general alias, number of frames to skip (int)
-
-        return: None
-        """
-
-        fade_delay: cc.FadeDelay
-        fade_delay = self._get_arguments(
-            class_namedtuple=cc.FadeDelay, given_arguments=arguments
-        )
-
-        if not fade_delay:
-            return
-
-        # Get the visible sprite based on the general alias
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        fade_delay_main = sd.FadeDelayMain(fade_delay=fade_delay)
-
-        # Set the property for the sprite so when the fading animation
-        # is working, it'll read this variable value and delay the fade effect.
-        sprite.fade_delay_main = fade_delay_main
 
     def _sprite_load(self, arguments: str, sprite_type: file_reader.ContentType):
         """
@@ -3944,31 +3776,6 @@ class StoryReader:
         # Start reading the new scene script.
         self.story.reader.read_story()
 
-    def _set_movement_delay(self, sprite_type: file_reader.ContentType, arguments: str):
-        """
-        Set the animation movement delay of the specified sprite.
-        :param arguments: str, such as '3, 5' (which means delay x by 3 frames, delay y by 5 frames.
-        :return: None
-        """
-        movement_delay: cc.MovementDelay
-        movement_delay = self._get_arguments(
-            class_namedtuple=cc.MovementDelay, given_arguments=arguments
-        )
-
-        if not movement_delay:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=movement_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Stamp the delay onto the sprite.
-        sprite.movement_delay = movement_delay
-
     def _sprite_start_or_stop_moving(
         self,
         sprite_type: file_reader.ContentType,
@@ -4009,17 +3816,26 @@ class StoryReader:
                 # don't apply, so clear the stop condition here (if any).
                 sprite.movement_stop_run_script = None
 
-    def _set_movement_speed(self, sprite_type: file_reader.ContentType, arguments: str):
+    def _set_movement_speed(self,
+                            sprite_type: file_reader.ContentType,
+                            arguments: str):
         """
         Set the movement speed of the character sprite.
 
-        :param arguments: str that looks like this: 'character sprite general alias, x, x_direction, y, y_direction'
-                          character sprite name: the name of the sprite
-                          x value is the number of pixels to move horizontally
-                          x_direction is a string ("left" or "right")
-                          y value is the number of pixels to move vertically
-                          y_direction is a string ("up" or "down")
-        :return: None
+        Arguments:
+        
+        - sprite_type: whether it's a character, object, etc.
+        
+        - arguments: str that looks like this:
+        'character sprite general alias, x, x_direction, y, y_direction'
+        
+        character sprite name: the name of the sprite
+        x value is the number of pixels to move horizontally
+        x_direction is a string ("left" or "right")
+        y value is the number of pixels to move vertically
+        y_direction is a string ("up" or "down")
+        
+        Return: None
         """
 
         movement_speed: cc.MovementSpeed
@@ -4263,13 +4079,13 @@ class StoryReader:
         )
 
         previous_letter = delay_punc.previous_letter
-        delay_milliseconds = delay_punc.number_of_milliseconds
+        delay_seconds = delay_punc.number_of_seconds
 
-        # Don't allow the delay to be less than 0 or more than 5000 milliseconds
-        if delay_milliseconds > 5000:
-            delay_milliseconds = 1000
-        elif delay_milliseconds < 0:
-            delay_milliseconds = 0
+        # Don't allow the delay to be less than 0 or more than 10 seconds
+        if delay_seconds > 10:
+            delay_seconds = 10
+        elif delay_seconds < 0:
+            delay_seconds = 0
 
         # Get the font handler of either the sprite object (dialog sprite, 
         # object, character) or the dialog rectangle.
@@ -4283,7 +4099,7 @@ class StoryReader:
 
         # Add the after-previous-letter delay setting.
         subject_font_handler.font_animation.letter_delay_handler.set_letter_delay(
-            previous_letter, delay_milliseconds
+            previous_letter, delay_seconds
         )
 
     def get_main_story_reader(self):

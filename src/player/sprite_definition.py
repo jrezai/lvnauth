@@ -34,23 +34,6 @@ class RotateType(Enum):
     COUNTERCLOCKWISE = auto()
 
 
-class FadeDelayMain:
-    def __init__(self, fade_delay: cc.FadeDelay):
-        self.fade_delay = fade_delay
-        self.frames_skipped_so_far = 0
-
-
-class ScaleDelayMain:
-    def __init__(self, scale_delay: cc.ScaleDelay):
-        self.scale_delay = scale_delay
-        self.frames_skipped_so_far = 0
-
-
-class RotateDelayMain:
-    def __init__(self, rotate_delay: cc.RotateDelay):
-        self.rotate_delay = rotate_delay
-        self.frames_skipped_so_far = 0
-
 
 class SpriteAnimationType(Enum):
     FADE = auto()
@@ -158,6 +141,24 @@ class SpriteObject:
         self.general_alias = general_alias
         self.image = image
         self.rect = self.image.get_rect()
+        
+        """
+        Used for delta movements. A pygame rectangle can only hold
+        integer values, so we need to keep track of the 'real' float movement
+        positions before telling self.rect about the newly moved int positions.
+        In other words, when we increment slightly, int values will be rounded
+        to a whole number, but we need float values to keep the accurate
+        non-rounded positions while the movement animation is occuring.
+        pos_moving_x and pos_moving_y are only used during a movement 
+        animation. They are not used anywhere else. Once a movement animation
+        stops, these two variables are reset to zero until the next movement.
+        Note: these two variables don't even get used for <position_x..> related
+        commands. They're *just* for movement animations.
+        """
+        self.pos_moving_x:float
+        self.pos_moving_x = 0
+        self.pos_moving_y:float
+        self.pos_moving_y = 0
 
         # We need a copy of the image before we apply any text to it, 
         # so that we don't blit the same text over and over again.
@@ -235,6 +236,8 @@ class SpriteObject:
 
         # Will be based on the FadeCurrentValue class
         self.current_fade_value = None
+        # For time-accuracy with delta calculations for each frame.
+        self.calculated_fade_value:float = 0
 
         # Will be based on the FadeStopRunScript class
         self.fade_stop_run_script = None
@@ -372,20 +375,38 @@ class SpriteObject:
         :return:
         """
         self.is_fading = False
+        
+        # Now that the fading animation has stopped, we no longer need
+        # the float fade value, so reset it for the next fading animation.        
+        self.calculated_fade_value = 0
 
     def start_moving(self):
         """
-        Set the flag to indicate that movement animations should occur for this sprite.
-        :return:
+        Set the flag to indicate that movement animations should occur
+        for this sprite.
+        
+        Return: None
         """
         self.is_moving = True
+        
+        # Record where the image (surface) currently is so we can use
+        # pos_moving_x and pos_moving_y for float movement calculations.
+        self.pos_moving_x = self.rect.x
+        self.pos_moving_y = self.rect.y
 
     def stop_moving(self):
         """
-        Reset the flag to indicate that movement animations should not occur for this sprite.
-        :return:
+        Reset the flag to indicate that movement animations should not occur
+        for this sprite.
+        
+        Return: None
         """
         self.is_moving = False
+        
+        # Now that the movement animation has stopped, we no longer need
+        # these two variables, so reset them for the next movement animation.
+        self.pos_moving_x = 0
+        self.pos_moving_y = 0
 
     def stop_scaling(self):
         """
@@ -1187,8 +1208,7 @@ class SpriteObject:
 
     def _scale_or_rotate_sprite(self):
         """
-        Scale and/or rotate the sprite and then return a rect
-        that covers the old rect and the new rect combined into one rect.
+        Scale and/or rotate the sprite and then update the sprite's rect.
         Return: None
         """
 
@@ -1234,9 +1254,21 @@ class SpriteObject:
             
             # Apply effects
             
-            self._scale_or_rotate_sprite()
-            self._fade_sprite(skip_copy_original_image=True)
+            if scale_or_rotation_needed:
+                self._scale_or_rotate_sprite()
+                
+            if fade_needed:
+                """
+                A fade is needed. Apply the fade to the scaled/rotated version
+                of the image the image was just scaled or rotated.
+                Otherwise apply the fade to the original version of the image.
+                That's why we're using scale_or_rotation_needed as a bool 
+                in the argument below.
+                """
+                self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
+                
             # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
+            
         else:
             """
             No effects needed to be applied in this frame.
@@ -1447,8 +1479,8 @@ class SpriteObject:
                     reached_destination_fade = True
                 else:
                     # Increment fade
-                    new_fade_value = self.current_fade_value.current_fade_value \
-                        + self.fade_speed.fade_speed \
+                    new_fade_value = (self.current_fade_value.current_fade_value \
+                        + self.fade_speed.fade_speed) \
                         * AnimationSpeed.delta
                     
                     if new_fade_value > 255:
@@ -1469,14 +1501,28 @@ class SpriteObject:
 
                 else:
                     # Decrease fade
-                    new_fade_value = self.current_fade_value.current_fade_value \
-                        - self.fade_speed.fade_speed \
-                        * AnimationSpeed.delta
+                    #new_fade_value = (self.current_fade_value.current_fade_value \
+                        #- self.fade_speed.fade_speed) \
+                        #* AnimationSpeed.delta
                     
-                    if new_fade_value < 0:
-                        new_fade_value = 0
+                    # Calculate the change in fade value that occurred in the 
+                    # time delta
+                    fade_change_this_frame =\
+                        self.fade_speed.fade_speed * AnimationSpeed.delta
+                    
+                    # Subtract this change from the current fade value to get 
+                    # the new fade value
+                    self.calculated_fade_value -= fade_change_this_frame
+                    
+                    if self.calculated_fade_value < 0:
+                        self.calculated_fade_value = 0
+                    elif self.calculated_fade_value > 255:
+                        self.calculated_fade_value = 255
+                    
+                    new_fade_value = int(self.calculated_fade_value)
 
                     self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
+                    
 
             # Have we reached a destination fade which caused the fade to stop?
             if reached_destination_fade:
@@ -1533,6 +1579,7 @@ class SpriteObject:
 
         replaced_image = False
 
+
         # Should we consider copying the original image to self.image?
         # The caller of this method may have already done this, which is
         # why we check here.
@@ -1546,12 +1593,18 @@ class SpriteObject:
             self.image = self.get_original_image_with_text()
                 
             replaced_image = True
-                
+            
+
+
         self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
+
 
         # Record how much fade we've applied so we don't keep applying
         # the fade unnecessarily during a non-animation sudden fade change.
         self.applied_fade_value = self.current_fade_value.current_fade_value
+        
+        # print(f"{self.name} fade: {self.applied_fade_value}")
+        
 
         return replaced_image
 
@@ -1594,7 +1647,7 @@ class SpriteObject:
 
     def reset_applied_effects(self):
         """
-        Also, reset the variables that keep track of the amount of
+        Reset the variables that keep track of the amount of
         rotation, scale, and fade.
         
         Purpose: once the original image of a sprite has been copied to
@@ -1766,11 +1819,15 @@ class SpriteObject:
 
         if proceed_move_x:
             # Move the X position
-            self.rect.move_ip(self.movement_speed.x, 0)
+            self.pos_moving_x += self.movement_speed.x * AnimationSpeed.delta
+            self.rect.x = int(self.pos_moving_x)
+            # self.rect.move_ip(int(self.pos_x), 0)
 
         if proceed_move_y:
             # Move the Y position
-            self.rect.move_ip(0, self.movement_speed.y)
+            self.pos_moving_y += self.movement_speed.y * AnimationSpeed.delta
+            self.rect.y = int(self.pos_moving_y)
+            # self.rect.move_ip(0, self.movement_speed.y)
 
 
 class SpriteGroup:
