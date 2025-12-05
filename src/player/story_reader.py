@@ -3267,12 +3267,14 @@ class StoryReader:
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        Set the current fade value of a sprite (0 (fully transparent) to 255 (fully opaque)).
+        Set the current fade value of a sprite (0 (fully transparent)
+        to 255 (fully opaque)).
 
         Arguments:
 
         - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, current fade value (example: 'rave_normal, 255')
+        - arguments: sprite general alias, current fade value
+        (example: 'rave, 255')
 
         return: None
         """
@@ -3293,8 +3295,12 @@ class StoryReader:
         if not sprite:
             return
 
-        # Set the current fade value for the character sprite.
+        # Set the current fade value for the sprite to the specified fade value.
         sprite.current_fade_value = current_fade_value
+        
+        # The calculated fade value (float) should start at this new initial
+        # fade value too.
+        sprite.calculated_fade_value = current_fade_value.current_fade_value
 
         # sprite.sudden_fade_change = True
 

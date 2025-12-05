@@ -1245,11 +1245,11 @@ class SpriteObject:
             # Original angle
             current_rotate = 0
 
-        # Scale and/or rotate the image, which is based on the original image.
+        ## Scale and/or rotate the image, which is based on the original image.
         self.image = pygame.transform.rotozoom(self.get_original_image_with_text(),
                                                current_rotate,
                                                current_scale)
-        
+
         # Record how much rotate/scale we've applied so we don't keep applying
         # the rotate/scale unnecessarily during a non-animation sudden rotate 
         # or scale change.
@@ -1259,6 +1259,12 @@ class SpriteObject:
         # Get the new rect of the rotated or scaled image
         self.rect = self.image.get_rect(center=self.rect.center)
 
+        #if self.is_fade_needed():
+            
+            #self.image.set_alpha(self.current_fade_value.current_fade_value)
+            #self.applied_fade_value = self.current_fade_value.current_fade_value
+            
+
     def _apply_still_effects(self):
         """
         Apply scale/rotation/fade effects to the sprite if
@@ -1266,19 +1272,27 @@ class SpriteObject:
         the expected amounts.
         """
         
-        fade_needed = self.is_fade_needed()
         scale_or_rotation_needed = self.is_scale_or_rotate_needed()
         
-        # If there is a fade and/or scale animation needed,
-        # apply those effects now.
-        if scale_or_rotation_needed or fade_needed:
+        at_least_one_effect_applied = False
+        
+        # If rotate or scale animation needed, apply the rotate/scale 
+        # effect now.
+        if scale_or_rotation_needed:
             
             # Apply effects
             
             if scale_or_rotation_needed:
+                
+                # If a fade is needed too, then _scale_or_rotate_sprite()
+                # will apply the fade automatically.
                 self._scale_or_rotate_sprite()
                 
-            if fade_needed:
+                at_least_one_effect_applied = True
+                
+            # We need to check if we need to apply fade *after* a scale/rotation
+            # because a scale/rotation will make the image opaque.
+            if self.is_fade_needed():
                 """
                 A fade is needed. Apply the fade to the scaled/rotated version
                 of the image the image was just scaled or rotated.
@@ -1287,10 +1301,13 @@ class SpriteObject:
                 in the argument below.
                 """
                 self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
+                # pass
+                
+                at_least_one_effect_applied = True
                 
             # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
             
-        else:
+        if not at_least_one_effect_applied:
             """
             No effects needed to be applied in this frame.
             Either the sprite has had its effect animations finished
@@ -1500,15 +1517,29 @@ class SpriteObject:
                     reached_destination_fade = True
                 else:
                     # Increment fade
-                    new_fade_value = (self.current_fade_value.current_fade_value \
-                        + self.fade_speed.fade_speed) \
-                        * AnimationSpeed.delta
-                    
-                    if new_fade_value > 255:
-                        new_fade_value = 255
 
+                    # Calculate the change in fade value that occurred in the 
+                    # time delta
+                    fade_change_this_frame =\
+                        self.fade_speed.fade_speed * AnimationSpeed.delta
+                    
+                    # Add this change from the current fade value to get 
+                    # the new fade value
+                    self.calculated_fade_value += fade_change_this_frame
+                    
+                    # Don't allow the calculated fade value to go beyond 255.
+                    if self.calculated_fade_value > 255:
+                        self.calculated_fade_value = 255
+                    
+                    # Convert the float fade value to an int, because
+                    # pygame uses the int value to set the opacity, not a float.
+                    new_fade_value = int(self.calculated_fade_value)
+
+                    # Set what the new int fade value should be so that it gets
+                    # applied to the sprite later on.
                     self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
 
+                    
             elif fade_type == FadeType.FADE_OUT:
                 if self.current_fade_value.current_fade_value <= self.fade_until.fade_value:
 
@@ -1532,11 +1563,9 @@ class SpriteObject:
                     # the new fade value
                     self.calculated_fade_value -= fade_change_this_frame
                     
-                    # Clamp the opacity to a min of 0 and a max of 255
+                    # Don't allow the calculated fade value to go below 0.
                     if self.calculated_fade_value < 0:
                         self.calculated_fade_value = 0
-                    elif self.calculated_fade_value > 255:
-                        self.calculated_fade_value = 255
                     
                     # Convert the float fade value to an int, because
                     # pygame uses the int value to set the opacity, not a float.
@@ -1618,14 +1647,15 @@ class SpriteObject:
             replaced_image = True
             
 
+        # self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
+        
 
-        self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
-
+        self.image.set_alpha(self.current_fade_value.current_fade_value)
 
         # Record how much fade we've applied so we don't keep applying
         # the fade unnecessarily during a non-animation sudden fade change.
         self.applied_fade_value = self.current_fade_value.current_fade_value
-        
+            
         # print(f"{self.name} fade: {self.applied_fade_value}")
         
 
