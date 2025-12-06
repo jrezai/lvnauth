@@ -1301,7 +1301,6 @@ class SpriteObject:
                 in the argument below.
                 """
                 self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
-                # pass
                 
                 at_least_one_effect_applied = True
                 
@@ -1319,10 +1318,14 @@ class SpriteObject:
             and the displayed image is different from the original sprite
             with text, then that means there is some text on the sprite
             that we're currently not showing and that we need to show.
+            
             OR there was text before (and we're showing the sprite with text)
             but now the sprite's text has been cleared, but we're still showing
-            the sprite with text. We need to copy the original image with text
-            to self.image, which gets shown to the viewer.
+            the sprite with text.
+            
+            We need to copy the original image with text to self.image,
+            which gets shown to the viewer.
+            
             This gets handled automatically when effects have been
             applied or animations are ongoing. But if the sprite hasn't had
             any animations or effects applied to it, we need to handle this
@@ -1356,8 +1359,10 @@ class SpriteObject:
         Purpose: if the sprite does not have any effects applied to it,
         then the caller needs to check if the sprite has any text and get
         a copy of the sprite image with text; otherwise the visible sprite
-        won't have text on it. Effects will automatically take care of a
-        sprite's text by making the sprite's text show up during animations.
+        won't have text on it.
+        
+        Effects will automatically take care of a sprite's text by making
+        the sprite's text show up during animations.
         But if a sprite has had no animations or is not going through an
         animation now, then we need to deal with showing the sprite's text
         a different way, and this method is used as part of this.
