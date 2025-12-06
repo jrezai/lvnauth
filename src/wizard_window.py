@@ -1883,7 +1883,7 @@ class WizardWindow:
                                     sub_display_text="object_after_fading_stop",
                                     command_name="object_after_fading_stop",
                                     purpose_line="Run a reusable script after a specific object sprite stops fading.",
-                                    group_name=GroupName.FLIP)
+                                    group_name=GroupName.FADE)
 
         page_object_fade_current_value =\
             CharacterFadeCurrentValue(parent_frame=self.frame_contents_outer,
@@ -3286,8 +3286,8 @@ class WizardListing:
             self.purpose_type = Purpose.VARIABLE_SET
             
         elif command_name in ("after", "after_cancel", "call"):
-            self.purpose_type = Purpose.REUSABLE_SCRIPT
-            
+            self.purpose_type = Purpose.REUSABLE_SCRIPT       
+        
         elif command_name in ("scene", ):
             self.purpose_type = Purpose.SCENE_SCRIPT
             
@@ -3393,10 +3393,12 @@ class WizardListing:
         - title_casing: (bool) set to True to return with title casing.
         Example: if True, 'Character' will be returned instead of 'character'.
         
-        - plural: (bool) will return the plural name instead of the singular name.
+        - plural: (bool) will return the plural name instead of the
+        singular name.
         Example: 'characters' instead of 'character'.
         
-        - capitalize_first_word: (bool) For example: 'Reusable script' instead of 'reusable script'.
+        - capitalize_first_word: (bool) For example: 'Reusable script'
+        instead of 'reusable script'.
         """
 
         name_mapping = {Purpose.BACKGROUND: ("background", "backgrounds"),
@@ -3443,19 +3445,27 @@ class WizardListing:
         
         Return: a dictionary or None if there is no reference dictionary.
         """
+        
+        # Commands, such as <character_after_fading_stop>, 
+        # <object_after_fading_stop> should have reusable scripts shown 
+        # in the combobox; not sprite names.
+        if "_after_" in self.command_name:
+            dict_ref = ProjectSnapshot.reusables
+        else:
 
-        dict_mapping = {Purpose.BACKGROUND: ProjectSnapshot.background_images,
-                        Purpose.CHARACTER: ProjectSnapshot.character_images,
-                        Purpose.OBJECT: ProjectSnapshot.object_images,
-                        Purpose.DIALOG: ProjectSnapshot.dialog_images,
-                        Purpose.FONT_SPRITE: ProjectSnapshot.font_sprites,
-                        Purpose.AUDIO: ProjectSnapshot.sounds,
-                        Purpose.MUSIC: ProjectSnapshot.music,
-                        Purpose.VARIABLE_SET: ProjectSnapshot.variables,
-                        Purpose.REMOTE_GET: ProjectSnapshot.variables,
-                        Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
-
-        dict_ref = dict_mapping.get(self.purpose_type)
+            dict_mapping =\
+                {Purpose.BACKGROUND: ProjectSnapshot.background_images,
+                 Purpose.CHARACTER: ProjectSnapshot.character_images,
+                 Purpose.OBJECT: ProjectSnapshot.object_images,
+                 Purpose.DIALOG: ProjectSnapshot.dialog_images,
+                 Purpose.FONT_SPRITE: ProjectSnapshot.font_sprites,
+                 Purpose.AUDIO: ProjectSnapshot.sounds,
+                 Purpose.MUSIC: ProjectSnapshot.music,
+                 Purpose.VARIABLE_SET: ProjectSnapshot.variables,
+                 Purpose.REMOTE_GET: ProjectSnapshot.variables,
+                 Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
+    
+            dict_ref = dict_mapping.get(self.purpose_type)
         
         return dict_ref    
 
