@@ -1280,31 +1280,27 @@ class SpriteObject:
         # effect now.
         if scale_or_rotation_needed:
             
-            # Apply effects
+            # If a fade is needed too, then _scale_or_rotate_sprite()
+            # will apply the fade automatically.
+            self._scale_or_rotate_sprite()
             
-            if scale_or_rotation_needed:
-                
-                # If a fade is needed too, then _scale_or_rotate_sprite()
-                # will apply the fade automatically.
-                self._scale_or_rotate_sprite()
-                
-                at_least_one_effect_applied = True
-                
-            # We need to check if we need to apply fade *after* a scale/rotation
-            # because a scale/rotation will make the image opaque.
-            if self.is_fade_needed():
-                """
-                A fade is needed. Apply the fade to the scaled/rotated version
-                of the image the image was just scaled or rotated.
-                Otherwise apply the fade to the original version of the image.
-                That's why we're using scale_or_rotation_needed as a bool 
-                in the argument below.
-                """
-                self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
-                
-                at_least_one_effect_applied = True
-                
-            # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
+            at_least_one_effect_applied = True
+            
+        # We need to check if we need to apply fade *after* a scale/rotation
+        # because a scale/rotation will make the image opaque.
+        if self.is_fade_needed():
+            """
+            A fade is needed. Apply the fade to the scaled/rotated version
+            of the image the image was just scaled or rotated.
+            Otherwise apply the fade to the original version of the image.
+            That's why we're using scale_or_rotation_needed as a bool 
+            in the argument below.
+            """
+            self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
+            
+            at_least_one_effect_applied = True
+            
+        # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
             
         if not at_least_one_effect_applied:
             """
