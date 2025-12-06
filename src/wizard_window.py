@@ -9007,7 +9007,7 @@ class DialogContinue(WizardListing):
         
         frame_contents = ttk.Frame(self.parent_frame)
         
-        instructions = "This command will cause the dialog text to continue on the last line\n" + \
+        instructions = "This command will cause the dialog text to continue on the same line\n" + \
         "instead of the next line."
         
         when_to_use_title = "When to use this command:"
