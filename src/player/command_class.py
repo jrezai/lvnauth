@@ -281,10 +281,25 @@ class MovementSpeed(NamedTuple):
     y_direction: str
 
 
-
-class MovementStopRunScript(NamedTuple):
+# Used for multiple commands, such as:
+# character_after_fading_stop
+# object_after_scaling_stop
+# dialog_sprite_after_rotating_stop
+# character_after_movement_stop
+class SpriteStopRunScriptNoArguments(NamedTuple):
     sprite_name: str
     reusable_script_name: str
+    
+    
+# Used for multiple commands, such as:
+# character_after_fading_stop
+# object_after_scaling_stop
+# dialog_sprite_after_rotating_stop
+# character_after_movement_stop
+class SpriteStopRunScriptWithArguments(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+    arguments: str
 
     
 # Used when the 'side to check' is specified (3 arguments)
@@ -343,12 +358,7 @@ class FadeSpeed(NamedTuple):
     fade_speed: float
     fade_direction: str  # "fade in" or "fade out"
 
-
-class FadeStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
+    
 
 class ScaleBy(NamedTuple):
     sprite_name: str
@@ -366,10 +376,6 @@ class ScaleCurrentValue(NamedTuple):
     scale_current_value: float
 
 
-class ScaleStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
 
 class RotateCurrentValue(NamedTuple):
     sprite_name: str
@@ -380,11 +386,6 @@ class RotateSpeed(NamedTuple):
     sprite_name: str
     rotate_speed: float
     rotate_direction: str
-
-
-class RotateStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
 
 
 class RotateUntil(NamedTuple):

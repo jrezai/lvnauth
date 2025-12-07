@@ -33,6 +33,7 @@ import re
 import pathlib
 import tkinter as tk
 import pygubu
+
 import command_class as cc
 from player.condition_handler import ConditionOperator
 from tkinter import messagebox
@@ -43,11 +44,9 @@ from enum import Enum, auto
 from project_snapshot import ProjectSnapshot
 from entry_limit import EntryWithLimit
 from functools import partial
-from re import search, IGNORECASE
 from command_helper import CommandHelper, ContextEditRun
 from variable_editor_window import VariableEditorWindow
 from animation_speed import AnimationSpeed
-
 
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -3592,6 +3591,31 @@ class WizardListing:
         
         self._edit_populate(command_class_object=command_class_object)
         
+    def try_get_arguments_attribute(self, unknown_object) -> str | None:
+        """
+        Determine if there is an 'arguments' attribute in the given
+        variable. If there is, get the value of that variable and return it.
+        
+        Purpose: when the user wants to edit a command via the context menu,
+        we need to check if the supplied object (while editing the command) has
+        an optional arguments attribute or not.
+        
+        So we use this method to get the optional arguments in the object,
+        if there is an arguments attribute.
+        
+        Arguments:
+        
+        - unknown_object: an object that may or may not have an 'arguments'
+        attribute.
+        The object could be a fade_after object, rotate_after object, etc.
+        This object always has 'reusable_script_name', but it may not
+        always have an 'arguments' attribute, which is what this method is for.
+        """
+        if hasattr(unknown_object, "arguments"):
+            return unknown_object.arguments
+        else:
+            return None        
+        
     def _edit_populate(self, command_class_object):
         """
         Populate the widgets for this listing from the given command
@@ -6306,6 +6330,12 @@ class SharedPages:
             # entry widget too.
             if hasattr(self, "entry_arguments"):
                 arguments = self.entry_arguments.get().strip()
+                
+                # Make sure the syntax of optional arguments is correct.
+                if not self.is_valid_key_value_arguments(arguments=arguments,
+                                                     is_arguments_required=False):
+                    return
+                
             else:
                 arguments = None
 
@@ -6969,10 +6999,10 @@ class SharedPages:
 
     class AfterStop(WizardListing):
         """
-        <character_after_fading_stop: general alias, reusable script name to run>
-        <character_after_scaling_stop: general alias, reusable script name to run>
-        <object_after_fading_stop: general alias, reusable script name to run>
-        <object_after_scaling_stop: general alias, reusable script name to run>
+        <character_after_fading_stop: general alias, reusable script name to run, optional arguments>
+        <character_after_scaling_stop: general alias, reusable script name to run, optional arguments>
+        <object_after_fading_stop: general alias, reusable script name to run, optional arguments>
+        <object_after_scaling_stop: general alias, reusable script name to run, optional arguments>
         """
 
         def __init__(self, parent_frame, header_label, purpose_label,
@@ -7000,6 +7030,9 @@ class SharedPages:
 
             lbl_reusable_script_name = ttk.Label(frame_content, text="Reusable script:")
             self.cb_reusable_script = ttk.Combobox(frame_content)
+            
+            lbl_optional_arguments = ttk.Label(frame_content, text="Optional arguments:")
+            self.entry_arguments = EntryWithLimit(frame_content, max_length=5000, width=50)
 
             self.lbl_general_alias.grid(row=0, column=0, sticky="w")
             self.entry_general_alias.grid(row=1, column=0, sticky="w")
@@ -7007,9 +7040,12 @@ class SharedPages:
             lbl_reusable_script_name.grid(row=2, column=0, sticky="w", pady=(15, 0))
             self.cb_reusable_script.grid(row=3, column=0, sticky="w")
 
+            lbl_optional_arguments.grid(row=4, column=0, sticky="w", pady=(15, 0))
+            self.entry_arguments.grid(row=5, column=0, sticky="w")
+
             return frame_content
 
-        def _edit_populate(self, command_class_object: cc.FadeStopRunScript):
+        def _edit_populate(self, command_class_object: cc.SpriteStopRunScriptNoArguments):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -7021,8 +7057,14 @@ class SharedPages:
             sprite_name = command_class_object.sprite_name
             reusable_script_name = command_class_object.reusable_script_name
             
+            # Try to get the arguments value, if there is one.
+            arguments = self.try_get_arguments_attribute(command_class_object)
+            
             self.entry_general_alias.insert(0, sprite_name)
             self.cb_reusable_script.insert(0, reusable_script_name)
+            
+            if arguments:
+                self.entry_arguments.insert(0, arguments)
 
         def check_inputs(self) -> Dict | None:
             """
@@ -7052,9 +7094,20 @@ class SharedPages:
                                        title="No alias provided",
                                        message=f"Enter an alias for the {self.get_purpose_name()}.")
                 return
+            
+            # Arguments are optional.
+            arguments = self.entry_arguments.get().strip()
+            if arguments:
+                if not self.is_valid_key_value_arguments(
+                    arguments=arguments,
+                    is_arguments_required=False):
+                    return
+            else:
+                arguments = None
 
             user_input = {"Alias": alias,
-                          "ReusableScript": selection}
+                          "ReusableScript": selection,
+                          "Arguments": arguments,}
 
             return user_input
 
@@ -7073,8 +7126,12 @@ class SharedPages:
 
             reusable_script_name = user_inputs.get("ReusableScript")
             alias = user_inputs.get("Alias")
-
-            return f"<{self.command_name}: {alias}, {reusable_script_name}>"
+            arguments = user_inputs.get("Arguments")
+            
+            if arguments:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}, {arguments}>"
+            else:
+                return f"<{self.command_name}: {alias}, {reusable_script_name}>"
 
         def show(self):
             """

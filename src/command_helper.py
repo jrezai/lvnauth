@@ -58,25 +58,25 @@ class CommandHelper:
         "character_flip_both": cc.SpriteShowHide,
         "character_flip_horizontal": cc.SpriteShowHide,
         "character_flip_vertical": cc.SpriteShowHide, 
-        "character_after_fading_stop": cc.FadeStopRunScript,
+        "character_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "character_fade_current_value": cc.FadeCurrentValue,
         "character_fade_speed": cc.FadeSpeed,
         "character_fade_until": cc.FadeUntilValue,
         "character_start_fading": cc.SpriteShowHide,
         "character_stop_fading": cc.SpriteShowHide,
-        "character_after_rotating_stop": cc.RotateStopRunScript,
+        "character_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "character_rotate_current_value": cc.RotateCurrentValue,
         "character_rotate_speed": cc.RotateSpeed,
         "character_rotate_until": cc.RotateUntil,
         "character_start_rotating": cc.SpriteShowHide,
         "character_stop_rotating": cc.SpriteShowHide,
-        "character_after_scaling_stop": cc.ScaleStopRunScript,
+        "character_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "character_scale_by": cc.ScaleBy,
         "character_scale_current_value": cc.ScaleCurrentValue,
         "character_scale_until": cc.ScaleUntil,
         "character_start_scaling": cc.SpriteShowHide,
         "character_stop_scaling": cc.SpriteShowHide,
-        "character_after_movement_stop": cc.MovementStopRunScript,
+        "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "character_stop_movement_condition": cc.MovementStopCondition,
         "character_move": cc.MovementSpeed,
         "character_start_moving": cc.SpriteShowHide,
@@ -97,25 +97,25 @@ class CommandHelper:
         "dialog_sprite_flip_both": cc.SpriteShowHide,
         "dialog_sprite_flip_horizontal": cc.SpriteShowHide,
         "dialog_sprite_flip_vertical": cc.SpriteShowHide, 
-        "dialog_sprite_after_fading_stop": cc.FadeStopRunScript,
+        "dialog_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_fade_current_value": cc.FadeCurrentValue,
         "dialog_sprite_fade_speed": cc.FadeSpeed,
         "dialog_sprite_fade_until": cc.FadeUntilValue,
         "dialog_sprite_start_fading": cc.SpriteShowHide,
         "dialog_sprite_stop_fading": cc.SpriteShowHide,
-        "dialog_sprite_after_rotating_stop": cc.RotateStopRunScript,
+        "dialog_sprite_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_rotate_current_value": cc.RotateCurrentValue,
         "dialog_sprite_rotate_speed": cc.RotateSpeed,
         "dialog_sprite_rotate_until": cc.RotateUntil,
         "dialog_sprite_start_rotating": cc.SpriteShowHide,
         "dialog_sprite_stop_rotating": cc.SpriteShowHide,
-        "dialog_sprite_after_scaling_stop": cc.ScaleStopRunScript,
+        "dialog_sprite_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_scale_by": cc.ScaleBy,
         "dialog_sprite_scale_current_value": cc.ScaleCurrentValue,
         "dialog_sprite_scale_until": cc.ScaleUntil,
         "dialog_sprite_start_scaling": cc.SpriteShowHide,
         "dialog_sprite_stop_scaling": cc.SpriteShowHide,
-        "dialog_sprite_after_movement_stop": cc.MovementStopRunScript,
+        "dialog_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_stop_movement_condition": cc.MovementStopCondition,
         "dialog_sprite_move": cc.MovementSpeed,
         "dialog_sprite_start_moving": cc.SpriteShowHide,
@@ -133,25 +133,25 @@ class CommandHelper:
         "object_flip_both": cc.SpriteShowHide,
         "object_flip_horizontal": cc.SpriteShowHide,
         "object_flip_vertical": cc.SpriteShowHide, 
-        "object_after_fading_stop": cc.FadeStopRunScript,
+        "object_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "object_fade_current_value": cc.FadeCurrentValue,
         "object_fade_speed": cc.FadeSpeed,
         "object_fade_until": cc.FadeUntilValue,
         "object_start_fading": cc.SpriteShowHide,
         "object_stop_fading": cc.SpriteShowHide,
-        "object_after_rotating_stop": cc.RotateStopRunScript,
+        "object_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "object_rotate_current_value": cc.RotateCurrentValue,
         "object_rotate_speed": cc.RotateSpeed,
         "object_rotate_until": cc.RotateUntil,
         "object_start_rotating": cc.SpriteShowHide,
         "object_stop_rotating": cc.SpriteShowHide,
-        "object_after_scaling_stop": cc.ScaleStopRunScript,
+        "object_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "object_scale_by": cc.ScaleBy,
         "object_scale_current_value": cc.ScaleCurrentValue,
         "object_scale_until": cc.ScaleUntil,
         "object_start_scaling": cc.SpriteShowHide,
         "object_stop_scaling": cc.SpriteShowHide,
-        "object_after_movement_stop": cc.MovementStopRunScript,
+        "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "object_stop_movement_condition": cc.MovementStopCondition,
         "object_move": cc.MovementSpeed,
         "object_start_moving": cc.SpriteShowHide,
@@ -226,7 +226,7 @@ class CommandHelper:
                             string=command_line)
     
         if result:
-            return result.groupdict()    
+            return result.groupdict()
     
     @staticmethod
     def get_arguments(class_namedtuple, given_arguments: str):
@@ -487,7 +487,30 @@ class CommandHelper:
                             arguments =\
                                 CommandHelper._get_optional_arguments(arguments, 2)                
                 
+                case "character_after_fading_stop" | \
+                    "character_after_rotating_stop" | \
+                    "character_after_scaling_stop" | \
+                    "character_after_movement_stop" | \
+                    "dialog_sprite_after_fading_stop" | \
+                    "dialog_sprite_after_rotating_stop" | \
+                    "dialog_sprite_after_scaling_stop" | \
+                    "dialog_sprite_after_movement_stop" | \
+                    "object_after_fading_stop" | \
+                    "object_after_rotating_stop" | \
+                    "object_after_scaling_stop" | \
+                    "object_after_movement_stop":
                     
+                    if isinstance(arguments, list) and len(arguments) == 2:
+                        # Use the 2-argument version of the class.
+                        command_cls = cc.SpriteStopRunScriptNoArguments
+                        
+                    elif isinstance(arguments, list) and len(arguments) >= 3:
+                        # 3-argument version of the class, where the 3rd
+                        # argument is for multiple optional arguments.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 2)
+                        
+
                 # Mouse related commands such as <character_on_mouse_click> 
                 # can have 2 or 3 arguments. If we have 2 arguments here, use the 
                 # 2 argument class version.

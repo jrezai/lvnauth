@@ -938,7 +938,7 @@ class SpriteObject:
                     # Run on_enter reusable script here
                     if self.on_mouse_enter_run_script:
                     
-                        # Run the script that is supposed to run now that the
+                        # Run the script that is supposed to run, now that the
                         # mouse pointer is over the sprite.
                         Passer.active_story.reader.\
                             spawn_new_background_reader_auto_arguments(
@@ -1080,25 +1080,41 @@ class SpriteObject:
                     self.rotate_current_value = self.rotate_current_value._replace \
                         (rotate_current_value=new_rotate_value)
 
-            # Have we reached a destination rotation which caused the rotating to stop?
+            # Have we reached a destination rotation which caused the 
+            # rotating to stop?
             if reached_destination_rotate:
-                # Yes, the rotation has now stopped because we've reached a specific rotation value.
+                # Yes, the rotation has now stopped because we've reached a 
+                # specific rotation value.
 
-                # Should we run a specific script now that the rotating animation
-                # has stopped for this sprite?
-                if self.rotate_stop_run_script and self.rotate_stop_run_script.reusable_script_name:
+                # Should we run a specific script now that the rotating 
+                # animation has stopped for this sprite?
+                if self.rotate_stop_run_script and \
+                   self.rotate_stop_run_script.reusable_script_name:
 
                     # Get the name of the script we need to run now.
-                    reusable_script_name = self.rotate_stop_run_script.reusable_script_name
+                    reusable_script_name =\
+                        self.rotate_stop_run_script.reusable_script_name
+                    
+                    # Try to get the arguments value, if there is one.
+                    arguments =\
+                        Passer.active_story.reader.\
+                        try_get_arguments_attribute(self.rotate_stop_run_script)
 
-                    # Clear the variable that holds information about which script we need to run
-                    # because we're about to load that specified script below.
-                    # If we don't clear this variable, it will run the specified script again
-                    # once the sprite stops rotating next time.
+                    # Clear the variable that holds information about which 
+                    # script we need to run because we're about to load that 
+                    # specified script below.
+                    
+                    # If we don't clear this variable, it will run the 
+                    # specified script again once the sprite stops rotating 
+                    # next time.
                     self.rotate_stop_run_script = None
 
-                    # Run the script that is supposed to run now that this sprite has stopped rotating.
-                    Passer.active_story.reader.spawn_new_background_reader(reusable_script_name=reusable_script_name)
+                    # Run the script that is supposed to run now that this 
+                    # sprite has stopped rotating.
+                    Passer.active_story.reader.\
+                        spawn_new_background_reader(
+                            reusable_script_name=reusable_script_name,
+                            arguments=arguments)
 
                 return
 
@@ -1192,9 +1208,11 @@ class SpriteObject:
 
                     self.scale_current_value = self.scale_current_value._replace(scale_current_value=new_scale_value)
 
-            # Have we reached a destination scaling which caused the scaling to stop?
+            # Have we reached a destination scaling which caused the scaling 
+            # to stop?
             if reached_destination_scale:
-                # Yes, the scaling has now stopped because we've reached a specific scaling value.
+                # Yes, the scaling has now stopped because we've reached a 
+                # specific scaling value.
 
                 # Should we run a specific script now that the scaling animation
                 # has stopped for this sprite?
@@ -1202,16 +1220,28 @@ class SpriteObject:
                         self.scale_stop_run_script.reusable_script_name:
 
                     # Get the name of the script we need to run now.
-                    reusable_script_name = self.scale_stop_run_script.reusable_script_name
-
-                    # Clear the variable that holds information about which script we need to run
-                    # because we're about to load that specified script below.
-                    # If we don't clear this variable, it will run the specified script again
-                    # once the sprite stops scaling next time.
+                    reusable_script_name =\
+                        self.scale_stop_run_script.reusable_script_name
+                    
+                    # Try to get the arguments value, if there is one.
+                    arguments =\
+                        Passer.active_story.reader.\
+                        try_get_arguments_attribute(self.scale_stop_run_script)
+                    
+                    # Clear the variable that holds information about which 
+                    # script we need to run because we're about to load that 
+                    # specified script below.
+                    # If we don't clear this variable, it will run the 
+                    # specified script again once the sprite stops scaling 
+                    # next time.
                     self.scale_stop_run_script = None
 
-                    # Run the script that is supposed to run now that this sprite has stopped scaling.
-                    Passer.active_story.reader.spawn_new_background_reader(reusable_script_name=reusable_script_name)
+                    # Run the script that is supposed to run now that this 
+                    # sprite has stopped scaling.
+                    Passer.active_story.reader.\
+                        spawn_new_background_reader(
+                            reusable_script_name=reusable_script_name,
+                            arguments=arguments)
 
                 return
 
@@ -1272,9 +1302,9 @@ class SpriteObject:
         the expected amounts.
         """
         
-        scale_or_rotation_needed = self.is_scale_or_rotate_needed()
-        
         at_least_one_effect_applied = False
+        
+        scale_or_rotation_needed = self.is_scale_or_rotate_needed()
         
         # If rotate or scale animation needed, apply the rotate/scale 
         # effect now.
@@ -1586,19 +1616,32 @@ class SpriteObject:
 
                 # Should we run a specific script now that the fade animation
                 # has stopped for this sprite?
-                if self.fade_stop_run_script and self.fade_stop_run_script.reusable_script_name:
+                if self.fade_stop_run_script \
+                   and self.fade_stop_run_script.reusable_script_name:
 
                     # Get the name of the script we need to run now.
-                    reusable_script_name = self.fade_stop_run_script.reusable_script_name
+                    reusable_script_name =\
+                        self.fade_stop_run_script.reusable_script_name
 
-                    # Clear the variable that holds information about which script we need to run
-                    # because we're about to load that specified script below.
-                    # If we don't clear this variable, it will run the specified script again
-                    # once the sprite stops fading next time.
+                    # Try to get the arguments attribute value, if there is one.
+                    arguments =\
+                        Passer.active_story.reader.\
+                        try_get_arguments_attribute(self.fade_stop_run_script)                 
+
+                    # Clear the variable that holds information about which 
+                    # script we need to run because we're about to load that 
+                    # specified script below.
+                    # If we don't clear this variable, it will run the 
+                    # specified script again once the sprite stops fading 
+                    # next time.
                     self.fade_stop_run_script = None
 
-                    # Run the script that is supposed to run now that this sprite has stopped fading.
-                    Passer.active_story.reader.spawn_new_background_reader(reusable_script_name=reusable_script_name)
+                    # Run the script that is supposed to run, 
+                    # now that this sprite has stopped fading.
+                    Passer.active_story.reader.\
+                        spawn_new_background_reader(
+                            reusable_script_name=reusable_script_name,
+                            arguments=arguments)
 
                 # Apply the fade effect one last time for the destination fade amount
                 # that we're in. Without this, the destination fade amount
@@ -1810,24 +1853,37 @@ class SpriteObject:
                 if not self.stop_movement_conditions:
                     self.stop_moving()
 
-                    # Should we run a specific reusable script now that the movement has stopped?
-                    # (this is if 'character_after_movement_stop' has been used on this sprite).
+                    # Should we run a specific reusable script now that the 
+                    # movement has stopped?
+                    # (this is if 'character_after_movement_stop' has been 
+                    # used on this sprite).
                     if self.movement_stop_run_script:
 
                         # Get the name of the script we need to run now.
-                        reusable_script_name = self.movement_stop_run_script.reusable_script_name
+                        reusable_script_name =\
+                            self.movement_stop_run_script.reusable_script_name
+                        
+                        # Try to get optional arguments, if there are any.
+                        arguments =\
+                            Passer.active_story.reader.\
+                            try_get_arguments_attribute(
+                                self.movement_stop_run_script)
 
-                        # At this point, we know the reusable script name we need to run, now that this
-                        # sprite has stopped moving.
-                        # So clear the variable that holds information about which script we need to run
-                        # because we're about to load that specified script below.
-                        # If we don't clear this variable, it will run the specified script again
-                        # once the sprite stops moving next time.
+                        # At this point, we know the reusable script name we 
+                        # need to run, now that this sprite has stopped moving.
+                        # So clear the variable that holds information about 
+                        # which script we need to run because we're about to 
+                        # load that specified script below.
+                        # If we don't clear this variable, it will run the 
+                        # specified script again once the sprite stops moving 
+                        # next time.
                         self.movement_stop_run_script = None
 
-                        # Run the script that is supposed to run now that this sprite has stopped moving.
+                        # Run the script that is supposed to run, now that this 
+                        # sprite has stopped moving.
                         Passer.active_story.reader.spawn_new_background_reader \
-                            (reusable_script_name=reusable_script_name)
+                            (reusable_script_name=reusable_script_name,
+                             arguments=arguments)
 
                     return
 

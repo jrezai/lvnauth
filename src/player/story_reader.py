@@ -1474,11 +1474,22 @@ class StoryReader:
         elif command_name == "call":
 
             if "," in arguments:
-                use_arguments = True
+                class_type = cc.CallWithArguments
             else:
-                use_arguments = False
+                class_type = cc.CallWithNoArguments
+                
+            call_class = self._get_arguments(class_namedtuple=class_type,
+                                             given_arguments=arguments,
+                                             num_of_fixed_groups=1)
+            
+            if class_type == cc.CallWithArguments:
+                arguments = call_class.arguments
+            else:
+                arguments = None
+            
             self.spawn_new_background_reader(
-                reusable_script_name=arguments, with_arguments=use_arguments
+                reusable_script_name=call_class.reusable_script_name,
+                arguments=arguments
             )
 
         elif command_name == "scene":
@@ -2722,24 +2733,35 @@ class StoryReader:
 
         return: None
         """
+        
+        if arguments.count(",") >=2:
+            class_type = cc.SpriteStopRunScriptWithArguments
+            optional_arguments = True
+        else:
+            class_type = cc.SpriteStopRunScriptNoArguments
+            optional_arguments = False
 
-        rotate_stop_run_script: cc.RotateStopRunScript
-        rotate_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.RotateStopRunScript, given_arguments=arguments
-        )
+        rotate_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        rotate_stop_run_script = \
+            self._get_arguments(class_namedtuple=class_type,
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=optional_arguments, 
+                                num_of_fixed_groups=2)
 
         if not rotate_stop_run_script:
             return
 
         # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_stop_run_script.sprite_name
-        )
+        sprite =\
+            self.story.get_visible_sprite(
+                content_type=sprite_type,
+                general_alias=rotate_stop_run_script.sprite_name)
 
         if not sprite:
             return
 
-        # Set the property for the character sprite so when the rotation stops, it'll read this variable value.
+        # Set the property for the character sprite so when the rotation stops, 
+        # it'll read this variable value.
         sprite.rotate_stop_run_script = rotate_stop_run_script
 
     def _sprite_start_or_stop_rotating(
@@ -2835,7 +2857,8 @@ class StoryReader:
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        When a specific sprite image stops scaling, run a specific reusable script.
+        When a specific sprite image stops scaling, run a specific
+        reusable script.
 
         Arguments:
 
@@ -2844,24 +2867,33 @@ class StoryReader:
 
         return: None
         """
+        
+        class_name = (cc.SpriteStopRunScriptWithArguments
+                    if arguments.count(",") >= 2
+                    else cc.SpriteStopRunScriptNoArguments)         
 
-        scale_stop_run_script: cc.ScaleStopRunScript
-        scale_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.ScaleStopRunScript, given_arguments=arguments
-        )
+        scale_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        scale_stop_run_script =\
+            self._get_arguments(
+                class_namedtuple=class_name,
+                given_arguments=arguments,
+                unlimited_optional_arguments=arguments.count(",") >= 2,
+                num_of_fixed_groups=2)
 
         if not scale_stop_run_script:
             return
 
         # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_stop_run_script.sprite_name
-        )
+        sprite =\
+            self.story.get_visible_sprite(
+                content_type=sprite_type,
+                general_alias=scale_stop_run_script.sprite_name)
 
         if not sprite:
             return
 
-        # Set the property for the sprite so when the scale stops, it'll read this variable value.
+        # Set the property for the sprite so when the scale stops, 
+        # it'll read this variable value.
         sprite.scale_stop_run_script = scale_stop_run_script
 
     def _sprite_scale_current_value(
@@ -3405,7 +3437,8 @@ class StoryReader:
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        When a specific sprite image stops fading, run a specific reusable script.
+        When a specific sprite image stops fading, run a specific
+        reusable script.
 
         Arguments:
 
@@ -3414,29 +3447,35 @@ class StoryReader:
 
         return: None
         """
+        
+        class_name = (cc.SpriteStopRunScriptWithArguments
+                    if arguments.count(",") >= 2
+                    else cc.SpriteStopRunScriptNoArguments)        
 
-        fade_stop_run_script: cc.FadeStopRunScript
-        fade_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.FadeStopRunScript, given_arguments=arguments
-        )
+        fade_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        fade_stop_run_script =\
+            self._get_arguments(class_namedtuple=class_name,
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=arguments.count(",") >= 2,
+                                num_of_fixed_groups=2)
 
         if not fade_stop_run_script:
             return
 
         # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_stop_run_script.sprite_name
-        )
+        sprite =\
+            self.story.get_visible_sprite(content_type=sprite_type,
+                            general_alias=fade_stop_run_script.sprite_name)
 
         if not sprite:
             return
-
-        # Set the property for the sprite so when the fade stops, it'll read this variable value.
+        
+        # Set the property for the sprite so when the fade stops, 
+        # it'll read this variable value.
         sprite.fade_stop_run_script = fade_stop_run_script
 
     def _sprite_after_movement_stop(
-        self, sprite_type: file_reader.ContentType, arguments
-    ):
+        self, sprite_type: file_reader.ContentType, arguments):
         """
         When a specific sprite image stops moving, run a specific reusable script.
 
@@ -3448,9 +3487,9 @@ class StoryReader:
         return: None
         """
 
-        movement_stop_run_script: cc.MovementStopRunScript
+        movement_stop_run_script: cc.SpriteStopRunScriptNoArguments
         movement_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.MovementStopRunScript, given_arguments=arguments
+            class_namedtuple=cc.SpriteStopRunScriptNoArguments, given_arguments=arguments
         )
 
         if not movement_stop_run_script:
@@ -3636,52 +3675,44 @@ class StoryReader:
             with_arguments=with_arguments,
         )
 
-    def spawn_new_background_reader(
-        self, reusable_script_name: str, with_arguments: bool = False
-    ):
+    def spawn_new_background_reader(self,
+                                    reusable_script_name: str,
+                                    arguments: str = None):
         """
         Create a new background reader.
-        :param reusable_script_name: (str) the case-sensitive name of the reusable script we should load.
+        
+        Arguments:
+        - reusable_script_name: (str) the case-sensitive name of the reusable
+        script we should load.
 
-        :param with_arguments: (bool) True if arguments have been supplied (comma separated)
-        as part of the reusable_script_name.
-        For example: 'character=theo,last name=something' (two arguments in this example)
+        - arguments: (str) comma separated key=value argument pairs.
+        For example: 'character=theo,last name=something'
+        (two arguments in this example)
 
-        :return: None
+        Return: None
         """
 
-        call: cc.CallWithArguments
-
-        if not with_arguments:
-            # The class type will be CallWithNoArguments here
-            call = self._get_arguments(
-                class_namedtuple=cc.CallWithNoArguments,
-                given_arguments=reusable_script_name,
-            )
-        else:
-            call = self._get_arguments(
-                class_namedtuple=cc.CallWithArguments,
-                given_arguments=reusable_script_name,
-                unlimited_optional_arguments=True,
-            )
-
-        # If a reusable script is calling another reusable script, spawn the new background reader
-        # from the main story reader, not from the background reader that requested the reusable script.
-        # That way, all the background readers will be tied to the main story reader.
+        # If a reusable script is calling another reusable script, spawn the 
+        # new background reader from the main story reader, not from the 
+        # background reader that requested the reusable script.
+        # That way, all the background readers will be tied to the main story 
+        # reader.
         if self.background_reader_name:
             # Load the reusable script from the main story reader.
-            self.story.reader.spawn_new_background_reader(
-                reusable_script_name=call.reusable_script_name
-            )
+            self.story.reader.\
+                spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name,
+                    arguments=arguments)
             return
 
-        # Is the requested reusable script already loaded and running? Don't allow another one.
-        elif call.reusable_script_name in self.background_readers:
+        # Is the requested reusable script already loaded and running?
+        # Don't allow another one.
+        elif reusable_script_name in self.background_readers:
             return
 
-        script = self._get_reusable_script(
-            reusable_script_name=call.reusable_script_name
-        )
+        script =\
+            self._get_reusable_script(
+                reusable_script_name=reusable_script_name)
 
         if not script:
             return
@@ -3690,24 +3721,27 @@ class StoryReader:
         reader = StoryReader(
             story=self.story,
             data_requester=self.data_requester,
-            background_reader_name=call.reusable_script_name,
+            background_reader_name=reusable_script_name,
         )
 
         reader.script_lines = script.splitlines()
 
-        # Add the background reader to the main dictionary that holds the background readers.
-        self.background_readers[call.reusable_script_name] = reader
+        # Add the background reader to the main dictionary that holds 
+        # the background readers.
+        self.background_readers[reusable_script_name] = reader
 
         # Debugging
         # print("BG Reader:", call.reusable_script_name)
 
         # Was the reusable script called with parameters/arguments?
-        # Then add those arguments to argument_handler for the new background reader.
-        if with_arguments:
-            # Get the parameter names and values by recording them in a dictionary.
-            parameter_arguments = self.get_optional_arguments(
-                unsorted_arguments_line=call.arguments
-            )
+        # Then add those arguments to argument_handler for the new 
+        # background reader.
+        if arguments:
+            
+            # Get the parameter names and values by recording them 
+            # in a dictionary.
+            parameter_arguments =\
+                self.get_optional_arguments(unsorted_arguments_line=arguments)
 
             # Add the parameter names and argument values to
             # the argument handler's dictionary, so <call> reusable scripts
@@ -3883,18 +3917,47 @@ class StoryReader:
 
         # Stamp the speed onto the sprite.
         sprite.movement_speed = movement_speed
+        
+    @staticmethod
+    def try_get_arguments_attribute(unknown_object) -> str | None:
+        """
+        Determine if there is an 'arguments' attribute in the given
+        object. If there is, get the value of that variable and return it.
+        
+        Purpose: when we want to run a reusable script after a specific action
+        is finished (such as a finished rotation animation), there is a
+        reusable variable, which may or may not have an arguments attribute
+        for passing optional arguments to the reusable script.
+        
+        So we use this method to get the optional arguments in the given object,
+        if there is an arguments attribute.
+        
+        Arguments:
+        
+        - unknown_object: an 'after' related object attached to a sprite object.
+        It could be a fade_after object, rotate_after object, etc.
+        This object always has 'reusable_script_name', but it may not
+        always have an 'arguments' attribute, which is what this method is for.
+        """
+        if hasattr(unknown_object, "arguments"):
+            return unknown_object.arguments
+        else:
+            return None    
 
     @staticmethod
     def _get_arguments(
         class_namedtuple,
         given_arguments: str,
-        unlimited_optional_arguments: bool = False):
+        unlimited_optional_arguments: bool = False,
+        num_of_fixed_groups: int = 1):
         """
         Take the given string arguments (comma separated) and turn them
         into a namedtuple class.
 
         For example: if 'given_arguments' contains '5, 4'
-        then this method will return an object in the given class in 'class_namedtuple'.
+        then this method will return an object in the given class in
+        'class_namedtuple'.
+        
         That object may be something like: MovementSpeed and its fields, X and Y 
         will be set to int (based on the arguments example '5, 4').
 
@@ -3939,7 +4002,14 @@ class StoryReader:
         if unlimited_optional_arguments:
 
             # Variable number of arguments.
-            pattern = r"^([^,]+),\s*(.*)$"
+            
+            # First group fixed, the rest variable?
+            if num_of_fixed_groups == 1:
+                pattern = r"^([^,]+),\s*(.*)$"
+                
+            # First two groups fixed, the rest variable?
+            elif num_of_fixed_groups == 2:
+                pattern = r"^([^,]+),\s*([^,]+),\s*(.*)$"
 
             # Make sure the minimum number of arguments is satisfied.
             if field_count > given_arguments.count(",") + 1:
@@ -3977,8 +4047,8 @@ class StoryReader:
         
         # If the class contains a single string field named 'arguments', then
         # that means a variable number of arguments are to be expected.
-        # For example, with the <remote_save> command, which only takes on argument
-        # string. Treat that as one argument string.
+        # For example, with the <remote_save> command, which only takes an 
+        # argument string. Treat that as one argument string.
         # For example: "favcolor=Blue, favpet=Cat" as one string.
         if field_count == 1 and expected_argument_types[0] is str and \
         tuple(class_namedtuple.__annotations__.keys())[0] == "arguments":
