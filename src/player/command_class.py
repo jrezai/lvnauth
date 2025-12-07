@@ -161,17 +161,6 @@ class SpriteTextClear(NamedTuple):
     general_alias: str
 
 
-class MouseEventRunScriptNoArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-    
-    
-class MouseEventRunScriptWithArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-    arguments: str
-
-
 class Flip(NamedTuple):
     general_alias: str
 
@@ -286,6 +275,7 @@ class MovementSpeed(NamedTuple):
 # object_after_scaling_stop
 # dialog_sprite_after_rotating_stop
 # character_after_movement_stop
+# character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptNoArguments(NamedTuple):
     sprite_name: str
     reusable_script_name: str
@@ -296,6 +286,7 @@ class SpriteStopRunScriptNoArguments(NamedTuple):
 # object_after_scaling_stop
 # dialog_sprite_after_rotating_stop
 # character_after_movement_stop
+# character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptWithArguments(NamedTuple):
     sprite_name: str
     reusable_script_name: str

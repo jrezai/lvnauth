@@ -7158,12 +7158,15 @@ class SharedPages:
         Also, same arguments for:
         <dialog_sprite_on_mouse_leave>
         <dialog_sprite_on_mouse_click>
+        <dialog_sprite_on_mouse_enter>
         
         <object_on_mouse_leave>
         <object_on_mouse_click>
+        <object_on_mouse_enter>
         
         <character_on_mouse_leave>
         <character_on_mouse_click>
+        <character_on_mouse_enter>
         """
     
         def __init__(self, parent_frame, header_label, purpose_label,
@@ -7174,8 +7177,6 @@ class SharedPages:
                              treeview_commands, parent_display_text,
                              sub_display_text, command_name, purpose_line,
                              **kwargs)
-            
-            self.create_frame_arguments().grid(pady=15)
     
         def generate_command(self) -> str | None:
             """
@@ -7200,31 +7201,9 @@ class SharedPages:
             if optional_arguments:
                 return f"<{self.command_name}: {alias}, {reusable_script_name}, {optional_arguments}>"
             else:
-                return f"<{self.command_name}: {alias}, {reusable_script_name}>"
-            
-        def create_frame_arguments(self) -> ttk.Frame:
-            """
-            Create and return a frame, used for specifying arguments
-            when running a specific script.
-            
-            Example:
-            For a command like this:
-            <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
-            This method is used for the optional values part.
-            """
-            
-            self.frame_arguments = ttk.Frame(self.frame_content)
-            
-            self.lbl_arguments_instructions = ttk.Label(self.frame_arguments,
-                                                        text="(optional) Argument(s) to pass to the reusable script:\nExample: color=blue,character=Theo")
-            self.entry_arguments = ttk.Entry(self.frame_arguments)
-            
-            self.lbl_arguments_instructions.grid(row=0, column=0, sticky=tk.W)
-            self.entry_arguments.grid(row=1, column=0, sticky=tk.W)
-            
-            return self.frame_arguments    
+                return f"<{self.command_name}: {alias}, {reusable_script_name}>" 
 
-        def _edit_populate(self, command_class_object: cc.MouseEventRunScriptWithArguments):
+        def _edit_populate(self, command_class_object: cc.SpriteStopRunScriptWithArguments):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -7240,7 +7219,7 @@ class SharedPages:
             self.cb_reusable_script.insert(0, reusable_script_name)
             
             match command_class_object:
-                case cc.MouseEventRunScriptWithArguments(_, _, arguments):
+                case cc.SpriteStopRunScriptWithArguments(_, _, arguments):
                     self.entry_arguments.insert(0, arguments)
 
     class LoadSpriteNoAlias(WizardListing):

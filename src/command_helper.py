@@ -85,9 +85,9 @@ class CommandHelper:
         "character_set_position_y": cc.SpritePosition,
         "character_set_center": cc.SpriteCenter,
         "character_center_x_with": cc.SpriteCenterWith,
-        "character_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "character_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "character_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "character_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "character_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "character_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "text_dialog_define": cc.DialogRectangleDefinition,
         "halt_auto": cc.HaltAuto,
         "continue": cc.Continue,
@@ -124,9 +124,9 @@ class CommandHelper:
         "dialog_sprite_set_position_y": cc.SpritePosition,
         "dialog_sprite_set_center": cc.SpriteCenter,
         "dialog_sprite_center_x_with": cc.SpriteCenterWith,
-        "dialog_sprite_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "dialog_sprite_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "dialog_sprite_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "dialog_sprite_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "dialog_sprite_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "dialog_sprite_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "load_object": cc.SpriteLoad,
         "object_show": cc.SpriteShowHide,
         "object_hide": cc.SpriteShowHide,
@@ -160,9 +160,9 @@ class CommandHelper:
         "object_set_position_y": cc.SpritePosition,
         "object_set_center": cc.SpriteCenter,
         "object_center_x_with": cc.SpriteCenterWith,
-        "object_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "object_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "object_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "object_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "object_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "object_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "load_font_sprite": cc.SpriteShowHide,
         "font": cc.SpriteShowHide,
         "font_x": cc.FontStartPosition,
@@ -526,7 +526,7 @@ class CommandHelper:
                     
                     if isinstance(arguments, list) and len(arguments) == 2:
                         # Use the 2-argument version of the class.
-                        command_cls = cc.MouseEventRunScriptNoArguments
+                        command_cls = cc.SpriteStopRunScriptNoArguments
                         
                     elif isinstance(arguments, list) and len(arguments) >= 3:
                         # 3-argument version of the class, where the 3rd

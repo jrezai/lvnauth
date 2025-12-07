@@ -5060,12 +5060,12 @@ class StoryReader:
         """
 
         class_name = (
-            cc.MouseEventRunScriptWithArguments
+            cc.SpriteStopRunScriptWithArguments
             if arguments.count(",") >= 2
-            else cc.MouseEventRunScriptNoArguments
+            else cc.SpriteStopRunScriptNoArguments
         )
 
-        mouse_run_script: cc.MouseEventRunScriptWithArguments
+        mouse_run_script: cc.SpriteStopRunScriptWithArguments
         mouse_run_script = self._get_arguments(
             class_namedtuple=class_name, given_arguments=arguments
         )
@@ -5087,14 +5087,14 @@ class StoryReader:
         if not existing_sprite:
             return
 
-        if class_name == cc.MouseEventRunScriptWithArguments:
+        if class_name == cc.SpriteStopRunScriptWithArguments:
             reusable_script_name = (
                 mouse_run_script.reusable_script_name
                 + ", "
                 + mouse_run_script.arguments
             )
 
-        elif class_name == cc.MouseEventRunScriptNoArguments:
+        elif class_name == cc.SpriteStopRunScriptNoArguments:
             reusable_script_name = mouse_run_script.reusable_script_name
 
         # Set the name of the reusable script to run when a specific
