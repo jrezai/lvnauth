@@ -306,9 +306,9 @@ class SpriteObject:
         self.mouse_status: SpriteMouseStatus = SpriteMouseStatus.AWAY_FROM_SPRITE
         
         # Names of reusable scripts to run after specific mouse events.
-        self.on_mouse_enter_run_script: str = None
-        self.on_mouse_leave_run_script: str = None
-        self.on_mouse_click_run_script: str = None
+        self.on_mouse_enter_run_script: cc.SpriteStopRunScriptWithArguments = None
+        self.on_mouse_leave_run_script: cc.SpriteStopRunScriptWithArguments = None
+        self.on_mouse_click_run_script: cc.SpriteStopRunScriptWithArguments = None
         
         # Deals with showing/hiding sprite text
         self.active_font_handler =\
@@ -937,26 +937,40 @@ class SpriteObject:
                     
                     # Run on_enter reusable script here
                     if self.on_mouse_enter_run_script:
+                        
+                        # Try to get the optional arguments (if any) to pass
+                        # to the reusable script.
+                        arguments =\
+                            Passer.active_story.reader.\
+                            try_get_arguments_attribute(
+                                self.on_mouse_enter_run_script)                        
                     
                         # Run the script that is supposed to run, now that the
                         # mouse pointer is over the sprite.
                         Passer.active_story.reader.\
-                            spawn_new_background_reader_auto_arguments(
-                                reusable_script_name_maybe_with_arguments=\
-                                self.on_mouse_enter_run_script)
+                            spawn_new_background_reader(
+                                reusable_script_name=self.on_mouse_enter_run_script.reusable_script_name, 
+                                arguments=arguments)
                     
                 # Was a mouse button clicked? Check if we should
                 # run a specific reusable script.
                 if MouseActionsAndCoordinates.MOUSE_UP:
                     
                     if self.on_mouse_click_run_script:
+                        
+                        # Try to get the optional arguments (if any) to pass
+                        # to the reusable script.
+                        arguments =\
+                            Passer.active_story.reader.\
+                            try_get_arguments_attribute(
+                                self.on_mouse_click_run_script)
                     
                         # Run the script that is supposed to run now that this 
                         # sprite has been clicked.
                         Passer.active_story.reader.\
-                            spawn_new_background_reader_auto_arguments(
-                                reusable_script_name_maybe_with_arguments=\
-                                self.on_mouse_click_run_script)
+                            spawn_new_background_reader(
+                                reusable_script_name=self.on_mouse_click_run_script.reusable_script_name,
+                                arguments=arguments)
                         
                     
             else:
@@ -969,16 +983,21 @@ class SpriteObject:
                     
                     # Run on_leave reusable script here
                     if self.on_mouse_leave_run_script:
+                        
+                        # Try to get the optional arguments (if any) to pass
+                        # to the reusable script.
+                        arguments =\
+                            Passer.active_story.reader.\
+                            try_get_arguments_attribute(
+                                self.on_mouse_leave_run_script)
                     
                         # Run the script that is supposed to run now that the
                         # mouse pointer is no longer over the sprite.
                         Passer.active_story.reader.\
-                            spawn_new_background_reader_auto_arguments(
-                                reusable_script_name_maybe_with_arguments=\
-                                self.on_mouse_leave_run_script)
+                            spawn_new_background_reader(
+                                reusable_script_name=self.on_mouse_leave_run_script.reusable_script_name, 
+                                arguments=arguments)
         
-        
-
     def _animate_rotation(self):
         """
         Rotate the sprite (if required).

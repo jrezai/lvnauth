@@ -5067,7 +5067,10 @@ class StoryReader:
 
         mouse_run_script: cc.SpriteStopRunScriptWithArguments
         mouse_run_script = self._get_arguments(
-            class_namedtuple=class_name, given_arguments=arguments
+            class_namedtuple=class_name,
+            given_arguments=arguments,
+            unlimited_optional_arguments=arguments.count(",")>=2,
+            num_of_fixed_groups=2
         )
 
         if not mouse_run_script:
@@ -5075,38 +5078,33 @@ class StoryReader:
 
         # Determine the sprite type that the command will be applied to
         # based on the command name.
-        sprite_type = self.get_sprite_type_from_command(command_name=command_name)
+        sprite_type =\
+            self.get_sprite_type_from_command(command_name=command_name)
 
         # Get the visible sprite based on the general alias
         # Used for setting a reusable script to run when specific
         # mouse events occur on the sprite.
         existing_sprite: sd.SpriteObject = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=mouse_run_script.sprite_name
+            content_type=sprite_type,
+            general_alias=mouse_run_script.sprite_name
         )
 
         if not existing_sprite:
             return
 
-        if class_name == cc.SpriteStopRunScriptWithArguments:
-            reusable_script_name = (
-                mouse_run_script.reusable_script_name
-                + ", "
-                + mouse_run_script.arguments
-            )
-
-        elif class_name == cc.SpriteStopRunScriptNoArguments:
-            reusable_script_name = mouse_run_script.reusable_script_name
-
         # Set the name of the reusable script to run when a specific
         # mouse event occurs.
         if "_mouse_enter" in command_name:
-            existing_sprite.on_mouse_enter_run_script = reusable_script_name
+            existing_sprite.on_mouse_enter_run_script =\
+                mouse_run_script.reusable_script_name
 
         elif "_mouse_leave" in command_name:
-            existing_sprite.on_mouse_leave_run_script = reusable_script_name
+            existing_sprite.on_mouse_leave_run_script =\
+                mouse_run_script.reusable_script_name
 
         elif "_mouse_click" in command_name:
-            existing_sprite.on_mouse_click_run_script = reusable_script_name
+            existing_sprite.on_mouse_click_run_script =\
+                mouse_run_script.reusable_script_name
 
     def _wait_for_animation(self, arguments: str):
         """
