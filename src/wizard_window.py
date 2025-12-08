@@ -3450,6 +3450,12 @@ class WizardListing:
         # in the combobox; not sprite names.
         if "_after_" in self.command_name:
             dict_ref = ProjectSnapshot.reusables
+            
+        # Mouse related commands, such as <character_on_mouse_click>
+        # should show reusable scripts in the combobox; not sprite names.
+        elif "_mouse_" in self.command_name:
+            dict_ref = ProjectSnapshot.reusables
+            
         else:
 
             dict_mapping =\
