@@ -5095,16 +5095,13 @@ class StoryReader:
         # Set the name of the reusable script to run when a specific
         # mouse event occurs.
         if "_mouse_enter" in command_name:
-            existing_sprite.on_mouse_enter_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_enter_run_script = mouse_run_script
 
         elif "_mouse_leave" in command_name:
-            existing_sprite.on_mouse_leave_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_leave_run_script = mouse_run_script
 
         elif "_mouse_click" in command_name:
-            existing_sprite.on_mouse_click_run_script =\
-                mouse_run_script.reusable_script_name
+            existing_sprite.on_mouse_click_run_script = mouse_run_script
 
     def _wait_for_animation(self, arguments: str):
         """
