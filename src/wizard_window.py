@@ -1138,7 +1138,8 @@ class WizardWindow:
                                         parent_display_text="Character",
                                         sub_display_text="character_on_mouse_click",
                                         command_name="character_on_mouse_click",
-                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.\n\n"
+                                        "Note: the character sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
         page_character_on_mouse_enter =\
@@ -1149,7 +1150,8 @@ class WizardWindow:
                                         parent_display_text="Character",
                                         sub_display_text="character_on_mouse_enter",
                                         command_name="character_on_mouse_enter",
-                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.\n\n"
+                                        "Note: the character sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
         page_character_on_mouse_leave =\
@@ -1160,7 +1162,8 @@ class WizardWindow:
                                         parent_display_text="Character",
                                         sub_display_text="character_on_mouse_leave",
                                         command_name="character_on_mouse_leave",
-                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
+                                        "Note: the character sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
 
@@ -1762,7 +1765,8 @@ class WizardWindow:
                                         parent_display_text="Dialog",
                                         sub_display_text="dialog_sprite_on_mouse_click",
                                         command_name="dialog_sprite_on_mouse_click",
-                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.\n\n"
+                                        "Note: the dialog sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
         page_dialog_sprite_on_mouse_enter =\
@@ -1773,7 +1777,8 @@ class WizardWindow:
                                         parent_display_text="Dialog",
                                         sub_display_text="dialog_sprite_on_mouse_enter",
                                         command_name="dialog_sprite_on_mouse_enter",
-                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.\n\n"
+                                        "Note: the dialog sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
         page_dialog_sprite_on_mouse_leave =\
@@ -1784,7 +1789,8 @@ class WizardWindow:
                                         parent_display_text="Dialog",
                                         sub_display_text="dialog_sprite_on_mouse_leave",
                                         command_name="dialog_sprite_on_mouse_leave",
-                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
+                                        "Note: the dialog sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
 
@@ -2276,7 +2282,8 @@ class WizardWindow:
                                         parent_display_text="Object",
                                         sub_display_text="object_on_mouse_click",
                                         command_name="object_on_mouse_click",
-                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.",
+                                        purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.\n\n"
+                                        "Note: the object sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
         page_object_on_mouse_enter =\
@@ -2287,7 +2294,8 @@ class WizardWindow:
                                         parent_display_text="Object",
                                         sub_display_text="object_on_mouse_enter",
                                         command_name="object_on_mouse_enter",
-                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.\n\n"
+                                        "Note: the object sprite must already be visible.",
                                         group_name=GroupName.MOUSE)
 
         page_object_on_mouse_leave =\
@@ -2298,7 +2306,8 @@ class WizardWindow:
                                         parent_display_text="Object",
                                         sub_display_text="object_on_mouse_leave",
                                         command_name="object_on_mouse_leave",
-                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.",
+                                        purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
+                                        "Note: the object sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
 
