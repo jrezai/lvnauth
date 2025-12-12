@@ -32,6 +32,8 @@ import file_reader
 import dialog_rectangle
 import font_handler
 import logging
+
+import sprite_definition
 import sprite_definition as sd
 import cover_screen_handler
 import font_handler
@@ -1606,20 +1608,20 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "character_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
+        elif command_name == "character_scale_speed":
+            self._sprite_scale_speed(
+                sprite_type=file_reader.ContentType.CHARACTER,
+                arguments=arguments)
 
-        elif command_name == "object_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
+        elif command_name == "object_scale_speed":
+            self._sprite_scale_speed(
+                sprite_type=file_reader.ContentType.OBJECT,
+                arguments=arguments)
 
-        elif command_name == "dialog_sprite_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
+        elif command_name == "dialog_sprite_scale_speed":
+            self._sprite_scale_speed(
+                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                arguments=arguments)
 
         elif command_name == "character_scale_until":
             self._sprite_scale_until(
@@ -2965,7 +2967,8 @@ class StoryReader:
         # Set the property for the sprite to know when to stop the scaling animation.
         sprite.scale_until = scale_until
 
-    def _sprite_scale_by(self, sprite_type: file_reader.ContentType, arguments):
+    def _sprite_scale_speed(self,
+                            sprite_type: file_reader.ContentType, arguments):
         """
         Set the scale speed of a sprite.
         Example: 0.0602  (2 means twice as big)
@@ -2980,17 +2983,17 @@ class StoryReader:
         return: None
         """
 
-        scale_by: cc.ScaleBy
-        scale_by = self._get_arguments(
-            class_namedtuple=cc.ScaleBy, given_arguments=arguments
+        scale_speed: cc.ScaleSpeed
+        scale_speed = self._get_arguments(
+            class_namedtuple=cc.ScaleSpeed, given_arguments=arguments
         )
 
-        if not scale_by:
+        if not scale_speed:
             return
 
         # Get the active sprite
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_by.sprite_name
+            content_type=sprite_type, general_alias=scale_speed.sprite_name
         )
 
         if not sprite:
@@ -2998,38 +3001,29 @@ class StoryReader:
 
         """
         Convert the user-provided convenient value speed (1 to 300000)
-        from scale_by.scale_by to a value that pygame can use.
+        from scale_speed.scale_speed to a value that pygame can use.
         Depending on the scale direction, the float will either be a positive
         value or a negative value.
         """
-        # Make sure the user has specified a proper scale direction
-        scale_direction = scale_by.scale_rotation.lower()
-        if not scale_direction in ("scale up", "scale down"):
-            return
         
         # Get the calculable animation speed value.
-        scale_by_float_value = \
+        scale_speed_float_value = \
             AnimationSpeed.get_sequence_value(
                 initial_value=0.0002,
                 increment_by=0.0002,
                 max_convenient_row=300000, 
-                convenient_row_number=scale_by.scale_by)
-        
-        if scale_direction == "scale down":
-            # A positive value will scale up the sprite.
-            # A negative value(such as -0.00050) will scale down a sprite.            
-            scale_by_float_value = -abs(scale_by_float_value)
+                convenient_row_number=scale_speed.scale_speed)
 
         # Make sure we have a float value, otherwise stop here.
-        if not scale_by_float_value:
+        if not scale_speed_float_value:
             return
 
         # Use the new float value instead of the convenience value.
-        scale_by = scale_by._replace(scale_by=scale_by_float_value)
+        scale_speed = scale_speed._replace(scale_speed=scale_speed_float_value)
 
         # Set the property for the sprite to know how fast
         # (or slow) the scale animation should occur.
-        sprite.scale_by = scale_by
+        sprite.scale_speed = scale_speed
 
     def _sprite_start_or_stop_fading(
         self,
@@ -3225,7 +3219,7 @@ class StoryReader:
         Arguments:
 
         - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, fade speed (example: 0.05 (fade in) or -0.05 (fade out))
+        - arguments: sprite general alias, fade speed (example: 0.05)
 
         return: None
         """
@@ -3239,8 +3233,10 @@ class StoryReader:
             return
 
         # Get the visible sprite based on the general alias
+        sprite: sprite_definition.SpriteObject
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_speed.sprite_name
+            content_type=sprite_type,
+            general_alias=fade_speed.sprite_name
         )
 
         if not sprite:
@@ -3262,9 +3258,7 @@ class StoryReader:
             return
 
         # Use the new float value instead of the convenience value.
-        fade_speed = cc.FadeSpeed(
-            fade_speed.sprite_name, fade_float_value, fade_speed.fade_direction
-        )
+        fade_speed = cc.FadeSpeed(fade_speed.sprite_name, fade_float_value)
 
         # Initialize the FadeCurrentValue object, we need to have
         # it for the animation to work.
@@ -3276,23 +3270,22 @@ class StoryReader:
 
             # Without this, the user has to explicitly use <..fade_current_value:>
             # before fading a sprite.
-            if fade_speed.fade_direction == "fade out":
-                initial_fade_value = 255
-            else:
-                initial_fade_value = 0
-
+            initial_fade_value = 255
+            
             sprite.current_fade_value = cc.FadeCurrentValue(
                 sprite_name=fade_speed.sprite_name,
                 current_fade_value=initial_fade_value,
-            )
+            )            
             
-            # Record the float fade value because we'll use this for
-            # time-accurate delta fade calculations in each frame.
-            sprite.calculated_fade_value = float(initial_fade_value)
+        else:
+            initial_fade_value = sprite.current_fade_value.current_fade_value
+
+            
+        # Record the float fade value because we'll use this for
+        # time-accurate delta fade calculations in each frame.
+        sprite.calculated_fade_value = float(initial_fade_value)
 
         # Set the fade speed.
-        # A positive value will fade-in the sprite.
-        # A negative value (such as -0.05) will fade out the sprite.
         sprite.fade_speed = fade_speed
 
     def _sprite_current_fade_value(

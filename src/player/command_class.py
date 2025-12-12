@@ -347,14 +347,11 @@ class FadeCurrentValue(NamedTuple):
 class FadeSpeed(NamedTuple):
     sprite_name: str
     fade_speed: float
-    fade_direction: str  # "fade in" or "fade out"
 
-    
 
-class ScaleBy(NamedTuple):
+class ScaleSpeed(NamedTuple):
     sprite_name: str
-    scale_by: float
-    scale_rotation: str
+    scale_speed: float
 
 
 class ScaleUntil(NamedTuple):

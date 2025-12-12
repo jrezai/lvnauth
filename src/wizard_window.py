@@ -865,6 +865,7 @@ class WizardWindow:
                                  radio_button_value_1="clockwise",
                                  radio_button_value_2="counterclockwise",
                                  default_radio_button_value="clockwise",
+                                 include_radio_buttons=True, 
                                  scale_default_value=5,
                                  scale_from_value=1,
                                  scale_to_value=220000,
@@ -924,14 +925,14 @@ class WizardWindow:
                                       "Note: the character sprite must already be visible.",
                                       group_name=GroupName.SCALE)
 
-        page_character_scale_by =\
+        page_character_scale_speed =\
             CharacterScaleBy(parent_frame=self.frame_contents_outer,
                              header_label=self.lbl_header,
                              purpose_label=self.lbl_purpose,
                              treeview_commands=self.treeview_commands,
                              parent_display_text="Character",
-                             sub_display_text="character_scale_by",
-                             command_name="character_scale_by",
+                             sub_display_text="character_scale_speed",
+                             command_name="character_scale_speed",
                              purpose_line="Sets the scale speed of a character sprite.\n"
                              "Note: the character sprite must already be visible.",
                              radio_button_instructions="Scale direction:",
@@ -1495,6 +1496,7 @@ class WizardWindow:
                                      radio_button_value_1="clockwise",
                                      radio_button_value_2="counterclockwise",
                                      default_radio_button_value="clockwise",
+                                     include_radio_buttons=True, 
                                      scale_default_value=5,
                                      scale_from_value=1,
                                      scale_to_value=220000,
@@ -1554,14 +1556,14 @@ class WizardWindow:
                                           "Note: the dialog sprite must already be visible.", 
                                           group_name=GroupName.SCALE)
     
-        page_dialog_scale_by =\
+        page_dialog_scale_speed =\
                 CharacterScaleBy(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
                                  parent_display_text="Dialog",
-                                 sub_display_text="dialog_sprite_scale_by",
-                                 command_name="dialog_sprite_scale_by",
+                                 sub_display_text="dialog_sprite_scale_speed",
+                                 command_name="dialog_sprite_scale_speed",
                                  purpose_line="Sets the scale speed of an dialog sprite.\n"
                                  "Note: the dialog sprite must already be visible.",
                                  radio_button_instructions="Scale direction:",
@@ -2013,6 +2015,7 @@ class WizardWindow:
                                  radio_button_value_1="clockwise",
                                  radio_button_value_2="counterclockwise",
                                  default_radio_button_value="clockwise",
+                                 include_radio_buttons=True, 
                                  scale_default_value=5,
                                  scale_from_value=1,
                                  scale_to_value=220000,
@@ -2072,14 +2075,14 @@ class WizardWindow:
                                       "Note: the object sprite must already be visible.",
                                       group_name=GroupName.SCALE)
 
-        page_object_scale_by =\
+        page_object_scale_speed =\
             CharacterScaleBy(parent_frame=self.frame_contents_outer,
                              header_label=self.lbl_header,
                              purpose_label=self.lbl_purpose,
                              treeview_commands=self.treeview_commands,
                              parent_display_text="Object",
-                             sub_display_text="object_scale_by",
-                             command_name="object_scale_by",
+                             sub_display_text="object_scale_speed",
+                             command_name="object_scale_speed",
                              purpose_line="Sets the scale speed of an object sprite.\n"
                              "Note: the object sprite must already be visible.",
                              radio_button_instructions="Scale direction:",
@@ -2886,7 +2889,7 @@ class WizardWindow:
         self.pages["character_stop_rotating"] = page_character_stop_rotating
 
         self.pages["character_after_scaling_stop"] = page_character_after_scaling_stop
-        self.pages["character_scale_by"] = page_character_scale_by
+        self.pages["character_scale_speed"] = page_character_scale_speed
         self.pages["character_scale_current_value"] = page_character_scale_current_value
         self.pages["character_scale_until"] = page_character_scale_until
         self.pages["character_start_scaling"] = page_character_start_scaling
@@ -2952,7 +2955,7 @@ class WizardWindow:
         self.pages["object_stop_rotating"] = page_object_stop_rotating
 
         self.pages["object_after_scaling_stop"] = page_object_after_scaling_stop
-        self.pages["object_scale_by"] = page_object_scale_by
+        self.pages["object_scale_speed"] = page_object_scale_speed
         self.pages["object_scale_current_value"] = page_object_scale_current_value
         self.pages["object_scale_until"] = page_object_scale_until
         self.pages["object_start_scaling"] = page_object_start_scaling
@@ -3009,7 +3012,7 @@ class WizardWindow:
         self.pages["dialog_sprite_stop_rotating"] = page_dialog_stop_rotating
 
         self.pages["dialog_sprite_after_scaling_stop"] = page_dialog_after_scaling_stop
-        self.pages["dialog_sprite_scale_by"] = page_dialog_scale_by
+        self.pages["dialog_sprite_scale_speed"] = page_dialog_scale_speed
         self.pages["dialog_sprite_scale_current_value"] = page_dialog_scale_current_value
         self.pages["dialog_sprite_scale_until"] = page_dialog_scale_until
         self.pages["dialog_sprite_start_scaling"] = page_dialog_start_scaling
@@ -5614,16 +5617,20 @@ class SharedPages:
 
     class Speed(WizardListing):
         """
-        <character_fade_speed: general alias, speed percentage, 'fade in' or 'fade out'>
+        <character_fade_speed: general alias, speed>
+        
+        Rotation commands have an additional argument for the rotation
+        direction. The other commands, such as fade and scale don't have
+        a direction.
         
         Examples:
         <character_rotate_speed: rave, 31, clockwise>
-        <character_fade_speed: rave, 33, fade in>
-        <character_scale_by: rave, 43, scale up>
+        <character_fade_speed: rave, 33>
+        <character_scale_speed: rave, 43>
         
         Layout:
           1 Entry
-          2 Radiobuttons
+          2 Radiobuttons (maybe)
           1 Labelscale
         """
 
@@ -5635,6 +5642,10 @@ class SharedPages:
                              treeview_commands, parent_display_text,
                              sub_display_text, command_name,
                              purpose_line, **kwargs)
+            
+            # Include radio buttons?
+            self.include_radio_buttons = \
+                self.kwargs.get("include_radio_buttons")            
 
             self.frame_content = self.create_content_frame()
 
@@ -5643,7 +5654,7 @@ class SharedPages:
             Create the widgets needed for this command
             and return a frame that contains the widgets.
             """
-
+        
             frame_content = ttk.Frame(self.parent_frame)
 
             self.lbl_general_alias = \
@@ -5652,21 +5663,27 @@ class SharedPages:
             
             self.entry_general_alias = ttk.Entry(frame_content, width=25)
             
-            # The text before the radio button widgets.
-            self.radio_button_instructions =\
-                self.kwargs.get("radio_button_instructions")
-
             # The text before the LabelScale widget, for the user to see.
             # Example: "Fade speed (1 to 100):"
             self.scale_instructions = self.kwargs.get("scale_instructions")
+            
+            
+            # Only rotation has radio buttons for choosing 
+            # the rotation direction.
+            if self.include_radio_buttons:
+                
+                # The text before the radio button widgets.
+                self.radio_button_instructions =\
+                    self.kwargs.get("radio_button_instructions")
+    
 
-            # The texts of the radio buttons, for the user to see.
-            self.radio_button_text1 = self.kwargs.get("radio_button_text_1")
-            self.radio_button_text2 = self.kwargs.get("radio_button_text_2")
-
-            # Radio button values (example: "fade in" and "fade out")
-            self.radio_button_value_1 = self.kwargs.get("radio_button_value_1")
-            self.radio_button_value_2 = self.kwargs.get("radio_button_value_2")
+                # The texts of the radio buttons, for the user to see.
+                self.radio_button_text1 = self.kwargs.get("radio_button_text_1")
+                self.radio_button_text2 = self.kwargs.get("radio_button_text_2")
+    
+                # Radio button values (example: "fade in" and "fade out")
+                self.radio_button_value_1 = self.kwargs.get("radio_button_value_1")
+                self.radio_button_value_2 = self.kwargs.get("radio_button_value_2")
 
             # The default int value of the LabelScale to set.
             self.scale_default_value = self.kwargs.get("scale_default_value")
@@ -5676,27 +5693,29 @@ class SharedPages:
             self.scale_from_value = self.kwargs.get("scale_from_value")
             self.scale_to_value = self.kwargs.get("scale_to_value")
             
-            # Tk variable for the radio buttons.
-            self.v_radio_button_selection = tk.StringVar()
-            
-            # Get the default radio button selection
-            self.default_radio_button_value = self.kwargs.get("default_radio_button_value")
-            self.v_radio_button_selection.set(self.default_radio_button_value)
-
-            # The text to show before the radio buttons, for the user to see.
-            # Example: "Fade type:"
-            self.lbl_radio_selection = ttk.Label(frame_content,
-                                                 text=self.radio_button_instructions)
-            
-            self.radio_1 = ttk.Radiobutton(frame_content,
-                                           text=self.radio_button_text1,
-                                           value=self.radio_button_value_1,
-                                           variable=self.v_radio_button_selection)
-
-            self.radio_2 = ttk.Radiobutton(frame_content,
-                                           text=self.radio_button_text2,
-                                           value=self.radio_button_value_2,
-                                           variable=self.v_radio_button_selection)
+            if self.include_radio_buttons:
+                
+                # Tk variable for the radio buttons.
+                self.v_radio_button_selection = tk.StringVar()
+                
+                # Get the default radio button selection
+                self.default_radio_button_value = self.kwargs.get("default_radio_button_value")
+                self.v_radio_button_selection.set(self.default_radio_button_value)
+    
+                # The text to show before the radio buttons, for the user to see.
+                # Example: "Fade type:"
+                self.lbl_radio_selection = ttk.Label(frame_content,
+                                                     text=self.radio_button_instructions)
+                
+                self.radio_1 = ttk.Radiobutton(frame_content,
+                                               text=self.radio_button_text1,
+                                               value=self.radio_button_value_1,
+                                               variable=self.v_radio_button_selection)
+    
+                self.radio_2 = ttk.Radiobutton(frame_content,
+                                               text=self.radio_button_text2,
+                                               value=self.radio_button_value_2,
+                                               variable=self.v_radio_button_selection)
 
             self.lbl_scale = ttk.Label(frame_content,
                                   text=self.scale_instructions)
@@ -5712,9 +5731,10 @@ class SharedPages:
             self.lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
             self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
 
-            self.lbl_radio_selection.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
-            self.radio_1.grid(row=3, column=0, sticky="w")
-            self.radio_2.grid(row=3, column=1, sticky="w", padx=(10, 0))
+            if self.include_radio_buttons:
+                self.lbl_radio_selection.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
+                self.radio_1.grid(row=3, column=0, sticky="w")
+                self.radio_2.grid(row=3, column=1, sticky="w", padx=(10, 0))
 
             self.lbl_scale.grid(row=4, column=0, sticky="w", pady=(10, 0), columnspan=2)
             self.scale.grid(row=5, column=0, sticky="w", columnspan=2)
@@ -5722,7 +5742,7 @@ class SharedPages:
             return frame_content
 
         def _edit_populate(self,
-                           command_class_object: cc.FadeSpeed | cc.RotateSpeed | cc.ScaleBy):
+                           command_class_object: cc.FadeSpeed | cc.RotateSpeed | cc.ScaleSpeed):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5736,9 +5756,22 @@ class SharedPages:
             sprite_name = command_class_object.sprite_name            
             
             match command_class_object:
-                case cc.FadeSpeed(sprite_name, speed, direction) | \
-                    cc.RotateSpeed(sprite_name, speed, direction) | \
-                    cc.ScaleBy(sprite_name, speed, direction):
+                
+                case cc.FadeSpeed(sprite_name, speed) | \
+                    cc.ScaleSpeed(sprite_name, speed):
+                    
+                    # Show the alias in the entry widget
+                    self.entry_general_alias.insert(0, sprite_name)
+        
+                    try:
+                        speed = int(speed)
+                    except ValueError:
+                        speed = 0
+        
+                    # Show the speed value in the spinbox widget
+                    self.v_scale_value.set(speed)
+                
+                case cc.RotateSpeed(sprite_name, speed, direction):
         
                     # Show the alias in the entry widget
                     self.entry_general_alias.insert(0, sprite_name)
@@ -5763,7 +5796,7 @@ class SharedPages:
             and the selection type (ie: fade in or fade out).
             Example:
             {"Alias": "Rave",
-            "Type": "fade in",
+            "Type": "clockwise",
             "ScaleValue": 25,}
             or None if insufficient information was provided by the user.
             """
@@ -5776,12 +5809,18 @@ class SharedPages:
                                        message=f"Enter an alias for the {self.get_purpose_name()}.")
                 return
 
-            radio_button_selection = self.v_radio_button_selection.get()
-            scale_value = self.v_scale_value.get()
 
-            user_input = {"Alias": alias,
-                          "Type": radio_button_selection,
-                          "ScaleValue": scale_value}
+            scale_value = self.v_scale_value.get()
+            
+            if self.include_radio_buttons:
+                radio_button_selection = self.v_radio_button_selection.get()
+    
+                user_input = {"Alias": alias,
+                              "Type": radio_button_selection,
+                              "ScaleValue": scale_value}
+            else:
+                user_input = {"Alias": alias,
+                              "ScaleValue": scale_value}                
 
             return user_input
 
@@ -5793,7 +5832,7 @@ class SharedPages:
             # The user input will be a dictionary like this:
             # {"Alias": "Rave",
             # "ScaleValue": 30,
-            # "Type": "fade in"}
+            # "Type": "clockwise"}
             user_inputs = self.check_inputs()
 
             if not user_inputs:
@@ -5801,10 +5840,15 @@ class SharedPages:
 
             alias = user_inputs.get("Alias")
             scale_value = user_inputs.get("ScaleValue")
-            radio_button_selection = user_inputs.get("Type")
-
-            return f"<{self.command_name}: {alias}, {scale_value}, {radio_button_selection}>"
-
+            
+            if self.include_radio_buttons:
+                
+                radio_button_selection = user_inputs.get("Type")
+    
+                return f"<{self.command_name}: {alias}, {scale_value}, {radio_button_selection}>"
+            else:
+                return f"<{self.command_name}: {alias}, {scale_value}>"
+                
 
     class SpeedOnly(WizardListing):
         """
@@ -7897,7 +7941,7 @@ class CharacterFadeUntil(SharedPages.Until):
 
 class CharacterFadeSpeed(SharedPages.Speed):
     """
-    <character_fade_speed: general alias, speed percentage, 'fade in' or 'fade out'>
+    <character_fade_speed: general alias, speed percentage>
     """
 
     def __init__(self, parent_frame, header_label, purpose_label,
@@ -9890,7 +9934,7 @@ class CharacterAfterScalingStop(SharedPages.AfterStop):
 
 class CharacterScaleBy(SharedPages.Speed):
     """
-    <character_scale_by: general alias, scale value, "scale up" or "scale down">
+    <character_scale_speed: general alias, scale value>
     """
 
     def __init__(self, parent_frame, header_label, purpose_label,

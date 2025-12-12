@@ -45,12 +45,13 @@ class SpriteAnimationType(Enum):
 class FadeType(Enum):
     FADE_IN = auto()
     FADE_OUT = auto()
+    FADE_REACHED_DESTINATION = auto()
 
 
 class ScaleType(Enum):
     SCALE_UP = auto()
     SCALE_DOWN = auto()
-
+    SCALE_REACHED_DESTINATION = auto()
 
 
 class StartOrStop(Enum):
@@ -266,10 +267,16 @@ class SpriteObject:
         # Will be based on the FadeSpeed class
         self.fade_speed = None
 
-        # Will be based on the ScaleBy class
-        self.scale_by = None
+        # Will be based on the ScaleSpeed class
+        self.scale_speed: cc.ScaleSpeed
+        self.scale_speed = None
+        
+        # So the animation method knows which direction to scale, up or down.
+        self.scale_type: ScaleType
+        self.scale_type = None
 
         # Will be based on the ScaleUntil class
+        self.scale_until: cc.ScaleUntil
         self.scale_until = None
 
         # Based on the ScaleCurrentValue class
@@ -435,14 +442,41 @@ class SpriteObject:
         :return:
         """
         self.is_scaling = False
+        
+        # Reset the scale animation direction.
+        self.scale_type = None
 
     def start_scaling(self):
         """
-        Set the flag to indicate that scaling animations should occur for this sprite.
-        :return:
+        Set the flag to indicate that scaling animations should occur
+        for this sprite.
+        
+        Also, determine whether the sprite showed me scale Up or scaled Down.
+        We do this by comparing where the scale is now (scale_current_value),
+        to where it needs to be (scale_until).
+        
+        Return: None
         """
+        
+        # Make sure scale_until is initialized
+        if not self.scale_until:
+            return
+        
+        if self.scale_until.scale_until > self.scale_current_value.scale_current_value:
+            self.scale_type = ScaleType.SCALE_UP
+            
+        elif self.scale_until.scale_until < self.scale_current_value.scale_current_value:
+            self.scale_type = ScaleType.SCALE_DOWN
+            
+        else:
+            # The scale_until value is the same as the current scale value.
+            # No scaling animation is required, so don't continue.
+            self.scale_type = None
+            return
+        
+        
         self.is_scaling = True
-
+        
     def stop_rotating(self):
         """
         Reset the flag to indicate that rotating animations should not occur for this sprite.
@@ -1160,8 +1194,9 @@ class SpriteObject:
         #return self._scale_or_rotate_sprite()
 
         # Not scaling the sprite or no scale speed set
-        # or no scale_until set? Return.
-        if not all((self.is_scaling, self.scale_by, self.scale_until)):
+        # or no scale_until set or no scale type (direction)? Return.
+        if not all((self.is_scaling, self.scale_speed,
+                    self.scale_until, self.scale_type)):
             return
 
         # Initialize for below
@@ -1184,19 +1219,34 @@ class SpriteObject:
         if not skip_scale:
 
             # Are we scaling up or scaling down?
-            # We need to know so we can determine when to stop the scaling (if a stop has been set).
-            if self.scale_by.scale_by > 0:
-                scale_type = ScaleType.SCALE_UP
-            elif self.scale_by.scale_by < 0:
-                scale_type = ScaleType.SCALE_DOWN
-            else:
-                return
+            # We need to know so we can determine when to stop the scaling.        
+            if self.scale_type == ScaleType.SCALE_UP:
+                
+                # Has the sprite reached the destination scale while
+                # scaling up?
+                if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
+                    self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
+                
+            elif self.scale_type == ScaleType.SCALE_DOWN:
+                
+                # Has the sprite reached the destination scale while 
+                # scaling down?
+                if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
+                    
+                    # The sprite has reached the destination scale.
+                    self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
 
             # Initialize
             reached_destination_scale = False
 
             # Has the sprite reached the destination scale value?
-            if scale_type == ScaleType.SCALE_UP:
+            if self.scale_type in (ScaleType.SCALE_UP,
+                                   ScaleType.SCALE_REACHED_DESTINATION):
+                
+                # We either need to keep scaling-up or we've already reached
+                # the final scale-up or scale-down and we need to use this block
+                # to stop the scale effect.                
+                
                 if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
                     # Stop the scaling
                     self.stop_scaling()
@@ -1205,21 +1255,28 @@ class SpriteObject:
                     # Increment scaling
                     new_scale_value =\
                         self.scale_current_value.scale_current_value \
-                        + self.scale_by.scale_by \
+                        + self.scale_speed.scale_speed \
                         * AnimationSpeed.delta
 
                     self.scale_current_value = self.scale_current_value._replace(scale_current_value=new_scale_value)
 
-            elif scale_type == ScaleType.SCALE_DOWN:
+            elif self.scale_type == ScaleType.SCALE_DOWN:
+                
                 if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
                     # Stop the scaling
                     self.stop_scaling()
                     reached_destination_scale = True
                 else:
+                    
+                    # A positive value will scale up the sprite.
+                    # A negative value(such as -0.00050) will scale down a 
+                    # sprite.            
+                    scale_down_float = -abs(self.scale_speed.scale_speed)                    
+                    
                     # Decrease scaling
                     new_scale_value =\
                         self.scale_current_value.scale_current_value \
-                        + self.scale_by.scale_by \
+                        + scale_down_float \
                         * AnimationSpeed.delta
                     
                     if new_scale_value <= 0:
@@ -1512,10 +1569,16 @@ class SpriteObject:
                 #self._fade_sprite()
                 #return
 
-        # At this point, we need to know whether to fade out or fade in.
+        # At this point, we need a fade speed.
         # If that hasn't been decided (fade_speed), return
         if not self.fade_speed:
             return
+        
+        # We must also have a fade_until, otherwise we won't know whether
+        # to fade in or fade out
+        elif not self.fade_until:
+            return
+        
 
         # Initialize for below
         skip_fade = False
@@ -1547,18 +1610,26 @@ class SpriteObject:
 
             # Are we fading-in or fading-out? We need to know so that we can
             # determine when to stop the fade.
-            if self.fade_speed.fade_direction == "fade in":  # > 0:
+            if self.current_fade_value.current_fade_value < self.fade_until.fade_value:
                 fade_type = FadeType.FADE_IN
-            elif self.fade_speed.fade_direction == "fade out":  # < 0:
+                
+            elif self.current_fade_value.current_fade_value > self.fade_until.fade_value:
                 fade_type = FadeType.FADE_OUT
+                
             else:
-                return
+                # The fade value has reached its fade_until value.
+                fade_type = FadeType.FADE_REACHED_DESTINATION
 
             # Initialize
             reached_destination_fade = False
 
             # Has the sprite reached the destination fade value?
-            if fade_type == FadeType.FADE_IN:
+            if fade_type in (FadeType.FADE_IN,
+                             FadeType.FADE_REACHED_DESTINATION):
+                
+                # We either need to keep fading-in or we've already reached
+                # the final fade-in or fade-out and we need to use this block
+                # to stop the fade effect.
                 if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
 
                     # We've reached the destination fade value, so stop fading.
