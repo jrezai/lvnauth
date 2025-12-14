@@ -1184,6 +1184,7 @@ class SpriteObject:
     def _animate_scaling(self):
         """
         Scale the sprite (if required).
+        
         Return: None
         """
 
@@ -1257,8 +1258,13 @@ class SpriteObject:
                         self.scale_current_value.scale_current_value \
                         + self.scale_speed.scale_speed \
                         * AnimationSpeed.delta
+                    
+                    if new_scale_value >= self.scale_until.scale_until:
+                        new_scale_value = self.scale_until.scale_until
 
-                    self.scale_current_value = self.scale_current_value._replace(scale_current_value=new_scale_value)
+                    self.scale_current_value =\
+                        self.scale_current_value._replace(
+                            scale_current_value=new_scale_value)
 
             elif self.scale_type == ScaleType.SCALE_DOWN:
                 
@@ -1282,7 +1288,9 @@ class SpriteObject:
                     if new_scale_value <= 0:
                         new_scale_value = 0
 
-                    self.scale_current_value = self.scale_current_value._replace(scale_current_value=new_scale_value)
+                    self.scale_current_value =\
+                        self.scale_current_value._replace(
+                            scale_current_value=new_scale_value)
 
             # Have we reached a destination scaling which caused the scaling 
             # to stop?
@@ -1397,11 +1405,14 @@ class SpriteObject:
         if self.is_fade_needed():
             """
             A fade is needed. Apply the fade to the scaled/rotated version
-            of the image the image was just scaled or rotated.
+            of the image the image was just scaled or rotated
+            (if skip_copy_original_image == True)
+            
             Otherwise apply the fade to the original version of the image.
             That's why we're using scale_or_rotation_needed as a bool 
-            in the argument below.
+            in the argument below. (skip_copy_original_image == False)
             """
+
             self._fade_sprite(skip_copy_original_image=scale_or_rotation_needed)
             
             at_least_one_effect_applied = True
@@ -1437,8 +1448,8 @@ class SpriteObject:
 
             # Update the displayed image with the sprite with text. 
             # If the two sprites are different, use the sprite with text.
-            if not self.any_effects_applied() and \
-               self.image != self.original_image:
+            if not self.any_effects_applied() \
+               and self.image != self.original_image:
                 
                 # The displayed image is different from the image with text,
                 # so get the image with text on it (self.original_image)
@@ -1450,8 +1461,8 @@ class SpriteObject:
             
     def any_effects_applied(self) -> bool:
         """
-        Return whether the sprite has had any type of effect
-        applied to it, such as fade, rotate, scale.
+        Return whether the sprite has had any type of effect applied to it,
+        such as fade, rotate, scale.
         
         Return: True if at least one of the effects has been applied
         to the sprite (fade, rotate, scale)
@@ -1469,9 +1480,8 @@ class SpriteObject:
         animation now, then we need to deal with showing the sprite's text
         a different way, and this method is used as part of this.
         """
-        if self.applied_fade_value is None \
-           and self.applied_rotate_value is None \
-           and self.applied_scale_value is None:
+        if not self.is_dirty_with_fade() \
+           and not self.is_dirty_with_rotate_or_scale():
             
             # This sprite currently does not have any effects applied to it.
             return False
@@ -1515,33 +1525,79 @@ class SpriteObject:
         """
         Return whether the applied scale or rotation value is the same
         as the expected scale or rotation value.
-        """        
         
-        if self.scale_current_value \
-                and self.scale_current_value.scale_current_value != self.applied_scale_value:
+        Purpose: to know whether a scale and/or rotation effect is required
+        on self.image
+        """
+        
+        # -------
+        # Scale check
+        
+        # Scale check #1
+        # Animating a scale?
+        reapply_scale = (self.scale_current_value is not None \
+                         and self.scale_current_value.scale_current_value) \
+            or self.is_scaling
+        
+        # Scale check #2 - continued challenge
+        # Is the 'applied' scale value different from the destination 
+        # scale value?
+        if reapply_scale:
             
-            # Scale already at normal scale and no scale effect applied?
-            # No need to apply a scale-effect
-            if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
-                # No scale animation needed
-                pass
-            else:
-                # The applied scale value is different than
-                # the expected scale value.
-                return True
+            # Scale if the 'applied' scale is different from the 
+            # destination scale.
+            reapply_scale = (self.applied_scale_value is None \
+                or self.applied_scale_value != self.scale_current_value.scale_current_value)
+
+            
+        
+        # ------
+        # Rotation check
+        
+        # Rotate check #1
+        # Animating a rotation?
+        reapply_rotate = (self.rotate_current_value is not None \
+                          and self.rotate_current_value.rotate_current_value > 1) \
+            or self.is_rotating
+        
+        # Rotate check #2 - continued challenge
+        # Is the 'applied' rotate value the different from the destination 
+        # rotate value?
+        if reapply_rotate:
+            
+            # Rotate if the 'applied' rotation is different from the 
+            # destination rotate.
+            reapply_rotate = self.applied_rotate_value is None \
+                or self.applied_rotate_value != self.rotate_current_value.rotate_current_value
+                
+        
+        return reapply_scale or reapply_rotate
+        
+        #if self.scale_current_value \
+                #and self.scale_current_value.scale_current_value != self.applied_scale_value:
+            
+            ## Scale already at normal scale and no scale effect applied?
+            ## No need to apply a scale-effect
+            #if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
+                ## No scale animation needed
+                #pass
+            #else:
+                ## The applied scale value is different than
+                ## the expected scale value.
+                #return True
 
 
-        if self.rotate_current_value \
-                and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
+        #if self.rotate_current_value \
+                #and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
             
-            # Rotation already at 0 degrees and no rotation effect applied?
-            # No need to apply a rotation-effect
-            if self.rotate_current_value.rotate_current_value == 0 and self.applied_rotate_value is None:
-                return False            
+            ## Rotation already at 0 degrees and no rotation effect applied?
+            ## No need to apply a rotation-effect
+            #if self.rotate_current_value.rotate_current_value == 0 and self.applied_rotate_value is None:
+                #return False            
             
-            # The applied rotation value is different than
-            # the expected rotation value.
-            return True
+            ## The applied rotation value is different than
+            ## the expected rotation value.
+            #return True
 
     def _animate_fading(self):
         """
@@ -1658,7 +1714,8 @@ class SpriteObject:
 
                     # Set what the new int fade value should be so that it gets
                     # applied to the sprite later on.
-                    self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
+                    self.current_fade_value =\
+                        self.current_fade_value._replace(current_fade_value=new_fade_value)
 
                     
             elif fade_type == FadeType.FADE_OUT:
@@ -1745,16 +1802,22 @@ class SpriteObject:
         Fade the sprite to the current fade value.
 
         If the sprite is being scaled (as an animation)
-        or being rotated (as an animation),
-        don't copy the original image, because then the scaling
-        and/or rotation changes won't show.
+        or being rotated (as an animation), don't copy the original image,
+        because then the scaling and/or rotation changes won't show.
+        
+        If the sprite is not scale-animating, but has a scale effect applied
+        and/or the sprite is not rotate-animating, but has a rotation effect
+        applied, then apply the rotate/scale effect in this method after
+        getting the original image (with optional sprite text), then in the
+        end, apply the fade effect.
         
         Arguments:
         
         - skip_copy_original_image: used by a sprite's clear_text_and_redraw()
         method. Sometimes we shouldn't attempt to copy self.original_image
         to self.image, because it has already been done and all we want to do
-        is fade the image. In a case like that, this variable will be set to True.
+        is fade the image. In a case like that, this variable will be set to
+        True.
         Under normal use-cases (without clear_text_and_redraw()) this variable
         will be False.
         """
@@ -1772,18 +1835,42 @@ class SpriteObject:
         if not skip_copy_original_image:
 
             # Yes, we should consider copying the original image to self.image
-
-            #if not self.is_scaling and not self.is_rotating \
-               #and self.applied_scale_value is not None \
-               #and self.applied_rotate_value is not None:
-            self.image = self.get_original_image_with_text()
+            
+            # Get the original image (no effects), but with sprite text (if any).
+            # Then re-apply a scale or rotate effect if it's currently applied.
+        
+            """
+            The method call below, self._scale_or_rotate_sprite(), will
+            deal with getting the original image (no effects), but with
+            sprite text (if any), and that same method will also rotate/scale 
+            right after it's done getting the original image.
+            """
+            
+            # Is the image touched with a scale or rotate effect?
+            # (regardless if there's a gradual animation or not)
+            if self.is_dirty_with_rotate_or_scale():
                 
+                # The scale or rotate effect is eligible to this sprite.
+                # So get the original image (with sprite text, if any)
+                # and reapply the scale and/or rotation effect, before
+                # we fade the image a few lines later.
+                self._scale_or_rotate_sprite()
+            else:
+                
+                # No scale or rotation necessary, just get the original image
+                # with sprite text (if any), before we apply a fade.
+                self.image = self.get_original_image_with_text()
+                
+
             replaced_image = True
             
+        
 
         # self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
         
-
+        # Now we're ready to apply a fade to this image.
+        # This is the last step. This image should already be rotated or scaled
+        # before we get here.
         self.image.set_alpha(self.current_fade_value.current_fade_value)
 
         # Record how much fade we've applied so we don't keep applying
@@ -1794,6 +1881,58 @@ class SpriteObject:
         
 
         return replaced_image
+    
+    def is_dirty_with_rotate_or_scale(self) -> bool:
+        """
+        Return whether the sprite has a non-default scale or non-default rotate
+        value. In other words, if the sprite has been touched or should be
+        touched with a rotate or scale effect.
+        
+        It doesn't check whether a scale or rotate is actively applied to the
+        sprite - it just checks whether the effect is applicable to the sprite,
+        regardless if it currently actually has a rotate/scale effect applied
+        to it or not.
+        
+        Purpose: before applying a fade effect, this method gets used
+        to determine whether the image needs to be scaled/rotated first, before
+        a fade effect is used.
+        """
+        
+        # Has a scale value that is not 1 (original size)? Consider it
+        # dirty with a scale.
+        # Or has a rotate value that is greater than 0? Consider it
+        # dirty with a rotate.
+        if (self.scale_current_value and self.scale_current_value != 1) \
+           or (self.rotate_current_value and self.rotate_current_value > 0):
+                return True
+            
+        else:
+            return False
+        
+    def is_dirty_with_fade(self) -> bool:
+        """
+        Return whether the sprite has a non-default fade (non-opaque) value.
+        In other words, if the sprite has been touched or should be
+        touched with a fade effect.
+        
+        It doesn't check whether a fade effect is actively applied to the
+        sprite - it just checks whether the effect is applicable to the sprite,
+        regardless if it currently actually has a fade applied to it or not.
+        
+        Purpose: this method is called by the any_effects_applied() method,
+        to check if a fade effect is applied to the sprite.
+        to determine whether the image needs to be scaled/rotated first, before
+        a fade effect is used.
+        """
+        
+        # Has a fade value that is not 255 (fully opaque)? Consider it
+        # dirty with a fade.
+        if self.current_fade_value is not None \
+           and self.current_fade_value.current_fade_value < 255:
+            
+            return True
+        else:
+            return False
 
     def get_original_image_with_text(self) -> pygame.Surface:
         """
