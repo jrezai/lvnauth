@@ -3064,8 +3064,9 @@ class StoryReader:
                 sprite.stop_fading()
 
     def _sprite_fade_speed_get_value_from_percent(
-        self, percent, fade_direction: str
-    ) -> float | None:
+        self,
+        percent,
+        fade_direction: str) -> float | None:
         """
         Take a percent value from 1 to 100 and convert it to a float
         that we can use for the fade speed in pygame.
@@ -3088,126 +3089,29 @@ class StoryReader:
         if fade_direction not in ("fade in", "fade out"):
             return
 
-        # The fade speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.01
-0.03
-0.05
-0.07
-0.09
-0.11
-0.13
-0.15
-0.17
-0.19
-0.44
-0.69
-0.94
-1.19
-1.44
-1.69
-1.94
-2.19
-2.44
-2.59
-2.74
-2.89
-3.04
-3.19
-3.34
-3.49
-3.64
-3.79
-3.94
-4.09
-4.19
-4.29
-4.39
-4.49
-4.59
-4.69
-4.79
-4.89
-4.99
-5.09
-5.19
-5.21
-5.23
-5.25
-5.27
-5.29
-5.31
-5.33
-5.35
-5.37
-5.42
-5.47
-5.52
-5.57
-5.62
-5.67
-5.72
-5.77
-5.82
-5.87
-5.97
-6.07
-6.17
-6.27
-6.37
-6.47
-6.57
-6.67
-6.77
-6.87
-6.89
-6.91
-6.93
-6.95
-6.97
-6.99
-7.01
-7.03
-7.05
-7.13
-7.21
-7.29
-7.37
-7.45
-7.53
-7.61
-7.69
-7.77
-7.85
-7.93
-8.18
-8.43
-8.68
-8.93
-9.18
-12.00
-19.00
-30.00
-45.00
-60.00"""
+        # The fade speed (slowest to fastest).
+        # There are 100 lines in the string.
+        
+        # Convert the user-provided convenient speed value
+        # from percent to a float that pygame can use.
+        # Depending on the fade direction, the float will either be a positive
+        # float or a negative float.
+        fade_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=5,
+                increment_by=4.5,
+                max_convenient_row=100,
+                convenient_row_number=percent)        
 
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-        if percent_to_float is None:
+        # Make sure we have a float value, otherwise stop here.
+        if not fade_float_value:
             return
 
-        if fade_direction == "fade out":
-            # Convert from a positive float to a negative float.
-            # A negative float will cause a pygame to fade out the sprite.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
+        #if fade_direction == "fade out":
+            ## Convert from a positive float to a negative float.
+            ## A negative float will cause a pygame to fade out the sprite.
+            #percent_to_float = -abs(percent_to_float)
+        return fade_float_value
 
     def _sprite_fade_speed(self, sprite_type: file_reader.ContentType, arguments):
         """
@@ -5155,7 +5059,9 @@ class StoryReader:
 
     def _scene_with_fade(self, arguments: str):
         """
-        Gradually fade in, then fade-out a color that covers the entire pygame window.
+        Gradually fade in, then fade-out a color that covers the entire
+        pygame window.
+        
         Right before it starts fading out, play a specific scene.
         This is used when transitioning between scenes.
         """
@@ -5175,13 +5081,15 @@ class StoryReader:
         direction = cover_screen_handler.FadeDirection.FADE_IN
         initial_fade = 0
 
-        incremental_fade_in_speed = self._sprite_fade_speed_get_value_from_percent(
-            percent=scene_with_fade.fade_in_speed, fade_direction="fade in"
-        )
+        incremental_fade_in_speed =\
+            self._sprite_fade_speed_get_value_from_percent(
+            percent=scene_with_fade.fade_in_speed,
+            fade_direction="fade in")
 
-        incremental_fade_out_speed = self._sprite_fade_speed_get_value_from_percent(
-            percent=scene_with_fade.fade_out_speed, fade_direction="fade out"
-        )
+        incremental_fade_out_speed =\
+            self._sprite_fade_speed_get_value_from_percent(
+            percent=scene_with_fade.fade_out_speed,
+            fade_direction="fade out")
 
         # None and zero are not proper values and will result to an exception.
         if not all([incremental_fade_in_speed, incremental_fade_out_speed]):

@@ -21,6 +21,8 @@ import pygame
 from enum import Enum, auto
 from typing import List
 from shared_components import Passer
+from animation_speed import AnimationSpeed
+
 
 
 class FadeDirection(Enum):
@@ -60,13 +62,15 @@ class CoverScreenHandler:
         self.fade_in_speed_incremental = 0
         self.fade_out_speed_incremental = 0
 
-        # The number of frames that have elapsed so far
+        # The number of seconds that have elapsed so far
         # while at full opacity.
-        self.hold_full_frame_counter = 0
+        self.elapsed_full_opacity_seconds:float
+        self.elapsed_full_opacity_seconds = 0
 
-        # The number of frames that we need to reach before
+        # The number of seconds that we need to reach before
         # starting to fade-out.
-        self.hold_frame_limit = 0
+        self.hold_seconds_at_full_opacity:float
+        self.hold_seconds_at_full_opacity = 0
 
         # So we know to draw the cover surface or not.
         self.is_cover_animating = False
@@ -82,9 +86,11 @@ class CoverScreenHandler:
 
     def is_busy_fading(self) -> bool:
         """
-        Check whether the screen is fading in or out and not finished fading yet.
+        Check whether the screen is fading in or out and not finished
+        fading yet.
 
-        Purpose: to prevent a second fade-in / fade-out attempt while the first one is busy.
+        Purpose: to prevent a second fade-in / fade-out attempt while the
+        first one is busy.
         """
 
         # Already currently fading in and not finished yet? return True
@@ -116,14 +122,27 @@ class CoverScreenHandler:
         Start fading in or fading out the entire pygame screen.
 
         Arguments:
-            - hex_color: the color, in hex, that we want to cover the screen with.
-            - initial_fade_value: 0 for fully transparent, 255 for fully opaque.
-            - fade_in_speed_incremental: the fade-in will increment by this much (a float value)
-            - fade_out_speed_incremental: the fade-out will increment by this much (a float value)
-            - hold_frame_count: the number of frames to hold the full opacity before starting to fade out
-            - chapter_name: the chapter the scene is in that we need to run before starting to fade out
-            - scene_name: the scene we need to run before starting to fade out
-            - fade_direction: fade in or fade out (based on the FadeDirection class).
+        
+        - hex_color: the color, in hex, that we want to cover the screen with.
+        
+        - initial_fade_value: 0 for fully transparent, 255 for fully opaque.
+        
+        - fade_in_speed_incremental: the fade-in will increment by this much
+        (a float value)
+        
+        - fade_out_speed_incremental: the fade-out will increment by this
+        much (a float value)
+        
+        - hold_frame_count: the number of frames to hold the full opacity
+        before starting to fade out
+        
+        - chapter_name: the chapter the scene is in that we need to run
+        before starting to fade out
+        
+        - scene_name: the scene we need to run before starting to fade out
+        
+        - fade_direction: fade in or fade out (based on the FadeDirection
+        class).
         """
 
         # Already fading in or fading out? return
@@ -138,8 +157,8 @@ class CoverScreenHandler:
         self.chapter_name = chapter_name
         self.scene_name = scene_name
         self.fade_direction = fade_direction
-        self.hold_frame_limit = hold_frame_count
-        self.hold_full_frame_counter = 0
+        self.hold_seconds_at_full_opacity = hold_frame_count
+        self.elapsed_full_opacity_seconds = 0
 
         # So the main draw method knows to draw the cover surface.
         self.is_cover_animating = True
@@ -188,13 +207,16 @@ class CoverScreenHandler:
 
             # Have we reached fully opacity?
             if self.current_fade_value >= 255:
+                
                 # We've reached full opacity, but we should not
                 # stop drawing the cover surface on the screen,
                 # because otherwise, the cover surface will just disappear.
                 self.current_fade_value = 255
 
-                if self.hold_full_frame_counter > self.hold_frame_limit:
-                    # We've reached the frame count limit at full opacity.
+                if self.elapsed_full_opacity_seconds \
+                   > self.hold_seconds_at_full_opacity:
+                    
+                    # We've reached the seconds limit at full opacity.
 
                     # Run the scene that is supposed to run and then
                     # start fading-out.
@@ -203,20 +225,22 @@ class CoverScreenHandler:
                     # Start fading-out
                     self.fade_direction = FadeDirection.FADE_OUT
 
-                    # Re-run this method immediately, now that we're in fade-out mode.
+                    # Re-run this method immediately, now that 
+                    # we're in fade-out mode.
                     self.update()
 
                     return
 
                 else:
-                    # We haven't reached the frames-elapsed limit at full
+                    # We haven't reached the seconds-elapsed limit at full
                     # opacity. We're not ready to start fading-out yet.
-                    self.hold_full_frame_counter += 1
+                    self.elapsed_full_opacity_seconds += AnimationSpeed.delta
 
                     return
 
             # Fade-in more
-            self.current_fade_value += self.fade_in_speed_incremental
+            self.current_fade_value += self.fade_in_speed_incremental \
+                * AnimationSpeed.delta
 
             # Don't allow the fade to go out of range.
             if self.current_fade_value > 255:
@@ -233,7 +257,8 @@ class CoverScreenHandler:
 
             # Fade-out more
             # (fade_speed_incremental will be a negative value when fading out).
-            self.current_fade_value += self.fade_out_speed_incremental
+            self.current_fade_value -= self.fade_out_speed_incremental \
+                * AnimationSpeed.delta
 
             # Don't allow the fade to go out of range.
             if self.current_fade_value < 0:
