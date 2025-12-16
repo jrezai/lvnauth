@@ -114,7 +114,7 @@ class CoverScreenHandler:
                             initial_fade_value: int,
                             fade_in_speed_incremental: float,
                             fade_out_speed_incremental: float,
-                            hold_frame_count: int,
+                            hold_seconds: int,
                             chapter_name: str,
                             scene_name: str,
                             fade_direction: FadeDirection = FadeDirection.FADE_IN):
@@ -133,7 +133,7 @@ class CoverScreenHandler:
         - fade_out_speed_incremental: the fade-out will increment by this
         much (a float value)
         
-        - hold_frame_count: the number of frames to hold the full opacity
+        - hold_seconds: the number of seconds to hold at full opacity
         before starting to fade out
         
         - chapter_name: the chapter the scene is in that we need to run
@@ -157,7 +157,7 @@ class CoverScreenHandler:
         self.chapter_name = chapter_name
         self.scene_name = scene_name
         self.fade_direction = fade_direction
-        self.hold_seconds_at_full_opacity = hold_frame_count
+        self.hold_seconds_at_full_opacity = hold_seconds
         self.elapsed_full_opacity_seconds = 0
 
         # So the main draw method knows to draw the cover surface.

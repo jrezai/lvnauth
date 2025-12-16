@@ -87,7 +87,7 @@ class SceneWithFade(NamedTuple):
     hex_color: str
     fade_in_speed: int
     fade_out_speed: int
-    fade_hold_for_frame_count: int
+    fade_hold_seconds: int
     chapter_name: str
     scene_name: str
 

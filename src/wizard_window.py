@@ -8661,7 +8661,7 @@ class SceneWithFadeFrame:
         # Default values
         self.default_fade_in = 10
         self.default_fade_out = 10
-        self.default_hold_frames = 80
+        self.default_hold_seconds = 1
         self.default_background_color = "#000000"
 
         self.v_scale_fade_in = builder.get_variable("v_scale_fade_in")
@@ -8670,8 +8670,8 @@ class SceneWithFadeFrame:
         self.v_scale_fade_out = builder.get_variable("v_scale_fade_out")
         self.v_scale_fade_out.set(self.default_fade_out)
 
-        self.v_scale_hold_frames = builder.get_variable("v_scale_hold_frames")
-        self.v_scale_hold_frames.set(self.default_hold_frames)
+        self.v_scale_seconds = builder.get_variable("v_scale_hold_seconds")
+        self.v_scale_seconds.set(self.default_hold_seconds)
 
     def on_change_color_button_clicked(self):
         """
@@ -8749,8 +8749,8 @@ class SceneWithFade(WizardListing):
         hex_color = command_class_object.hex_color
         fade_in_speed = command_class_object.fade_in_speed
         fade_out_speed = command_class_object.fade_out_speed
-        fade_hold_for_frame_count =\
-            command_class_object.fade_hold_for_frame_count
+        fade_hold_for_seconds =\
+            command_class_object.fade_hold_seconds
         chapter_name = command_class_object.chapter_name
         scene_name = command_class_object.scene_name
         
@@ -8776,12 +8776,12 @@ class SceneWithFade(WizardListing):
             fade_out_speed = self.scene_frame.default_fade_out
         self.scene_frame.v_scale_fade_out.set(fade_out_speed)
         
-        # Hold frames value
+        # Hold at full opacity seconds value
         try:
-            fade_hold_for_frame_count = int(fade_hold_for_frame_count)
+            fade_hold_for_seconds = int(fade_hold_for_seconds)
         except ValueError:
-            fade_hold_for_frame_count = self.scene_frame.default_hold_frames
-        self.scene_frame.v_scale_hold_frames.set(fade_hold_for_frame_count)
+            fade_hold_for_seconds = self.scene_frame.default_hold_seconds
+        self.scene_frame.v_scale_seconds.set(fade_hold_for_seconds)
         
         # Chapter name
         WizardListing.set_combobox_readonly_text(self.scene_frame.cb_chapters,
@@ -8811,7 +8811,7 @@ class SceneWithFade(WizardListing):
         bg_color_hex = self.scene_frame.lbl_color.cget("background")
         fade_in_speed = self.scene_frame.v_scale_fade_in.get()
         fade_out_speed = self.scene_frame.v_scale_fade_out.get()
-        hold_frames = self.scene_frame.v_scale_hold_frames.get()
+        hold_seconds = self.scene_frame.v_scale_seconds.get()
 
         if not chapter_name:
             messagebox.showerror(parent=self.scene_frame.lbl_color.winfo_toplevel(),
@@ -8831,7 +8831,7 @@ class SceneWithFade(WizardListing):
                       "FadeColor": bg_color_hex,
                       "FadeInSpeed": fade_in_speed,
                       "FadeOutSpeed": fade_out_speed,
-                      "HoldFrames": hold_frames}
+                      "HoldSeconds": hold_seconds}
 
         return user_input
 
@@ -8846,7 +8846,7 @@ class SceneWithFade(WizardListing):
         #  "FadeColor": bg_color_hex,
         #  "FadeInSpeed": fade_in_speed,
         #  "FadeOutSpeed": fade_out_speed,
-        #  "HoldFrames": hold_frames}
+        #  "HoldSeconds": hold_seconds}
         user_inputs = self.check_inputs()
 
         if not user_inputs:
@@ -8857,9 +8857,9 @@ class SceneWithFade(WizardListing):
         fade_color = user_inputs.get("FadeColor")
         fade_in_speed = user_inputs.get("FadeInSpeed")
         fade_out_speed = user_inputs.get("FadeOutSpeed")
-        hold_frames = user_inputs.get("HoldFrames")
+        hold_seconds = user_inputs.get("HoldSeconds")
 
-        return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_frames}, {chapter_name}, {scene_name}>"
+        return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
 
 
 class WaitForAnimationFrame:

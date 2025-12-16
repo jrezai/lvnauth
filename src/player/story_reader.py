@@ -5104,7 +5104,7 @@ class StoryReader:
             initial_fade_value=initial_fade,
             fade_in_speed_incremental=incremental_fade_in_speed,
             fade_out_speed_incremental=incremental_fade_out_speed,
-            hold_frame_count=scene_with_fade.fade_hold_for_frame_count,
+            hold_seconds=scene_with_fade.fade_hold_seconds,
             chapter_name=scene_with_fade.chapter_name,
             scene_name=scene_with_fade.scene_name,
             fade_direction=direction,
@@ -5721,18 +5721,19 @@ class WaitForAnimationHandler:
 
     def check_wait(self) -> bool:
         """
-        Check the wait list to see if the main reader should pause
-        until one or more sprites' animations have stopped.
+        Check the wait list to see if the main reader should pause until
+        one or more sprites' animations have stopped.
 
-        Return: True if the main story reader should wait
-        or False if there is no need for the main reader to wait for animation(s) to finish.
+        Return: True if the main story reader should wait or False if there
+        is no need for the main reader to wait for animation(s) to finish.
         """
         if not self.wait_list:
             return False
 
         remove_indexes = []
 
-        # Loop through wait_list to see what animation(s) we need to wait for (if any).
+        # Loop through wait_list to see what animation(s) we need to 
+        # wait for (if any).
         for idx, wait_info in enumerate(self.wait_list):
 
             # Initialize
@@ -5740,7 +5741,8 @@ class WaitForAnimationHandler:
 
             if isinstance(wait_info, str) and wait_info == "cover":
                 # Wait for a screen fade-in / fade-out animation to finish
-                # (even if the screen is fully faded-in, it's still considered to be animating)
+                # (even if the screen is fully faded-in, it's still considered 
+                # to be animating)
                 if Passer.active_story.cover_screen_handler.is_cover_animating:
                     wait = True
 
@@ -5761,7 +5763,8 @@ class WaitForAnimationHandler:
             if wait:
                 return True
             else:
-                # The wait rule is not animating, so remove it from the wait list later.
+                # The wait rule is not animating, so remove it from the wait 
+                # list later.
                 remove_indexes.append(idx)
         else:
 
@@ -5791,7 +5794,8 @@ class WaitForAnimationHandler:
             - sprite_group: the sprite group we should check sprites in
             - general_alias: we use the general alias to find a matching sprite
             that is visible.
-            - animation_type: the type of animation to check for, or 'all', or 'any'.
+            - animation_type: the type of animation to check for, or 'all',
+            or 'any'.
 
         Return: True if the given type of animation is occurring for the given
         sprite alias in the given sprite group.

@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="ttk.Frame" id="frame_scene_with_fade" named="True">
     <property name="height">200</property>
     <property name="width">200</property>
@@ -103,7 +107,7 @@
     <child>
       <object class="ttk.Labelframe" id="labelframe6">
         <property name="height">200</property>
-        <property name="text" translatable="yes">Number of frames to hold at before fading out</property>
+        <property name="text" translatable="yes">Number of seconds to hold before fading out</property>
         <property name="width">200</property>
         <layout manager="grid">
           <property name="column">0</property>
@@ -119,23 +123,14 @@
         <child>
           <object class="ttk.LabeledScale" id="labeledscale3">
             <property name="from_">0</property>
-            <property name="to">1200</property>
-            <property name="variable">int:v_scale_hold_frames</property>
+            <property name="to">300</property>
+            <property name="variable">int:v_scale_hold_seconds</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="padx">5</property>
+              <property name="pady">5</property>
               <property name="row">0</property>
               <property name="sticky">ew</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="ttk.Label" id="label9">
-            <property name="text" translatable="yes">Example: 60 frames is 1 second</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="pady">5</property>
-              <property name="row">1</property>
             </layout>
           </object>
         </child>
