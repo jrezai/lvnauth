@@ -24,7 +24,6 @@ from shared_components import Passer, ManualUpdate, MouseActionsAndCoordinates
 from typing import Tuple
 from enum import Enum, auto
 from datetime import datetime
-from time import perf_counter
 from animation_speed import AnimationSpeed
 
 
@@ -156,10 +155,10 @@ class SpriteObject:
         Note: these two variables don't even get used for <position_x..> related
         commands. They're *just* for movement animations.
         """
-        self.pos_moving_x:float
-        self.pos_moving_x = 0
-        self.pos_moving_y:float
-        self.pos_moving_y = 0
+        self.calculated_pos_moving_x:float
+        self.calculated_pos_moving_x = 0
+        self.calculated_pos_moving_y:float
+        self.calculated_pos_moving_y = 0
 
         # We need a copy of the image before we apply any text to it, 
         # so that we don't blit the same text over and over again.
@@ -197,23 +196,6 @@ class SpriteObject:
         self.movement_speed: cc.MovementSpeed
         self.movement_speed = None
 
-        # Will be based on the MovementDelay class.
-        self.movement_delay = None
-
-        # Used for skipping frames to simulate a movement delay.
-        self.delay_frame_counter_x = 0
-        self.delay_frame_counter_y = 0
-
-        # The number of frames to skip for these animations
-
-        # Will be based on the FadeDelayMain class
-        self.fade_delay_main = None
-
-        # Will be based on the ScaleDelayMain class
-        self.scale_delay_main = None
-
-        # Will be based on the RotateDelayMain class
-        self.rotate_delay_main = None
 
         # Initialize
         self.is_moving = False
@@ -265,6 +247,7 @@ class SpriteObject:
         self.fade_stop_run_script = None
 
         # Will be based on the FadeSpeed class
+        self.fade_speed:cc.FadeSpeed
         self.fade_speed = None
 
         # Will be based on the ScaleSpeed class
@@ -367,33 +350,15 @@ class SpriteObject:
 
     def start_fading(self):
         """
-        Set the flag to indicate that fading animations should occur for this sprite.
-        
-        If there no fade_until value, assume the destination fade-until value
-        based on the fade-direction.
+        Set the flag to indicate that fading animations should occur
+        for this sprite.
         """
         
-        # If there is no fade-until value, assume fade-until to 255 or 0,
-        # depending on the fade direction.
+        # There has to be a fade_until value for the fade to work.
+        # fade_until is used to determine the direction of the fade (fade-in or
+        # fade-out).
         if self.fade_until is None:
-            
-            # Fading in? Assume the destination fade value to be 255.
-            if self.fade_speed is not None and \
-               self.fade_speed.fade_direction == "fade in":
-                
-                self.fade_until = cc.FadeUntilValue(sprite_name=self.name,
-                                                    fade_value=255)
-            
-            # Fading out? Assume the destination fade value to be 0.
-            elif self.fade_speed is not None and \
-               self.fade_speed.fade_direction == "fade out":
-                
-                self.fade_until = cc.FadeUntilValue(sprite_name=self.name,
-                                                    fade_value=0)
-                
-            else:
-                # No fade speed or no valid fade direction.
-                return
+            return
                 
         self.is_fading = True
 
@@ -419,8 +384,8 @@ class SpriteObject:
         
         # Record where the image (surface) currently is so we can use
         # pos_moving_x and pos_moving_y for float movement calculations.
-        self.pos_moving_x = self.rect.x
-        self.pos_moving_y = self.rect.y
+        self.calculated_pos_moving_x = self.rect.x
+        self.calculated_pos_moving_y = self.rect.y
 
     def stop_moving(self):
         """
@@ -433,8 +398,8 @@ class SpriteObject:
         
         # Now that the movement animation has stopped, we no longer need
         # these two variables, so reset them for the next movement animation.
-        self.pos_moving_x = 0
-        self.pos_moving_y = 0
+        self.calculated_pos_moving_x = 0
+        self.calculated_pos_moving_y = 0
 
     def stop_scaling(self):
         """
@@ -1048,128 +1013,109 @@ class SpriteObject:
         if not self.is_rotating or not self.rotate_speed:
             return
 
-        # Initialize for below
-        skip_rotate = False
 
-        # Should we skip rotating this sprite in this frame,
-        # due to a rotate delay?
-        if self.rotate_delay_main:
-            if self.rotate_delay_main.frames_skipped_so_far >= self.rotate_delay_main.rotate_delay.rotate_delay:
-                # Don't skip this frame for the rotate effect,
-                # it has been delayed enough times already.
-                self.rotate_delay_main.frames_skipped_so_far = 0
-            else:
-                # Don't rotate in this frame and increment skipped counter
-                self.rotate_delay_main.frames_skipped_so_far += 1
-                skip_rotate = True
-
-        if skip_rotate:
+        # Are we rotating clockwise (negative value) or counter-clockwise? (positive value)
+        # We need to know so we can determine when to stop the rotating (if a stop has been set).
+        if self.rotate_speed.rotate_speed > 0:
+            rotate_type = RotateType.COUNTERCLOCKWISE
+        elif self.rotate_speed.rotate_speed < 0:
+            rotate_type = RotateType.CLOCKWISE
+        else:
             return
 
-        if not skip_rotate:
+        # Initialize
+        reached_destination_rotate = False
 
-            # Are we rotating clockwise (negative value) or counter-clockwise? (positive value)
-            # We need to know so we can determine when to stop the rotating (if a stop has been set).
-            if self.rotate_speed.rotate_speed > 0:
-                rotate_type = RotateType.COUNTERCLOCKWISE
-            elif self.rotate_speed.rotate_speed < 0:
-                rotate_type = RotateType.CLOCKWISE
-            else:
-                return
-
-            # Initialize
-            reached_destination_rotate = False
-
-            # Has the sprite reached the destination rotate value?
-            if rotate_type == RotateType.COUNTERCLOCKWISE:
-
-                # if rotate_until is None, it means rotate continuously.
-                if self.rotate_until and self.rotate_current_value.rotate_current_value >= self.rotate_until.rotate_until:
-                    # Stop the rotation
-                    self.stop_rotating()
-                    reached_destination_rotate = True
-                else:
-                    # Rotate counterclockwise
-                    new_rotate_value =\
-                        self.rotate_current_value.rotate_current_value \
-                        + self.rotate_speed.rotate_speed \
-                        * AnimationSpeed.delta
-
-                    if new_rotate_value >= 360:
-                        new_rotate_value = 0
-
-                    self.rotate_current_value = self.rotate_current_value._replace \
-                        (rotate_current_value=new_rotate_value)
+        # Has the sprite reached the destination rotate value?
+        if rotate_type == RotateType.COUNTERCLOCKWISE:
 
             # if rotate_until is None, it means rotate continuously.
-            elif rotate_type == RotateType.CLOCKWISE:
+            if self.rotate_until and self.rotate_current_value.rotate_current_value >= self.rotate_until.rotate_until:
+                # Stop the rotation
+                self.stop_rotating()
+                reached_destination_rotate = True
+            else:
+                # Rotate counterclockwise
+                new_rotate_value =\
+                    self.rotate_current_value.rotate_current_value \
+                    + self.rotate_speed.rotate_speed \
+                    * AnimationSpeed.delta
 
-                # Conditions for stopping a rotation that's not rotating forever:
-                # 1) If a 'rotate_until' value has been specified
-                # 2) and the current rotate value is greater than 0 (if we don't have
-                # this check, then no rotation will start, because a rotation typically starts at 0 degrees)
-                # 3) and if 360 minus the current rotation value has reached the destination angle.
-                # The reason we take 360 minus the current rotation value is because pygame
-                # starts from 360 and goes down when rotating clockwise, so for example
-                # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
-                # 4) then stop the rotation
-                if self.rotate_until and \
-                   self.rotate_current_value.rotate_current_value > 0 and \
-                   (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_until.rotate_until:
-                    
-                    # Stop the rotation
-                    self.stop_rotating()
-                    reached_destination_rotate = True
-                else:
-                    # Rotate clockwise
-                    new_rotate_value =\
-                        self.rotate_current_value.rotate_current_value \
-                        + self.rotate_speed.rotate_speed \
-                        * AnimationSpeed.delta
+                if new_rotate_value >= 360:
+                    new_rotate_value = 0
 
-                    if new_rotate_value < 0:
-                        new_rotate_value = 360
+                self.rotate_current_value = self.rotate_current_value._replace \
+                    (rotate_current_value=new_rotate_value)
 
-                    self.rotate_current_value = self.rotate_current_value._replace \
-                        (rotate_current_value=new_rotate_value)
+        # if rotate_until is None, it means rotate continuously.
+        elif rotate_type == RotateType.CLOCKWISE:
 
-            # Have we reached a destination rotation which caused the 
-            # rotating to stop?
-            if reached_destination_rotate:
-                # Yes, the rotation has now stopped because we've reached a 
-                # specific rotation value.
+            # Conditions for stopping a rotation that's not rotating forever:
+            # 1) If a 'rotate_until' value has been specified
+            # 2) and the current rotate value is greater than 0 (if we don't have
+            # this check, then no rotation will start, because a rotation typically starts at 0 degrees)
+            # 3) and if 360 minus the current rotation value has reached the destination angle.
+            # The reason we take 360 minus the current rotation value is because pygame
+            # starts from 360 and goes down when rotating clockwise, so for example
+            # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
+            # 4) then stop the rotation
+            if self.rotate_until and \
+               self.rotate_current_value.rotate_current_value > 0 and \
+               (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_until.rotate_until:
+                
+                # Stop the rotation
+                self.stop_rotating()
+                reached_destination_rotate = True
+            else:
+                # Rotate clockwise
+                new_rotate_value =\
+                    self.rotate_current_value.rotate_current_value \
+                    + self.rotate_speed.rotate_speed \
+                    * AnimationSpeed.delta
 
-                # Should we run a specific script now that the rotating 
-                # animation has stopped for this sprite?
-                if self.rotate_stop_run_script and \
-                   self.rotate_stop_run_script.reusable_script_name:
+                if new_rotate_value < 0:
+                    new_rotate_value = 360
 
-                    # Get the name of the script we need to run now.
-                    reusable_script_name =\
-                        self.rotate_stop_run_script.reusable_script_name
-                    
-                    # Try to get the arguments value, if there is one.
-                    arguments =\
-                        Passer.active_story.reader.\
-                        try_get_arguments_attribute(self.rotate_stop_run_script)
+                self.rotate_current_value = self.rotate_current_value._replace \
+                    (rotate_current_value=new_rotate_value)
 
-                    # Clear the variable that holds information about which 
-                    # script we need to run because we're about to load that 
-                    # specified script below.
-                    
-                    # If we don't clear this variable, it will run the 
-                    # specified script again once the sprite stops rotating 
-                    # next time.
-                    self.rotate_stop_run_script = None
+        # Have we reached a destination rotation which caused the 
+        # rotating to stop?
+        if reached_destination_rotate:
+            # Yes, the rotation has now stopped because we've reached a 
+            # specific rotation value.
 
-                    # Run the script that is supposed to run now that this 
-                    # sprite has stopped rotating.
+            # Should we run a specific script now that the rotating 
+            # animation has stopped for this sprite?
+            if self.rotate_stop_run_script and \
+               self.rotate_stop_run_script.reusable_script_name:
+
+                # Get the name of the script we need to run now.
+                reusable_script_name =\
+                    self.rotate_stop_run_script.reusable_script_name
+                
+                # Try to get the arguments value, if there is one.
+                arguments =\
                     Passer.active_story.reader.\
-                        spawn_new_background_reader(
-                            reusable_script_name=reusable_script_name,
-                            arguments=arguments)
+                    try_get_arguments_attribute(self.rotate_stop_run_script)
 
-                return
+                # Clear the variable that holds information about which 
+                # script we need to run because we're about to load that 
+                # specified script below.
+                
+                # If we don't clear this variable, it will run the 
+                # specified script again once the sprite stops rotating 
+                # next time.
+                self.rotate_stop_run_script = None
+
+                # Run the script that is supposed to run now that this 
+                # sprite has stopped rotating.
+                Passer.active_story.reader.\
+                    spawn_new_background_reader(
+                        reusable_script_name=reusable_script_name,
+                        arguments=arguments)
+
+            return
 
         ## Skipping the animation in this frame due to a delay?
         ## Don't apply the current value of the animation effect
@@ -1200,134 +1146,116 @@ class SpriteObject:
                     self.scale_until, self.scale_type)):
             return
 
-        # Initialize for below
-        skip_scale = False
 
-        # Should we skip scaling this sprite in this frame, due to a scale delay?
-        if self.scale_delay_main:
-            if self.scale_delay_main.frames_skipped_so_far >= self.scale_delay_main.scale_delay.scale_delay:
-                # Don't skip this frame for the scale effect,
-                # it has been delayed enough times already.
-                self.scale_delay_main.frames_skipped_so_far = 0
+        # Are we scaling up or scaling down?
+        # We need to know so we can determine when to stop the scaling.        
+        if self.scale_type == ScaleType.SCALE_UP:
+            
+            # Has the sprite reached the destination scale while
+            # scaling up?
+            if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
+                self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
+            
+        elif self.scale_type == ScaleType.SCALE_DOWN:
+            
+            # Has the sprite reached the destination scale while 
+            # scaling down?
+            if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
+                
+                # The sprite has reached the destination scale.
+                self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
+
+        # Initialize
+        reached_destination_scale = False
+
+        # Has the sprite reached the destination scale value?
+        if self.scale_type in (ScaleType.SCALE_UP,
+                               ScaleType.SCALE_REACHED_DESTINATION):
+            
+            # We either need to keep scaling-up or we've already reached
+            # the final scale-up or scale-down and we need to use this block
+            # to stop the scale effect.                
+            
+            if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
+                # Stop the scaling
+                self.stop_scaling()
+                reached_destination_scale = True
             else:
-                # Don't scale in this frame and increment skipped counter
-                self.scale_delay_main.frames_skipped_so_far += 1
-                skip_scale = True
+                # Increment scaling
+                new_scale_value =\
+                    self.scale_current_value.scale_current_value \
+                    + self.scale_speed.scale_speed \
+                    * AnimationSpeed.delta
                 
-        if skip_scale:
-            return
+                if new_scale_value >= self.scale_until.scale_until:
+                    new_scale_value = self.scale_until.scale_until
 
-        if not skip_scale:
+                self.scale_current_value =\
+                    self.scale_current_value._replace(
+                        scale_current_value=new_scale_value)
 
-            # Are we scaling up or scaling down?
-            # We need to know so we can determine when to stop the scaling.        
-            if self.scale_type == ScaleType.SCALE_UP:
+        elif self.scale_type == ScaleType.SCALE_DOWN:
+            
+            if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
+                # Stop the scaling
+                self.stop_scaling()
+                reached_destination_scale = True
+            else:
                 
-                # Has the sprite reached the destination scale while
-                # scaling up?
-                if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
-                    self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
+                # A positive value will scale up the sprite.
+                # A negative value(such as -0.00050) will scale down a 
+                # sprite.            
+                scale_down_float = -abs(self.scale_speed.scale_speed)                    
                 
-            elif self.scale_type == ScaleType.SCALE_DOWN:
+                # Decrease scaling
+                new_scale_value =\
+                    self.scale_current_value.scale_current_value \
+                    + scale_down_float \
+                    * AnimationSpeed.delta
                 
-                # Has the sprite reached the destination scale while 
-                # scaling down?
-                if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
-                    
-                    # The sprite has reached the destination scale.
-                    self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
+                if new_scale_value <= 0:
+                    new_scale_value = 0
 
-            # Initialize
-            reached_destination_scale = False
+                self.scale_current_value =\
+                    self.scale_current_value._replace(
+                        scale_current_value=new_scale_value)
 
-            # Has the sprite reached the destination scale value?
-            if self.scale_type in (ScaleType.SCALE_UP,
-                                   ScaleType.SCALE_REACHED_DESTINATION):
+        # Have we reached a destination scaling which caused the scaling 
+        # to stop?
+        if reached_destination_scale:
+            # Yes, the scaling has now stopped because we've reached a 
+            # specific scaling value.
+
+            # Should we run a specific script now that the scaling animation
+            # has stopped for this sprite?
+            if self.scale_stop_run_script and \
+                    self.scale_stop_run_script.reusable_script_name:
+
+                # Get the name of the script we need to run now.
+                reusable_script_name =\
+                    self.scale_stop_run_script.reusable_script_name
                 
-                # We either need to keep scaling-up or we've already reached
-                # the final scale-up or scale-down and we need to use this block
-                # to stop the scale effect.                
-                
-                if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
-                    # Stop the scaling
-                    self.stop_scaling()
-                    reached_destination_scale = True
-                else:
-                    # Increment scaling
-                    new_scale_value =\
-                        self.scale_current_value.scale_current_value \
-                        + self.scale_speed.scale_speed \
-                        * AnimationSpeed.delta
-                    
-                    if new_scale_value >= self.scale_until.scale_until:
-                        new_scale_value = self.scale_until.scale_until
-
-                    self.scale_current_value =\
-                        self.scale_current_value._replace(
-                            scale_current_value=new_scale_value)
-
-            elif self.scale_type == ScaleType.SCALE_DOWN:
-                
-                if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
-                    # Stop the scaling
-                    self.stop_scaling()
-                    reached_destination_scale = True
-                else:
-                    
-                    # A positive value will scale up the sprite.
-                    # A negative value(such as -0.00050) will scale down a 
-                    # sprite.            
-                    scale_down_float = -abs(self.scale_speed.scale_speed)                    
-                    
-                    # Decrease scaling
-                    new_scale_value =\
-                        self.scale_current_value.scale_current_value \
-                        + scale_down_float \
-                        * AnimationSpeed.delta
-                    
-                    if new_scale_value <= 0:
-                        new_scale_value = 0
-
-                    self.scale_current_value =\
-                        self.scale_current_value._replace(
-                            scale_current_value=new_scale_value)
-
-            # Have we reached a destination scaling which caused the scaling 
-            # to stop?
-            if reached_destination_scale:
-                # Yes, the scaling has now stopped because we've reached a 
-                # specific scaling value.
-
-                # Should we run a specific script now that the scaling animation
-                # has stopped for this sprite?
-                if self.scale_stop_run_script and \
-                        self.scale_stop_run_script.reusable_script_name:
-
-                    # Get the name of the script we need to run now.
-                    reusable_script_name =\
-                        self.scale_stop_run_script.reusable_script_name
-                    
-                    # Try to get the arguments value, if there is one.
-                    arguments =\
-                        Passer.active_story.reader.\
-                        try_get_arguments_attribute(self.scale_stop_run_script)
-                    
-                    # Clear the variable that holds information about which 
-                    # script we need to run because we're about to load that 
-                    # specified script below.
-                    # If we don't clear this variable, it will run the 
-                    # specified script again once the sprite stops scaling 
-                    # next time.
-                    self.scale_stop_run_script = None
-
-                    # Run the script that is supposed to run now that this 
-                    # sprite has stopped scaling.
+                # Try to get the arguments value, if there is one.
+                arguments =\
                     Passer.active_story.reader.\
-                        spawn_new_background_reader(
-                            reusable_script_name=reusable_script_name,
-                            arguments=arguments)
+                    try_get_arguments_attribute(self.scale_stop_run_script)
+                
+                # Clear the variable that holds information about which 
+                # script we need to run because we're about to load that 
+                # specified script below.
+                # If we don't clear this variable, it will run the 
+                # specified script again once the sprite stops scaling 
+                # next time.
+                self.scale_stop_run_script = None
 
-                return
+                # Run the script that is supposed to run now that this 
+                # sprite has stopped scaling.
+                Passer.active_story.reader.\
+                    spawn_new_background_reader(
+                        reusable_script_name=reusable_script_name,
+                        arguments=arguments)
+
+            return
 
         ## Skipping the animation in this frame due to a delay?
         ## Don't apply the current value of the animation effect
@@ -1636,166 +1564,138 @@ class SpriteObject:
             return
         
 
-        # Initialize for below
-        skip_fade = False
+        # Are we fading-in or fading-out? We need to know so that we can
+        # determine when to stop the fade.
+        if self.current_fade_value.current_fade_value < self.fade_until.fade_value:
+            fade_type = FadeType.FADE_IN
+            
+        elif self.current_fade_value.current_fade_value > self.fade_until.fade_value:
+            fade_type = FadeType.FADE_OUT
+            
+        else:
+            # The fade value has reached its fade_until value.
+            fade_type = FadeType.FADE_REACHED_DESTINATION
 
-        # Should we skip fading this sprite in this frame, due to a fade delay?
-        if self.fade_delay_main:
-            if self.fade_delay_main.frames_skipped_so_far >= self.fade_delay_main.fade_delay.fade_delay:
-                # Don't skip this frame for the fade effect,
-                # it has been delayed enough times already.
-                self.fade_delay_main.frames_skipped_so_far = 0
+        # Initialize
+        reached_destination_fade = False
+
+        # Has the sprite reached the destination fade value?
+        if fade_type in (FadeType.FADE_IN,
+                         FadeType.FADE_REACHED_DESTINATION):
+            
+            # We either need to keep fading-in or we've already reached
+            # the final fade-in or fade-out and we need to use this block
+            # to stop the fade effect.
+            if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
+
+                # We've reached the destination fade value, so stop fading.
+                self.stop_fading()
+
+                reached_destination_fade = True
             else:
-                # Don't fade in this frame and increment skipped counter
-                self.fade_delay_main.frames_skipped_so_far += 1
-                skip_fade = True
-                
-        # Skipping the animation in this frame due to a delay?
-        # Don't apply the current value of the animation effect
-        # if it's the *only* active animation.
-        if skip_fade:
-            return
-            #if self._is_only_active_animation(animation_type=SpriteAnimationType.FADE):
-                ## Don't apply this animation in this frame,
-                ## because it's the only animation and it's currently
-                ## on a delayed pause.
-                #return
+                # Increment fade
 
-
-        if not skip_fade:
-
-            # Are we fading-in or fading-out? We need to know so that we can
-            # determine when to stop the fade.
-            if self.current_fade_value.current_fade_value < self.fade_until.fade_value:
-                fade_type = FadeType.FADE_IN
+                # Calculate the change in fade value that occurred in the 
+                # time delta
+                fade_change_this_frame =\
+                    self.fade_speed.fade_speed * AnimationSpeed.delta
                 
-            elif self.current_fade_value.current_fade_value > self.fade_until.fade_value:
-                fade_type = FadeType.FADE_OUT
+                # Add this change from the current fade value to get 
+                # the new fade value
+                self.calculated_fade_value += fade_change_this_frame
                 
+                # Don't allow the calculated fade value to go beyond 255.
+                if self.calculated_fade_value > 255:
+                    self.calculated_fade_value = 255
+                
+                # Convert the float fade value to an int, because
+                # pygame uses the int value to set the opacity, not a float.
+                new_fade_value = int(self.calculated_fade_value)
+
+                # Set what the new int fade value should be so that it gets
+                # applied to the sprite later on.
+                self.current_fade_value =\
+                    self.current_fade_value._replace(current_fade_value=new_fade_value)
+
+                
+        elif fade_type == FadeType.FADE_OUT:
+            if self.current_fade_value.current_fade_value <= self.fade_until.fade_value:
+
+                # We've reached the destination fade out value.
+                # Set a flag so we can check if a reusable script needs to run
+                reached_destination_fade = True
+
+                # The sprite has reached its fade-value destination,
+                # so stop the fade-out animation.
+                self.stop_fading()
+
             else:
-                # The fade value has reached its fade_until value.
-                fade_type = FadeType.FADE_REACHED_DESTINATION
+                # Decrease fade
 
-            # Initialize
-            reached_destination_fade = False
-
-            # Has the sprite reached the destination fade value?
-            if fade_type in (FadeType.FADE_IN,
-                             FadeType.FADE_REACHED_DESTINATION):
+                # Calculate the change in fade value that occurred in the 
+                # time delta
+                fade_change_this_frame =\
+                    self.fade_speed.fade_speed * AnimationSpeed.delta
                 
-                # We either need to keep fading-in or we've already reached
-                # the final fade-in or fade-out and we need to use this block
-                # to stop the fade effect.
-                if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
-
-                    # We've reached the destination fade value, so stop fading.
-                    self.stop_fading()
-
-                    reached_destination_fade = True
-                else:
-                    # Increment fade
-
-                    # Calculate the change in fade value that occurred in the 
-                    # time delta
-                    fade_change_this_frame =\
-                        self.fade_speed.fade_speed * AnimationSpeed.delta
-                    
-                    # Add this change from the current fade value to get 
-                    # the new fade value
-                    self.calculated_fade_value += fade_change_this_frame
-                    
-                    # Don't allow the calculated fade value to go beyond 255.
-                    if self.calculated_fade_value > 255:
-                        self.calculated_fade_value = 255
-                    
-                    # Convert the float fade value to an int, because
-                    # pygame uses the int value to set the opacity, not a float.
-                    new_fade_value = int(self.calculated_fade_value)
-
-                    # Set what the new int fade value should be so that it gets
-                    # applied to the sprite later on.
-                    self.current_fade_value =\
-                        self.current_fade_value._replace(current_fade_value=new_fade_value)
-
-                    
-            elif fade_type == FadeType.FADE_OUT:
-                if self.current_fade_value.current_fade_value <= self.fade_until.fade_value:
-
-                    # We've reached the destination fade out value.
-                    # Set a flag so we can check if a reusable script needs to run
-                    reached_destination_fade = True
-
-                    # The sprite has reached its fade-value destination,
-                    # so stop the fade-out animation.
-                    self.stop_fading()
-
-                else:
-                    # Decrease fade
-
-                    # Calculate the change in fade value that occurred in the 
-                    # time delta
-                    fade_change_this_frame =\
-                        self.fade_speed.fade_speed * AnimationSpeed.delta
-                    
-                    # Subtract this change from the current fade value to get 
-                    # the new fade value
-                    self.calculated_fade_value -= fade_change_this_frame
-                    
-                    # Don't allow the calculated fade value to go below 0.
-                    if self.calculated_fade_value < 0:
-                        self.calculated_fade_value = 0
-                    
-                    # Convert the float fade value to an int, because
-                    # pygame uses the int value to set the opacity, not a float.
-                    new_fade_value = int(self.calculated_fade_value)
-
-                    # Set what the new int fade value should be so that it gets
-                    # applied to the sprite later on.
-                    self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
-                    
-
-            # Have we reached a destination fade which caused the fade to stop?
-            if reached_destination_fade:
-                # Yes, the fade has now stopped because we've reached a specific fade value.
+                # Subtract this change from the current fade value to get 
+                # the new fade value
+                self.calculated_fade_value -= fade_change_this_frame
                 
-                # Reset the fade_until value
-                self.fade_until = None
+                # Don't allow the calculated fade value to go below 0.
+                if self.calculated_fade_value < 0:
+                    self.calculated_fade_value = 0
+                
+                # Convert the float fade value to an int, because
+                # pygame uses the int value to set the opacity, not a float.
+                new_fade_value = int(self.calculated_fade_value)
 
-                # Should we run a specific script now that the fade animation
-                # has stopped for this sprite?
-                if self.fade_stop_run_script \
-                   and self.fade_stop_run_script.reusable_script_name:
+                # Set what the new int fade value should be so that it gets
+                # applied to the sprite later on.
+                self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
+                
 
-                    # Get the name of the script we need to run now.
-                    reusable_script_name =\
-                        self.fade_stop_run_script.reusable_script_name
+        # Have we reached a destination fade which caused the fade to stop?
+        if reached_destination_fade:
+            # Yes, the fade has now stopped because we've reached a specific fade value.
+            
+            # Reset the fade_until value
+            self.fade_until = None
 
-                    # Try to get the arguments attribute value, if there is one.
-                    arguments =\
-                        Passer.active_story.reader.\
-                        try_get_arguments_attribute(self.fade_stop_run_script)                 
+            # Should we run a specific script now that the fade animation
+            # has stopped for this sprite?
+            if self.fade_stop_run_script \
+               and self.fade_stop_run_script.reusable_script_name:
 
-                    # Clear the variable that holds information about which 
-                    # script we need to run because we're about to load that 
-                    # specified script below.
-                    # If we don't clear this variable, it will run the 
-                    # specified script again once the sprite stops fading 
-                    # next time.
-                    self.fade_stop_run_script = None
+                # Get the name of the script we need to run now.
+                reusable_script_name =\
+                    self.fade_stop_run_script.reusable_script_name
 
-                    # Run the script that is supposed to run, 
-                    # now that this sprite has stopped fading.
+                # Try to get the arguments attribute value, if there is one.
+                arguments =\
                     Passer.active_story.reader.\
-                        spawn_new_background_reader(
-                            reusable_script_name=reusable_script_name,
-                            arguments=arguments)
+                    try_get_arguments_attribute(self.fade_stop_run_script)                 
 
-                # Apply the fade effect one last time for the destination fade amount
-                # that we're in. Without this, the destination fade amount
-                # won't get blitted.
-                # self._fade_sprite()
+                # Clear the variable that holds information about which 
+                # script we need to run because we're about to load that 
+                # specified script below.
+                # If we don't clear this variable, it will run the 
+                # specified script again once the sprite stops fading 
+                # next time.
+                self.fade_stop_run_script = None
 
-                return
+                # Run the script that is supposed to run, 
+                # now that this sprite has stopped fading.
+                Passer.active_story.reader.\
+                    spawn_new_background_reader(
+                        reusable_script_name=reusable_script_name,
+                        arguments=arguments)
+
+            # Apply the fade effect one last time for the destination fade amount
+            # that we're in. Without this, the destination fade amount
+            # won't get blitted.
+            # self._fade_sprite()
+
+            return
 
     def _fade_sprite(self, skip_copy_original_image: bool = False):
         """
@@ -1985,7 +1885,7 @@ class SpriteObject:
 
     def _animate_movement(self):
         """
-        Move the sprite (if required) and obey any delay rules for the movement.
+        Move the sprite (if required) based on the sprite's movement speed.
 
         Return: None
         """
@@ -2116,56 +2016,21 @@ class SpriteObject:
 
                     return
 
-        # For now, we'll assume we will be moving both x and y
-        proceed_move_x = True
-        proceed_move_y = True
 
-        # Should we delay/skip the movement of this sprite?
-        if self.movement_delay:
-            # Yes, we need to consider the delay of x or y or both.
-
-            # Are we delaying the movement of x?
-            if self.movement_delay.x > 0:
-                # Yes, consider delaying the movement of x
-
-                # Increment delay counter so we can keep track of how many frames we've skipped so far.
-                self.delay_frame_counter_x += 1
-
-                # Have we skipped the movement of x enough times?
-                if self.delay_frame_counter_x < self.movement_delay.x:
-                    # We haven't skipped enough times.
-                    proceed_move_x = False
-                else:
-                    # We've skipped enough times, to reset the delay counter.
-                    # At this point, we will proceed with moving x.
-                    self.delay_frame_counter_x = 0
-
-            # Are we delaying the movement of y?
-            if self.movement_delay.y > 0:
-                # Yes, consider delaying the movement of y
-
-                # Increment delay counter so we can keep track of how many frames we've skipped so far.
-                self.delay_frame_counter_y += 1
-
-                # Have we skipped the movement of y enough times?
-                if self.delay_frame_counter_y < self.movement_delay.y:
-                    # We haven't skipped enough times.
-                    proceed_move_y = False
-                else:
-                    # We've skipped enough times, to reset the delay counter.
-                    # At this point, we will proceed with moving y.
-                    self.delay_frame_counter_y = 0
-
-        if proceed_move_x:
+        if self.movement_speed.x:
             # Move the X position
-            self.pos_moving_x += self.movement_speed.x * AnimationSpeed.delta
-            self.rect.x = int(self.pos_moving_x)
+            self.calculated_pos_moving_x +=\
+                self.movement_speed.x * AnimationSpeed.delta
+            
+            self.rect.x = int(self.calculated_pos_moving_x)
             # self.rect.move_ip(int(self.pos_x), 0)
 
-        if proceed_move_y:
+        if self.movement_speed.y:
             # Move the Y position
-            self.pos_moving_y += self.movement_speed.y * AnimationSpeed.delta
-            self.rect.y = int(self.pos_moving_y)
+            self.calculated_pos_moving_y +=\
+                self.movement_speed.y * AnimationSpeed.delta
+            
+            self.rect.y = int(self.calculated_pos_moving_y)
             # self.rect.move_ip(0, self.movement_speed.y)
 
 

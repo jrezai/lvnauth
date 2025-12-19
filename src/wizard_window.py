@@ -4393,7 +4393,7 @@ class SharedPages:
         
         For example: <character_move: rave, 50, 100> which means move the
         sprite horizontally by 50 pixels each time and 100 pixels vertically
-        each time. The ‘time’ portion depends on <character_move_delay>
+        each time. The ‘time’ portion depends on the movement speed.
         """
     
         def __init__(self, parent_frame, header_label, purpose_label,
@@ -6221,7 +6221,7 @@ class SharedPages:
         1 Label
         1 Combobox
         
-        (below only if frames_delay flag is set)
+        (below only if show_delay_widgets flag is set)
         1 Label
         1 Spinbox widget.
         """
