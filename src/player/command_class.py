@@ -59,7 +59,7 @@ class Continue(NamedTuple):
 
 
 class HaltAuto(NamedTuple):
-    number_of_frames: int
+    number_of_seconds: float
 
 
 

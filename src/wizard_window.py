@@ -1228,11 +1228,12 @@ class WizardWindow:
                            parent_display_text="Dialog",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
-                           purpose_line="Pause the dialog text for a specific number of frames.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of frames have\nelapsed (specified below).",
-                           scale_instructions="Choose the number of frames to halt the dialog.\nNote: 60 frames is 1 second.",
+                           purpose_line="Pause the dialog text for a specific number of seconds.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of seconds have\nelapsed (specified below).",
+                           scale_instructions="Choose the number of seconds to halt the dialog.\nSeconds as a decimal can be used, such as 0.5 (half a second).",
                            scale_from_value=1,
-                           scale_to_value=600,
-                           scale_default_value=120,
+                           scale_to_value=300,
+                           scale_default_value=4,
+                           scale_type=float, 
                            group_name=GroupName.PAUSE)
         
         page_dialog_halt_and_pause = \

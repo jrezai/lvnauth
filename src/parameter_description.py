@@ -130,7 +130,7 @@ class ParameterDescription:
                      "character_on_mouse_enter": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "character_on_mouse_leave": ("Alias", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "text_dialog_define": ("Width (pixels)", "Height (pixels)", "Animation speed (1 to 100)", "Intro animation", "Outro animation", "Anchor", "Background color (hex)", "X padding", "Y padding", "Opacity (0 to 255)", "Rounded corners", "Reusable script name to run when intro animation starting", "Reusable script name to run when intro animation finishes", "Reusable script name to run when outro animation starting", "Reusable script name to run when outro animation finishes", "Reusable script name to run when <halt> is used", "Reusable script name to run when the story unhalts after using <halt>", "Border color (hex)", "Border opacity (0 to 255)", "Border thickness"),
-                     "halt_auto": ("Number of frames to halt the dialog",), 
+                     "halt_auto": ("Number of seconds to halt the dialog",), 
                      "continue": ("(optional) Manual Y position",),
                      
                      "load_dialog_sprite": ("Dialog sprite name", "Alias"),

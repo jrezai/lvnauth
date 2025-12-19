@@ -261,7 +261,7 @@ class ActiveStory:
         
         # In non-automated halt-mode? Look for a mouse click to advance the story.
         if self.reader.halt_main_script \
-           and not self.reader.halt_main_script_auto_mode_frames:
+           and not self.reader.halt_main_script_auto_mode_seconds_reach:
             
             # Advance the story if a mouse button was clicked.
             if event.type == pygame.MOUSEBUTTONDOWN:

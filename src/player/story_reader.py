@@ -327,15 +327,15 @@ class StoryReader:
             self.pause_main_script = False
 
             # When halted in auto-mode, a mouse click or keyboard press won't
-            # advance the story. Instead, the story will be advanced automatically
-            # after X number of frames have elapsed.
-            self.halt_main_script_auto_mode_frames = 0
+            # advance the story. Instead, the story will be advanced 
+            # automatically after X number of seconds have elapsed.
+            self.halt_main_script_auto_mode_seconds_reach = 0
 
-            # This will increment until we reach the frame count above.
-            self.halt_main_script_frame_counter = 0
+            # This will increment until we reach the seconds count above.
+            self.halt_main_script_seconds_counter = 0
 
             # Used for starting a timer which runs a reusable script
-            # after X number of frames have elapsed.
+            # after X number of seconds have elapsed.
             self.after_manager = AfterManager(
                 method_spawn_background_reader=self.spawn_new_background_reader
             )
@@ -1130,10 +1130,10 @@ class StoryReader:
         elif command_name == "halt_auto":
             """
             Same as <halt> except it won't respond to mouse or keyboard
-            events until X number of frames have elapsed.
+            events until X number of seconds have elapsed.
 
             In other words, it will automatically 'click'
-            after X number of frames.
+            after X number of seconds.
             """
             self._halt_auto(arguments=arguments)
 
@@ -2283,19 +2283,20 @@ class StoryReader:
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        if main_reader.halt_main_script_auto_mode_frames:
+        if main_reader.halt_main_script_auto_mode_seconds_reach:
             # We're in auto-halt mode
 
-            # Have we reached the number of frames that we need to wait?
+            # Have we reached the number of seconds that we need to wait?
             if (
-                main_reader.halt_main_script_frame_counter
-                >= main_reader.halt_main_script_auto_mode_frames
+                main_reader.halt_main_script_seconds_counter
+                >= main_reader.halt_main_script_auto_mode_seconds_reach
             ):
 
                 # Yes, we've reached the amount needed to wait.
 
                 # Now we can reset the counter and unhalt the story.
-                # The unhalt() method below will reset the halt_auto counter variables.
+                # The unhalt() method below will reset the halt_auto 
+                # counter variables.
                 main_reader.unhalt()
 
             else:
@@ -2307,22 +2308,24 @@ class StoryReader:
                 # dialog letters have finished being displayed.
                 # Reason: if we don't have this check, halt_auto's counter might
                 # finish before all the letters have finished being displayed.
-                if main_reader.active_font_handler.font_animation.is_start_animating:
+                if main_reader.active_font_handler.font_animation.\
+                   is_start_animating:
                     return
 
-                # Increment the frame counter
-                main_reader.halt_main_script_frame_counter += 1
+                # Increment the seconds counter
+                main_reader.\
+                    halt_main_script_seconds_counter += AnimationSpeed.delta
 
-    def halt(self, automate_after_frame_count: int = 0):
+    def halt(self, automate_after_seconds_count: int = 0):
         """
         Pause the reading of the main script
         until the user clicks the mouse.
 
         Arguments:
 
-        - automate_after_frame_count: if specified (>0), it will be considered
+        - automate_after_seconds_count: if specified (>0), it will be considered
         an automatic halt, which means that the keyboard and mouse won't
-        progress the story. Instead X number of frames must elapse first,
+        progress the story. Instead X number of seconds must elapse first,
         and then the story will unhalt automatically.
         """
 
@@ -2344,7 +2347,8 @@ class StoryReader:
         main_reader.halt_main_script = True
 
         # Automated halt flag (if > 0)
-        main_reader.halt_main_script_auto_mode_frames = automate_after_frame_count
+        main_reader.halt_main_script_auto_mode_seconds_reach =\
+            automate_after_seconds_count
 
         # So <continue> can't be used after using the <halt> command.
         main_reader.active_font_handler.next_letter_x_position_continue = None
@@ -2420,10 +2424,10 @@ class StoryReader:
 
         # Reset halt_auto variables, if they were used.
         # Note: these two variables need to be here, *after* stop_intro_animation() above,
-        # because stop_intro_animation() will try and run reusable_on_halt, which we shouldn't
-        # if we just came out of halt_auto.
-        main_reader.halt_main_script_auto_mode_frames = 0
-        main_reader.halt_main_script_frame_counter = 0
+        # because stop_intro_animation() will try and run reusable_on_halt, 
+        # which we shouldn't if we just came out of halt_auto.
+        main_reader.halt_main_script_auto_mode_seconds_reach = 0
+        main_reader.halt_main_script_seconds_counter = 0
 
         # Clear the current letter list because we should make way for
         # other dialog text.
@@ -4851,33 +4855,32 @@ class StoryReader:
         """
         Use a timed <halt> command which is like a normal <halt> command
         but will not respond to mouse clicks or keyboard presses
-        until X number of frames has passed.
+        until X number of seconds has passed.
 
         Arguments:
 
-        - arguments: this is the number of frames to elapse while halting.
+        - arguments: this is the number of seconds to elapse while halting.
 
         Return: None
         """
         halt_auto: cc.HaltAuto
         halt_auto = self._get_arguments(
-            class_namedtuple=cc.HaltAuto, given_arguments=arguments
-        )
+            class_namedtuple=cc.HaltAuto, given_arguments=arguments)
 
         if not halt_auto:
             return
 
-        # Make sure the number of frames is an integer.
+        # Make sure the number of seconds is a float.
         try:
-            frames_to_elapse = int(halt_auto.number_of_frames)
+            seconds_to_elapse = float(halt_auto.number_of_seconds)
         except ValueError:
             return
         else:
             # Don't allow zero or a negative value.
-            if frames_to_elapse <= 0:
+            if seconds_to_elapse <= 0:
                 return
 
-        self.halt(automate_after_frame_count=frames_to_elapse)
+        self.halt(automate_after_seconds_count=seconds_to_elapse)
 
     def _no_clear(self):
         """

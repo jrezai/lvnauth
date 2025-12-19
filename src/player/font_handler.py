@@ -1127,9 +1127,10 @@ class FontAnimation:
             main_reader = Passer.active_story.reader.get_main_story_reader()
 
             # Run reusable_on_halt, if we're not in halt_auto mode.
-            # halt_auto should not show on_halt animations, because it will proceed on its own.
+            # halt_auto should not show on_halt animations, because it will 
+            # proceed on its own.
             if Passer.active_story.dialog_rectangle.reusable_on_halt and \
-                    not main_reader.halt_main_script_auto_mode_frames:
+                    not main_reader.halt_main_script_auto_mode_seconds_reach:
                 Passer.active_story.reader.spawn_new_background_reader(
                     reusable_script_name=Passer.active_story.dialog_rectangle.reusable_on_halt)
 
