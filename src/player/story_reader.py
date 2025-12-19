@@ -69,39 +69,39 @@ class AfterCounter:
     """
     Used with the AfterManager class.
 
-    Purpose: to keep track of how many frames need to be skipped
-    and how many frames have been skipped so far.
+    Purpose: to keep track of how many seconds need to elapse
+    and how many seconds have elapsed so far.
     """
 
-    def __init__(self, frames_to_skip: int, optional_arguments: str = None):
+    def __init__(self, seconds_to_wait: float, optional_arguments: str = None):
         """
         Arguments:
 
-        - frames_to_skip: the number of frames to elapse
-        until the reusable script is run.
+        - seconds_to_wait: the number of seconds to elapse until the
+        reusable script is run.
 
         - optional_arguments: arguments to pass to the reusable script
         once the number of frames has been satisfied.
         """
 
-        self.frames_to_skip = frames_to_skip
-        self.frames_skipped_so_far = 0
+        self.seconds_to_wait:float = seconds_to_wait
+        self.seconds_waited_so_far:float = 0
 
         self.optional_arguments = optional_arguments
 
     def elapse(self):
         """
-        Elapse/increment by 1 frame.
+        Elapse/increment by delta time.
         """
-        self.frames_skipped_so_far += 1
+        self.seconds_waited_so_far += AnimationSpeed.delta
 
     def is_ready(self) -> bool:
         """
-        Return True if the number of frames that has been skipped
+        Return True if the number of seconds that has been skipped
         has reached its limit.
         """
 
-        return self.frames_skipped_so_far >= self.frames_to_skip
+        return self.seconds_waited_so_far >= self.seconds_to_wait
 
 
 class AfterManager:
@@ -132,28 +132,24 @@ class AfterManager:
         # We'll need this method in the tick_elapse() method.
         self.method_spawn_background_reader = method_spawn_background_reader
 
-    def add_timer(
-        self,
-        reusable_script_name: str,
-        frames_to_skip: int,
-        optional_arguments: str | None = None,
-    ):
+    def add_timer(self, reusable_script_name: str, seconds_to_wait: int,
+        optional_arguments: str | None = None):
         """
         Add the given reusable script to a queue so that after X number of
-        frames has been elapsed, run the reusable script and then remove it
+        seconds have elapsed, run the reusable script and then remove it
         from the queue.
         """
 
-        if not reusable_script_name and not frames_to_skip:
+        if not reusable_script_name and not seconds_to_wait:
             return
 
         # Only allow each reusable script to be in the queue one-time.
         if reusable_script_name in self.scripts_and_timers:
             return
 
-        counter = AfterCounter(
-            frames_to_skip=frames_to_skip, optional_arguments=optional_arguments
-        )
+        counter = \
+            AfterCounter(seconds_to_wait=seconds_to_wait,
+                         optional_arguments=optional_arguments)
 
         # Add to dictionary
         self.scripts_and_timers[reusable_script_name] = counter
@@ -181,7 +177,7 @@ class AfterManager:
 
     def tick_elapse(self):
         """
-        Increment all the items in the queue by 1 and then
+        Increment all the items in the queue by delta time and then
         run reusable scripts that need to run.
 
         This method gets run every frame of the story,
@@ -196,7 +192,7 @@ class AfterManager:
         counter: AfterCounter
         for reusable_script_name, counter in self.scripts_and_timers.items():
 
-            # Increment this timer by 1 frame.
+            # Increment this timer by delta time.
             counter.elapse()
 
             # Is this queue ready to run the script?
@@ -215,20 +211,10 @@ class AfterManager:
             # Remove expired timer
             del self.scripts_and_timers[reusable_script_name]
 
-            if optional_arguments:
-                with_arguments = True
-
-                # Combine the reusable script name with the optional arguments
-                # because it gets passed all as one string when spawning
-                # a background reader.
-                reusable_script_name = f"{reusable_script_name},{optional_arguments}"
-            else:
-                with_arguments = False
-
             # Spawn a new background reader so we can run
             # the reusable script that we're iterating on.
             self.method_spawn_background_reader(
-                reusable_script_name, with_arguments=with_arguments
+                reusable_script_name, arguments=optional_arguments
             )
 
 
@@ -536,7 +522,8 @@ class StoryReader:
         # Progress the main story script.
         self.read_story()
 
-        # Increment all After timers (if any) by 1 frame.
+        # Increment all After timers (if any) by the number of seconds
+        # that have elapsed since the last frame in delta time.
         self.after_manager.tick_elapse()
 
         # If this is the main story reader, read the background readers.
@@ -3408,8 +3395,8 @@ class StoryReader:
 
     def after_run(self, arguments):
         """
-        Run a reusable script after X number of frames has elapsed.
-        Example: <after: 30 (frames), reusable script here>
+        Run a reusable script after X number of seconds have elapsed.
+        Example: <after: 5 (seconds), reusable script here>
         """
 
         if arguments.count(",") > 1:
@@ -3433,7 +3420,7 @@ class StoryReader:
         # Create a timer to run the specific reusable script.
         after_manager_method.add_timer(
             reusable_script_name=after_timer.reusable_script_name,
-            frames_to_skip=after_timer.frames_elapse,
+            seconds_to_wait=after_timer.seconds_to_wait,
             optional_arguments=optional_arguments,
         )
 
@@ -3497,7 +3484,8 @@ class StoryReader:
 
         return after_manager_method
 
-    def get_optional_arguments(self, unsorted_arguments_line: str) -> Dict | None:
+    def get_optional_arguments(self,
+                               unsorted_arguments_line: str) -> Dict | None:
         """
         Parse the parameter name(s) and argument value(s) from
         the given line.

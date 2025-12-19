@@ -133,7 +133,7 @@ class ParameterDescription:
                      "halt_auto": ("Number of frames to halt the dialog",), 
                      "continue": ("(optional) Manual Y position",),
                      
-                     "load_dialog_sprite": ("Character sprite name", "Alias"),
+                     "load_dialog_sprite": ("Dialog sprite name", "Alias"),
                      "dialog_sprite_show": ("Sprite name (not alias)", ),
                      "dialog_sprite_hide": ("Alias", ),
                      "dialog_sprite_flip_both": ("Alias", ),
@@ -237,7 +237,7 @@ class ParameterDescription:
                      
                      "scene_with_fade": ("Background color (hex)", "Fade-in speed (1 to 100)", "Fade-out speed (1 to 100)", "Number of seconds to hold", "Chapter name", "Scene name"),
                      "rest": ("Number of frames to pause",),
-                     "after": ("Number of frames to elapse", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
+                     "after": ("Number of seconds to elapse", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "after_cancel": ("Reusable script name",),
                      "call": ("Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "scene": ("Chapter name", "Scene name"),

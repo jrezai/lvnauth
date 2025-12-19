@@ -191,13 +191,13 @@ class FontOutroAnimation(NamedTuple):
 
 
 class AfterWithArguments(NamedTuple):
-    frames_elapse: int
+    seconds_to_wait: float
     reusable_script_name: str
     arguments: str
 
     
 class AfterWithoutArguments(NamedTuple):
-    frames_elapse: int
+    seconds_to_wait: float
     reusable_script_name: str
     
 

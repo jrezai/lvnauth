@@ -2653,14 +2653,14 @@ class WizardWindow:
                                  parent_display_text="General",
                                  sub_display_text="after",
                                  command_name="after",
-                                 purpose_line="Runs a reusable script after a number of frames have elapsed.\n\n"
-                                 "Note: 60 frames is 1 second, 120 frames is 2 seconds, etc.\n"
+                                 purpose_line="Runs a reusable script after a number of seconds have elapsed.\n\n"
+                                 "Note: Decimal values, such as 0.5 or 2.8, can also be used.\n"
                                  "Only one after-timer can be used at a time per reusable script name.", 
-                                 spinbox_instructions="Choose the number of frames to elapse:",
+                                 spinbox_instructions="Choose the number of seconds to elapse:",
                                  from_value=1,
                                  to_value=30000,
-                                 amount_name="number of frames to elapse", 
-                                 spinbox_default_value=120,
+                                 amount_name="number of seconds to elapse", 
+                                 spinbox_default_value=10,
                                  show_delay_widgets=True,
                                  show_additional_argument_widgets=True, 
                                  group_name=GroupName.TIMER)
@@ -6311,19 +6311,25 @@ class SharedPages:
             if not command_class_object:
                 return
             
-            # Only <after> (with or without arguments) uses frames_elapse, 
+            # Only <after> (with or without arguments) uses seconds_elapse, 
             # not <after_cancel> or <call>
             match command_class_object:
-                case cc.AfterWithArguments(frames_elapse, _, _) | \
-                    cc.AfterWithoutArguments(frames_elapse):
+                case cc.AfterWithArguments(seconds_elapse, _, _) | \
+                    cc.AfterWithoutArguments(seconds_elapse):
                     
                     # Verify that it's a valid numeric value.
                     try:
-                        frames_elapse = int(frames_elapse)
-                    except ValueError:
-                        frames_elapse = self.spinbox_default_value
+                        seconds_elapse = float(seconds_elapse)
                         
-                    self.sb_amount.set(frames_elapse)
+                        # Change a decimal value, such as 1.0 to 1
+                        # if it can be evaluated as an integer.
+                        if seconds_elapse.is_integer():
+                            seconds_elapse = int(seconds_elapse)
+                            
+                    except ValueError:
+                        seconds_elapse = self.spinbox_default_value
+                        
+                    self.sb_amount.set(seconds_elapse)
                 
             reusable_script_name = command_class_object.reusable_script_name
             self.cb_reusable_script.insert(0, reusable_script_name)
@@ -6346,7 +6352,7 @@ class SharedPages:
             Return: a dict with the character general alias and an opacity level.
             Example:
             {"ReusableScriptName": "some script name",
-             "DelayFramesAmount": "60"}
+             "SecondsDelay": "60"}
             or None if insufficient information was provided by the user.
             
             In the case of <after> and <call>, there will be an optional
@@ -6356,8 +6362,9 @@ class SharedPages:
             user_input = {}
             
             # There may not be an amount, so we initialize to None.
-            # (the amount is only used for <after>, not <after_cancel> and not <after_cancel_all>
-            delay_frames_amount = None
+            # (the amount is only used for <after>, not <after_cancel> 
+            # and not <after_cancel_all>
+            seconds_delay = None
 
             # Get the amount from the spinbox widget, if it's being shown.
             if self.show_delay_widgets:
@@ -6368,13 +6375,13 @@ class SharedPages:
                                            message=f"Please specify the {self.amount_name}.")
                     return
                 
-                # Attempt to convert frames delay value to an int
+                # Attempt to convert seconds delay value to a float
                 try:
-                    delay_frames_amount = int(amount)
+                    seconds_delay = float(amount)
                 except ValueError:
                     messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
                                            title=f"Numeric Value Expected",
-                                           message=f"A number is expected for the elapse-frames value.")
+                                           message=f"A number is expected for the elapse-seconds value.")
                     return                    
 
             # The reusable script name
@@ -6391,15 +6398,18 @@ class SharedPages:
                 arguments = self.entry_arguments.get().strip()
                 
                 # Make sure the syntax of optional arguments is correct.
-                if not self.is_valid_key_value_arguments(arguments=arguments,
-                                                     is_arguments_required=False):
-                    return
+                if arguments:
+
+                    if not self.is_valid_key_value_arguments(
+                        arguments=arguments,
+                        is_arguments_required=False):
+                        return
                 
             else:
                 arguments = None
 
             user_input = {"ReusableScriptName": reusable_script_name,
-                          "DelayFramesAmount": delay_frames_amount,
+                          "SecondsDelay": seconds_delay,
                           "Arguments": arguments,}
 
             return user_input
@@ -6410,23 +6420,29 @@ class SharedPages:
             """
 
             # The user input will be a dictionary like this:
-            # {"DelayFramesAmount": "120",
+            # {"Seconds": "120",
             # "ReusableScriptName": "some script name"}
             user_inputs = self.check_inputs()
 
             if not user_inputs:
                 return
 
-            delay_frames_amount = user_inputs.get("DelayFramesAmount")
+            seconds_delay = user_inputs.get("SecondsDelay")
             reusable_script_name = user_inputs.get("ReusableScriptName")
             arguments = user_inputs.get("Arguments")
+            
+            # If the number seconds doesn't have decimal places, use an integer
+            # value instead, so instead of 2.0 (seconds) it'll just 
+            # show 2 (seconds)
+            if seconds_delay.is_integer():
+                seconds_delay = int(seconds_delay)
             
             if self.show_delay_widgets:
                 # <after: 60, reusable script name, optional arguments>
                 if arguments:
-                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}, {arguments}>"
+                    return f"<{self.command_name}: {seconds_delay}, {reusable_script_name}, {arguments}>"
                 else:
-                    return f"<{self.command_name}: {delay_frames_amount}, {reusable_script_name}>"
+                    return f"<{self.command_name}: {seconds_delay}, {reusable_script_name}>"
             else:
                 # <after_cancel: reusable script name> or <call: reusable script name, optional arguments>
                 if arguments:
