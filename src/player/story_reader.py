@@ -1139,7 +1139,7 @@ class StoryReader:
 
         elif command_name == "rest":
             """
-            Same as <halt> except the number of frames to pause is specified
+            Same as <halt> except the number of seconds to pause is specified
             and the pause can't be skipped (only pauses the main reader,
             not background readers).
             """
@@ -4892,7 +4892,7 @@ class StoryReader:
 
     def _rest(self, arguments: str):
         """
-        Pause the main story reader for X number of frames.
+        Pause the main story reader for X number of seconds.
         This is similar to <halt> except it's not interactive (mouse-clicking)
         will not unrest it.
 
@@ -4900,30 +4900,31 @@ class StoryReader:
         on dialog text. It can rest without a dialog rectangle, whereas
         <halt_auto> requires a dialog rectangle to be visible.
 
-        It forces the main reader to pause. It has
-        no effect on background readers.
+        It forces the main reader to pause. It has no effect on
+        background readers.
         """
         rest: cc.Rest
-        rest = self._get_arguments(class_namedtuple=cc.Rest, given_arguments=arguments)
+        rest = self._get_arguments(class_namedtuple=cc.Rest,
+                                   given_arguments=arguments)
 
         if not rest:
             return
 
-        # Make sure the number of frames is an integer.
+        # Make sure the number of seconds is a float.
         try:
-            frames_to_elapse = int(rest.number_of_frames)
+            seconds_to_elapse = float(rest.number_of_seconds)
         except ValueError:
             return
         else:
             # Don't allow zero or a negative value.
-            if frames_to_elapse <= 0:
+            if seconds_to_elapse <= 0:
                 return
 
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+        main_reader.rest_handler.setup(seconds_reach=seconds_to_elapse)
 
     def get_sprite_type_from_command(
         self, command_name: str

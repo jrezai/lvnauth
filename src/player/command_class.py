@@ -70,7 +70,7 @@ class CenterSprite(NamedTuple):
 
 
 class Rest(NamedTuple):
-    number_of_frames: int
+    number_of_seconds: float
 
 
 class WaitForAnimation(NamedTuple):

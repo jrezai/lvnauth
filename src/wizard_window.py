@@ -2634,15 +2634,17 @@ class WizardWindow:
                        parent_display_text="General",
                        sub_display_text="rest",
                        command_name="rest",
-                       purpose_line="Pauses all chapter and scene scripts for a specific number of frames.\n"
+                       purpose_line="Pauses all chapter and scene scripts for a number of seconds.\n"
+                       "Seconds as a decimal can also be used, such as 0.5 (half a second)\n\n"
                        "It does not pause reusable scripts, but can be used from a reusable script.\n\n"
                        "Purpose: to give the viewer a break from reading.\n\n"
                        "Example usage: use <rest> to pause the chapter/scenes scripts\n"
                        "and allow the viewer to watch an animation while music is playing.",
-                       scale_instructions="Choose the number of frames to halt chapter/scenes.\nNote: 60 frames is 1 second.",
+                       scale_instructions="Choose the number of seconds to halt chapter/scenes.",
                        scale_from_value=1,
-                       scale_to_value=600,
-                       scale_default_value=120,
+                       scale_to_value=1200,
+                       scale_default_value=5,
+                       scale_type=float, 
                        group_name=GroupName.PAUSE)        
 
         page_after =\
@@ -5939,7 +5941,7 @@ class SharedPages:
                     cc.FontTextFadeSpeed(scale_value) | \
                     cc.Rest(scale_value):
                     
-                    # We've extracted the scale value.
+                    # We've now extracted the scale value.
                     pass
                 
                 case cc.SpriteFontFadeSpeed(sprite_type, general_alias, scale_value) | \
@@ -5955,6 +5957,13 @@ class SharedPages:
                 scale_value = self.scale_type(scale_value)
             except ValueError:
                 scale_value = 1
+                
+            # If the scale value is a float, but the value can be
+            # evaluated as an integer, use an integer instead
+            # to avoid numbers like 1 showing as 1.0
+            if isinstance(scale_value, float):
+                if scale_value.is_integer():
+                    scale_value = int(scale_value)
 
             self.v_scale_value.set(scale_value)
 
@@ -6006,6 +6015,12 @@ class SharedPages:
                 return
 
             scale_value = user_inputs.get("ScaleValue")
+            
+            # If the scale value is a float but can be evaluated
+            # as an int, use an int to avoid numbers like 1.0 (better to have 1)
+            if isinstance(scale_value, float):
+                if scale_value.is_integer():
+                    scale_value = int(scale_value)
             
             # If it's being used in a sprite_text related page,
             # such as <sprite_font>, then check for the two common

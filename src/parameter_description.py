@@ -236,7 +236,7 @@ class ParameterDescription:
                      "sprite_text_clear": ("Sprite type", "Sprite alias"),
                      
                      "scene_with_fade": ("Background color (hex)", "Fade-in speed (1 to 100)", "Fade-out speed (1 to 100)", "Number of seconds to hold", "Chapter name", "Scene name"),
-                     "rest": ("Number of frames to pause",),
+                     "rest": ("Number of seconds to pause",),
                      "after": ("Number of seconds to elapse", "Reusable script name", "*(optional) Arguments to pass to the reusable script"),
                      "after_cancel": ("Reusable script name",),
                      "call": ("Reusable script name", "*(optional) Arguments to pass to the reusable script"),
