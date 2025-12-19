@@ -253,6 +253,13 @@ class Main:
         # Delta is time in seconds since last frame.
         # Used for FPS setting independent physics.
         AnimationSpeed.delta = 0
+        
+        # Frames per second
+        FPS = 60
+        
+        # Used for converting milliseconds to seconds 
+        # (for delta time in seconds)
+        MS_PER_SECOND = 1000
 
         while story.story_running:
 
@@ -289,7 +296,8 @@ class Main:
             pygame.display.flip()
             
             # The number of seconds elapsed in this frame
-            AnimationSpeed.delta = clock.tick(60) / 1000       
+            delta_raw = clock.tick(FPS)
+            AnimationSpeed.delta = delta_raw / MS_PER_SECOND
             
     def check_queue(self):
         """
