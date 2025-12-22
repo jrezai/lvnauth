@@ -159,6 +159,20 @@ class SpriteFontFadeSpeed(NamedTuple):
 class SpriteTextClear(NamedTuple):
     sprite_type: str
     general_alias: str
+    
+    
+    
+class SpriteTintRegular(NamedTuple):
+    general_alias: str
+    speed: int
+    dest_tint: int
+    
+    
+class SpriteTintGlow(NamedTuple):
+    general_alias: str
+    speed: int
+    dest_tint: int
+    glow_keyword: str
 
 
 class Flip(NamedTuple):

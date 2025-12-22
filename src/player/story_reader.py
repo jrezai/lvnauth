@@ -1481,6 +1481,10 @@ class StoryReader:
                 arguments=arguments
             )
 
+        elif command_name == "character_tint":
+            self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
+                              arguments=arguments)
+
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
 
@@ -3744,6 +3748,62 @@ class StoryReader:
                 # When a sprite is manually stopped, stop conditions
                 # don't apply, so clear the stop condition here (if any).
                 sprite.movement_stop_run_script = None
+
+    def _tint_sprite(self,
+                   sprite_type: file_reader.ContentType,
+                   arguments: str):
+        """
+        Start a tint animation on a particular sprite.
+        
+        Arguments:
+        
+        - sprite_type: whether it's a character, object, etc.
+        
+        - arguments: the alias of the sprite, speed of animation,
+        tint destination, and optional 'glow' keyword if it's a glow tint
+        instead of a regular tint.
+        """
+        tint: cc.SpriteTintGlow
+        tint = self._get_arguments(
+            class_namedtuple=cc.SpriteTintGlow,
+            given_arguments=arguments
+        )
+
+        # Not successful with a SpriteTintGlow class?
+        if not tint:
+            
+            # Try to get the arguments with a SpriteTintRegular class instead.
+            # This is the last attempt.
+            tint = self._get_arguments(
+                class_namedtuple=cc.SpriteTintRegular,
+                given_arguments=arguments
+            )
+            
+            if not tint:
+                return
+            
+        elif tint.glow_keyword.strip().lower() != "glow":
+            return
+
+        # Get the active/visible sprite based on the general alias
+        sprite: sd.SpriteObject
+        sprite = self.story.get_visible_sprite(
+            content_type=sprite_type,
+            general_alias=tint.general_alias
+        )
+
+        if not sprite:
+            return
+
+        # Set the speed and destination tint value.
+        if isinstance(tint, cc.SpriteTintRegular):
+            sprite.tint_handler.\
+                start_tint_regular(speed=tint.speed,
+                                   destination_tint=tint.dest_tint)
+            
+        elif isinstance(tint, cc.SpriteTintGlow):
+            sprite.tint_handler.start_tint_glow(speed=tint.speed,
+                                                destination_tint=tint.dest_tint)
 
     def _set_movement_speed(self,
                             sprite_type: file_reader.ContentType,
