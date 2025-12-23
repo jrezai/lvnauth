@@ -168,11 +168,11 @@ class SpriteTintRegular(NamedTuple):
     dest_tint: int
     
     
-class SpriteTintGlow(NamedTuple):
+class SpriteTintBright(NamedTuple):
     general_alias: str
     speed: int
     dest_tint: int
-    glow_keyword: str
+    bright_keyword: str
 
 
 class Flip(NamedTuple):

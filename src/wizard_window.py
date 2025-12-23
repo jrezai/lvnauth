@@ -53,6 +53,7 @@ PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "wizard.ui"
 TEXT_CREATE_DIALOG_UI = PROJECT_PATH / "ui" / "text_create_dialog.ui"
 WAIT_FOR_ANIMATION_UI = PROJECT_PATH / "ui" / "wait_for_animation_dialog.ui"
+TINT_UI = PROJECT_PATH / "ui" / "tint_dialog.ui"
 SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
 REMOTE_GET_UI = PROJECT_PATH / "ui" / "remote_get_dialog.ui"
 REMOTE_SAVE_UI = PROJECT_PATH / "ui" / "remote_save_dialog.ui"
@@ -88,6 +89,7 @@ class GroupName(Enum):
     MOVE = auto()
     POSITION = auto()
     MOUSE = auto()
+    TINT = auto()
 
     # Font
     SPEED = auto()
@@ -729,6 +731,18 @@ class WizardWindow:
                           command_name="character_flip_vertical",
                           purpose_line="Flips the given sprite vertically.",
                           group_name=GroupName.FLIP)
+        
+        page_character_tint =\
+            TintFrameWizard(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Character",
+                            sub_display_text="character_tint",
+                            command_name="character_tint",
+                            purpose_line="Darkens or brightens a given sprite.\n"
+                            "Note: the character sprite must already be visible.",
+                            group_name=GroupName.TINT)
         
 
         page_character_after_fading_stop =\
@@ -2876,6 +2890,8 @@ class WizardWindow:
         self.pages["character_flip_both"] = page_character_flip_both
         self.pages["character_flip_horizontal"] = page_character_flip_horizontal
         self.pages["character_flip_vertical"] = page_character_flip_vertical
+        
+        self.pages["character_tint"] = page_character_tint
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
         self.pages["character_fade_current_value"] = page_character_fade_current_value
@@ -8892,6 +8908,177 @@ class SceneWithFade(WizardListing):
         hold_seconds = user_inputs.get("HoldSeconds")
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
+
+
+class TintFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(TINT_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_tint", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_alias_title:tk.StringVar
+        self.v_alias_title = builder.get_variable("v_alias_title")
+
+        self.entry_alias:EntryWithLimit
+        self.entry_alias = builder.get_object("entry_alias")
+        self.entry_alias.configure(max_length=200)
+
+        self.v_alias:tk.IntVar
+        self.v_alias = builder.get_variable("v_alias")
+        
+        self.v_speed:tk.IntVar
+        self.v_speed = builder.get_variable("v_speed")
+        
+        self.v_tint_amount:tk.IntVar
+        self.v_tint_amount = builder.get_variable("v_tint_amount")
+        
+        # Radio button selection. Either 'dark' or 'bright'.
+        self.v_tint_type:tk.StringVar
+        self.v_tint_type = builder.get_variable("v_tint_type")
+        
+        # Default to 'dark'
+        self.v_tint_type.set("dark")
+
+
+class TintFrameWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.tint_frame = TintFrame(self.frame_content)
+        
+        
+        alias_title = self.tint_frame.v_alias_title.get()
+        alias_title = f"{self.get_purpose_name(title_casing=True)} alias:"
+        self.tint_frame.v_alias_title.set(alias_title)
+        
+        self.tint_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.SpriteTintBright):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        # Alias
+        self.tint_frame.v_alias.set(command_class_object.general_alias)
+        
+        # Animation speed
+        self.tint_frame.v_speed.set(command_class_object.speed)
+        
+        # Tint amount
+        self.tint_frame.v_tint_amount.set(command_class_object.dest_tint)
+        
+        # Glow set? Select the 'Brighten' radio button
+        if hasattr(command_class_object, "bright_keyword"):
+            bright = command_class_object.bright_keyword
+            
+            if bright.strip().lower() == "bright":
+                self.tint_frame.v_tint_type.set("bright")
+        
+        
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        alias = self.tint_frame.v_alias.get().strip()
+        
+        tint_amount = self.tint_frame.v_tint_amount.get()
+        tint_type = self.tint_frame.v_tint_type.get()
+        
+        # Animation speed
+        try:
+            speed = self.tint_frame.v_speed.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation Speed",
+                                 message="The speed is expected to be a number between 1 and 100.")
+            return
+        
+        # Tint amount
+        try:
+            speed = self.tint_frame.v_tint_amount.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Tint Amount",
+                                 message="The tint amount is expected to be a number between 0 and 255.")
+            return            
+
+        # Alias
+        if not alias:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.tint_frame.entry_alias.focus()
+            return
+
+        
+        # Set speed limits (1 to 100)
+        if speed > 100:
+            speed = 100
+        elif speed < 1:
+            speed = 1
+            
+        # Set tint amount limits (0 to 255)
+        if tint_amount > 255:
+            tint_amount = 255
+        elif tint_amount < 0:
+            tint_amount = 0
+
+        
+        if tint_type == "bright":
+            tint_type = "Bright"
+        else:
+            tint_type = "Dark"
+
+        user_input = {"TintType": tint_type,
+                      "SpriteAlias": alias,
+                      "TintAmount": tint_amount,
+                      "TintSpeed": speed}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For # <wait_for_animation: sprite type, sprite alias, animation type>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_alias = user_inputs.get("SpriteAlias")
+        speed = user_inputs.get("TintSpeed")
+        tint_type = user_inputs.get("TintType")
+        tint_amount = user_inputs.get("TintAmount")
+
+        if tint_type == "Dark":
+            command_line = f"<{self.command_name}: {sprite_alias}, {speed}, {tint_amount}>"
+            
+        elif tint_type == "Bright":
+            command_line = f"<{self.command_name}: {sprite_alias}, {speed}, {tint_amount}, bright>"
+            
+        return command_line
 
 
 class WaitForAnimationFrame:

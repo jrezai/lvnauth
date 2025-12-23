@@ -3768,16 +3768,16 @@ class StoryReader:
         - sprite_type: whether it's a character, object, etc.
         
         - arguments: the alias of the sprite, speed of animation,
-        tint destination, and optional 'glow' keyword if it's a glow tint
+        tint destination, and optional 'bright' keyword if it's a glow tint
         instead of a regular tint.
         """
-        tint: cc.SpriteTintGlow
+        tint: cc.SpriteTintBright
         tint = self._get_arguments(
-            class_namedtuple=cc.SpriteTintGlow,
+            class_namedtuple=cc.SpriteTintBright,
             given_arguments=arguments
         )
 
-        # Not successful with a SpriteTintGlow class?
+        # Not successful with a SpriteTintBright class?
         if not tint:
             
             # Try to get the arguments with a SpriteTintRegular class instead.
@@ -3790,7 +3790,7 @@ class StoryReader:
             if not tint:
                 return
             
-        elif tint.glow_keyword.strip().lower() != "glow":
+        elif tint.bright_keyword.strip().lower() != "bright":
             return
 
         # Get the active/visible sprite based on the general alias
@@ -3820,7 +3820,7 @@ class StoryReader:
                 start_tint_regular(speed=speed,
                                    destination_tint=tint.dest_tint)
             
-        elif isinstance(tint, cc.SpriteTintGlow):
+        elif isinstance(tint, cc.SpriteTintBright):
             sprite.tint_handler.start_tint_glow(speed=speed,
                                                 destination_tint=tint.dest_tint)
 
