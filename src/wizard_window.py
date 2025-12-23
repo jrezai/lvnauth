@@ -1376,6 +1376,17 @@ class WizardWindow:
                           purpose_line="Flips the given sprite vertically.",
                           group_name=GroupName.FLIP)
 
+        page_dialog_tint =\
+            TintFrameWizard(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Dialog",
+                            sub_display_text="dialog_sprite_tint",
+                            command_name="dialog_sprite_tint",
+                            purpose_line="Darkens or brightens a given sprite.\n"
+                            "Note: the dialog sprite must already be visible.",
+                            group_name=GroupName.TINT)
     
         page_dialog_after_fading_stop =\
                 CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
@@ -1895,6 +1906,17 @@ class WizardWindow:
                           purpose_line="Flips the given sprite vertically.",
                           group_name=GroupName.FLIP)
         
+        page_object_tint =\
+            TintFrameWizard(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Object",
+                            sub_display_text="object_tint",
+                            command_name="object_tint",
+                            purpose_line="Darkens or brightens a given sprite.\n"
+                            "Note: the object sprite must already be visible.",
+                            group_name=GroupName.TINT)
 
         page_object_after_fading_stop =\
             CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
@@ -2959,6 +2981,8 @@ class WizardWindow:
         self.pages["object_flip_horizontal"] = page_object_flip_horizontal
         self.pages["object_flip_vertical"] = page_object_flip_vertical
         
+        self.pages["object_tint"] = page_object_tint
+        
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
         self.pages["object_fade_current_value"] = page_object_fade_current_value
         self.pages["object_fade_speed"] = page_object_fade_speed
@@ -3015,6 +3039,8 @@ class WizardWindow:
         self.pages["dialog_sprite_flip_both"] = page_dialog_flip_both
         self.pages["dialog_sprite_flip_horizontal"] = page_dialog_flip_horizontal
         self.pages["dialog_sprite_flip_vertical"] = page_dialog_flip_vertical
+        
+        self.pages["dialog_sprite_tint"] = page_dialog_tint
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
         self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value
@@ -9015,7 +9041,7 @@ class TintFrameWizard(WizardListing):
         
         # Tint amount
         try:
-            speed = self.tint_frame.v_tint_amount.get()
+            tint_amount = self.tint_frame.v_tint_amount.get()
         except tk.TclError:
             messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
                                  title="Tint Amount",
