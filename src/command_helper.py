@@ -57,7 +57,8 @@ class CommandHelper:
         "character_hide": cc.SpriteShowHide,
         "character_flip_both": cc.SpriteShowHide,
         "character_flip_horizontal": cc.SpriteShowHide,
-        "character_flip_vertical": cc.SpriteShowHide, 
+        "character_flip_vertical": cc.SpriteShowHide,
+        "character_tint": cc.SpriteTintBright,
         "character_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "character_fade_current_value": cc.FadeCurrentValue,
         "character_fade_speed": cc.FadeSpeed,
@@ -96,7 +97,8 @@ class CommandHelper:
         "dialog_sprite_hide": cc.SpriteShowHide,
         "dialog_sprite_flip_both": cc.SpriteShowHide,
         "dialog_sprite_flip_horizontal": cc.SpriteShowHide,
-        "dialog_sprite_flip_vertical": cc.SpriteShowHide, 
+        "dialog_sprite_flip_vertical": cc.SpriteShowHide,
+        "dialog_sprite_tint": cc.SpriteTintBright,
         "dialog_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_fade_current_value": cc.FadeCurrentValue,
         "dialog_sprite_fade_speed": cc.FadeSpeed,
@@ -132,7 +134,8 @@ class CommandHelper:
         "object_hide": cc.SpriteShowHide,
         "object_flip_both": cc.SpriteShowHide,
         "object_flip_horizontal": cc.SpriteShowHide,
-        "object_flip_vertical": cc.SpriteShowHide, 
+        "object_flip_vertical": cc.SpriteShowHide,
+        "object_tint": cc.SpriteTintBright,
         "object_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "object_fade_current_value": cc.FadeCurrentValue,
         "object_fade_speed": cc.FadeSpeed,
@@ -487,6 +490,17 @@ class CommandHelper:
                             arguments =\
                                 CommandHelper._get_optional_arguments(arguments, 2)                
                 
+                case "character_tint" | "object_tint" | "dialog_sprite_tint":
+                    
+                    if isinstance(arguments, list) and len(arguments) == 3:
+                        # Use the 3-argument version of the class.
+                        command_cls = cc.SpriteTintRegular
+                        
+                    elif isinstance(arguments, list) and len(arguments) == 4:
+                        # 4-argument version of the class, where the 4th
+                        # argument is for the optional 'bright' keyword.
+                        command_cls = cc.SpriteTintBright                   
+                
                 case "character_after_fading_stop" | \
                     "character_after_rotating_stop" | \
                     "character_after_scaling_stop" | \
@@ -533,7 +547,7 @@ class CommandHelper:
                         # argument is for multiple optional arguments.
                         arguments =\
                             CommandHelper._get_optional_arguments(arguments, 2)
-                    
+
                 case "wait_for_animation":
                     # <wait_for_animation> can have 1 argument or 3 arguments.
                     
