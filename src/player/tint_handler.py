@@ -67,7 +67,11 @@ class TintHandler:
         self.reach_tint_value = None
         
         self.current_tint_value = None
+        self.calculated_tint_value = None
+        
         self.applied_tint_value = None
+        
+        self.speed = None
         
     def is_dirty_with_tint(self) -> bool:
         """
@@ -159,12 +163,19 @@ class TintHandler:
         # Reset
         self.applied_tint_value = None
         
+        # Set the calculated speed for the tint animation
+        self.speed = speed
+        
         # The tint style is used for us to find out whether we need to blit
         # the sprite has BLEND_RGB_ADD (Glow) or BLEND_RGB_MULT (Regular tint)
         self.tint_style = TintStyle.REGULAR
         
         # Record the tint value that needs to be reached.
         self.reach_tint_value = destination_tint
+        
+        # Initialize the calculated tint value that we're starting with.
+        # This will be calculated on each frame.
+        self.calculated_tint_value = self.current_tint_value
             
         # Set flag to indicate that a tint animation has started.
         self.status = TintStatus.ANIMATING
@@ -212,12 +223,19 @@ class TintHandler:
         # Reset
         self.applied_tint_value = None
         
+        # Set the calculated speed for the tint animation
+        self.speed = speed        
+        
         # The tint style is used for us to find out whether we need to blit
         # the sprite has BLEND_RGB_ADD (Glow) or BLEND_RGB_MULT (Regular tint)
         self.tint_style = TintStyle.GLOW
         
         # Record the tint value that needs to be reached.
         self.reach_tint_value = destination_tint
+        
+        # Initialize the calculated tint value that we're starting with.
+        # This will be calculated on each frame.
+        self.calculated_tint_value = self.current_tint_value
             
         # Set flag to indicate that a tint animation has started.
         self.status = TintStatus.ANIMATING
@@ -247,7 +265,7 @@ class TintHandler:
             return
         
         # SPEED = 775
-        SPEED = 200
+        SPEED = self.speed
 
         if self.tint_style == TintStyle.REGULAR:
             
@@ -264,7 +282,7 @@ class TintHandler:
                 else:
                     
                     # The final tint value has not been reached yet.
-                    self.current_tint_value -= SPEED * AnimationSpeed.delta                      
+                    self.calculated_tint_value -= SPEED * AnimationSpeed.delta                      
                     
             elif self.direction == TintDirection.HIGHER:
                 
@@ -288,7 +306,7 @@ class TintHandler:
                 else:
                     
                     # The final tint value has not been reached yet.
-                    self.current_tint_value += SPEED * AnimationSpeed.delta                        
+                    self.calculated_tint_value += SPEED * AnimationSpeed.delta
 
                 
             # Was the tint value reached? If so, set the current tint value
@@ -315,7 +333,8 @@ class TintHandler:
                 else:
                     
                     # The final tint value has not been reached yet.
-                    self.current_tint_value += SPEED * AnimationSpeed.delta                      
+                    self.calculated_tint_value += SPEED * AnimationSpeed.delta
+                    
                     
             elif self.direction == TintDirection.LOWER:
                 
@@ -339,17 +358,25 @@ class TintHandler:
                 else:
                     
                     # The final tint value has not been reached yet.
-                    self.current_tint_value -= SPEED * AnimationSpeed.delta                        
-
-                
-            # Was the tint value reached? If so, set the current tint value
-            # to match the destination tint value so it's exact.
-            if self.status != TintStatus.ANIMATING:
+                    self.calculated_tint_value -= SPEED * AnimationSpeed.delta
                     
-                # Make the current tint value match the final tint value.
-                self.current_tint_value = self.reach_tint_value
+                
+        # Was the tint value reached? If so, set the current tint value
+        # to match the destination tint value so it's exact.
+        if self.status != TintStatus.ANIMATING:
+                
+            # Make the current tint value match the final tint value.
+            self.current_tint_value = self.reach_tint_value
 
-    
-            # Animating/calculating tint was required.
-            return True
+        # Make sure the tint value is an integer, not a float.
+        self.current_tint_value = int(self.calculated_tint_value)
+
+        # Don't allow the tint value to go over 255 or below 0.
+        if self.current_tint_value > 255:
+            self.current_tint_value = 255
+        elif self.current_tint_value < 0:
+            self.current_tint_value = 0
+
+        # Animating/calculating tint was required.
+        return True
     

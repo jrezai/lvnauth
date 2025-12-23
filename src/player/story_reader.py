@@ -1484,6 +1484,14 @@ class StoryReader:
         elif command_name == "character_tint":
             self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
                               arguments=arguments)
+            
+        elif command_name == "object_tint":
+            self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
+                              arguments=arguments)
+            
+        elif command_name == "dialog_sprite_tint":
+            self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                              arguments=arguments)
 
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -3794,15 +3802,26 @@ class StoryReader:
 
         if not sprite:
             return
+        
+        # Convert the convenient speed (1-100) to a value that
+        # we can use in the animation.
+        float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=15.5,
+                increment_by=15.5,
+                max_convenient_row=100,
+                convenient_row_number=tint.speed)
+        
+        speed = float_value        
 
         # Set the speed and destination tint value.
         if isinstance(tint, cc.SpriteTintRegular):
             sprite.tint_handler.\
-                start_tint_regular(speed=tint.speed,
+                start_tint_regular(speed=speed,
                                    destination_tint=tint.dest_tint)
             
         elif isinstance(tint, cc.SpriteTintGlow):
-            sprite.tint_handler.start_tint_glow(speed=tint.speed,
+            sprite.tint_handler.start_tint_glow(speed=speed,
                                                 destination_tint=tint.dest_tint)
 
     def _set_movement_speed(self,
