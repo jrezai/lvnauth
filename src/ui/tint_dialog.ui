@@ -138,6 +138,10 @@
               <property name="row">3</property>
               <property name="sticky">w</property>
             </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="1" name="weight">1</property>
+              <property type="row" id="1" name="weight">1</property>
+            </containerlayout>
             <child>
               <object class="ttk.Label" id="lbl_tint_amount" named="True">
                 <property name="text" translatable="yes">Tint amount:</property>
@@ -169,6 +173,19 @@
                   <property name="column">1</property>
                   <property name="padx">5</property>
                   <property name="row">1</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Label" id="lbl_tint_amount_info" named="True">
+                <property name="text" translatable="yes">lbl_tint_amount_info</property>
+                <property name="textvariable">string:v_tint_amount_info</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="columnspan">2</property>
+                  <property name="pady">5 0</property>
+                  <property name="row">2</property>
                   <property name="sticky">w</property>
                 </layout>
               </object>

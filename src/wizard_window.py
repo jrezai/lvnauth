@@ -8962,13 +8962,38 @@ class TintFrame:
         self.v_tint_amount:tk.IntVar
         self.v_tint_amount = builder.get_variable("v_tint_amount")
         
+        # For showing additional info about 'Tint amount', to the user.
+        self.v_tint_amount:tk.StringVar
+        self.v_tint_amount_info = builder.get_variable("v_tint_amount_info")
+        
         # Radio button selection. Either 'dark' or 'bright'.
         self.v_tint_type:tk.StringVar
         self.v_tint_type = builder.get_variable("v_tint_type")
         
+        # Update the description of the 'Tint amount' when the tint type
+        # changes - to make it clearer to the user what tint amount means.
+        self.v_tint_type.trace_add("write", self.on_tint_type_changed)
+        
+        
         # Default to 'dark'
         self.v_tint_type.set("dark")
-
+        
+    def on_tint_type_changed(self, *args):
+        """
+        The tint type radio button has been changed.
+        
+        Update the description of the 'Tint amount' when the tint type
+        changes - to make it clearer to the user what tint amount means.
+        """
+        
+        selection = self.v_tint_type.get()
+        if selection == "dark":
+            tint_info = "0 means completely dark.\n255 means no tint.\nA normal tint amount is 100."
+        else:
+            tint_info = "255 means completely bright.\n0 means no tint.\nA normal tint amount is 100."
+        
+        self.v_tint_amount_info.set(tint_info)
+        
 
 class TintFrameWizard(WizardListing):
     def __init__(self, parent_frame, header_label, purpose_label,
