@@ -1484,14 +1484,29 @@ class StoryReader:
         elif command_name == "character_tint":
             self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
                               arguments=arguments)
-            
+                    
+        elif command_name == "character_tint_solo":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.CHARACTER,
+                arguments=arguments)
+
         elif command_name == "object_tint":
             self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
                               arguments=arguments)
             
+        elif command_name == "object_tint_solo":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.OBJECT,
+                arguments=arguments)            
+            
         elif command_name == "dialog_sprite_tint":
             self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                               arguments=arguments)
+            
+        elif command_name == "dialog_sprite_tint_solo":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                arguments=arguments)              
 
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -3812,7 +3827,7 @@ class StoryReader:
                 max_convenient_row=100,
                 convenient_row_number=tint.speed)
         
-        speed = float_value        
+        speed = float_value
 
         # Set the speed and destination tint value.
         if isinstance(tint, cc.SpriteTintRegular):
@@ -3824,6 +3839,114 @@ class StoryReader:
             sprite.tint_handler.start_tint_glow(speed=speed,
                                                 destination_tint=tint.dest_tint)
 
+    def _tint_sprite_solo(self,
+                          sprite_type: file_reader.ContentType,
+                          arguments: str):
+        """
+        Set all visible sprites to tinted, if they're currently not tinted,
+        except the given sprite alias. Use a preset animation speed and
+        preset tint amount, for convenience.
+        
+        Then make sure the given sprite has no tint, making it appear
+        that it has the main focus.
+        """
+        
+        tint: cc.SpriteTintSolo
+        tint = self._get_arguments(
+            class_namedtuple=cc.SpriteTintSolo,
+            given_arguments=arguments
+        )
+
+        # Not successful with a SpriteTintSolo class? Return.
+        if not tint:
+            return
+        
+        arguments_to_run = []
+        
+        # Get the dictionary for the sprites we need to check.
+        if sprite_type == file_reader.ContentType.CHARACTER:
+            sprite_group_to_check = sd.Groups.character_group
+            
+        elif sprite_type == file_reader.ContentType.OBJECT:
+            sprite_group_to_check = sd.Groups.object_group
+            
+        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+            sprite_group_to_check = sd.Groups.dialog_group
+        else:
+            return
+        
+        alias_found = False
+        
+        # Enumerate over all visible sprites.
+        sprite_name: str
+        sprite: sd.SpriteObject
+        for sprite_name, sprite in sprite_group_to_check.sprites.items():
+            
+            # Found the given sprite and it's visible?
+            if sprite.general_alias == tint.general_alias \
+               and sprite.visible:
+                
+                # We found the sprite we want; don't do anything with this 
+                # sprite yet until after the loop is finished.
+                # We just wanted to make sure the sprite exists and is visible.
+                alias_found = True
+                
+                continue
+            
+            # If the 'other' sprite is visible and is currently tinted,
+            # regardless if it's a regular tint or bright tint, make it 
+            # untinted.
+            if sprite.visible and not sprite.tint_handler.is_dirty_with_tint():
+                
+                # The other sprite is tinted.
+                # Make it untinted.
+                
+                # The alias of a sprite than is not the solo one we want,
+                # but is visible on the display surface, so we need to 
+                # untint it.
+                other_sprite_alias = sprite.general_alias
+                
+                # Medium speed
+                animation_speed = 50
+                
+                # Medium tint amount
+                tint_amount = 120
+                
+                # Generate the comma separated arguments.
+                arguments =\
+                    f"{other_sprite_alias}, {animation_speed}, {tint_amount}"
+                
+                # Add the arguments for the 'other' sprites to a list
+                # so we can enumerate it later.
+                arguments_to_run.append(arguments)
+                
+        # The loop is finished. Did we find the general alias that was asked?
+        if alias_found:
+            
+            # The sprite that needs to be solo untinted was found.
+            # Make sure the sprite is not tinted.
+            
+            # Medium speed
+            animation_speed = 50
+            
+            # Tint to 255 (no tint)
+            tint_amount = 255
+            
+            arguments =\
+                f"{tint.general_alias}, {animation_speed}, {tint_amount}"
+            
+            # Tint the sprite alias that needs to be tinted solo.
+            # If the sprite is already untinted, the method below will
+            # just return, so it's safe to run it self._tint_sprite()
+            # on a sprite that is untinted.
+            self._tint_sprite(sprite_type=sprite_type,
+                              arguments=arguments)
+            
+            # Enumerate the list of 'other' sprites that need to be tinted.
+            for arguments_line in arguments_to_run:
+                self._tint_sprite(sprite_type=sprite_type,
+                                  arguments=arguments_line)                
+            
     def _set_movement_speed(self,
                             sprite_type: file_reader.ContentType,
                             arguments: str):

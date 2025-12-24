@@ -740,9 +740,22 @@ class WizardWindow:
                             parent_display_text="Character",
                             sub_display_text="character_tint",
                             command_name="character_tint",
-                            purpose_line="Darkens or brightens a given sprite.\n"
+                            purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the character sprite must already be visible.",
                             group_name=GroupName.TINT)
+        
+        page_character_tint_solo =\
+            Flip(parent_frame=self.frame_contents_outer,
+                 header_label=self.lbl_header,
+                 purpose_label=self.lbl_purpose,
+                 treeview_commands=self.treeview_commands,
+                 parent_display_text="Character",
+                 sub_display_text="character_tint_solo",
+                 command_name="character_tint_solo",
+                 purpose_line="Tints all visible character sprites except the given sprite.\n"
+                 "This command is used for showing which character is speaking.\n\n"
+                 "Note: the character sprite must already be visible.", 
+                 group_name=GroupName.TINT)
         
 
         page_character_after_fading_stop =\
@@ -1384,9 +1397,21 @@ class WizardWindow:
                             parent_display_text="Dialog",
                             sub_display_text="dialog_sprite_tint",
                             command_name="dialog_sprite_tint",
-                            purpose_line="Darkens or brightens a given sprite.\n"
+                            purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the dialog sprite must already be visible.",
                             group_name=GroupName.TINT)
+    
+        page_dialog_tint_solo =\
+            Flip(parent_frame=self.frame_contents_outer,
+                 header_label=self.lbl_header,
+                 purpose_label=self.lbl_purpose,
+                 treeview_commands=self.treeview_commands,
+                 parent_display_text="Dialog",
+                 sub_display_text="dialog_sprite_tint_solo",
+                 command_name="dialog_sprite_tint_solo",
+                 purpose_line="Tints all visible dialog sprites except the given sprite.\n\n"
+                 "Note: the dialog sprite must already be visible.", 
+                 group_name=GroupName.TINT) 
     
         page_dialog_after_fading_stop =\
                 CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
@@ -1914,9 +1939,21 @@ class WizardWindow:
                             parent_display_text="Object",
                             sub_display_text="object_tint",
                             command_name="object_tint",
-                            purpose_line="Darkens or brightens a given sprite.\n"
+                            purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the object sprite must already be visible.",
                             group_name=GroupName.TINT)
+        
+        page_object_tint_solo =\
+            Flip(parent_frame=self.frame_contents_outer,
+                 header_label=self.lbl_header,
+                 purpose_label=self.lbl_purpose,
+                 treeview_commands=self.treeview_commands,
+                 parent_display_text="Object",
+                 sub_display_text="object_tint_solo",
+                 command_name="object_tint_solo",
+                 purpose_line="Tints all visible object sprites except the given sprite.\n\n"
+                 "Note: the object sprite must already be visible.", 
+                 group_name=GroupName.TINT)
 
         page_object_after_fading_stop =\
             CharacterAfterFadingStop(parent_frame=self.frame_contents_outer,
@@ -2914,6 +2951,7 @@ class WizardWindow:
         self.pages["character_flip_vertical"] = page_character_flip_vertical
         
         self.pages["character_tint"] = page_character_tint
+        self.pages["character_tint_solo"] = page_character_tint_solo
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
         self.pages["character_fade_current_value"] = page_character_fade_current_value
@@ -2982,6 +3020,7 @@ class WizardWindow:
         self.pages["object_flip_vertical"] = page_object_flip_vertical
         
         self.pages["object_tint"] = page_object_tint
+        self.pages["object_tint_solo"] = page_object_tint_solo
         
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
         self.pages["object_fade_current_value"] = page_object_fade_current_value
@@ -3041,6 +3080,7 @@ class WizardWindow:
         self.pages["dialog_sprite_flip_vertical"] = page_dialog_flip_vertical
         
         self.pages["dialog_sprite_tint"] = page_dialog_tint
+        self.pages["dialog_sprite_tint_solo"] = page_dialog_tint_solo
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
         self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value
@@ -8714,6 +8754,7 @@ class Flip(SharedPages.StartStop):
         super().__init__(parent_frame, header_label, purpose_label,
                 treeview_commands, parent_display_text,
                 sub_display_text, command_name, purpose_line, **kwargs)
+        
 
 
 class SceneWithFadeFrame:
@@ -8988,7 +9029,7 @@ class TintFrame:
         
         selection = self.v_tint_type.get()
         if selection == "dark":
-            tint_info = "0 means completely dark.\n255 means no tint.\nA normal tint amount is 100."
+            tint_info = "0 means completely dark.\n255 means no tint.\nA normal tint amount is 120."
         else:
             tint_info = "255 means completely bright.\n0 means no tint.\nA normal tint amount is 100."
         

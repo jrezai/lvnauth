@@ -173,6 +173,10 @@ class SpriteTintBright(NamedTuple):
     speed: int
     dest_tint: int
     bright_keyword: str
+    
+    
+class SpriteTintSolo(NamedTuple):
+    general_alias: str
 
 
 class Flip(NamedTuple):
