@@ -744,14 +744,14 @@ class WizardWindow:
                             "Note: the character sprite must already be visible.",
                             group_name=GroupName.TINT)
         
-        page_character_tint_solo =\
+        page_character_focus =\
             Flip(parent_frame=self.frame_contents_outer,
                  header_label=self.lbl_header,
                  purpose_label=self.lbl_purpose,
                  treeview_commands=self.treeview_commands,
                  parent_display_text="Character",
-                 sub_display_text="character_tint_solo",
-                 command_name="character_tint_solo",
+                 sub_display_text="character_focus",
+                 command_name="character_focus",
                  purpose_line="Tints all visible character sprites except the given sprite.\n"
                  "This command is used for showing which character is speaking.\n\n"
                  "Note: the character sprite must already be visible.", 
@@ -970,8 +970,8 @@ class WizardWindow:
                              default_radio_button_value="scale up",
                              scale_default_value=5,
                              scale_from_value=1,
-                             scale_to_value=300000,
-                             scale_instructions="Scale speed (1 to 300000):",
+                             scale_to_value=100000,
+                             scale_instructions="Scale speed (1 to 100000):",
                              group_name=GroupName.SCALE)
 
         page_character_scale_current_value =\
@@ -1401,14 +1401,14 @@ class WizardWindow:
                             "Note: the dialog sprite must already be visible.",
                             group_name=GroupName.TINT)
     
-        page_dialog_tint_solo =\
+        page_dialog_focus =\
             Flip(parent_frame=self.frame_contents_outer,
                  header_label=self.lbl_header,
                  purpose_label=self.lbl_purpose,
                  treeview_commands=self.treeview_commands,
                  parent_display_text="Dialog",
-                 sub_display_text="dialog_sprite_tint_solo",
-                 command_name="dialog_sprite_tint_solo",
+                 sub_display_text="dialog_sprite_focus",
+                 command_name="dialog_sprite_focus",
                  purpose_line="Tints all visible dialog sprites except the given sprite.\n\n"
                  "Note: the dialog sprite must already be visible.", 
                  group_name=GroupName.TINT) 
@@ -1625,8 +1625,8 @@ class WizardWindow:
                                  default_radio_button_value="scale up",
                                  scale_default_value=5,
                                  scale_from_value=1,
-                                 scale_to_value=100,
-                                 scale_instructions="Scale speed (1 to 100):",
+                                 scale_to_value=100000,
+                                 scale_instructions="Scale speed (1 to 100000):",
                                  group_name=GroupName.SCALE)
     
         page_dialog_scale_current_value =\
@@ -1943,14 +1943,14 @@ class WizardWindow:
                             "Note: the object sprite must already be visible.",
                             group_name=GroupName.TINT)
         
-        page_object_tint_solo =\
+        page_object_focus =\
             Flip(parent_frame=self.frame_contents_outer,
                  header_label=self.lbl_header,
                  purpose_label=self.lbl_purpose,
                  treeview_commands=self.treeview_commands,
                  parent_display_text="Object",
-                 sub_display_text="object_tint_solo",
-                 command_name="object_tint_solo",
+                 sub_display_text="object_focus",
+                 command_name="object_focus",
                  purpose_line="Tints all visible object sprites except the given sprite.\n\n"
                  "Note: the object sprite must already be visible.", 
                  group_name=GroupName.TINT)
@@ -2167,8 +2167,8 @@ class WizardWindow:
                              default_radio_button_value="scale up",
                              scale_default_value=5,
                              scale_from_value=1,
-                             scale_to_value=100,
-                             scale_instructions="Scale speed (1 to 100):",
+                             scale_to_value=100000,
+                             scale_instructions="Scale speed (1 to 100000):",
                              group_name=GroupName.SCALE)
 
         page_object_scale_current_value =\
@@ -2951,7 +2951,7 @@ class WizardWindow:
         self.pages["character_flip_vertical"] = page_character_flip_vertical
         
         self.pages["character_tint"] = page_character_tint
-        self.pages["character_tint_solo"] = page_character_tint_solo
+        self.pages["character_focus"] = page_character_focus
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
         self.pages["character_fade_current_value"] = page_character_fade_current_value
@@ -3020,7 +3020,7 @@ class WizardWindow:
         self.pages["object_flip_vertical"] = page_object_flip_vertical
         
         self.pages["object_tint"] = page_object_tint
-        self.pages["object_tint_solo"] = page_object_tint_solo
+        self.pages["object_focus"] = page_object_focus
         
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
         self.pages["object_fade_current_value"] = page_object_fade_current_value
@@ -3080,7 +3080,7 @@ class WizardWindow:
         self.pages["dialog_sprite_flip_vertical"] = page_dialog_flip_vertical
         
         self.pages["dialog_sprite_tint"] = page_dialog_tint
-        self.pages["dialog_sprite_tint_solo"] = page_dialog_tint_solo
+        self.pages["dialog_sprite_focus"] = page_dialog_focus
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
         self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value

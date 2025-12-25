@@ -1485,7 +1485,7 @@ class StoryReader:
             self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
                               arguments=arguments)
                     
-        elif command_name == "character_tint_solo":
+        elif command_name == "character_focus":
             self._tint_sprite_solo(
                 sprite_type=file_reader.ContentType.CHARACTER,
                 arguments=arguments)
@@ -1494,7 +1494,7 @@ class StoryReader:
             self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
                               arguments=arguments)
             
-        elif command_name == "object_tint_solo":
+        elif command_name == "object_focus":
             self._tint_sprite_solo(
                 sprite_type=file_reader.ContentType.OBJECT,
                 arguments=arguments)
@@ -1503,7 +1503,7 @@ class StoryReader:
             self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                               arguments=arguments)
             
-        elif command_name == "dialog_sprite_tint_solo":
+        elif command_name == "dialog_sprite_focus":
             self._tint_sprite_solo(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                 arguments=arguments)
@@ -3018,7 +3018,7 @@ class StoryReader:
             return
 
         """
-        Convert the user-provided convenient value speed (1 to 300000)
+        Convert the user-provided convenient value speed (1 to 100000)
         from scale_speed.scale_speed to a value that pygame can use.
         Depending on the scale direction, the float will either be a positive
         value or a negative value.
@@ -3029,7 +3029,7 @@ class StoryReader:
             AnimationSpeed.get_sequence_value(
                 initial_value=0.0002,
                 increment_by=0.0002,
-                max_convenient_row=300000, 
+                max_convenient_row=100000, 
                 convenient_row_number=scale_speed.scale_speed)
 
         # Make sure we have a float value, otherwise stop here.
