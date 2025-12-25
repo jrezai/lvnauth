@@ -5208,7 +5208,8 @@ class SharedPages:
     
             return frame_content
         
-        def _edit_populate(self, command_class_object: cc.SpriteShowHide|cc.Flip):
+        def _edit_populate(self,
+                           command_class_object: cc.SpriteShowHide|cc.Flip|cc.SpriteTintSolo):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -5218,7 +5219,9 @@ class SharedPages:
                 return
             
             match command_class_object:
-                case cc.SpriteShowHide(name) | cc.Flip(name):
+                case cc.SpriteShowHide(name) | \
+                    cc.Flip(name) | \
+                    cc.SpriteTintSolo(name):
                     
                     # Show the alias in the entry widget
                     self.entry_general_alias.insert(0, name)
