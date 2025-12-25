@@ -1497,7 +1497,7 @@ class StoryReader:
         elif command_name == "object_tint_solo":
             self._tint_sprite_solo(
                 sprite_type=file_reader.ContentType.OBJECT,
-                arguments=arguments)            
+                arguments=arguments)
             
         elif command_name == "dialog_sprite_tint":
             self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
@@ -1506,7 +1506,7 @@ class StoryReader:
         elif command_name == "dialog_sprite_tint_solo":
             self._tint_sprite_solo(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE,
-                arguments=arguments)              
+                arguments=arguments)
 
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -3828,7 +3828,7 @@ class StoryReader:
                 convenient_row_number=tint.speed)
         
         speed = float_value
-
+        
         # Set the speed and destination tint value.
         if isinstance(tint, cc.SpriteTintRegular):
             sprite.tint_handler.\
@@ -3882,9 +3882,11 @@ class StoryReader:
         sprite: sd.SpriteObject
         for sprite_name, sprite in sprite_group_to_check.sprites.items():
             
-            # Found the given sprite and it's visible?
+            # Found the given sprite and it's visible or pending
+            # to become visible?
             if sprite.general_alias == tint.general_alias \
-               and sprite.visible:
+               and any((sprite.visible, sprite.pending_show)) \
+               and not sprite.pending_hide:
                 
                 # We found the sprite we want; don't do anything with this 
                 # sprite yet until after the loop is finished.
@@ -3893,10 +3895,11 @@ class StoryReader:
                 
                 continue
             
-            # If the 'other' sprite is visible and is currently tinted,
-            # regardless if it's a regular tint or bright tint, make it 
-            # untinted.
-            if sprite.visible and not sprite.tint_handler.is_dirty_with_tint():
+            # If the 'other' sprite is visible and is not tinted,
+            # make it tinted.
+            if any((sprite.visible, sprite.pending_show)) \
+               and not sprite.pending_hide \
+               and not sprite.tint_handler.is_dirty_with_tint():
                 
                 # The other sprite is tinted.
                 # Make it untinted.
