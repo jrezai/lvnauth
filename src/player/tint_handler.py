@@ -282,7 +282,12 @@ class TintHandler:
                 else:
                     
                     # The final tint value has not been reached yet.
-                    self.calculated_tint_value -= SPEED * AnimationSpeed.delta                      
+                    self.calculated_tint_value -= SPEED * AnimationSpeed.delta                    
+                    
+                    # Clamp the value so it doesn't go below the 
+                    # tint-reach value.
+                    self.calculated_tint_value =\
+                        max(self.reach_tint_value, self.calculated_tint_value)                      
                     
             elif self.direction == TintDirection.HIGHER:
                 
@@ -307,6 +312,11 @@ class TintHandler:
                     
                     # The final tint value has not been reached yet.
                     self.calculated_tint_value += SPEED * AnimationSpeed.delta
+                    
+                    # Clamp the value so it doesn't go above the 
+                    # tint-reach value.
+                    self.calculated_tint_value =\
+                        min(self.reach_tint_value, self.calculated_tint_value)                      
 
                 
             # Was the tint value reached? If so, set the current tint value
@@ -335,6 +345,11 @@ class TintHandler:
                     # The final tint value has not been reached yet.
                     self.calculated_tint_value += SPEED * AnimationSpeed.delta
                     
+                    # Clamp the value so it doesn't go above the 
+                    # tint-reach value.
+                    self.calculated_tint_value =\
+                        min(self.reach_tint_value, self.calculated_tint_value)                    
+                    
                     
             elif self.direction == TintDirection.LOWER:
                 
@@ -360,20 +375,32 @@ class TintHandler:
                     # The final tint value has not been reached yet.
                     self.calculated_tint_value -= SPEED * AnimationSpeed.delta
                     
+                    # Clamp the value so it doesn't go below the 
+                    # tint-reach value.
+                    self.calculated_tint_value =\
+                        max(self.reach_tint_value, self.calculated_tint_value)
+                    
                 
-        # Was the tint value reached? If so, set the current tint value
-        # to match the destination tint value so it's exact.
-        if self.status != TintStatus.ANIMATING:
+        ## Was the tint value reached? If so, set the current tint value
+        ## to match the destination tint value so it's exact.
+        #if self.status != TintStatus.ANIMATING:
                 
-            # Make the current tint value match the final tint value.
-            self.current_tint_value = self.reach_tint_value
+            ## Make the current tint value match the final tint value.
+            #self.current_tint_value = self.reach_tint_value
+
 
         # Make sure the tint value is an integer, not a float.
         self.current_tint_value = int(self.calculated_tint_value)
 
+        # For debugging
+        # print("Calculated tint:", self.calculated_tint_value, self.status)
+        
+        
+
         # Don't allow the tint value to go over 255 or below 0.
         if self.current_tint_value > 255:
             self.current_tint_value = 255
+
         elif self.current_tint_value < 0:
             self.current_tint_value = 0
 
