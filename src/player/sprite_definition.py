@@ -1305,55 +1305,62 @@ class SpriteObject:
         # Get the new rect of the rotated or scaled image
         self.rect = self.image.get_rect(center=self.rect.center)
 
-        #if self.is_fade_needed():
-            
-            #self.image.set_alpha(self.current_fade_value.current_fade_value)
-            #self.applied_fade_value = self.current_fade_value.current_fade_value
-            
-
     def _apply_still_effects(self):
         """
-        Apply scale/rotation/fade effects to the sprite if
-        the amount of effects applied to the sprite is different than
-        the expected amounts.
+        Apply scale/rotation/fade effects to the sprite if the amount of
+        effects applied to the sprite is different than the expected amounts.
+        
+        This doesn't mean the sprite is necessarily being 'animated'.
+        A still-effect could have been applied
+        OR an animation could be occurring and the time to apply the effect
+        may not have come yet (too soon).
+        
+        Either way, this method only checks if the applied effect is different
+        from what it *should* be, regardless if the sprite is being animated
+        or not.
         """
         
         at_least_one_effect_applied = False
         
-        scale_or_rotation_needed = self.is_scale_or_rotate_needed()
-        
-        # If rotate or scale animation needed, apply the rotate/scale 
-        # effect now.
-        if scale_or_rotation_needed:
+
+        # # Is a required scale/rotate effect caught up with what's required?
+        if self.is_scale_or_rotate_needed():
             
-            # If a fade is needed too, then _scale_or_rotate_sprite()
-            # will apply the fade automatically.
+            # Apply a scale/rotation effect to the current sprite.
             self._scale_or_rotate_sprite()
             
+            # So the rest of the effect methods know that the sprite
+            # has been altered in some way.
             at_least_one_effect_applied = True
             
+        # Is a required tint effect caught up with what's required?
         if self.tint_handler.is_tint_animation_needed():
             
-            dim_was_applied =\
-                self._tint_sprite(skip_copy_original_image=at_least_one_effect_applied)
+            # Apply a tint effect to the current sprite.
+            self._tint_sprite(
+                skip_copy_original_image=at_least_one_effect_applied)
             
+            # So the rest of the effect methods know that the sprite
+            # has been altered in some way.            
             at_least_one_effect_applied = True
                 
             
         # We need to check if we need to apply fade *after* a scale/rotation
-        # because a scale/rotation will make the image opaque.
+        # and *after* a tint effect because a scale/rotation/tint will 
+        # make the image opaque.
         if self.is_fade_needed():
             """
-            A fade is needed. Apply the fade to the scaled/rotated version
-            of the image the image was just scaled or rotated
+            A fade is needed. Apply the fade to the scaled/rotated/tinted 
+            version of the image the image was just scaled or rotated or tinted
             (if skip_copy_original_image == True)
             
             Otherwise apply the fade to the original version of the image.
-            That's why we're using scale_or_rotation_needed as a bool 
-            in the argument below. (skip_copy_original_image == False)
+            That's why we're using at_least_one_effect_applied as a bool 
+            in the argument below.
+            (skip_copy_original_image == at_least_one_effect_applied)
             """
             
-            skip_copy = scale_or_rotation_needed or dim_was_applied
+            skip_copy = at_least_one_effect_applied
 
             self._fade_sprite(skip_copy_original_image=skip_copy)
             
@@ -1404,10 +1411,10 @@ class SpriteObject:
     def any_effects_applied(self) -> bool:
         """
         Return whether the sprite has had any type of effect applied to it,
-        such as fade, rotate, scale.
+        such as fade, rotate, scale, tint.
         
         Return: True if at least one of the effects has been applied
-        to the sprite (fade, rotate, scale, dim)
+        to the sprite (fade, rotate, scale, tint)
         
         Return: False if the sprite does not have any effects applied to it.
         
@@ -1430,7 +1437,7 @@ class SpriteObject:
             return False
         else:
             # This sprite has at least one type of effect applied to it.
-            # Fade and/or scale and/or animation.
+            # Fade and/or scale/rotation and/or tint.
             return True     
 
     def is_fade_needed(self) -> bool:
@@ -1747,7 +1754,7 @@ class SpriteObject:
         tint_values: Tuple
         tint_values = self.tint_handler.get_tint_values()
         if not tint_values:
-            # No dimming required; an undimmed image should be displayed.
+            # No tinting required; an untinted image should be displayed.
             return
 
         replaced_image = False
@@ -1778,19 +1785,19 @@ class SpriteObject:
                 # The scale or rotate effect is eligible to this sprite.
                 # So get the original image (with sprite text, if any)
                 # and reapply the scale and/or rotation effect, before
-                # we fade the image a few lines later.
+                # we tint the image a few lines later.
                 self._scale_or_rotate_sprite()
             else:
                 
                 # No scale or rotation necessary, just get the original image
-                # with sprite text (if any), before we apply a fade.
+                # with sprite text (if any), before we apply a tint effect.
                 self.image = self.get_original_image_with_text()
                 
 
             # So the caller knows the displayed image was altered.
             replaced_image = True
             
-        # Apply the dim values to the displayed sprite.
+        # Apply the tint values to the displayed sprite.
         # We use RGB here, instead of RGBA, to keep the alpha channel as-is.
         if self.tint_handler.tint_style == TintStyle.REGULAR:
             self.image.fill(tint_values, special_flags=pygame.BLEND_RGB_MULT)
@@ -1808,13 +1815,13 @@ class SpriteObject:
         """
         Fade the sprite to the current fade value.
 
-        If the sprite is being scaled (as an animation)
-        or being rotated (as an animation), don't copy the original image,
-        because then the scaling and/or rotation changes won't show.
+        If the sprite needs a scale/rotation/tint effect applied, don't copy
+        the original image, because then the scaling and/or rotating
+        and/or tint changes won't show - they'll get replaced with a faded
+        sprite with none of those effects, which we don't want.
         
-        If the sprite is not scale-animating, but has a scale effect applied
-        and/or the sprite is not rotate-animating, but has a rotation effect
-        applied, then apply the rotate/scale effect in this method after
+        If the sprite needs a scaling/rotating/tinting effect  applied, then
+        apply the rotate/scale/tint effect(s) in this method after
         getting the original image (with optional sprite text), then in the
         end, apply the fade effect.
         
@@ -1844,14 +1851,22 @@ class SpriteObject:
             # Yes, we should consider copying the original image to self.image
             
             # Get the original image (no effects), but with sprite text (if any).
-            # Then re-apply a scale or rotate effect if it's currently applied.
+            # Then re-apply a scale or rotate or tint effect if it's currently 
+            # applied.
         
             """
-            The method call below, self._scale_or_rotate_sprite(), will
-            deal with getting the original image (no effects), but with
-            sprite text (if any), and that same method will also rotate/scale 
-            right after it's done getting the original image.
+            The method calls below, self._scale_or_rotate_sprite(),
+            self._tint_sprite(), will deal with getting the original image
+            (no effects), but with sprite text (if any), and those same methods
+            will also rotate/scale/tint right after they're done getting the
+            original image.
             """
+            
+            # Keep track when an effect is applied, so when the second effect
+            # is applied, it doesn't overwrite the image with the previous
+            # effect, causing the previous effect to not appear on the sprite.
+            scale_rotation_was_dirty = False
+            tint_was_dirty = False
             
             # Is the image touched with a scale or rotate effect?
             # (regardless if there's a gradual animation or not)
@@ -1862,17 +1877,42 @@ class SpriteObject:
                 # and reapply the scale and/or rotation effect, before
                 # we fade the image a few lines later.
                 self._scale_or_rotate_sprite()
-            else:
                 
-                # No scale or rotation necessary, just get the original image
-                # with sprite text (if any), before we apply a fade.
-                self.image = self.get_original_image_with_text()
+                scale_rotation_was_dirty = True
                 
+            # Should a tint effect be applied to the image?
+            if self.tint_handler.is_dirty_with_tint():
+                
+                # Apply a tint effect before doing a fade.
+                
+                # If a scale/rotate above just replaced the image,
+                # then we won't need to replace the sprite again before doing 
+                # a tint. That's what, scale_rotation_was_dirty, is for.
+                self._tint_sprite(
+                    skip_copy_original_image=scale_rotation_was_dirty)
+                
+                tint_was_dirty = True
 
-            replaced_image = True
+                
+            # Check if the image was replaced with a rotated/scaled
+            # or tinted version. If not, we should get the original image
+            # so we we don't keep fading an already-faded sprite on top of 
+            # itself.
+            if not any([scale_rotation_was_dirty, tint_was_dirty]):
+            
+                # The sprite is not dirty with either scale/rotation
+                # nor a tint.
+            
+                # No scale/rotation/tint is applied to the sprite, so it's safe
+                # to get the original image with sprite text (if any), before
+                # we apply a fade.
+                self.image = self.get_original_image_with_text()
+
+                # Flag to indicate the sprite was replaced with the original
+                # copy with sprite text (if any).
+                replaced_image = True
             
         
-
         # self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
         
         # Now we're ready to apply a fade to this image.
@@ -1886,7 +1926,6 @@ class SpriteObject:
             
         # print(f"{self.name} fade: {self.applied_fade_value}")
         
-
         return replaced_image
     
     def is_dirty_with_rotate_or_scale(self) -> bool:
