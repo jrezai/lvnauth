@@ -9273,7 +9273,7 @@ class WaitForAnimation(WizardListing):
                 sprite_type = sprite_type.lower()
                 
             wait_for = \
-                ("fade", "move", "rotate", "scale", "all", "any")
+                ("fade", "move", "rotate", "scale", "tint", "all", "any")
             
             try:
                 wait_for_animation_index = wait_for.index(animation_type)

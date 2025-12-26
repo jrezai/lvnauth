@@ -49,6 +49,7 @@ from typing import Tuple
 from typing import Dict
 from shared_components import Passer
 from animation_speed import AnimationSpeed
+from tint_handler import TintStatus
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -5868,8 +5869,10 @@ class WaitForAnimationHandler:
         self.wait_list = []
 
     def enable_wait_for(
-        self, sprite_type: str, general_alias: str = None, animation_type: str = None
-    ):
+        self,
+        sprite_type: str,
+        general_alias: str = None,
+        animation_type: str = None):
         """
         Record a new reason to pause the main story reader.
         Reusable scripts are not affected.
@@ -5905,6 +5908,8 @@ class WaitForAnimationHandler:
                 animation_type_to_check = sd.SpriteAnimationType.ROTATE
             elif animation_type == "scale":
                 animation_type_to_check = sd.SpriteAnimationType.SCALE
+            elif animation_type == "tint":
+                animation_type_to_check = sd.SpriteAnimationType.TINT
             elif animation_type == "all":
                 animation_type_to_check = ("all",)
             elif animation_type == "any":
@@ -5981,8 +5986,7 @@ class WaitForAnimationHandler:
     def _is_sprite_animating(
         sprite_group: sd.SpriteGroup,
         general_alias: str | None,
-        animation_type: sd.SpriteAnimationType | str,
-    ) -> bool | None:
+        animation_type: sd.SpriteAnimationType | str) -> bool | None:
         """
         Check if a specific type of animation is currently occurring.
 
@@ -6038,6 +6042,11 @@ class WaitForAnimationHandler:
                     and sprite_object.is_scaling
                 ):
                     return True
+                elif (
+                    animation_type == sd.SpriteAnimationType.TINT
+                    and sprite_object.tint_handler.status == TintStatus.ANIMATING
+                ):
+                    return True
 
             elif isinstance(animation_type, str):
                 # Check if all the animations are occurring on the sprite.
@@ -6049,6 +6058,7 @@ class WaitForAnimationHandler:
                         sprite_object.is_moving,
                         sprite_object.is_rotating,
                         sprite_object.is_scaling,
+                        sprite_object.tint_handler.status == TintStatus.ANIMATING
                     ]
                 ):
                     return True
@@ -6062,6 +6072,7 @@ class WaitForAnimationHandler:
                         sprite_object.is_moving,
                         sprite_object.is_rotating,
                         sprite_object.is_scaling,
+                        sprite_object.tint_handler.status == TintStatus.ANIMATING
                     ]
                 ):
                     return True

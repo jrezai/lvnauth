@@ -40,6 +40,7 @@ class SpriteAnimationType(Enum):
     SCALE = auto()
     MOVE = auto()
     ROTATE = auto()
+    TINT = auto()
 
 
 class FadeType(Enum):
