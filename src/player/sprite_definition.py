@@ -2119,7 +2119,7 @@ class SpriteObject:
                         # The sprite is moving right
 
                         # if self.rect.left >= pixel_coordinate:
-                        if self.rect.centerx + self.half_width >= pixel_coordinate:
+                        if self.rect.centerx - self.half_width >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                             # Check the right side of the sprite for stops?
