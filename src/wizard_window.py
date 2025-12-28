@@ -8433,7 +8433,8 @@ class RotateStartWizard(WizardListing):
             configure(from_=self.scale_speed_from,
                       to=self.scale_speed_to)
         
-        self.rotate_start_frame.v_speed.set(self.scale_speed_to)
+        # Default to a rotation speed of 3000
+        self.rotate_start_frame.v_speed.set(3000)
         
         # Show the speed range in the Speed section label widget.
         rotation_speed_title =\
