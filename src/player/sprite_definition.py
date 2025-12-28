@@ -175,6 +175,11 @@ class SpriteObject:
         # exactly the same as self.original_image_before_text
         self.original_image = image.copy()
         self.original_rect = self.original_image.get_rect()
+        
+        # Initialize a recording of half the size of the sprite's 
+        # width/height, for use when setting centerx and centery during 
+        # a movement animation.        
+        self._refresh_half_size_dimensions()
 
         # Flags that will be checked in the .update() method
         # of this sprite, so we'll know to show or hide the sprite
@@ -302,6 +307,37 @@ class SpriteObject:
 
         self.visible = False
 
+    def _refresh_half_size_dimensions(self):
+        """
+        Keep track of half the size of the original sprite's width/height,
+        for use when setting centerx and centery during a movement animation.
+        
+        Why from the original image? Because if the sprite is being rotated or
+        scaled, the sprite's width/height grows and shrinks.
+        If we use the width/height of the display sprite and add it to
+        the centerx/centery, we will effectively "push" the sprite left and
+        right in sync with the rotation, which we don't want.
+        
+        During a movement animation:
+        We move sprites using the centerx and centery, not the .left or .right
+        of the sprite, so the centerx and centery is half the size of the image,
+        (we move the sprites from the middle to keep the movement smooth
+        during a rotation or scale).
+        
+        So when we move a sprite during a movement animation, we need to take
+        the full width/height into consideration while moving. Otherwise, if
+        we have a sprite that, say, starts at the end of the display (after
+        the width of the display) and we want to move it left gradually, the
+        first movement animation will be at half the size of the sprite (the
+        sprite will instantly show half of itself, half showing, half at the
+        end of the display, because we use centerx and centery to move.
+        
+        So we need half of the width of the sprite to make it start after the
+        display, at full width, which is why we have this method here).
+        """
+        self.half_width = self.original_image.get_width() / 2
+        self.half_height = self.original_image.get_height() / 2        
+
     def clear_text_and_redraw(self):
         """
         Copy the image that doesn't have any text on it
@@ -329,8 +365,6 @@ class SpriteObject:
         # Get the original image that has no text blitted on it.
         # We might need to apply a scale/rotation/fade to it later.
         self.original_image = self.get_original_image_without_text()
-
-        
 
         ## If self.image wasn't replaced by any of the scale/rotation/fade
         ## method calls here, then replace self.image with the original image now.
@@ -566,6 +600,7 @@ class SpriteObject:
         :param image_position_x_or_y: instance of ImagePositionX or ImagePositionY
         :return: Tuple (example: MovementStops.LEFT, 0)
         """
+        
 
         if isinstance(image_position_x_or_y, ImagePositionX):
             if image_position_x_or_y == ImagePositionX.BEFORE_START_OF_DISPLAY:
@@ -728,6 +763,11 @@ class SpriteObject:
         else:
             # No flips have occurred, so there is no need to request a screen-update.
             return
+        
+        # Update a recording of half the size of the sprite's 
+        # width/height, for use when setting centerx and centery during 
+        # a movement animation.        
+        self._refresh_half_size_dimensions()        
 
         # Queue the combined rect for a manual screen update.
         # Regular animations (such as <character_start_moving: rave>)
@@ -752,7 +792,7 @@ class SpriteObject:
 
         :return: None
         """
-
+      
         # Make sure we have a value for at least one argument.
         if position_type is None and position_absolute_x is None:
             return
@@ -2168,22 +2208,32 @@ class SpriteObject:
 
                     return
 
-
+        """
+        Get the half width and half height of the *original* image
+        for setting the center of the image after the move takes place.
+        
+        Why the original image? Because if the sprite is being rotated or
+        scaled, the sprite's width/height grows and shrinks.
+        If we use get the width/height of the display sprite and add it to
+        the centerx/centery, we are effectively "pushing" the sprite left and
+        right in sync with the rotation.
+        """
         if self.move_properties.x:
             # Move the X position
             self.calculated_pos_moving_x +=\
                 self.move_properties.x * AnimationSpeed.delta
             
-            self.rect.centerx = int(self.calculated_pos_moving_x)
-            # self.rect.move_ip(int(self.pos_x), 0)
+            # self.rect.centerx = int(self.calculated_pos_moving_x)
+            self.rect.centerx =\
+                int(self.calculated_pos_moving_x + self.half_width)
 
         if self.move_properties.y:
             # Move the Y position
             self.calculated_pos_moving_y +=\
                 self.move_properties.y * AnimationSpeed.delta
             
-            self.rect.centery = int(self.calculated_pos_moving_y)
-            # self.rect.move_ip(0, self.movement_speed.y)
+            self.rect.centery =\
+                int(self.calculated_pos_moving_y + self.half_height)
 
 
 class SpriteGroup:
