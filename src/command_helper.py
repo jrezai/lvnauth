@@ -58,7 +58,7 @@ class CommandHelper:
         "character_flip_both": cc.SpriteShowHide,
         "character_flip_horizontal": cc.SpriteShowHide,
         "character_flip_vertical": cc.SpriteShowHide,
-        "character_tint": cc.SpriteTintBright,
+        "character_start_tinting": cc.SpriteTintBright,
         "character_focus": cc.SpriteTintSolo,
         "character_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "character_fade_current_value": cc.FadeCurrentValue,
@@ -74,8 +74,7 @@ class CommandHelper:
         "character_stop_scaling": cc.SpriteShowHide,
         "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "character_stop_movement_condition": cc.MovementStopCondition,
-        "character_move": cc.MovementSpeed,
-        "character_start_moving": cc.SpriteShowHide,
+        "character_start_moving": cc.MoveStart,
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
@@ -93,7 +92,7 @@ class CommandHelper:
         "dialog_sprite_flip_both": cc.SpriteShowHide,
         "dialog_sprite_flip_horizontal": cc.SpriteShowHide,
         "dialog_sprite_flip_vertical": cc.SpriteShowHide,
-        "dialog_sprite_tint": cc.SpriteTintBright,
+        "dialog_sprite_start_tinting": cc.SpriteTintBright,
         "dialog_sprite_focus": cc.SpriteTintSolo,
         "dialog_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_fade_current_value": cc.FadeCurrentValue,
@@ -109,8 +108,7 @@ class CommandHelper:
         "dialog_sprite_stop_scaling": cc.SpriteShowHide,
         "dialog_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_stop_movement_condition": cc.MovementStopCondition,
-        "dialog_sprite_move": cc.MovementSpeed,
-        "dialog_sprite_start_moving": cc.SpriteShowHide,
+        "dialog_sprite_start_moving": cc.MoveStart,
         "dialog_sprite_stop_moving": cc.SpriteShowHide,
         "dialog_sprite_set_position_x": cc.SpritePosition,
         "dialog_sprite_set_position_y": cc.SpritePosition,
@@ -125,7 +123,7 @@ class CommandHelper:
         "object_flip_both": cc.SpriteShowHide,
         "object_flip_horizontal": cc.SpriteShowHide,
         "object_flip_vertical": cc.SpriteShowHide,
-        "object_tint": cc.SpriteTintBright,
+        "object_start_tinting": cc.SpriteTintBright,
         "object_focus": cc.SpriteTintSolo,
         "object_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "object_fade_current_value": cc.FadeCurrentValue,
@@ -141,8 +139,7 @@ class CommandHelper:
         "object_stop_scaling": cc.SpriteShowHide,
         "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "object_stop_movement_condition": cc.MovementStopCondition,
-        "object_move": cc.MovementSpeed,
-        "object_start_moving": cc.SpriteShowHide,
+        "object_start_moving": cc.MoveStart,
         "object_stop_moving": cc.SpriteShowHide,
         "object_set_position_x": cc.SpritePosition,
         "object_set_position_y": cc.SpritePosition,
@@ -475,7 +472,7 @@ class CommandHelper:
                             arguments =\
                                 CommandHelper._get_optional_arguments(arguments, 2)                
                 
-                case "character_tint" | "object_tint" | "dialog_sprite_tint":
+                case "character_start_tinting" | "object_start_tinting" | "dialog_sprite_start_tinting":
                     
                     if isinstance(arguments, list) and len(arguments) == 3:
                         # Use the 3-argument version of the class.

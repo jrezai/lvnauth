@@ -194,9 +194,9 @@ class SpriteObject:
         # Will be based on the MovementStopRunScript class.
         self.movement_stop_run_script = None
 
-        # Will be based on the MovementSpeed class.
-        self.movement_speed: cc.MovementSpeed
-        self.movement_speed = None
+        # Will be based on the MoveStart class.
+        self.move_properties: cc.MoveStart
+        self.move_properties = None
 
 
         # Initialize
@@ -2043,7 +2043,7 @@ class SpriteObject:
         """
 
         # Not moving the sprite or no instructions on speed? Return.
-        if not self.is_moving or not self.movement_speed:
+        if not self.is_moving or not self.move_properties:
             return
 
         if self.stop_movement_conditions:
@@ -2060,13 +2060,13 @@ class SpriteObject:
 
                     # How we check for a stop depends on the
                     # direction the sprite is moving.
-                    if self.movement_speed.x_direction == "left":
+                    if self.move_properties.x_direction == "left":
                         # The sprite is moving left
 
                         if self.rect.left <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
-                    elif self.movement_speed.x_direction == "right":
+                    elif self.move_properties.x_direction == "right":
                         # The sprite is moving right
 
                         if self.rect.left >= pixel_coordinate:
@@ -2077,13 +2077,13 @@ class SpriteObject:
 
                     # How we check for a stop depends on the
                     # direction the sprite is moving.
-                    if self.movement_speed.x_direction == "right":
+                    if self.move_properties.x_direction == "right":
                         # The sprite is moving right
 
                         if self.rect.right >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
-                    elif self.movement_speed.x_direction == "left":
+                    elif self.move_properties.x_direction == "left":
                         # The sprite is moving left
 
                         if self.rect.right <= pixel_coordinate:
@@ -2095,13 +2095,13 @@ class SpriteObject:
                     # How we check for a stop depends on the
                     # direction the sprite is moving.
 
-                    if self.movement_speed.y_direction == "up":
+                    if self.move_properties.y_direction == "up":
                         # The sprite is moving up
 
                         if self.rect.top <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
-                    if self.movement_speed.y_direction == "down":
+                    if self.move_properties.y_direction == "down":
                         # The sprite is moving down
 
                         if self.rect.top >= pixel_coordinate:
@@ -2113,13 +2113,13 @@ class SpriteObject:
                     # How we check for a stop depends on the
                     # direction the sprite is moving.
 
-                    if self.movement_speed.y_direction == "down":
+                    if self.move_properties.y_direction == "down":
                         # The sprite is moving down
 
                         if self.rect.bottom >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
-                    elif self.movement_speed.y_direction == "up":
+                    elif self.move_properties.y_direction == "up":
                         # The sprite is moving up
 
                         if self.rect.bottom <= pixel_coordinate:
@@ -2169,18 +2169,18 @@ class SpriteObject:
                     return
 
 
-        if self.movement_speed.x:
+        if self.move_properties.x:
             # Move the X position
             self.calculated_pos_moving_x +=\
-                self.movement_speed.x * AnimationSpeed.delta
+                self.move_properties.x * AnimationSpeed.delta
             
             self.rect.x = int(self.calculated_pos_moving_x)
             # self.rect.move_ip(int(self.pos_x), 0)
 
-        if self.movement_speed.y:
+        if self.move_properties.y:
             # Move the Y position
             self.calculated_pos_moving_y +=\
-                self.movement_speed.y * AnimationSpeed.delta
+                self.move_properties.y * AnimationSpeed.delta
             
             self.rect.y = int(self.calculated_pos_moving_y)
             # self.rect.move_ip(0, self.movement_speed.y)

@@ -741,8 +741,8 @@ class WizardWindow:
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
                             parent_display_text="Character",
-                            sub_display_text="character_tint",
-                            command_name="character_tint",
+                            sub_display_text="character_start_tinting",
+                            command_name="character_start_tinting",
                             purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the character sprite must already be visible.",
                             group_name=GroupName.TINT)
@@ -955,34 +955,22 @@ class WizardWindow:
                                       "will stop moving.",
                                       group_name=GroupName.MOVE)
 
-        page_character_move =\
+        page_character_start_moving =\
             CharacterMove(parent_frame=self.frame_contents_outer,
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
                           parent_display_text="Character",
-                          sub_display_text="character_move",
-                          command_name="character_move",
-                          purpose_line="Sets the movement speed and direction of a character sprite.",
+                          sub_display_text="character_start_moving",
+                          command_name="character_start_moving",
+                          purpose_line="Starts a movement animation on a specific character sprite.",
                           scale_default_value=5,
                           scale_from_value=0,
-                          scale_to_value=1500,                          
+                          scale_to_value=1500,                                       
                           group_name=GroupName.MOVE)
 
-
-        page_character_start_moving =\
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Character",
-                                 sub_display_text="character_start_moving",
-                                 command_name="character_start_moving",
-                                 purpose_line="Starts a movement animation on a specific character sprite.",
-                                 group_name=GroupName.MOVE)
-
         page_character_stop_moving = \
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+            CharacterStopMoving(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
@@ -1289,8 +1277,8 @@ class WizardWindow:
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
                             parent_display_text="Dialog",
-                            sub_display_text="dialog_sprite_tint",
-                            command_name="dialog_sprite_tint",
+                            sub_display_text="dialog_sprite_start_tinting",
+                            command_name="dialog_sprite_start_tinting",
                             purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the dialog sprite must already be visible.",
                             group_name=GroupName.TINT)
@@ -1501,31 +1489,22 @@ class WizardWindow:
                                           "will stop moving.",
                                           group_name=GroupName.MOVE)
     
-        page_dialog_move =\
+        page_dialog_start_moving =\
                 CharacterMove(parent_frame=self.frame_contents_outer,
                               header_label=self.lbl_header,
                               purpose_label=self.lbl_purpose,
                               treeview_commands=self.treeview_commands,
                               parent_display_text="Dialog",
-                              sub_display_text="dialog_sprite_move",
-                              command_name="dialog_sprite_move",
-                              purpose_line="Sets the movement speed and direction of an dialog sprite.",
+                              sub_display_text="dialog_sprite_start_moving",
+                              command_name="dialog_sprite_start_moving",
+                              purpose_line="Starts a movement animation on a specific dialog sprite.",
+                              scale_default_value=5,
+                              scale_from_value=0,
+                              scale_to_value=1500,                                     
                               group_name=GroupName.MOVE)
-    
-    
-        page_dialog_start_moving =\
-                CharacterStartMoving(parent_frame=self.frame_contents_outer,
-                                     header_label=self.lbl_header,
-                                     purpose_label=self.lbl_purpose,
-                                     treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_start_moving",
-                                     command_name="dialog_sprite_start_moving",
-                                     purpose_line="Starts a movement animation on a specific dialog sprite.",
-                                     group_name=GroupName.MOVE)
 
         page_dialog_stop_moving = \
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+            CharacterStopMoving(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
@@ -1722,8 +1701,8 @@ class WizardWindow:
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
                             parent_display_text="Object",
-                            sub_display_text="object_tint",
-                            command_name="object_tint",
+                            sub_display_text="object_start_tinting",
+                            command_name="object_start_tinting",
                             purpose_line="Darkens or brightens a given sprite.\n\n"
                             "Note: the object sprite must already be visible.",
                             group_name=GroupName.TINT)
@@ -1933,30 +1912,22 @@ class WizardWindow:
                                       "will stop moving.",
                                       group_name=GroupName.MOVE)
 
-        page_object_move =\
+        page_object_start_moving =\
             CharacterMove(parent_frame=self.frame_contents_outer,
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
                           parent_display_text="Object",
-                          sub_display_text="object_move",
-                          command_name="object_move",
-                          purpose_line="Sets the movement speed and direction of an object sprite.",
+                          sub_display_text="object_start_moving",
+                          command_name="object_start_moving",
+                          purpose_line="Starts a movement animation on a specific object sprite.",
+                          scale_default_value=5,
+                          scale_from_value=0,
+                          scale_to_value=1500,
                           group_name=GroupName.MOVE)
 
-        page_object_start_moving =\
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_start_moving",
-                                 command_name="object_start_moving",
-                                 purpose_line="Starts a movement animation on a specific object sprite.",
-                                 group_name=GroupName.MOVE)
-
         page_object_stop_moving = \
-            CharacterStartMoving(parent_frame=self.frame_contents_outer,
+            CharacterStopMoving(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
@@ -2625,7 +2596,7 @@ class WizardWindow:
         self.pages["character_flip_horizontal"] = page_character_flip_horizontal
         self.pages["character_flip_vertical"] = page_character_flip_vertical
         
-        self.pages["character_tint"] = page_character_tint
+        self.pages["character_start_tinting"] = page_character_tint
         self.pages["character_focus"] = page_character_focus
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
@@ -2645,7 +2616,6 @@ class WizardWindow:
 
         self.pages["character_after_movement_stop"] = page_character_after_movement_stop
         self.pages["character_stop_movement_condition"] = page_character_stop_movement_condition
-        self.pages["character_move"] = page_character_move
         self.pages["character_start_moving"] = page_character_start_moving
         self.pages["character_stop_moving"] = page_character_stop_moving
         self.pages["character_set_position_x"] = page_character_set_position_x
@@ -2688,7 +2658,7 @@ class WizardWindow:
         self.pages["object_flip_horizontal"] = page_object_flip_horizontal
         self.pages["object_flip_vertical"] = page_object_flip_vertical
         
-        self.pages["object_tint"] = page_object_tint
+        self.pages["object_start_tinting"] = page_object_tint
         self.pages["object_focus"] = page_object_focus
         
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
@@ -2708,7 +2678,6 @@ class WizardWindow:
 
         self.pages["object_after_movement_stop"] = page_object_after_movement_stop
         self.pages["object_stop_movement_condition"] = page_object_stop_movement_condition
-        self.pages["object_move"] = page_object_move
         self.pages["object_start_moving"] = page_object_start_moving
         self.pages["object_stop_moving"] = page_object_stop_moving
         self.pages["object_set_position_x"] = page_object_set_position_x
@@ -2742,7 +2711,7 @@ class WizardWindow:
         self.pages["dialog_sprite_flip_horizontal"] = page_dialog_flip_horizontal
         self.pages["dialog_sprite_flip_vertical"] = page_dialog_flip_vertical
         
-        self.pages["dialog_sprite_tint"] = page_dialog_tint
+        self.pages["dialog_sprite_start_tinting"] = page_dialog_tint
         self.pages["dialog_sprite_focus"] = page_dialog_focus
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
@@ -2762,7 +2731,6 @@ class WizardWindow:
 
         self.pages["dialog_sprite_after_movement_stop"] = page_dialog_after_movement_stop
         self.pages["dialog_sprite_stop_movement_condition"] = page_dialog_stop_movement_condition
-        self.pages["dialog_sprite_move"] = page_dialog_move
         self.pages["dialog_sprite_start_moving"] = page_dialog_start_moving
         self.pages["dialog_sprite_stop_moving"] = page_dialog_stop_moving
         self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
@@ -4436,7 +4404,7 @@ class SharedPages:
     
             return user_input
         
-        def _edit_populate(self, command_class_object: cc.MovementSpeed):
+        def _edit_populate(self, command_class_object: cc.MoveStart):
             """
             Populate the widgets with the arguments for editing.
             """
@@ -8655,6 +8623,9 @@ class TintFrame:
         self.v_speed:tk.IntVar
         self.v_speed = builder.get_variable("v_speed")
         
+        # Default to a speed of 50
+        self.v_speed.set(50)
+        
         self.v_tint_amount:tk.IntVar
         self.v_tint_amount = builder.get_variable("v_tint_amount")
         
@@ -10173,9 +10144,9 @@ class CharacterMove(SharedPages.Move):
                          sub_display_text, command_name, purpose_line, **kwargs)
 
 
-class CharacterStartMoving(SharedPages.StartStop):
+class CharacterStopMoving(SharedPages.StartStop):
     """
-    <character_move_start: general alias>
+    <character_move_stop: general alias>
     """
 
     def __init__(self, parent_frame, header_label, purpose_label,

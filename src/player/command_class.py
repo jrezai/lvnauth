@@ -280,7 +280,7 @@ class RemoteCallWithArguments(NamedTuple):
 # Sprite classes
 
 
-class MovementSpeed(NamedTuple):
+class MoveStart(NamedTuple):
     sprite_name: str
     x: int
     x_direction: str

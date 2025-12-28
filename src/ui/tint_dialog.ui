@@ -93,7 +93,7 @@
             </containerlayout>
             <child>
               <object class="ttk.Label" id="lbl_speed" named="True">
-                <property name="text" translatable="yes">Animation speed to reach tint:</property>
+                <property name="text" translatable="yes">Gradual tinting animation speed:</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="columnspan">2</property>
@@ -144,7 +144,7 @@
             </containerlayout>
             <child>
               <object class="ttk.Label" id="lbl_tint_amount" named="True">
-                <property name="text" translatable="yes">Tint amount:</property>
+                <property name="text" translatable="yes">Tint amount to stop at:</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="columnspan">2</property>

@@ -1404,21 +1404,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
-        elif command_name == "character_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_start_moving":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.CHARACTER,
@@ -1482,7 +1467,7 @@ class StoryReader:
                 arguments=arguments
             )
 
-        elif command_name == "character_tint":
+        elif command_name == "character_start_tinting":
             self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
                               arguments=arguments)
                     
@@ -1491,7 +1476,7 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.CHARACTER,
                 arguments=arguments)
 
-        elif command_name == "object_tint":
+        elif command_name == "object_start_tinting":
             self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
                               arguments=arguments)
             
@@ -1500,7 +1485,7 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT,
                 arguments=arguments)
             
-        elif command_name == "dialog_sprite_tint":
+        elif command_name == "dialog_sprite_start_tinting":
             self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                               arguments=arguments)
             
@@ -3618,20 +3603,26 @@ class StoryReader:
         :return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the visible sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing
+            arguments = arguments.strip()
 
             if start_or_stop == sd.StartOrStop.START:
-                sprite.start_moving()
+                self._sprite_move_start(sprite_type=sprite_type,
+                                        arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+    
+                # Get the visible sprite
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 # The user wants to stop moving this object.
                 sprite.stop_moving()
 
@@ -3817,11 +3808,11 @@ class StoryReader:
                 self._tint_sprite(sprite_type=sprite_type,
                                   arguments=arguments_line)                
             
-    def _set_movement_speed(self,
+    def _sprite_move_start(self,
                             sprite_type: file_reader.ContentType,
                             arguments: str):
         """
-        Set the movement speed of the character sprite.
+        Start a movement animation on a particular sprite.
 
         Arguments:
         
@@ -3839,12 +3830,12 @@ class StoryReader:
         Return: None
         """
 
-        movement_speed: cc.MovementSpeed
-        movement_speed = self._get_arguments(
-            class_namedtuple=cc.MovementSpeed, given_arguments=arguments
+        move_start: cc.MoveStart
+        move_start = self._get_arguments(
+            class_namedtuple=cc.MoveStart, given_arguments=arguments
         )
 
-        if not movement_speed:
+        if not move_start:
             return
 
         """
@@ -3857,27 +3848,30 @@ class StoryReader:
         """
 
         # Set the directions to lowercase
-        movement_speed._replace(x_direction=movement_speed.x_direction.lower())
-        movement_speed._replace(y_direction=movement_speed.y_direction.lower())
+        move_start._replace(x_direction=move_start.x_direction.lower())
+        move_start._replace(y_direction=move_start.y_direction.lower())
 
         # Horizontal direction going left? Set the X to a negative int.
-        if movement_speed.x_direction == "left":
-            movement_speed = movement_speed._replace(x=-abs(movement_speed.x))
+        if move_start.x_direction == "left":
+            move_start = move_start._replace(x=-abs(move_start.x))
 
         # Vertical direction going up? Set the Y to a negative int.
-        if movement_speed.y_direction == "up":
-            movement_speed = movement_speed._replace(y=-abs(movement_speed.y))
+        if move_start.y_direction == "up":
+            move_start = move_start._replace(y=-abs(move_start.y))
 
         # Get the visible sprite
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=movement_speed.sprite_name
+            content_type=sprite_type, general_alias=move_start.sprite_name
         )
 
         if not sprite:
             return
 
         # Stamp the speed onto the sprite.
-        sprite.movement_speed = movement_speed
+        sprite.move_properties = move_start
+        
+        # Set the flag to start a movement animation.
+        sprite.start_moving()
         
     @staticmethod
     def try_get_arguments_attribute(unknown_object) -> str | None:
