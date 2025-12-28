@@ -899,9 +899,9 @@ class SpriteObject:
 
         # Note: it's important to do the fading animation last because otherwise
         # the faded image will get overwritten with the original image in the other animations.
+        self._animate_movement()
         self.active_font_handler.draw()
         self._animate_scaling()
-        self._animate_movement()
         self._animate_rotation()
         self.tint_handler.animate_tint()
         self._animate_fading()
@@ -2174,7 +2174,7 @@ class SpriteObject:
             self.calculated_pos_moving_x +=\
                 self.move_properties.x * AnimationSpeed.delta
             
-            self.rect.x = int(self.calculated_pos_moving_x)
+            self.rect.centerx = int(self.calculated_pos_moving_x)
             # self.rect.move_ip(int(self.pos_x), 0)
 
         if self.move_properties.y:
@@ -2182,7 +2182,7 @@ class SpriteObject:
             self.calculated_pos_moving_y +=\
                 self.move_properties.y * AnimationSpeed.delta
             
-            self.rect.y = int(self.calculated_pos_moving_y)
+            self.rect.centery = int(self.calculated_pos_moving_y)
             # self.rect.move_ip(0, self.movement_speed.y)
 
 
