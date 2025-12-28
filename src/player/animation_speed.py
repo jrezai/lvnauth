@@ -36,7 +36,7 @@ class AnimationSpeed:
         a starting value and a specified increment.
     
         Purpose: to get a float value that can be used in an animation, such as
-        fading, movement, scaling, rotating.
+        fading, movement, scaling, rotating, tinting.
     
         Each type of animation will need its own initial value
         and incrementation.

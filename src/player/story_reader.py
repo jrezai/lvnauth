@@ -1521,21 +1521,6 @@ class StoryReader:
         elif command_name == "after_cancel_all":
             self.after_cancel_all()
 
-        elif command_name == "character_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_fade_current_value":
             self._sprite_current_fade_value(
                 sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
@@ -1548,21 +1533,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_fade_current_value":
             self._sprite_current_fade_value(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_fade_speed":
-            self._sprite_fade_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_speed":
-            self._sprite_fade_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_speed":
-            self._sprite_fade_speed(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -1621,36 +1591,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.STOP,
-            )
-
-        elif command_name == "character_scale_speed":
-            self._sprite_scale_speed(
-                sprite_type=file_reader.ContentType.CHARACTER,
-                arguments=arguments)
-
-        elif command_name == "object_scale_speed":
-            self._sprite_scale_speed(
-                sprite_type=file_reader.ContentType.OBJECT,
-                arguments=arguments)
-
-        elif command_name == "dialog_sprite_scale_speed":
-            self._sprite_scale_speed(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
-                arguments=arguments)
-
-        elif command_name == "character_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_scale_current_value":
@@ -1737,36 +1677,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_rotate_current_value":
             self._sprite_rotate_current_value(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_rotate_speed":
-            self._sprite_rotate_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_speed":
-            self._sprite_rotate_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_speed":
-            self._sprite_rotate_speed(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -2624,122 +2534,6 @@ class StoryReader:
 
         # sprite.sudden_rotate_change = True
 
-    def _sprite_rotate_until(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set when to stop rotating a sprite.
-        Example: 90  (90 means when the sprite reaches a 90-degree angle)
-
-        If the rotation value is a negative number, such as -1, it will
-        cause the rotation to occur continuously without stopping, by setting
-        the .rotate_until variable to None.
-
-        Arguments:
-         - sprite_type: so we can know which dictionary to get the sprite from.
-         - arguments: sprite general alias, angle (float)
-
-        Return: None
-        """
-
-        rotate_until: cc.RotateUntil
-        rotate_until = self._get_arguments(
-            class_namedtuple=cc.RotateUntil, given_arguments=arguments
-        )
-
-        if not rotate_until:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_until.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Rotate continuously?
-        # if isinstance(rotate_until, int) and rotate_until < 0:
-        if rotate_until.rotate_until.lower() == "forever":
-            # Rotate continuously.
-            sprite.rotate_until = None
-        else:
-
-            # Attempt to convert the rotate_until to a float
-            # because the rotate_until value is currently a str.
-            try:
-                rotate_float = float(rotate_until.rotate_until)
-            except ValueError:
-                return
-
-            rotate_until = rotate_until._replace(rotate_until=rotate_float)
-
-            # Set the property for the character sprite to know when to stop the rotating animation.
-            sprite.rotate_until = rotate_until
-
-    def _sprite_rotate_speed(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set the rotation speed of a sprite.
-        Example: 0.50
-        A positive value will rotate the sprite counterclockwise.
-        A negative value (such as -0.50) will rotate the sprite clockwise.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, rotation speed, rotation direction
-
-        Return: None
-        """
-
-        rotate_speed: cc.RotateSpeed
-        rotate_speed = self._get_arguments(
-            class_namedtuple=cc.RotateSpeed, given_arguments=arguments
-        )
-
-        if not rotate_speed:
-            return
-
-        # Get the visible character sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_speed.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        rotate_direction = rotate_speed.rotate_direction.lower()
-        if not rotate_direction in ("clockwise", "counterclockwise"):
-            return        
-
-        # Convert the user-provided speed value from sprite.rotate_speed 
-        # to a float that pygame can use.
-        # Depending on the rotation direction, the float will either be a 
-        # positive float or a negative float.
-        rotate_float_value = \
-            AnimationSpeed.get_sequence_value(
-                initial_value=0.1,
-                increment_by=0.01, 
-                max_convenient_row=220000,
-                convenient_row_number=rotate_speed.rotate_speed)
-        
-        if rotate_direction == "clockwise":
-            # A positive value will rotate the sprite counterclockwise.
-            # A negative value(such as -0.50) will rotate the sprite clockwise.
-            rotate_float_value = -abs(rotate_float_value)        
-        
-        # Make sure we have a float value, otherwise stop here.
-        if not rotate_float_value:
-            return
-
-        # Use the new float value instead of the convenience value.
-        rotate_speed = cc.RotateSpeed(
-            rotate_speed.sprite_name, rotate_float_value, rotate_speed.rotate_direction
-        )
-
-        # Set the property for the sprite to know how fast
-        # (or slow) the rotation animation should occur,
-        # and also which direction the rotate should occur.
-        sprite.rotate_speed = rotate_speed
-
     def _sprite_after_rotating_stop(
         self, sprite_type: file_reader.ContentType, arguments
     ):
@@ -2785,6 +2579,107 @@ class StoryReader:
         # it'll read this variable value.
         sprite.rotate_stop_run_script = rotate_stop_run_script
 
+    def _sprite_rotate_start(self,
+                             sprite_type: file_reader.ContentType,
+                             arguments):
+        """
+        Set the rotation speed of a sprite.
+        Example: 0.50
+        A positive value will rotate the sprite counterclockwise.
+        A negative value (such as -0.50) will rotate the sprite clockwise.
+
+        Arguments:
+
+        - sprite_type: so we can know which dictionary to get the sprite from.
+        - arguments: sprite general alias, rotation speed, rotation direction
+
+        Return: None
+        """
+
+        if not arguments:
+            return
+
+        rotate_start: cc.RotateStart
+        rotate_start = self._get_arguments(
+            class_namedtuple=cc.RotateStart, given_arguments=arguments
+        )
+
+        if not rotate_start:
+            return
+
+        # Get the visible character sprite
+        sprite = self.story.get_visible_sprite(
+            content_type=sprite_type, general_alias=rotate_start.sprite_name
+        )
+
+        if not sprite:
+            return
+
+        rotate_direction = rotate_start.rotate_direction.lower()
+        if not rotate_direction in ("clockwise", "counterclockwise"):
+            return
+        
+        # Initialize the RotateCurrentValue object, we need to have
+        # it for the animation to work.
+        if sprite.rotate_current_value is None:
+            sprite.rotate_current_value = cc.RotateCurrentValue(
+                sprite_name=rotate_start.sprite_name, rotate_current_value=0
+            )
+    
+
+        # Convert the user-provided speed value from sprite.rotate_speed 
+        # to a float that pygame can use.
+        # Depending on the rotation direction, the float will either be a 
+        # positive float or a negative float.
+        rotate_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.1,
+                increment_by=0.01, 
+                max_convenient_row=220000,
+                convenient_row_number=rotate_start.rotate_speed)
+        
+        if rotate_direction == "clockwise":
+            # A positive value will rotate the sprite counterclockwise.
+            # A negative value(such as -0.50) will rotate the sprite clockwise.
+            rotate_float_value = -abs(rotate_float_value)        
+        
+        # Make sure we have a float value, otherwise stop here.
+        if not rotate_float_value:
+            return
+
+        # Use the new float value instead of the convenience value.
+        rotate_start = \
+            rotate_start._replace(rotate_speed=rotate_float_value)
+        
+        # Record the rotate direction
+        rotate_start = \
+            rotate_start._replace(rotate_direction=rotate_direction)
+
+        # Rotate continuously?
+        # if isinstance(rotate_until, int) and rotate_until < 0:
+        if rotate_start.rotate_until.lower() == "forever":
+            # Rotate continuously.
+            rotate_start = rotate_start._replace(rotate_until=None)
+        else:
+
+            # Attempt to convert the rotate_until to a float
+            # because the rotate_until value is currently a str.
+            try:
+                rotate_float = float(rotate_start.rotate_until)
+            except ValueError:
+                return
+
+            rotate_start = rotate_start._replace(rotate_until=rotate_float)
+
+
+        # Set the property for the sprite to know how fast
+        # (or slow) the rotation animation should occur,
+        # and also which direction the rotate should occur.
+        sprite.rotate_properties = rotate_start
+        
+        # Set the flag to start rotating the sprite.
+        sprite.start_rotating()
+
     def _sprite_start_or_stop_rotating(
         self,
         sprite_type: file_reader.ContentType,
@@ -2798,7 +2693,9 @@ class StoryReader:
         Arguments:
          - sprite_type: so we can know which dictionary to get the sprite from.
 
-         - arguments: a str with the sprite's general alias (example: 'rave')
+         - arguments: a str with the arguments to start a rotation, such as
+         the sprite alias, rotation speed, rotation direction, and whether to
+         rotate to a certain angle and then stop, or rotate forever.
 
          - start_or_stop: whether we should start the animation
         or stop the animation. Based on extract_functions.StartOrStop
@@ -2806,28 +2703,27 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the visible character sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing.
+            arguments = arguments.strip()
 
             if start_or_stop == sd.StartOrStop.START:
 
-                # Initialize the RotateCurrentValue object, we need to have
-                # it for the animation to work.
-                if sprite.rotate_current_value is None:
-                    sprite.rotate_current_value = cc.RotateCurrentValue(
-                        sprite_name=sprite_name, rotate_current_value=0
-                    )
-
-                sprite.start_rotating()
+                self._sprite_rotate_start(sprite_type=sprite_type,
+                                          arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+    
+                # Get the rotation arguments as individual fields.
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 sprite.stop_rotating()
 
     def _sprite_start_or_stop_scaling(
@@ -2850,28 +2746,27 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the active sprite using the general alias.
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing.
+            arguments = arguments.strip()    
 
             if start_or_stop == sd.StartOrStop.START:
 
-                # Initialize the ScaleCurrentValue object, we need to have
-                # it for the animation to work.
-                if sprite.scale_current_value is None:
-                    sprite.scale_current_value = cc.ScaleCurrentValue(
-                        sprite_name=sprite_name, scale_current_value=0
-                    )
-
-                sprite.start_scaling()
+                self._sprite_scale_start(sprite_type=sprite_type,
+                                         arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+                
+                # Get the active sprite using the general alias.
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 sprite.stop_scaling()
 
     def _sprite_after_scaling_stop(
@@ -2954,70 +2849,57 @@ class StoryReader:
 
         # sprite.sudden_scale_change = True
 
-    def _sprite_scale_until(self, sprite_type: file_reader.ContentType, arguments):
+    def _sprite_scale_start(self,
+                            sprite_type: file_reader.ContentType,
+                            arguments):
         """
-        Set when to stop scaling a sprite.
-        Example: 2  (2 means twice as big as the original sprite)
+        Set the flag for the sprite object
+        to indicate that fading animations should start or stop.
 
         Arguments:
+         - sprite_type: so we can know which dictionary to get the sprite from.
 
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite name, scale until value
+         - arguments: a str with the arguments to start a fade, such as
+         the sprite alias, fade speed, fade stop at.
 
-        return: None
+         - start_or_stop: whether we should start the animation
+        or stop the animation.
+
+        Return: None
         """
 
-        scale_until: cc.ScaleUntil
-        scale_until = self._get_arguments(
-            class_namedtuple=cc.ScaleUntil, given_arguments=arguments
+        scale_start: cc.ScaleStart
+        scale_start = self._get_arguments(
+            class_namedtuple=cc.ScaleStart, given_arguments=arguments
         )
 
-        if not scale_until:
+        if not scale_start:
             return
 
-        # Get the active sprite
+        # Get the visible sprite based on the general alias
+        sprite: sprite_definition.SpriteObject
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_until.sprite_name
+            content_type=sprite_type,
+            general_alias=scale_start.sprite_name
         )
 
         if not sprite:
             return
-
-        # Set the property for the sprite to know when to stop the scaling animation.
-        sprite.scale_until = scale_until
-
-    def _sprite_scale_speed(self,
-                            sprite_type: file_reader.ContentType, arguments):
+        
+        # Initialize the ScaleCurrentValue object, we need to have
+        # it for the animation to work.
+        if sprite.scale_current_value is None:
+            sprite.scale_current_value = cc.ScaleCurrentValue(
+                sprite_name=sprite.general_alias, scale_current_value=0
+            )        
+        
         """
         Set the scale speed of a sprite.
         Example: 0.0602  (2 means twice as big)
         A positive value will scale up the sprite. A negative value (such as -0.0602)
         will scale down a sprite.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from
-        - arguments: sprite name, scale speed, scale direction
-
-        return: None
         """
-
-        scale_speed: cc.ScaleSpeed
-        scale_speed = self._get_arguments(
-            class_namedtuple=cc.ScaleSpeed, given_arguments=arguments
-        )
-
-        if not scale_speed:
-            return
-
-        # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_speed.sprite_name
-        )
-
-        if not sprite:
-            return
-
+        
         """
         Convert the user-provided convenient value speed (1 to 100000)
         from scale_speed.scale_speed to a value that pygame can use.
@@ -3031,18 +2913,20 @@ class StoryReader:
                 initial_value=0.0002,
                 increment_by=0.0002,
                 max_convenient_row=100000, 
-                convenient_row_number=scale_speed.scale_speed)
+                convenient_row_number=scale_start.scale_speed)
 
         # Make sure we have a float value, otherwise stop here.
         if not scale_speed_float_value:
             return
 
         # Use the new float value instead of the convenience value.
-        scale_speed = scale_speed._replace(scale_speed=scale_speed_float_value)
+        scale_start = scale_start._replace(scale_speed=scale_speed_float_value)
 
-        # Set the property for the sprite to know how fast
-        # (or slow) the scale animation should occur.
-        sprite.scale_speed = scale_speed
+        # Set the scale properties of the sprite.
+        sprite.scale_properties = scale_start
+
+        # Set the flag to start the scaling animation.
+        sprite.start_scaling()
 
     def _sprite_start_or_stop_fading(
         self,
@@ -3066,20 +2950,24 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
 
-            # Get the visible sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            # Remove excess spacing.
+            arguments = arguments.strip()            
 
             if start_or_stop == sd.StartOrStop.START:
-                sprite.start_fading()
+                
+                self._sprite_fade_start(sprite_type=sprite_type,
+                                        arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+                
+                # Get the visible spart based on the alias.
+                sprite = self.story.get_visible_sprite(
+                                content_type=sprite_type,
+                                general_alias=sprite_name)                
+            
                 sprite.stop_fading()
 
     def _sprite_fade_speed_get_value_from_percent(
@@ -3132,34 +3020,38 @@ class StoryReader:
             #percent_to_float = -abs(percent_to_float)
         return fade_float_value
 
-    def _sprite_fade_speed(self, sprite_type: file_reader.ContentType, arguments):
+    def _sprite_fade_start(self,
+                           sprite_type: file_reader.ContentType,
+                           arguments):
         """
-        Set the fade-speed of a sprite.
-        Example: 0.05
-        A positive value will fade-in the sprite. A negative value (such as -0.05)
-        will fade out a sprite.
+        Set the flag for the sprite object
+        to indicate that fading animations should start or stop.
 
         Arguments:
+         - sprite_type: so we can know which dictionary to get the sprite from.
 
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, fade speed (example: 0.05)
+         - arguments: a str with the arguments to start a fade, such as
+         the sprite alias, fade speed, fade stop at.
 
-        return: None
+         - start_or_stop: whether we should start the animation
+        or stop the animation.
+
+        Return: None
         """
 
-        fade_speed: cc.FadeSpeed
-        fade_speed = self._get_arguments(
-            class_namedtuple=cc.FadeSpeed, given_arguments=arguments
+        fade_start: cc.FadeStart
+        fade_start = self._get_arguments(
+            class_namedtuple=cc.FadeStart, given_arguments=arguments
         )
 
-        if not fade_speed:
+        if not fade_start:
             return
 
         # Get the visible sprite based on the general alias
         sprite: sprite_definition.SpriteObject
         sprite = self.story.get_visible_sprite(
             content_type=sprite_type,
-            general_alias=fade_speed.sprite_name
+            general_alias=fade_start.sprite_name
         )
 
         if not sprite:
@@ -3174,14 +3066,15 @@ class StoryReader:
                 initial_value=0.1,
                 increment_by=0.1,
                 max_convenient_row=15000,
-                convenient_row_number=fade_speed.fade_speed)        
+                convenient_row_number=fade_start.fade_speed)        
 
         # Make sure we have a float value, otherwise stop here.
         if not fade_float_value:
             return
 
+
         # Use the new float value instead of the convenience value.
-        fade_speed = cc.FadeSpeed(fade_speed.sprite_name, fade_float_value)
+        fade_start = fade_start._replace(fade_speed=fade_float_value)
 
         # Initialize the FadeCurrentValue object, we need to have
         # it for the animation to work.
@@ -3196,7 +3089,7 @@ class StoryReader:
             initial_fade_value = 255
             
             sprite.current_fade_value = cc.FadeCurrentValue(
-                sprite_name=fade_speed.sprite_name,
+                sprite_name=fade_start.sprite_name,
                 current_fade_value=initial_fade_value,
             )            
             
@@ -3206,10 +3099,13 @@ class StoryReader:
             
         # Record the float fade value because we'll use this for
         # time-accurate delta fade calculations in each frame.
-        sprite.calculated_fade_value = float(initial_fade_value)
+        sprite.calculated_fade_value = float(initial_fade_value)     
 
-        # Set the fade speed.
-        sprite.fade_speed = fade_speed
+        # Set the fade speed / fade until properties.
+        sprite.fade_properties = fade_start
+        
+        # Set the flag to start the fade animation.
+        sprite.start_fading()
 
     def _sprite_current_fade_value(
         self, sprite_type: file_reader.ContentType, arguments
@@ -3252,37 +3148,7 @@ class StoryReader:
 
         # sprite.sudden_fade_change = True
 
-    def _sprite_fade_until(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set the property of a sprite to indicate that a fade animation should stop
-        when it reaches a specific fade value (0 to 255).
 
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general lias, fade value (example: 'rave, 255')
-
-        return: None
-        """
-
-        fade_until: cc.FadeUntilValue
-        fade_until = self._get_arguments(
-            class_namedtuple=cc.FadeUntilValue, given_arguments=arguments
-        )
-
-        if not fade_until:
-            return
-
-        # Get the visible/active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_until.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Set the property for the sprite to know when a fade animation should stop.
-        sprite.fade_until = fade_until
 
     def _sprite_load(self, arguments: str, sprite_type: file_reader.ContentType):
         """
@@ -6098,8 +5964,8 @@ class WaitForAnimationHandler:
         return (
             sprite_object.is_fading
             and isinstance(sprite_object.current_fade_value, cc.FadeCurrentValue)
-            and isinstance(sprite_object.fade_until, cc.FadeUntilValue)
-            and sprite_object.current_fade_value != sprite_object.fade_until.fade_value
+            and sprite_object.fade_properties.fade_until is not None
+            and sprite_object.current_fade_value != sprite_object.fade_properties.fade_until
         )
 
 

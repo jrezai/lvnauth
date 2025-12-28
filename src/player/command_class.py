@@ -352,28 +352,22 @@ class SpriteLoad(NamedTuple):
     sprite_general_alias: str
 
 
-class FadeUntilValue(NamedTuple):
-    sprite_name: str
-    fade_value: float
-
-
 class FadeCurrentValue(NamedTuple):
     sprite_name: str
     current_fade_value: int
 
 
-class FadeSpeed(NamedTuple):
+    
+class FadeStart(NamedTuple):
     sprite_name: str
     fade_speed: float
+    fade_until: int
 
 
-class ScaleSpeed(NamedTuple):
+
+class ScaleStart(NamedTuple):
     sprite_name: str
     scale_speed: float
-
-
-class ScaleUntil(NamedTuple):
-    sprite_name: str
     scale_until: float
 
 
@@ -382,18 +376,15 @@ class ScaleCurrentValue(NamedTuple):
     scale_current_value: float
 
 
-
 class RotateCurrentValue(NamedTuple):
     sprite_name: str
     rotate_current_value: float
+    
+    
 
-
-class RotateSpeed(NamedTuple):
+class RotateStart(NamedTuple):
     sprite_name: str
-    rotate_speed: float
     rotate_direction: str
-
-
-class RotateUntil(NamedTuple):
-    sprite_name: str
+    rotate_speed: float
     rotate_until: str  # str because the word 'forever' can be used.
+    

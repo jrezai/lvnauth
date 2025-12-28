@@ -58,6 +58,9 @@ SCENE_WITH_FADE_UI = PROJECT_PATH / "ui" / "scene_with_fade_dialog.ui"
 REMOTE_GET_UI = PROJECT_PATH / "ui" / "remote_get_dialog.ui"
 REMOTE_SAVE_UI = PROJECT_PATH / "ui" / "remote_save_dialog.ui"
 REMOTE_CALL_UI = PROJECT_PATH / "ui" / "remote_call_dialog.ui"
+ROTATE_START_UI = PROJECT_PATH / "ui" / "rotate_dialog.ui"
+FADE_START_UI = PROJECT_PATH / "ui" / "fade_dialog.ui"
+SCALE_START_UI = PROJECT_PATH / "ui" / "scale_dialog.ui"
 
 class Purpose(Enum):
     BACKGROUND = auto()
@@ -787,45 +790,6 @@ class WizardWindow:
                                       group_name=GroupName.FADE)
 
 
-        page_character_fade_speed =\
-            CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Character",
-                               sub_display_text="character_fade_speed",
-                               command_name="character_fade_speed",
-                               purpose_line="Set the fade-speed of a character sprite.\n"
-                               "Note: the character sprite must already be visible.",
-                               radio_button_instructions="Fade direction:",
-                               radio_button_text_1="Fade in",
-                               radio_button_text_2="Fade out",
-                               radio_button_value_1="fade in",
-                               radio_button_value_2="fade out",
-                               default_radio_button_value="fade in",
-                               scale_default_value=5,
-                               scale_from_value=1,
-                               scale_to_value=15000,
-                               scale_instructions="Fade speed (1 to 15000):",
-                               group_name=GroupName.FADE)
-
-        page_character_fade_until =\
-            CharacterFadeUntil(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Character",
-                               sub_display_text="character_fade_until",
-                               command_name="character_fade_until",
-                               purpose_line="Indicate at what fade level a fade animation should stop.\n"
-                               "Note: the character sprite must already be visible.",
-                               scale_instructions="Stop fading when the opacity reaches... (0 to 255)\n"
-                               "0 = fully transparent  255 = fully opaque",
-                               scale_from_value=0,
-                               scale_to_value=255,
-                               scale_default_value=128,
-                               group_name=GroupName.FADE)
-
         page_character_start_fading =\
             CharacterStartFading(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
@@ -836,6 +800,9 @@ class WizardWindow:
                                  command_name="character_start_fading",
                                  purpose_line="Starts a character sprite fading animation.\n"
                                  "Note: the character sprite must already be visible.",
+                                 scale_speed_from=1,
+                                 scale_speed_to=15000,
+                                 scale_speed_default=1000,                               
                                  group_name=GroupName.FADE)
 
         page_character_stop_fading =\
@@ -875,46 +842,6 @@ class WizardWindow:
                                         group_name=GroupName.ROTATE)
 
 
-        page_character_rotate_speed =\
-            CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Character",
-                                 sub_display_text="character_rotate_speed",
-                                 command_name="character_rotate_speed",
-                                 purpose_line="Set the rotation speed percentage of a character sprite.\n"
-                                 "The speed range is 1 (slowest) to 100 (fastest).\n\n"
-                                 "Note: the character sprite must already be visible.",
-                                 radio_button_instructions="Rotate direction:",
-                                 radio_button_text_1="Clockwise",
-                                 radio_button_text_2="Counterclockwise",
-                                 radio_button_value_1="clockwise",
-                                 radio_button_value_2="counterclockwise",
-                                 default_radio_button_value="clockwise",
-                                 include_radio_buttons=True, 
-                                 scale_default_value=5,
-                                 scale_from_value=1,
-                                 scale_to_value=220000,
-                                 scale_instructions="Rotation speed (1 to 220000):",
-                                 group_name=GroupName.ROTATE)
-
-        page_character_rotate_until =\
-            CharacterRotateUntil(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Character",
-                                 sub_display_text="character_rotate_until",
-                                 command_name="character_rotate_until",
-                                 purpose_line="Indicate at what degree a rotation animation should stop.\n"
-                                 "Note: the character sprite must already be visible.",
-                                 scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
-                                 scale_from_value=0,
-                                 scale_to_value=359,
-                                 scale_default_value=180,
-                                 group_name=GroupName.ROTATE)
-
         page_character_start_rotating =\
             CharacterStartRotating(parent_frame=self.frame_contents_outer,
                                    header_label=self.lbl_header,
@@ -925,6 +852,9 @@ class WizardWindow:
                                    command_name="character_start_rotating",
                                    purpose_line="Starts a character sprite rotation animation.\n"
                                    "Note: the character sprite must already be visible.",
+                                   scale_speed_from=1,
+                                   scale_speed_to=220000,
+                                   scale_speed_default=180,                                    
                                    group_name=GroupName.ROTATE)
 
         page_character_stop_rotating =\
@@ -952,28 +882,6 @@ class WizardWindow:
                                       "Note: the character sprite must already be visible.",
                                       group_name=GroupName.SCALE)
 
-        page_character_scale_speed =\
-            CharacterScaleBy(parent_frame=self.frame_contents_outer,
-                             header_label=self.lbl_header,
-                             purpose_label=self.lbl_purpose,
-                             treeview_commands=self.treeview_commands,
-                             parent_display_text="Character",
-                             sub_display_text="character_scale_speed",
-                             command_name="character_scale_speed",
-                             purpose_line="Sets the scale speed of a character sprite.\n"
-                             "Note: the character sprite must already be visible.",
-                             radio_button_instructions="Scale direction:",
-                             radio_button_text_1="Scale up",
-                             radio_button_text_2="Scale down",
-                             radio_button_value_1="scale up",
-                             radio_button_value_2="scale down",
-                             default_radio_button_value="scale up",
-                             scale_default_value=5,
-                             scale_from_value=1,
-                             scale_to_value=100000,
-                             scale_instructions="Scale speed (1 to 100000):",
-                             group_name=GroupName.SCALE)
-
         page_character_scale_current_value =\
             CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
                                        header_label=self.lbl_header,
@@ -992,22 +900,6 @@ class WizardWindow:
                                        group_name=GroupName.SCALE)
 
 
-        page_character_scale_until =\
-            CharacterScaleUntil(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Character",
-                                sub_display_text="character_scale_until",
-                                command_name="character_scale_until",
-                                purpose_line="Indicate at what scale a scaling animation should stop.\n"
-                                "Note: the character sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
-                                scale_from_value=0,
-                                scale_to_value=100,
-                                scale_default_value=2,
-                                group_name=GroupName.SCALE)
-
         page_character_start_scaling =\
             CharacterStartScaling(parent_frame=self.frame_contents_outer,
                                   header_label=self.lbl_header,
@@ -1017,8 +909,10 @@ class WizardWindow:
                                   sub_display_text="character_start_scaling",
                                   command_name="character_start_scaling",
                                   purpose_line="Starts a character sprite scaling animation.\n\n"
-                                  "Note: the character sprite must already be visible.\n"
-                                  "Also, <character_scale_until> should be used prior.",
+                                  "Note: the character sprite must already be visible.", 
+                                  scale_speed_from=1,
+                                  scale_speed_to=100000,
+                                  scale_speed_default=1000,                                      
                                   group_name=GroupName.SCALE)
 
         page_character_stop_scaling =\
@@ -1442,45 +1336,6 @@ class WizardWindow:
                                           group_name=GroupName.FADE)
     
     
-        page_dialog_fade_speed =\
-                CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
-                                   header_label=self.lbl_header,
-                                   purpose_label=self.lbl_purpose,
-                                   treeview_commands=self.treeview_commands,
-                                   parent_display_text="Dialog",
-                                   sub_display_text="dialog_sprite_fade_speed",
-                                   command_name="dialog_sprite_fade_speed",
-                                   purpose_line="Set the fade-speed of a dialog sprite.\n"
-                                   "Note: the dialog sprite must already be visible.",
-                                   radio_button_instructions="Fade direction:",
-                                   radio_button_text_1="Fade in",
-                                   radio_button_text_2="Fade out",
-                                   radio_button_value_1="fade in",
-                                   radio_button_value_2="fade out",
-                                   default_radio_button_value="fade in",
-                                   scale_default_value=5,
-                                   scale_from_value=1,
-                                   scale_to_value=100,
-                                   scale_instructions="Fade speed (1 to 15000):",
-                                   group_name=GroupName.FADE)
-    
-        page_dialog_fade_until =\
-                CharacterFadeUntil(parent_frame=self.frame_contents_outer,
-                                   header_label=self.lbl_header,
-                                   purpose_label=self.lbl_purpose,
-                                   treeview_commands=self.treeview_commands,
-                                   parent_display_text="Dialog",
-                                   sub_display_text="dialog_sprite_fade_until",
-                                   command_name="dialog_sprite_fade_until",
-                                   purpose_line="Indicate at what fade level a fade animation should stop.\n"
-                                   "Note: the dialog sprite must already be visible.",
-                                   scale_instructions="Stop fading when the opacity reaches... (0 to 255)\n"
-                                   "0 = fully transparent  255 = fully opaque",
-                                   scale_from_value=0,
-                                   scale_to_value=255,
-                                   scale_default_value=128,
-                                   group_name=GroupName.FADE)
-    
         page_dialog_start_fading =\
                 CharacterStartFading(parent_frame=self.frame_contents_outer,
                                      header_label=self.lbl_header,
@@ -1491,6 +1346,9 @@ class WizardWindow:
                                      command_name="dialog_sprite_start_fading",
                                      purpose_line="Starts an dialog sprite fading animation.\n"
                                      "Note: the dialog sprite must already be visible.",
+                                     scale_speed_from=1,
+                                     scale_speed_to=15000,
+                                     scale_speed_default=1000,                                     
                                      group_name=GroupName.FADE)
     
         page_dialog_stop_fading =\
@@ -1530,46 +1388,6 @@ class WizardWindow:
                                             group_name=GroupName.ROTATE)
 
     
-        page_dialog_rotate_speed =\
-                CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
-                                     header_label=self.lbl_header,
-                                     purpose_label=self.lbl_purpose,
-                                     treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_rotate_speed",
-                                     command_name="dialog_sprite_rotate_speed",
-                                     purpose_line="Set the rotation speed percentage of an dialog sprite.\n"
-                                     "The speed range is 1 (slowest) to 100 (fastest).\n\n"
-                                     "Note: the dialog sprite must already be visible.",
-                                     radio_button_instructions="Rotate direction:",
-                                     radio_button_text_1="Clockwise",
-                                     radio_button_text_2="Counterclockwise",
-                                     radio_button_value_1="clockwise",
-                                     radio_button_value_2="counterclockwise",
-                                     default_radio_button_value="clockwise",
-                                     include_radio_buttons=True, 
-                                     scale_default_value=5,
-                                     scale_from_value=1,
-                                     scale_to_value=220000,
-                                     scale_instructions="Rotation speed (1 to 220000):",
-                                     group_name=GroupName.ROTATE)
-    
-        page_dialog_rotate_until =\
-                CharacterRotateUntil(parent_frame=self.frame_contents_outer,
-                                     header_label=self.lbl_header,
-                                     purpose_label=self.lbl_purpose,
-                                     treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_rotate_until",
-                                     command_name="dialog_sprite_rotate_until",
-                                     purpose_line="Indicate at what degree a rotation animation should stop.\n"
-                                     "Note: the dialog sprite must already be visible.",
-                                     scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
-                                     scale_from_value=0,
-                                     scale_to_value=359,
-                                     scale_default_value=180,
-                                     group_name=GroupName.ROTATE)
-    
         page_dialog_start_rotating =\
                 CharacterStartRotating(parent_frame=self.frame_contents_outer,
                                        header_label=self.lbl_header,
@@ -1580,6 +1398,9 @@ class WizardWindow:
                                        command_name="dialog_sprite_start_rotating",
                                        purpose_line="Starts an dialog sprite rotation animation.\n"
                                        "Note: the dialog sprite must already be visible.",
+                                       scale_speed_from=1,
+                                       scale_speed_to=220000,
+                                       scale_speed_default=180,                                        
                                        group_name=GroupName.ROTATE)
     
         page_dialog_stop_rotating =\
@@ -1607,28 +1428,6 @@ class WizardWindow:
                                           "Note: the dialog sprite must already be visible.", 
                                           group_name=GroupName.SCALE)
     
-        page_dialog_scale_speed =\
-                CharacterScaleBy(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="dialog_sprite_scale_speed",
-                                 command_name="dialog_sprite_scale_speed",
-                                 purpose_line="Sets the scale speed of an dialog sprite.\n"
-                                 "Note: the dialog sprite must already be visible.",
-                                 radio_button_instructions="Scale direction:",
-                                 radio_button_text_1="Scale up",
-                                 radio_button_text_2="Scale down",
-                                 radio_button_value_1="scale up",
-                                 radio_button_value_2="scale down",
-                                 default_radio_button_value="scale up",
-                                 scale_default_value=5,
-                                 scale_from_value=1,
-                                 scale_to_value=100000,
-                                 scale_instructions="Scale speed (1 to 100000):",
-                                 group_name=GroupName.SCALE)
-    
         page_dialog_scale_current_value =\
                 CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
                                            header_label=self.lbl_header,
@@ -1645,23 +1444,7 @@ class WizardWindow:
                                            "(example: 2 means twice as big as the original size)\nDecimal values like 1.1 can be used as well.",
                                            amount_name="scale",
                                            group_name=GroupName.SCALE)
-    
-    
-        page_dialog_scale_until =\
-                CharacterScaleUntil(parent_frame=self.frame_contents_outer,
-                                    header_label=self.lbl_header,
-                                    purpose_label=self.lbl_purpose,
-                                    treeview_commands=self.treeview_commands,
-                                    parent_display_text="Dialog",
-                                    sub_display_text="dialog_sprite_scale_until",
-                                    command_name="dialog_sprite_scale_until",
-                                    purpose_line="Indicate at what scale a scaling animation should stop.\n"
-                                    "Note: the dialog sprite must already be visible.",
-                                    scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
-                                    scale_from_value=0,
-                                    scale_to_value=100,
-                                    scale_default_value=2,
-                                    group_name=GroupName.SCALE)
+
     
         page_dialog_start_scaling =\
                 CharacterStartScaling(parent_frame=self.frame_contents_outer,
@@ -1672,8 +1455,10 @@ class WizardWindow:
                                       sub_display_text="dialog_sprite_start_scaling",
                                       command_name="dialog_sprite_start_scaling",
                                       purpose_line="Starts an dialog sprite scaling animation.\n\n"
-                                      "Note: the dialog sprite must already be visible.\n"
-                                      "Also, <dialog_sprite_scale_until> should be used prior.",
+                                      "Note: the dialog sprite must already be visible.", 
+                                      scale_speed_from=1,
+                                      scale_speed_to=100000,
+                                      scale_speed_default=1000,                                        
                                       group_name=GroupName.SCALE)
     
         page_dialog_stop_scaling =\
@@ -1983,46 +1768,6 @@ class WizardWindow:
                                       amount_name="opacity level",
                                       group_name=GroupName.FADE)
 
-
-        page_object_fade_speed =\
-            CharacterFadeSpeed(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_speed",
-                               command_name="object_fade_speed",
-                               purpose_line="Set the fade-speed of an object sprite.\n"
-                               "Note: the object sprite must already be visible.",
-                               radio_button_instructions="Fade direction:",
-                               radio_button_text_1="Fade in",
-                               radio_button_text_2="Fade out",
-                               radio_button_value_1="fade in",
-                               radio_button_value_2="fade out",
-                               default_radio_button_value="fade in",
-                               scale_default_value=5,
-                               scale_from_value=1,
-                               scale_to_value=15000,
-                               scale_instructions="Fade speed (1 to 15000):",
-                               group_name=GroupName.FADE)
-
-        page_object_fade_until =\
-            CharacterFadeUntil(parent_frame=self.frame_contents_outer,
-                               header_label=self.lbl_header,
-                               purpose_label=self.lbl_purpose,
-                               treeview_commands=self.treeview_commands,
-                               parent_display_text="Object",
-                               sub_display_text="object_fade_until",
-                               command_name="object_fade_until",
-                               purpose_line="Indicate at what fade level a fade animation should stop.\n"
-                               "Note: the object sprite must already be visible.",
-                               scale_instructions="Stop fading when the opacity reaches... (0 to 255)\n"
-                               "0 = fully transparent  255 = fully opaque",
-                               scale_from_value=0,
-                               scale_to_value=255,
-                               scale_default_value=128,
-                               group_name=GroupName.FADE)
-
         page_object_start_fading =\
             CharacterStartFading(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
@@ -2033,6 +1778,9 @@ class WizardWindow:
                                  command_name="object_start_fading",
                                  purpose_line="Starts an object sprite fading animation.\n"
                                  "Note: the object sprite must already be visible.",
+                                 scale_speed_from=1,
+                                 scale_speed_to=15000,
+                                 scale_speed_default=1000,                                 
                                  group_name=GroupName.FADE)
 
         page_object_stop_fading =\
@@ -2072,46 +1820,6 @@ class WizardWindow:
                                         group_name=GroupName.ROTATE)
 
 
-        page_object_rotate_speed =\
-            CharacterRotateSpeed(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_speed",
-                                 command_name="object_rotate_speed",
-                                 purpose_line="Set the rotation speed percentage of an object sprite.\n"
-                                 "The speed range is 1 (slowest) to 100 (fastest).\n\n"
-                                 "Note: the object sprite must already be visible.",
-                                 radio_button_instructions="Rotate direction:",
-                                 radio_button_text_1="Clockwise",
-                                 radio_button_text_2="Counterclockwise",
-                                 radio_button_value_1="clockwise",
-                                 radio_button_value_2="counterclockwise",
-                                 default_radio_button_value="clockwise",
-                                 include_radio_buttons=True, 
-                                 scale_default_value=5,
-                                 scale_from_value=1,
-                                 scale_to_value=220000,
-                                 scale_instructions="Rotation speed (1 to 220000):",
-                                 group_name=GroupName.ROTATE)
-
-        page_object_rotate_until =\
-            CharacterRotateUntil(parent_frame=self.frame_contents_outer,
-                                 header_label=self.lbl_header,
-                                 purpose_label=self.lbl_purpose,
-                                 treeview_commands=self.treeview_commands,
-                                 parent_display_text="Object",
-                                 sub_display_text="object_rotate_until",
-                                 command_name="object_rotate_until",
-                                 purpose_line="Indicate at what degree a rotation animation should stop.\n"
-                                 "Note: the object sprite must already be visible.",
-                                 scale_instructions="Stop rotating when the angle reaches... (0 to 359)",
-                                 scale_from_value=0,
-                                 scale_to_value=359,
-                                 scale_default_value=180,
-                                 group_name=GroupName.ROTATE)
-
         page_object_start_rotating =\
             CharacterStartRotating(parent_frame=self.frame_contents_outer,
                                    header_label=self.lbl_header,
@@ -2120,8 +1828,11 @@ class WizardWindow:
                                    parent_display_text="Object",
                                    sub_display_text="object_start_rotating",
                                    command_name="object_start_rotating",
-                                   purpose_line="Starts an object sprite rotation animation.\n"
+                                   purpose_line="Starts a object sprite rotation animation.\n"
                                    "Note: the object sprite must already be visible.",
+                                   scale_speed_from=1,
+                                   scale_speed_to=220000,
+                                   scale_speed_default=180, 
                                    group_name=GroupName.ROTATE)
 
         page_object_stop_rotating =\
@@ -2149,27 +1860,6 @@ class WizardWindow:
                                       "Note: the object sprite must already be visible.",
                                       group_name=GroupName.SCALE)
 
-        page_object_scale_speed =\
-            CharacterScaleBy(parent_frame=self.frame_contents_outer,
-                             header_label=self.lbl_header,
-                             purpose_label=self.lbl_purpose,
-                             treeview_commands=self.treeview_commands,
-                             parent_display_text="Object",
-                             sub_display_text="object_scale_speed",
-                             command_name="object_scale_speed",
-                             purpose_line="Sets the scale speed of an object sprite.\n"
-                             "Note: the object sprite must already be visible.",
-                             radio_button_instructions="Scale direction:",
-                             radio_button_text_1="Scale up",
-                             radio_button_text_2="Scale down",
-                             radio_button_value_1="scale up",
-                             radio_button_value_2="scale down",
-                             default_radio_button_value="scale up",
-                             scale_default_value=5,
-                             scale_from_value=1,
-                             scale_to_value=100000,
-                             scale_instructions="Scale speed (1 to 100000):",
-                             group_name=GroupName.SCALE)
 
         page_object_scale_current_value =\
             CharacterScaleCurrentValue(parent_frame=self.frame_contents_outer,
@@ -2188,23 +1878,6 @@ class WizardWindow:
                                        amount_name="scale",
                                        group_name=GroupName.SCALE)
 
-
-        page_object_scale_until =\
-            CharacterScaleUntil(parent_frame=self.frame_contents_outer,
-                                header_label=self.lbl_header,
-                                purpose_label=self.lbl_purpose,
-                                treeview_commands=self.treeview_commands,
-                                parent_display_text="Object",
-                                sub_display_text="object_scale_until",
-                                command_name="object_scale_until",
-                                purpose_line="Indicate at what scale a scaling animation should stop.\n"
-                                "Note: the object sprite must already be visible.",
-                                scale_instructions="Stop scaling when the scale reaches... (0 to 100)\nDecimal values like 1.1 can be used as well.",
-                                scale_from_value=0,
-                                scale_to_value=100,
-                                scale_default_value=2,
-                                group_name=GroupName.SCALE)
-
         page_object_start_scaling =\
             CharacterStartScaling(parent_frame=self.frame_contents_outer,
                                   header_label=self.lbl_header,
@@ -2214,8 +1887,10 @@ class WizardWindow:
                                   sub_display_text="object_start_scaling",
                                   command_name="object_start_scaling",
                                   purpose_line="Starts an object sprite scaling animation.\n\n"
-                                  "Note: the object sprite must already be visible.\n"
-                                  "Also, <object_scale_until> should be used prior.",
+                                  "Note: the object sprite must already be visible.", 
+                                  scale_speed_from=1,
+                                  scale_speed_to=100000,
+                                  scale_speed_default=1000,                                    
                                   group_name=GroupName.SCALE)
 
         page_object_stop_scaling =\
@@ -2955,22 +2630,16 @@ class WizardWindow:
         
         self.pages["character_after_fading_stop"] = page_character_after_fading_stop
         self.pages["character_fade_current_value"] = page_character_fade_current_value
-        self.pages["character_fade_speed"] = page_character_fade_speed
-        self.pages["character_fade_until"] = page_character_fade_until
         self.pages["character_start_fading"] = page_character_start_fading
         self.pages["character_stop_fading"] = page_character_stop_fading
         
         self.pages["character_after_rotating_stop"] = page_character_after_rotating_stop
         self.pages["character_rotate_current_value"] = page_character_rotate_current_value
-        self.pages["character_rotate_speed"] = page_character_rotate_speed
-        self.pages["character_rotate_until"] = page_character_rotate_until
         self.pages["character_start_rotating"] = page_character_start_rotating
         self.pages["character_stop_rotating"] = page_character_stop_rotating
 
         self.pages["character_after_scaling_stop"] = page_character_after_scaling_stop
-        self.pages["character_scale_speed"] = page_character_scale_speed
         self.pages["character_scale_current_value"] = page_character_scale_current_value
-        self.pages["character_scale_until"] = page_character_scale_until
         self.pages["character_start_scaling"] = page_character_start_scaling
         self.pages["character_stop_scaling"] = page_character_stop_scaling
 
@@ -3024,22 +2693,16 @@ class WizardWindow:
         
         self.pages["object_after_fading_stop"] = page_object_after_fading_stop
         self.pages["object_fade_current_value"] = page_object_fade_current_value
-        self.pages["object_fade_speed"] = page_object_fade_speed
-        self.pages["object_fade_until"] = page_object_fade_until
         self.pages["object_start_fading"] = page_object_start_fading
         self.pages["object_stop_fading"] = page_object_stop_fading
         
         self.pages["object_after_rotating_stop"] = page_object_after_rotating_stop
         self.pages["object_rotate_current_value"] = page_object_rotate_current_value
-        self.pages["object_rotate_speed"] = page_object_rotate_speed
-        self.pages["object_rotate_until"] = page_object_rotate_until
         self.pages["object_start_rotating"] = page_object_start_rotating
         self.pages["object_stop_rotating"] = page_object_stop_rotating
 
         self.pages["object_after_scaling_stop"] = page_object_after_scaling_stop
-        self.pages["object_scale_speed"] = page_object_scale_speed
         self.pages["object_scale_current_value"] = page_object_scale_current_value
-        self.pages["object_scale_until"] = page_object_scale_until
         self.pages["object_start_scaling"] = page_object_start_scaling
         self.pages["object_stop_scaling"] = page_object_stop_scaling
 
@@ -3084,22 +2747,16 @@ class WizardWindow:
         
         self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
         self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value
-        self.pages["dialog_sprite_fade_speed"] = page_dialog_fade_speed
-        self.pages["dialog_sprite_fade_until"] = page_dialog_fade_until
         self.pages["dialog_sprite_start_fading"] = page_dialog_start_fading
         self.pages["dialog_sprite_stop_fading"] = page_dialog_stop_fading
         
         self.pages["dialog_sprite_after_rotating_stop"] = page_dialog_after_rotating_stop
         self.pages["dialog_sprite_rotate_current_value"] = page_dialog_rotate_current_value
-        self.pages["dialog_sprite_rotate_speed"] = page_dialog_rotate_speed
-        self.pages["dialog_sprite_rotate_until"] = page_dialog_rotate_until
         self.pages["dialog_sprite_start_rotating"] = page_dialog_start_rotating
         self.pages["dialog_sprite_stop_rotating"] = page_dialog_stop_rotating
 
         self.pages["dialog_sprite_after_scaling_stop"] = page_dialog_after_scaling_stop
-        self.pages["dialog_sprite_scale_speed"] = page_dialog_scale_speed
         self.pages["dialog_sprite_scale_current_value"] = page_dialog_scale_current_value
-        self.pages["dialog_sprite_scale_until"] = page_dialog_scale_until
         self.pages["dialog_sprite_start_scaling"] = page_dialog_start_scaling
         self.pages["dialog_sprite_stop_scaling"] = page_dialog_stop_scaling
 
@@ -5494,449 +5151,6 @@ class SharedPages:
             
             return f"<{self.command_name}: {alias_to_move}, {sprite_type_center_with}, {center_with_alias}>"
             
-    
-    class Until(WizardListing):
-        """
-        <character_fade_until: general alias, fade value>
-        The fade value should be between 0 and 255.
-        
-        1 Label
-        1 Entry
-        1 Label
-        1 LabelScale
-        *1 Checkbutton (*Rotate until only)
-        """
-    
-        def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line, **kwargs):
-    
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name,
-                             purpose_line, **kwargs)
-            
-            self.frame_content = self.create_content_frame()
-    
-        def create_content_frame(self) -> ttk.Frame:
-            """
-            Create the widgets needed for this command
-            and return a frame that contains the widgets.
-            """
-    
-            frame_content = ttk.Frame(self.parent_frame)
-
-            # The text to show the user
-            # ie: "Stop rotating when the angle reaches... (degrees): (0 to 359):"
-            scale_instructions = self.kwargs.get("scale_instructions")
-            
-            # Get the scale range
-            scale_from_value = self.kwargs.get("scale_from_value")
-            scale_to_value = self.kwargs.get("scale_to_value")
-
-            # The default value for the scale widget.
-            scale_default_value = self.kwargs.get("scale_default_value")
-    
-            lbl_general_alias =\
-                ttk.Label(frame_content,
-                text=f"{self.get_purpose_name(title_casing=True)} alias:")
-            
-            self.entry_general_alias = ttk.Entry(frame_content, width=25)
-    
-            self.v_until = tk.IntVar()
-            self.v_until.set(0)
-
-            # Is this page for 'rotate until'?
-
-            # We need this to know whether to show the 'Rotate forever'
-            # checkbutton or not.
-            self.is_rotate_until = "rotate" in self.command_name
-    
-            if self.is_rotate_until:
-                self.v_rotate_forever = tk.BooleanVar()
-                self.v_rotate_forever.set(False)
-                
-                self.chk_rotate_forever = ttk.Checkbutton(frame_content,
-                                                          text="Rotate forever",
-                                                          variable=self.v_rotate_forever)
-                
-                self.v_rotate_forever.trace("w", self.on_checkbutton_rotate_forever_changed)
-    
-
-            self.lbl_until = ttk.Label(frame_content,
-                                       text=scale_instructions)
-            
-            self.scale = ttk.LabeledScale(frame_content,
-                                          from_=scale_from_value,
-                                          to=scale_to_value,
-                                          variable=self.v_until)
-    
-            # Set the default value for the scale.
-            self.v_until.set(scale_default_value)
-    
-            lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
-            self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
-    
-            self.lbl_until.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
-            self.scale.grid(row=3, column=0, sticky="w", columnspan=2)
-
-            if self.is_rotate_until:
-                self.chk_rotate_forever.grid(row=4, column=0, sticky="w", pady=(10, 0))
-
-            return frame_content
-        
-        def on_checkbutton_rotate_forever_changed(self, *args):
-            """
-            The checkbox, 'Rotate forever', has been checked or unchecked.
-            
-            When unchecked, disable the scale widget which allows the degrees
-            to be chosen.
-            """
-    
-            if self.v_rotate_forever.get():
-                # Rotate forever is checked
-                state_change = "disabled"
-            else:
-                state_change = "!disabled"
-                
-            self.lbl_until.state([state_change])
-            
-            # Using the state method doesn't work on a labeled scale.
-            # We need to disable/enable individual widgets in the labeledscale.
-            for name in self.scale.children.values():
-                widget = self.scale.nametowidget(name)
-                widget.state([state_change])
-    
-        def _edit_populate(self,
-                           command_class_object: cc.FadeUntilValue | cc.RotateUntil):
-            """
-            Populate the widgets with the arguments for editing.
-            """
-            
-            # No arguments? return.
-            if not command_class_object:
-                return
-            
-            match command_class_object:
-                case cc.FadeUntilValue(alias, numeric_value) | cc.ScaleUntil(alias, numeric_value):
-                    # We've extracted the values.
-                    pass
-                    
-                case cc.RotateUntil(alias, rotate_until_value):
-                    
-                    # str because the word 'forever' can be used to rotate
-                    # continuously.
-                    if rotate_until_value == "forever":
-                        self.v_rotate_forever.set(True)
-                        numeric_value = 0
-                    else:
-                        try:
-                            numeric_value = float(rotate_until_value)
-                        except ValueError:
-                            numeric_value = 0                    
-                        
-                        self.v_until.set(numeric_value)
-                    
-            # To ensure it's not a non-numeric value.
-            try:
-                numeric_value = float(numeric_value)
-            except ValueError:
-                numeric_value = 0
-            
-            self.v_until.set(numeric_value)                
-            
-            self.entry_general_alias.insert(0, alias)
-    
-        def check_inputs(self) -> Dict | None:
-            """
-            Check whether the user has inputted sufficient information
-            to use this command.
-            
-            Return: a dict with the character general alias, and the scale
-            value (ie: the angle between 0 and 359).
-            Example:
-            {"Alias": "Rave",
-            "UntilValue": 90}
-            or None if insufficient information was provided by the user.
-            """
-            user_input = {}
-    
-            alias = self.entry_general_alias.get().strip()
-            if not alias:
-                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No alias provided",
-                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
-                return
-    
-    
-            # Get the value from the scale widget.
-            scale_value = self.v_until.get()
-    
-            user_input = {"Alias": alias,
-                          "UntilValue": scale_value}
-    
-            return user_input
-        
-        def generate_command(self) -> str | None:
-            """
-            Return the command based on the user's configuration/selection.
-            """
-    
-            # The user input will be a dictionary like this:
-            # {"Alias": "Rave",
-            # "UntilValue": 90}
-            user_inputs = self.check_inputs()
-            
-            if not user_inputs:
-                return
-    
-            alias = user_inputs.get("Alias")
-            rotate_until_value = user_inputs.get("UntilValue")
-
-            # Is this a page for 'Rotate until'? Check the 'Rotate forever'
-            # checkbutton value.
-            if self.is_rotate_until:
-                rotate_forever = self.v_rotate_forever.get()
-    
-                if rotate_forever:
-                    rotate_until_value = "forever"
-                
-            return f"<{self.command_name}: {alias}, {rotate_until_value}>"
-
-    class Speed(WizardListing):
-        """
-        <character_fade_speed: general alias, speed>
-        
-        Rotation commands have an additional argument for the rotation
-        direction. The other commands, such as fade and scale don't have
-        a direction.
-        
-        Examples:
-        <character_rotate_speed: rave, 31, clockwise>
-        <character_fade_speed: rave, 33>
-        <character_scale_speed: rave, 43>
-        
-        Layout:
-          1 Entry
-          2 Radiobuttons (maybe)
-          1 Labelscale
-        """
-
-        def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line, **kwargs):
-
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name,
-                             purpose_line, **kwargs)
-            
-            # Include radio buttons?
-            self.include_radio_buttons = \
-                self.kwargs.get("include_radio_buttons")            
-
-            self.frame_content = self.create_content_frame()
-
-        def create_content_frame(self) -> ttk.Frame:
-            """
-            Create the widgets needed for this command
-            and return a frame that contains the widgets.
-            """
-        
-            frame_content = ttk.Frame(self.parent_frame)
-
-            self.lbl_general_alias = \
-                ttk.Label(frame_content,
-                text=f"{self.get_purpose_name(title_casing=True)} alias:")
-            
-            self.entry_general_alias = ttk.Entry(frame_content, width=25)
-            
-            # The text before the LabelScale widget, for the user to see.
-            # Example: "Fade speed (1 to 100):"
-            self.scale_instructions = self.kwargs.get("scale_instructions")
-            
-            
-            # Only rotation has radio buttons for choosing 
-            # the rotation direction.
-            if self.include_radio_buttons:
-                
-                # The text before the radio button widgets.
-                self.radio_button_instructions =\
-                    self.kwargs.get("radio_button_instructions")
-    
-
-                # The texts of the radio buttons, for the user to see.
-                self.radio_button_text1 = self.kwargs.get("radio_button_text_1")
-                self.radio_button_text2 = self.kwargs.get("radio_button_text_2")
-    
-                # Radio button values (example: "fade in" and "fade out")
-                self.radio_button_value_1 = self.kwargs.get("radio_button_value_1")
-                self.radio_button_value_2 = self.kwargs.get("radio_button_value_2")
-
-            # The default int value of the LabelScale to set.
-            self.scale_default_value = self.kwargs.get("scale_default_value")
-            self.v_scale_value = tk.IntVar()
-
-            # Scale range
-            self.scale_from_value = self.kwargs.get("scale_from_value")
-            self.scale_to_value = self.kwargs.get("scale_to_value")
-            
-            if self.include_radio_buttons:
-                
-                # Tk variable for the radio buttons.
-                self.v_radio_button_selection = tk.StringVar()
-                
-                # Get the default radio button selection
-                self.default_radio_button_value = self.kwargs.get("default_radio_button_value")
-                self.v_radio_button_selection.set(self.default_radio_button_value)
-    
-                # The text to show before the radio buttons, for the user to see.
-                # Example: "Fade type:"
-                self.lbl_radio_selection = ttk.Label(frame_content,
-                                                     text=self.radio_button_instructions)
-                
-                self.radio_1 = ttk.Radiobutton(frame_content,
-                                               text=self.radio_button_text1,
-                                               value=self.radio_button_value_1,
-                                               variable=self.v_radio_button_selection)
-    
-                self.radio_2 = ttk.Radiobutton(frame_content,
-                                               text=self.radio_button_text2,
-                                               value=self.radio_button_value_2,
-                                               variable=self.v_radio_button_selection)
-
-            self.lbl_scale = ttk.Label(frame_content,
-                                  text=self.scale_instructions)
-
-            self.scale = ttk.LabeledScale(frame_content,
-                                          from_=self.scale_from_value,
-                                          to=self.scale_to_value,
-                                          variable=self.v_scale_value)
-
-            # Set the default value of the scale.
-            self.v_scale_value.set(self.scale_default_value)
-
-            self.lbl_general_alias.grid(row=0, column=0, sticky="w", columnspan=2)
-            self.entry_general_alias.grid(row=1, column=0, sticky="w", columnspan=2)
-
-            if self.include_radio_buttons:
-                self.lbl_radio_selection.grid(row=2, column=0, sticky="w", pady=(10, 0), columnspan=2)
-                self.radio_1.grid(row=3, column=0, sticky="w")
-                self.radio_2.grid(row=3, column=1, sticky="w", padx=(10, 0))
-
-            self.lbl_scale.grid(row=4, column=0, sticky="w", pady=(10, 0), columnspan=2)
-            self.scale.grid(row=5, column=0, sticky="w", columnspan=2)
-
-            return frame_content
-
-        def _edit_populate(self,
-                           command_class_object: cc.FadeSpeed | cc.RotateSpeed | cc.ScaleSpeed):
-            """
-            Populate the widgets with the arguments for editing.
-            """
-            
-            # No arguments? return.
-            if not command_class_object:
-                return
-            
-
-            # Get the alias
-            sprite_name = command_class_object.sprite_name            
-            
-            match command_class_object:
-                
-                case cc.FadeSpeed(sprite_name, speed) | \
-                    cc.ScaleSpeed(sprite_name, speed):
-                    
-                    # Show the alias in the entry widget
-                    self.entry_general_alias.insert(0, sprite_name)
-        
-                    try:
-                        speed = int(speed)
-                    except ValueError:
-                        speed = 0
-        
-                    # Show the speed value in the spinbox widget
-                    self.v_scale_value.set(speed)
-                
-                case cc.RotateSpeed(sprite_name, speed, direction):
-        
-                    # Show the alias in the entry widget
-                    self.entry_general_alias.insert(0, sprite_name)
-        
-                    # Set the direction in the appropriate optionbutton widget
-                    self.v_radio_button_selection.set(direction)
-                    
-                    try:
-                        speed = int(speed)
-                    except ValueError:
-                        speed = 0
-        
-                    # Show the speed value in the spinbox widget
-                    self.v_scale_value.set(speed)
-
-        def check_inputs(self) -> Dict | None:
-            """
-            Check whether the user has inputted sufficient information
-            to use this command.
-            
-            Return: a dict with the general alias, the scale value,
-            and the selection type (ie: fade in or fade out).
-            Example:
-            {"Alias": "Rave",
-            "Type": "clockwise",
-            "ScaleValue": 25,}
-            or None if insufficient information was provided by the user.
-            """
-            user_input = {}
-
-            alias = self.entry_general_alias.get().strip()
-            if not alias:
-                messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
-                                       title="No alias provided",
-                                       message=f"Enter an alias for the {self.get_purpose_name()}.")
-                return
-
-
-            scale_value = self.v_scale_value.get()
-            
-            if self.include_radio_buttons:
-                radio_button_selection = self.v_radio_button_selection.get()
-    
-                user_input = {"Alias": alias,
-                              "Type": radio_button_selection,
-                              "ScaleValue": scale_value}
-            else:
-                user_input = {"Alias": alias,
-                              "ScaleValue": scale_value}                
-
-            return user_input
-
-        def generate_command(self) -> str | None:
-            """
-            Return the command based on the user's configuration/selection.
-            """
-
-            # The user input will be a dictionary like this:
-            # {"Alias": "Rave",
-            # "ScaleValue": 30,
-            # "Type": "clockwise"}
-            user_inputs = self.check_inputs()
-
-            if not user_inputs:
-                return
-
-            alias = user_inputs.get("Alias")
-            scale_value = user_inputs.get("ScaleValue")
-            
-            if self.include_radio_buttons:
-                
-                radio_button_selection = user_inputs.get("Type")
-    
-                return f"<{self.command_name}: {alias}, {scale_value}, {radio_button_selection}>"
-            else:
-                return f"<{self.command_name}: {alias}, {scale_value}>"
-                
 
     class SpeedOnly(WizardListing):
         """
@@ -8007,12 +7221,218 @@ class SharedPages:
             """
             self.lbl_prompt.configure(text=f"Hide which {self.get_purpose_name()}?")
             
+    
+
+class FadeStartFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(FADE_START_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_fade", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_alias_title:tk.StringVar
+        self.v_alias_title = builder.get_variable("v_alias_title")
+
+        self.entry_alias:EntryWithLimit
+        self.entry_alias = builder.get_object("entry_alias")
+        self.entry_alias.configure(max_length=200)
+
+        self.v_alias:tk.IntVar
+        self.v_alias = builder.get_variable("v_alias")
+        
+        self.v_speed:tk.IntVar
+        self.v_speed = builder.get_variable("v_speed")
+        self.scale_speed = builder.get_object("scale_speed")
+        self.lbl_fade_speed = builder.get_object("lbl_fade_speed")
+        
+        self.v_fade_until:tk.IntVar
+        self.v_fade_until = builder.get_variable("v_fade_until")
+        
+        # Default to half fade
+        self.v_fade_until.set(128)
+        
+        self.scale_fade_until:ttk.LabeledScale
+        self.scale_fade_until = builder.get_object("scale_fade_until")
+        
+        
+class FadeStartWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.fade_start_frame = FadeStartFrame(self.frame_content)
+        
+        # Scale range for the fade speed
+        self.scale_speed_from = self.kwargs.get("scale_speed_from")
+        self.scale_speed_to = self.kwargs.get("scale_speed_to")
+        
+        # Get the default fade speed
+        self.scale_speed_default = self.kwargs.get("scale_speed_default")
+        
+        self.fade_start_frame.scale_speed.scale.\
+            configure(from_=self.scale_speed_from,
+                      to=self.scale_speed_to)
+        
+        self.fade_start_frame.v_speed.set(self.scale_speed_to)
+        
+        # Show the speed range in the Speed section label widget.
+        fade_speed_title =\
+            f"Fade speed ({self.scale_speed_from} to {self.scale_speed_to}):"
+        
+        self.fade_start_frame.\
+            lbl_fade_speed.configure(text=fade_speed_title)
+        
+        self.fade_start_frame.v_speed.set(self.scale_speed_default)
+        
+        alias_title = self.fade_start_frame.v_alias_title.get()
+        alias_title = f"{self.get_purpose_name(title_casing=True)} alias:"
+        self.fade_start_frame.v_alias_title.set(alias_title)
+        
+        self.fade_start_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.RotateStart):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.FadeStart(sprite_name, fade_speed, fade_until):
+                
+                # Alias
+                self.fade_start_frame.v_alias.set(sprite_name)                
+                
+                # Speed
+                try:
+                    
+                    # Try to convert the speed to an int (from a string).
+                    fade_speed = int(fade_speed)
+                        
+                    # Animation speed
+                    fade_speed = min(self.scale_speed_to,
+                                     max(self.scale_speed_from, fade_speed))
+                    
+                except ValueError:
+                    # Default to 1
+                    fade_speed = 1
+                    
+                finally:
+                    self.fade_start_frame.v_speed.set(fade_speed)
+                    
+                    
+                # Fade until
+                
+                # Try to convert the fade value to an int
+                try:
+                    fade_until = int(fade_until)
+                    fade_until = min(255, max(0, fade_until))
+                    
+                except:
+                    # Default to a 128 opacity
+                    fade_until = 128
+                    
+                finally:
+                    self.fade_start_frame.v_fade_until.set(fade_until)
+        
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        alias = self.fade_start_frame.v_alias.get().strip()
+        
+        
+        # Fade speed
+        try:
+            speed = self.fade_start_frame.v_speed.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation Speed",
+                                 message=f"The speed is expected to be a number between {self.scale_speed_from} and {self.scale_speed_to}.")
+            return
+        
+        # Fade until
+        try:
+            fade_until = self.fade_start_frame.v_fade_until.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Fade Until",
+                                 message="The 'fade until' value is expected to be a number between 0 and 255.")
+            return            
+
+        # Alias
+        if not alias:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.fade_start_frame.entry_alias.focus()
+            return
+
+        
+        # Set speed limits (the minimum and maximum)
+        if speed > self.scale_speed_to:
+            speed = self.scale_speed_to
+        elif speed < self.scale_speed_from:
+            speed = self.scale_speed_from
+            
+        # Set fade_until limits (0 to 255)
+        if fade_until > 255:
+            fade_until = 255
+        elif fade_until < 0:
+            fade_until = 0
+
+        user_input = {"SpriteAlias": alias,
+                      "FadeSpeed": speed,
+                      "FadeUntil": fade_until,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For <_start_fading>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_alias = user_inputs.get("SpriteAlias")
+        speed = user_inputs.get("FadeSpeed")
+        fade_until = user_inputs.get("FadeUntil")
             
 
+        command_line = f"<{self.command_name}: {sprite_alias}, {speed}, {fade_until}>"
+            
+        return command_line
+        
+     
 
-class CharacterStartFading(SharedPages.StartStop):
+
+class CharacterStartFading(FadeStartWizard):
     """
-    <character_start_fading: general alias>
+    <character_start_fading>
     Starts a character sprite fading animation.
     """
 
@@ -8038,38 +7458,6 @@ class CharacterStopFading(SharedPages.StartStop):
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line, **kwargs)
-
-
-class CharacterFadeUntil(SharedPages.Until):
-    """
-    <character_fade_until: general alias, fade value>
-    The fade value should be between 0 and 255.
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
-
-class CharacterFadeSpeed(SharedPages.Speed):
-    """
-    <character_fade_speed: general alias, speed percentage>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
 
 
 class CharacterFadeCurrentValue(SharedPages.CurrentValue):
@@ -8978,6 +8366,270 @@ class SceneWithFade(WizardListing):
         hold_seconds = user_inputs.get("HoldSeconds")
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
+
+
+class RotateStartFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(ROTATE_START_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_rotate", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_alias_title:tk.StringVar
+        self.v_alias_title = builder.get_variable("v_alias_title")
+
+        self.entry_alias:EntryWithLimit
+        self.entry_alias = builder.get_object("entry_alias")
+        self.entry_alias.configure(max_length=200)
+
+        self.v_alias:tk.IntVar
+        self.v_alias = builder.get_variable("v_alias")
+        
+        self.v_speed:tk.IntVar
+        self.v_speed = builder.get_variable("v_speed")
+        self.scale_speed = builder.get_object("scale_speed")
+        self.lbl_rotation_speed = builder.get_object("lbl_rotation_speed")
+        
+        self.v_rotate_until:tk.IntVar
+        self.v_rotate_until = builder.get_variable("v_rotate_until")
+        
+        self.lbl_stop_rotating_title = \
+            builder.get_object("lbl_stop_rotating_title")
+        
+        self.scale_rotate_until:ttk.LabeledScale
+        self.scale_rotate_until = builder.get_object("scale_rotate_until")
+        
+        # Radio button selection. Either 'Clockwise' or 'Counterclockwise'
+        self.v_direction:tk.StringVar
+        self.v_direction = builder.get_variable("v_direction")
+        # Default to 'clockwise'
+        self.v_direction.set("clockwise")
+        
+        # Rotate forever checkbutton
+        self.v_rotate_forever:tk.BooleanVar
+        self.v_rotate_forever = builder.get_variable("v_rotate_forever")
+        
+        # When 'Rotate forever' is checked, the 'rotate until' scale
+        # should be disabled.
+        self.v_rotate_forever.\
+            trace_add("write",
+                      self.on_rotate_forever_checkbutton_changed)
+        
+    def on_rotate_forever_checkbutton_changed(self, *args):
+        """
+        The checkbutton, 'Rotate forever', had its check-state checked.
+        
+        Disable the 'Rotate until' scale widget if 'Rotate forever' is checked.
+        Otherwise, enable the scale widget for 'Rotate until'.
+        """
+        
+        check_state = self.v_rotate_forever.get()
+        if check_state:
+            state_change = "disabled"
+        else:
+            state_change = "!disabled"
+            
+        self.lbl_stop_rotating_title.state([state_change])
+        
+        # We need to disable/enable individual widgets in the labeledscale.
+        # Using .state() directly on the widget itself won't work, which
+        # is why we need a loop.
+        for name in self.scale_rotate_until.children.values():
+            widget = self.scale_rotate_until.nametowidget(name)
+            widget.state([state_change])        
+
+
+class RotateStartWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.rotate_start_frame = RotateStartFrame(self.frame_content)
+        
+        # Scale range for the rotation speed
+        self.scale_speed_from = self.kwargs.get("scale_speed_from")
+        self.scale_speed_to = self.kwargs.get("scale_speed_to")
+        
+        # Get the default rotation speed
+        self.scale_speed_default = self.kwargs.get("scale_speed_default")
+        
+        self.rotate_start_frame.scale_speed.scale.\
+            configure(from_=self.scale_speed_from,
+                      to=self.scale_speed_to)
+        
+        self.rotate_start_frame.v_speed.set(self.scale_speed_to)
+        
+        # Show the speed range in the Speed section label widget.
+        rotation_speed_title =\
+            f"Rotation speed ({self.scale_speed_from} to {self.scale_speed_to}):"
+        
+        self.rotate_start_frame.\
+            lbl_rotation_speed.configure(text=rotation_speed_title)
+        
+        alias_title = self.rotate_start_frame.v_alias_title.get()
+        alias_title = f"{self.get_purpose_name(title_casing=True)} alias:"
+        self.rotate_start_frame.v_alias_title.set(alias_title)
+        
+        self.rotate_start_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.RotateStart):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.RotateStart(sprite_name, rotate_direction, rotate_speed, rotate_until):
+                
+                # Alias
+                self.rotate_start_frame.v_alias.set(command_class_object.sprite_name)                
+                
+                # Rotate direction
+                rotate_direction = rotate_direction.lower()
+                if rotate_direction not in ("clockwise", "counterclockwise"):
+                    # Default to Clockwise.
+                    rotate_direction = "clockwise"
+                    
+                self.rotate_start_frame.v_direction.set(rotate_direction)
+                    
+                # Speed
+                try:
+                    
+                    # Try to convert the speed to an integer (from a string).
+                    rotate_speed = int(rotate_speed)
+                        
+                    # Animation speed
+                    rotate_speed = min(self.scale_speed_to,
+                                       max(self.scale_speed_from, rotate_speed))
+                    
+                except ValueError:
+                    # Default to 1
+                    rotate_speed = 1
+                    
+                finally:
+                    self.rotate_start_frame.v_speed.set(rotate_speed)
+                    
+                    
+                # Rotate until
+                if rotate_until.lower() == "forever":
+                    self.rotate_start_frame.v_rotate_forever.set(True)
+                else:
+                    # Try to convert the value to an int
+                    try:
+                        rotate_until = int(rotate_until)
+                        self.rotate_start_frame.v_rotate_forever.set(False)
+                        rotate_until = min(359, max(0, rotate_until))
+                        
+                    except:
+                        # Default to a 90 degrees
+                        rotate_until = 90
+                        
+                    finally:
+                        self.rotate_start_frame.v_rotate_until.set(rotate_until)
+        
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        alias = self.rotate_start_frame.v_alias.get().strip()
+        
+        rotate_direction = self.rotate_start_frame.v_direction.get()
+        
+        # Rotate speed
+        try:
+            speed = self.rotate_start_frame.v_speed.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation Speed",
+                                 message=f"The speed is expected to be a number between {self.scale_speed_from} and {self.scale_speed_to}.")
+            return
+        
+        # Rotate until
+        try:
+            rotate_until = self.rotate_start_frame.v_rotate_until.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Rotatation Stop Angle",
+                                 message="The rotation stop angle is expected to be a number between 0 and 359.")
+            return            
+
+        # Alias
+        if not alias:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.rotate_start_frame.entry_alias.focus()
+            return
+
+        
+        # Set speed limits (the minimum and maximum)
+        if speed > self.scale_speed_to:
+            speed = self.scale_speed_to
+        elif speed < self.scale_speed_from:
+            speed = self.scale_speed_from
+            
+        # Set rotate_until limits (0 to 359)
+        if rotate_until > 359:
+            rotate_until = 359
+        elif rotate_until < 0:
+            rotate_until = 0
+
+        # Rotate forever?
+        rotate_forever = self.rotate_start_frame.v_rotate_forever.get()
+
+        user_input = {"SpriteAlias": alias,
+                      "RotateDirection": rotate_direction,
+                      "RotateSpeed": speed,
+                      "RotateUntil": rotate_until,
+                      "RotateForever": rotate_forever,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For # <_start_rotating>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_alias = user_inputs.get("SpriteAlias")
+        direction = user_inputs.get("RotateDirection")
+        speed = user_inputs.get("RotateSpeed")
+        rotate_until = user_inputs.get("RotateUntil")
+        rotate_forever = user_inputs.get("RotateForever")
+
+        if rotate_forever:
+            rotate_until = "forever"
+            
+
+        command_line = f"<{self.command_name}: {sprite_alias}, {direction}, {speed}, {rotate_until}>"
+            
+        return command_line
 
 
 class TintFrame:
@@ -10168,41 +9820,7 @@ class CharacterRotateCurrentValue(WizardListing):
         self.frame_content.grid()
 
 
-
-class CharacterRotateSpeed(SharedPages.Speed):
-    """
-    <character_rotate_speed: general alias, rotate speed value, "clockwise" or "counterclockwise">
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
-
-class CharacterRotateUntil(SharedPages.Until):
-    """
-    <character_fade_until: general alias, fade value>
-    The fade value should be between 0 and 255.
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-        
-        self.frame_content = self.create_content_frame()
-
-
-class CharacterStartRotating(SharedPages.StartStop):
+class CharacterStartRotating(RotateStartWizard):
     """
     <character_start_rotating: general alias>
     Starts a character sprite rotation animation.
@@ -10246,22 +9864,6 @@ class CharacterAfterScalingStop(SharedPages.AfterStop):
                          sub_display_text, command_name, purpose_line, **kwargs)
 
 
-class CharacterScaleBy(SharedPages.Speed):
-    """
-    <character_scale_speed: general alias, scale value>
-    """
-
-    def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
-        super().__init__(parent_frame, header_label, purpose_label,
-                         treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
-
-
-
 class CharacterScaleCurrentValue(SharedPages.CurrentValue):
     """
     <character_scale_current_value: general alias, scale value>
@@ -10280,23 +9882,222 @@ class CharacterScaleCurrentValue(SharedPages.CurrentValue):
 
 
 
-class CharacterScaleUntil(SharedPages.Until):
-    """
-    <character_scale_until: general alias, scale amount>
-    Set when to stop scaling a sprite.
-    """
+class ScaleStartFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SCALE_START_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_scale", master)
+        self.master = master
+        builder.connect_callbacks(self)
 
+        self.v_alias_title:tk.StringVar
+        self.v_alias_title = builder.get_variable("v_alias_title")
+
+        self.entry_alias:EntryWithLimit
+        self.entry_alias = builder.get_object("entry_alias")
+        self.entry_alias.configure(max_length=200)
+
+        self.v_alias:tk.IntVar
+        self.v_alias = builder.get_variable("v_alias")
+        
+        self.v_speed:tk.IntVar
+        self.v_speed = builder.get_variable("v_speed")
+        self.scale_speed = builder.get_object("scale_speed")
+        self.lbl_scale_speed = builder.get_object("lbl_scale_speed")
+        
+        self.v_scale_until:tk.DoubleVar
+        self.v_scale_until = builder.get_variable("v_scale_until")
+        
+        # Default to double the size
+        self.v_scale_until.set(2)
+        
+        
+class ScaleStartWizard(WizardListing):
     def __init__(self, parent_frame, header_label, purpose_label,
-                treeview_commands, parent_display_text, sub_display_text,
-                command_name, purpose_line, **kwargs):
-
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
         super().__init__(parent_frame, header_label, purpose_label,
                          treeview_commands, parent_display_text,
-                         sub_display_text, command_name,
-                         purpose_line, **kwargs)
+                         sub_display_text, command_name, purpose_line, **kwargs)
 
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.scale_start_frame = ScaleStartFrame(self.frame_content)
+        
+        # Scale range for the scale speed
+        self.scale_speed_from = self.kwargs.get("scale_speed_from")
+        self.scale_speed_to = self.kwargs.get("scale_speed_to")
+        
+        # Get the default fade speed
+        self.scale_speed_default = self.kwargs.get("scale_speed_default")
+        
+        self.scale_start_frame.scale_speed.scale.\
+            configure(from_=self.scale_speed_from,
+                      to=self.scale_speed_to)
+        
+        self.scale_start_frame.v_speed.set(self.scale_speed_to)
+        
+        # Show the speed range in the Speed section label widget.
+        scale_speed_title =\
+            f"Scale speed ({self.scale_speed_from} to {self.scale_speed_to}):"
+        
+        self.scale_start_frame.\
+            lbl_scale_speed.configure(text=scale_speed_title)
+        
+        self.scale_start_frame.v_speed.set(self.scale_speed_default)
+        
+        alias_title = self.scale_start_frame.v_alias_title.get()
+        alias_title = f"{self.get_purpose_name(title_casing=True)} alias:"
+        self.scale_start_frame.v_alias_title.set(alias_title)
+        
+        self.scale_start_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.ScaleStart):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
 
-class CharacterStartScaling(SharedPages.StartStop):
+        match command_class_object:
+            
+            case cc.ScaleStart(sprite_name, scale_speed, scale_until):
+                
+                # Alias
+                self.scale_start_frame.v_alias.set(sprite_name)                
+                
+                # Speed
+                try:
+                    
+                    # Try to convert the speed to an int (from a string).
+                    scale_speed = int(scale_speed)
+                        
+                    # Animation speed
+                    scale_speed = min(self.scale_speed_to,
+                                      max(self.scale_speed_from, scale_speed))
+                    
+                except ValueError:
+                    # Default to 100
+                    scale_speed = 100
+                    
+                finally:
+                    self.scale_start_frame.v_speed.set(scale_speed)
+                    
+                    
+                # Scale until
+                
+                # Try to convert the scale value to a float
+                try:
+                    scale_until = float(scale_until)
+                    scale_until = min(100, max(0, scale_until))
+                    
+                    # If the 'scale until' value can be evaluated as
+                    # an integer, use an int instead to avoid 2 showing as 2.0
+                    if scale_until.is_integer():
+                        scale_until = int(scale_until)
+                    
+                except:
+                    # Default to the scale until value to double the size
+                    # of the original image.
+                    scale_until = 2
+                    
+                finally:
+                    self.scale_start_frame.v_scale_until.set(scale_until)
+        
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        alias = self.scale_start_frame.v_alias.get().strip()
+        
+        
+        # Scale speed
+        try:
+            speed = self.scale_start_frame.v_speed.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Animation Speed",
+                                 message=f"The speed is expected to be a number between {self.scale_speed_from} and {self.scale_speed_to}.")
+            return
+        
+        # Scale until
+        try:
+            scale_until = self.scale_start_frame.v_scale_until.get()
+            
+            scale_until = float(scale_until)
+            
+            # Try to convert the 'scale until' value to an int, to avoid
+            # a number like 2 showing as 2.0
+            if scale_until.is_integer():
+                scale_until = int(scale_until)
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Scale Until",
+                                 message="The 'scale until' value is expected to be a number between 0 and 100.")
+            return            
+
+        # Alias
+        if not alias:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite alias",
+                                 message="The sprite alias is missing.")
+            self.scale_start_frame.entry_alias.focus()
+            return
+
+        
+        # Set speed limits (the minimum and maximum)
+        if speed > self.scale_speed_to:
+            speed = self.scale_speed_to
+        elif speed < self.scale_speed_from:
+            speed = self.scale_speed_from
+            
+        # Set scale_until limits (0 to 100)
+        if scale_until > 100:
+            scale_until = 100
+        elif scale_until < 0:
+            scale_until = 0
+
+        user_input = {"SpriteAlias": alias,
+                      "ScaleSpeed": speed,
+                      "ScaleUntil": scale_until,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For <_start_scaling>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sprite_alias = user_inputs.get("SpriteAlias")
+        speed = user_inputs.get("ScaleSpeed")
+        scale_until = user_inputs.get("ScaleUntil")
+            
+
+        command_line = f"<{self.command_name}: {sprite_alias}, {speed}, {scale_until}>"
+            
+        return command_line
+        
+     
+class CharacterStartScaling(ScaleStartWizard):
     """
     <character_start_scaling: general alias>
     Starts a character sprite scaling animation.

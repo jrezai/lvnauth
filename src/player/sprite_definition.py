@@ -218,8 +218,7 @@ class SpriteObject:
         # continue to be read until the flag below has been set to False (for *all* sprite objects).
         self.wait_for_movement = False
 
-        # Will be based on the FadeUntilValue class
-        self.fade_until = None
+
 
         """
         There are 3 variables for sprite fading.
@@ -246,25 +245,20 @@ class SpriteObject:
         self.current_fade_value = None
         # For time-accuracy with delta calculations for each frame.
         self.calculated_fade_value:float = 0
+                 
 
         # Will be based on the FadeStopRunScript class
         self.fade_stop_run_script = None
 
-        # Will be based on the FadeSpeed class
-        self.fade_speed:cc.FadeSpeed
-        self.fade_speed = None
-
-        # Will be based on the ScaleSpeed class
-        self.scale_speed: cc.ScaleSpeed
-        self.scale_speed = None
+        self.fade_properties:cc.FadeStart
+        self.fade_properties = None
         
         # So the animation method knows which direction to scale, up or down.
         self.scale_type: ScaleType
         self.scale_type = None
 
-        # Will be based on the ScaleUntil class
-        self.scale_until: cc.ScaleUntil
-        self.scale_until = None
+        self.scale_properties:cc.ScaleStart
+        self.scale_properties = None
 
         # Based on the ScaleCurrentValue class
         # Initialize the sprite to a scale of 1.0, which means regular size.
@@ -278,13 +272,10 @@ class SpriteObject:
         self.scale_stop_run_script = None
 
         # Will be based on the RotateCurrentValue class
-        self.rotate_current_value = None
-
-        # Will be based on the RotateSpeed class
-        self.rotate_speed = None
-
-        # Will be based on the RotateUntil class
-        self.rotate_until = None
+        self.rotate_current_value = None 
+        
+        self.rotate_properties:cc.RotateStart
+        self.rotate_properties = None
 
         # Will be based on the RotateStopRunScript class
         self.rotate_stop_run_script = None
@@ -361,7 +352,7 @@ class SpriteObject:
         # There has to be a fade_until value for the fade to work.
         # fade_until is used to determine the direction of the fade (fade-in or
         # fade-out).
-        if self.fade_until is None:
+        if self.fade_properties.fade_until is None:
             return
                 
         self.is_fading = True
@@ -428,13 +419,14 @@ class SpriteObject:
         """
         
         # Make sure scale_until is initialized
-        if not self.scale_until:
+        if self.scale_properties is None \
+           or not self.scale_properties.scale_until:
             return
         
-        if self.scale_until.scale_until > self.scale_current_value.scale_current_value:
+        if self.scale_properties.scale_until > self.scale_current_value.scale_current_value:
             self.scale_type = ScaleType.SCALE_UP
             
-        elif self.scale_until.scale_until < self.scale_current_value.scale_current_value:
+        elif self.scale_properties.scale_until < self.scale_current_value.scale_current_value:
             self.scale_type = ScaleType.SCALE_DOWN
             
         else:
@@ -1014,16 +1006,16 @@ class SpriteObject:
         # self.sudden_rotate_change = False
         # return self._scale_or_rotate_sprite()
 
-        # Not rotating the sprite or no rotation speed set? Return.
-        if not self.is_rotating or not self.rotate_speed:
+        # Not rotating the sprite or no rotation properties set? Return.
+        if not self.is_rotating or not self.rotate_properties:
             return
 
 
         # Are we rotating clockwise (negative value) or counter-clockwise? (positive value)
         # We need to know so we can determine when to stop the rotating (if a stop has been set).
-        if self.rotate_speed.rotate_speed > 0:
+        if self.rotate_properties.rotate_speed > 0:
             rotate_type = RotateType.COUNTERCLOCKWISE
-        elif self.rotate_speed.rotate_speed < 0:
+        elif self.rotate_properties.rotate_speed < 0:
             rotate_type = RotateType.CLOCKWISE
         else:
             return
@@ -1035,7 +1027,8 @@ class SpriteObject:
         if rotate_type == RotateType.COUNTERCLOCKWISE:
 
             # if rotate_until is None, it means rotate continuously.
-            if self.rotate_until and self.rotate_current_value.rotate_current_value >= self.rotate_until.rotate_until:
+            if self.rotate_properties.rotate_until \
+               and self.rotate_current_value.rotate_current_value >= self.rotate_properties.rotate_until:
                 # Stop the rotation
                 self.stop_rotating()
                 reached_destination_rotate = True
@@ -1043,7 +1036,7 @@ class SpriteObject:
                 # Rotate counterclockwise
                 new_rotate_value =\
                     self.rotate_current_value.rotate_current_value \
-                    + self.rotate_speed.rotate_speed \
+                    + self.rotate_properties.rotate_speed \
                     * AnimationSpeed.delta
 
                 if new_rotate_value >= 360:
@@ -1064,9 +1057,9 @@ class SpriteObject:
             # starts from 360 and goes down when rotating clockwise, so for example
             # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
             # 4) then stop the rotation
-            if self.rotate_until and \
+            if self.rotate_properties.rotate_until and \
                self.rotate_current_value.rotate_current_value > 0 and \
-               (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_until.rotate_until:
+               (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_properties.rotate_until:
                 
                 # Stop the rotation
                 self.stop_rotating()
@@ -1075,7 +1068,7 @@ class SpriteObject:
                 # Rotate clockwise
                 new_rotate_value =\
                     self.rotate_current_value.rotate_current_value \
-                    + self.rotate_speed.rotate_speed \
+                    + self.rotate_properties.rotate_speed \
                     * AnimationSpeed.delta
 
                 if new_rotate_value < 0:
@@ -1145,10 +1138,16 @@ class SpriteObject:
         # self.sudden_scale_change = False
         #return self._scale_or_rotate_sprite()
 
+        # Make sure the object that holds the scale speed, etc, is initialized.
+        if not self.scale_properties:
+            return
+        
         # Not scaling the sprite or no scale speed set
-        # or no scale_until set or no scale type (direction)? Return.
-        if not all((self.is_scaling, self.scale_speed,
-                    self.scale_until, self.scale_type)):
+        # or no scale_until set or no scale type (direction)? Return.        
+        elif not all((self.is_scaling,
+                    self.scale_properties.scale_speed,
+                    self.scale_properties.scale_until,
+                    self.scale_type)):
             return
 
 
@@ -1158,14 +1157,14 @@ class SpriteObject:
             
             # Has the sprite reached the destination scale while
             # scaling up?
-            if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
+            if self.scale_current_value.scale_current_value >= self.scale_properties.scale_until:
                 self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
             
         elif self.scale_type == ScaleType.SCALE_DOWN:
             
             # Has the sprite reached the destination scale while 
             # scaling down?
-            if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
+            if self.scale_current_value.scale_current_value <= self.scale_properties.scale_until:
                 
                 # The sprite has reached the destination scale.
                 self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
@@ -1181,7 +1180,7 @@ class SpriteObject:
             # the final scale-up or scale-down and we need to use this block
             # to stop the scale effect.                
             
-            if self.scale_current_value.scale_current_value >= self.scale_until.scale_until:
+            if self.scale_current_value.scale_current_value >= self.scale_properties.scale_until:
                 # Stop the scaling
                 self.stop_scaling()
                 reached_destination_scale = True
@@ -1189,11 +1188,11 @@ class SpriteObject:
                 # Increment scaling
                 new_scale_value =\
                     self.scale_current_value.scale_current_value \
-                    + self.scale_speed.scale_speed \
+                    + self.scale_properties.scale_speed \
                     * AnimationSpeed.delta
                 
-                if new_scale_value >= self.scale_until.scale_until:
-                    new_scale_value = self.scale_until.scale_until
+                if new_scale_value >= self.scale_properties.scale_until:
+                    new_scale_value = self.scale_properties.scale_until
 
                 self.scale_current_value =\
                     self.scale_current_value._replace(
@@ -1201,7 +1200,7 @@ class SpriteObject:
 
         elif self.scale_type == ScaleType.SCALE_DOWN:
             
-            if self.scale_current_value.scale_current_value <= self.scale_until.scale_until:
+            if self.scale_current_value.scale_current_value <= self.scale_properties.scale_until:
                 # Stop the scaling
                 self.stop_scaling()
                 reached_destination_scale = True
@@ -1210,7 +1209,7 @@ class SpriteObject:
                 # A positive value will scale up the sprite.
                 # A negative value(such as -0.00050) will scale down a 
                 # sprite.            
-                scale_down_float = -abs(self.scale_speed.scale_speed)                    
+                scale_down_float = -abs(self.scale_properties.scale_speed)                    
                 
                 # Decrease scaling
                 new_scale_value =\
@@ -1578,21 +1577,21 @@ class SpriteObject:
 
         # At this point, we need a fade speed.
         # If that hasn't been decided (fade_speed), return
-        if not self.fade_speed:
+        if not self.fade_properties.fade_speed:
             return
         
         # We must also have a fade_until, otherwise we won't know whether
-        # to fade in or fade out
-        elif not self.fade_until:
+        # to fade in or fade out. Zero is a valid fade_until value, which is
+        # why we specifically check for None here.
+        elif self.fade_properties.fade_until is None:
             return
         
-
         # Are we fading-in or fading-out? We need to know so that we can
         # determine when to stop the fade.
-        if self.current_fade_value.current_fade_value < self.fade_until.fade_value:
+        if self.current_fade_value.current_fade_value < self.fade_properties.fade_until:
             fade_type = FadeType.FADE_IN
             
-        elif self.current_fade_value.current_fade_value > self.fade_until.fade_value:
+        elif self.current_fade_value.current_fade_value > self.fade_properties.fade_until:
             fade_type = FadeType.FADE_OUT
             
         else:
@@ -1609,7 +1608,7 @@ class SpriteObject:
             # We either need to keep fading-in or we've already reached
             # the final fade-in or fade-out and we need to use this block
             # to stop the fade effect.
-            if self.current_fade_value.current_fade_value >= self.fade_until.fade_value:
+            if self.current_fade_value.current_fade_value >= self.fade_properties.fade_until:
 
                 # We've reached the destination fade value, so stop fading.
                 self.stop_fading()
@@ -1621,15 +1620,17 @@ class SpriteObject:
                 # Calculate the change in fade value that occurred in the 
                 # time delta
                 fade_change_this_frame =\
-                    self.fade_speed.fade_speed * AnimationSpeed.delta
+                    self.fade_properties.fade_speed * AnimationSpeed.delta
                 
                 # Add this change from the current fade value to get 
                 # the new fade value
                 self.calculated_fade_value += fade_change_this_frame
                 
-                # Don't allow the calculated fade value to go beyond 255.
-                if self.calculated_fade_value > 255:
-                    self.calculated_fade_value = 255
+                # Don't allow the calculated fade value to go beyond 
+                # the maximum fade value.
+                max_fade = min(255, self.fade_properties.fade_until)
+                if self.calculated_fade_value > max_fade:
+                    self.calculated_fade_value = max_fade
                 
                 # Convert the float fade value to an int, because
                 # pygame uses the int value to set the opacity, not a float.
@@ -1642,7 +1643,7 @@ class SpriteObject:
 
                 
         elif fade_type == FadeType.FADE_OUT:
-            if self.current_fade_value.current_fade_value <= self.fade_until.fade_value:
+            if self.current_fade_value.current_fade_value <= self.fade_properties.fade_until:
 
                 # We've reached the destination fade out value.
                 # Set a flag so we can check if a reusable script needs to run
@@ -1658,15 +1659,17 @@ class SpriteObject:
                 # Calculate the change in fade value that occurred in the 
                 # time delta
                 fade_change_this_frame =\
-                    self.fade_speed.fade_speed * AnimationSpeed.delta
+                    self.fade_properties.fade_speed * AnimationSpeed.delta
                 
                 # Subtract this change from the current fade value to get 
                 # the new fade value
                 self.calculated_fade_value -= fade_change_this_frame
                 
-                # Don't allow the calculated fade value to go below 0.
-                if self.calculated_fade_value < 0:
-                    self.calculated_fade_value = 0
+                # Don't allow the calculated fade value to go below the 
+                # minimum fade value.
+                minimum_fade = max(0, self.fade_properties.fade_until)
+                if self.calculated_fade_value < minimum_fade:
+                    self.calculated_fade_value = minimum_fade
                 
                 # Convert the float fade value to an int, because
                 # pygame uses the int value to set the opacity, not a float.
@@ -1682,7 +1685,8 @@ class SpriteObject:
             # Yes, the fade has now stopped because we've reached a specific fade value.
             
             # Reset the fade_until value
-            self.fade_until = None
+            self.fade_properties =\
+                self.fade_properties._replace(fade_until = None)
 
             # Should we run a specific script now that the fade animation
             # has stopped for this sprite?
