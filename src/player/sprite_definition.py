@@ -2081,6 +2081,14 @@ class SpriteObject:
 
         Return: None
         """
+        
+        # Update: December 28, 2025 (Jobin Rezai)
+        # Now using the sprite's half_width and half_height when determining
+        # stop locations because movement animations are now done using centerx
+        # and centery, so we need to read the sprite's current location as
+        # 'the side to check' plus or minus half_width, depending on the side
+        # that's being checked and the direction of the movement stop.
+        # The same kind of logic applies to the height, via half_height.
 
         # Not moving the sprite or no instructions on speed? Return.
         if not self.is_moving or not self.move_properties:
@@ -2103,13 +2111,15 @@ class SpriteObject:
                     if self.move_properties.x_direction == "left":
                         # The sprite is moving left
 
-                        if self.rect.left <= pixel_coordinate:
+                        # if self.rect.left <= pixel_coordinate:
+                        if self.rect.centerx - self.half_width <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.x_direction == "right":
                         # The sprite is moving right
 
-                        if self.rect.left >= pixel_coordinate:
+                        # if self.rect.left >= pixel_coordinate:
+                        if self.rect.centerx + self.half_width >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                             # Check the right side of the sprite for stops?
@@ -2120,13 +2130,15 @@ class SpriteObject:
                     if self.move_properties.x_direction == "right":
                         # The sprite is moving right
 
-                        if self.rect.right >= pixel_coordinate:
+                        # if self.rect.right >= pixel_coordinate:
+                        if self.rect.right + self.half_width >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.x_direction == "left":
                         # The sprite is moving left
 
-                        if self.rect.right <= pixel_coordinate:
+                        # if self.rect.right <= pixel_coordinate:
+                        if self.rect.centerx + self.half_width <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                             # Check the top of the sprite for a stop?
@@ -2138,13 +2150,15 @@ class SpriteObject:
                     if self.move_properties.y_direction == "up":
                         # The sprite is moving up
 
-                        if self.rect.top <= pixel_coordinate:
+                        # if self.rect.top <= pixel_coordinate:
+                        if self.rect.centery - self.half_height <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                     if self.move_properties.y_direction == "down":
                         # The sprite is moving down
 
-                        if self.rect.top >= pixel_coordinate:
+                        # if self.rect.top >= pixel_coordinate:
+                        if self.rect.centery -self.half_height >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                             # Check the bottom of the sprite for a stop?
@@ -2156,13 +2170,15 @@ class SpriteObject:
                     if self.move_properties.y_direction == "down":
                         # The sprite is moving down
 
-                        if self.rect.bottom >= pixel_coordinate:
+                        # if self.rect.bottom >= pixel_coordinate:
+                        if self.rect.centery + self.half_height >= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.y_direction == "up":
                         # The sprite is moving up
 
-                        if self.rect.bottom <= pixel_coordinate:
+                        # if self.rect.bottom <= pixel_coordinate:
+                        if self.rect.bottom +self.half_height <= pixel_coordinate:
                             satisfied_stop_keys.append(side)
 
             if satisfied_stop_keys:
