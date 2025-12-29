@@ -2100,15 +2100,15 @@ class WizardWindow:
                            parent_display_text="Font",
                            sub_display_text="font_text_letter_delay",
                            command_name="font_text_letter_delay",
-                           purpose_line="Sets the gradual letter-by-letter\n"
-                           "animation delay in seconds.\n"
+                           purpose_line="Sets the gradual letter-by-letter animation delay in seconds.\n"
                            "Does not apply to letter fade-ins",
                            scale_from_value=0,
                            scale_to_value=10,
                            scale_instructions="Letter animation delay (seconds) (0-10):\n\n"
                            "For example: a value of 1 means: show a letter every 1 second.\n"
                            "0.50 means show a letter every half a second.\n"
-                           "A value of 0 defaults to a fast speed.",
+                           "A speed of 0 defaults to a fast speed.\n"
+                           "If this is your first time, try a speed of 0.03",
                            scale_default_value=0.2,
                            scale_increment_by=0.01,
                            scale_type=float, 
@@ -2238,15 +2238,15 @@ class WizardWindow:
                                  parent_display_text="Font",
                                  sub_display_text="sprite_font_text_letter_delay",
                                  command_name="sprite_font_text_letter_delay",
-                                 purpose_line="Sets a sprite's gradual letter-by-letter\n"
-                                 "animation delay in seconds.\n"
+                                 purpose_line="Sets a sprite's gradual letter-by-letter animation delay in seconds.\n"
                                  "Does not apply to letter fade-ins",
                                  scale_from_value=0,
                                  scale_to_value=10,
                                  scale_instructions="Letter animation delay (seconds) (0-10):\n\n"
                                  "For example: a value of 1 means: show a letter every 1 second.\n"
                                  "0.50 means show a letter every half a second.\n"
-                                 "A value of 0 defaults to a fast speed.",
+                                 "A speed of 0 defaults to a fast speed.\n"
+                                 "If this is your first time, try a speed of 0.03",
                                  scale_default_value=0.2,
                                  scale_increment_by=0.01,
                                  scale_type=float, 
