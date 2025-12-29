@@ -116,7 +116,7 @@ class FontAnimationShowingType(Enum):
 
 class FontLetterDelayHandler:
     """
-    Used for calculating and elapsing millisecond delays when showing
+    Used for calculating and elapsing second delays when showing
     letter by letter gradual font animations (non-fading).
     
     This prioritizes time accuracy over over frame-by-frame consistency.
@@ -127,7 +127,7 @@ class FontLetterDelayHandler:
         
         # Punctuation delay
         # Key: (str) letter
-        # Value: (float) number of milliseconds to delay
+        # Value: (float) number of seconds to delay
         # Used for gradual letter text displays (not gradual letter fading)
         self.letter_delays = {}
         
@@ -135,13 +135,13 @@ class FontLetterDelayHandler:
         # at different frame rates. Used for development-only.
         self.start_time = None
 
-        # The number of milliseconds to delay when applying gradual text 
+        # The number of seconds to delay when applying gradual text 
         # animation.
         # For letter-by-letter animation only (not *any* fade-ins.)
         self.font_text_delay: float = 0.10
         
-        # For keeping track of the number of milliseconds
-        # that have been elapsed so far for gradual text display animation.
+        # For keeping track of the number of seconds that have been elapsed 
+        # so far for gradual text display animation.
         self.time_since_last_letter_shown: float = 0
         
         # The number of characters that should be visible based on time.
@@ -156,13 +156,13 @@ class FontLetterDelayHandler:
         
         self.sprite_mode = sprite_mode
         
-    def set_letter_delay(self, letter: str, delay_milliseconds: int):
+    def set_letter_delay(self, letter: str, delay_seconds: int):
         """
         Set a delay for a specific letter.
         
-        For example, if "." is provided as the letter with a delay_milliseconds
-        value of 1000, then any period that gets shown will pause for 1 second
-        before showing the next letter.
+        For example, if "." is provided as the letter with a delay_seconds
+        value of 0.5, then any period that gets shown will pause for half a
+        second, before showing the next letter.
         
         Used with <font_text_delay_punc>
         """
@@ -173,38 +173,38 @@ class FontLetterDelayHandler:
             return
         elif not isinstance(letter, str):
             return
-        elif not isinstance(delay_milliseconds, int) \
-             and not isinstance(delay_milliseconds, float):
+        elif not isinstance(delay_seconds, int) \
+             and not isinstance(delay_seconds, float):
             return
-        elif delay_milliseconds < 0:
+        elif delay_seconds < 0:
             return
         
         # If the value is 0 (zero), remove the delay rule if the letter exists.
-        if delay_milliseconds == 0:
+        if delay_seconds == 0:
             if letter in self.letter_delays:
                 del self.letter_delays[letter]
         else:
             
             # Add or update letter delay.
-            self.letter_delays[letter] = delay_milliseconds
+            self.letter_delays[letter] = delay_seconds
 
     def get_font_after_letter_delay(self, letter: str) -> int:
         """
-        Get the number of milliseconds to delay after a specific
+        Get the number of seconds to delay after a specific
         letter is shown.
     
         A letter's delay is set using the command: <font_text_delay_punc>
         """
-        delay_milliseconds =\
+        delay_seconds =\
             self.letter_delays.get(letter, 0)
         
-        return delay_milliseconds
+        return delay_seconds
     
     def check_wait_punctuation(self, previous_letter: str) -> bool:
         """
         Check if the given letter is a letter that should be cause a delay
-        for X number of milliseconds. If so, set a variable to the number of
-        milliseconds that should be waited (self.punct_wait_milliseconds).
+        for X number of seconds. If so, set a variable to the number of
+        seconds that should be waited (self.punct_wait_seconds).
         
         Return: True if the given letter should cause a delay. The caller then
         should wait before showing the next letter.
@@ -214,12 +214,12 @@ class FontLetterDelayHandler:
         """
         
         # Was the previous letter a letter that should 
-        # cause this new letter to delay for X number of milliseconds?
+        # cause this new letter to delay for X number of seconds?
         # (ie: if the previous letter was a ".")
         self.punct_wait_seconds =\
             self.get_font_after_letter_delay(previous_letter)
         
-        # Should we wait a few milliseconds because the last letter
+        # Should we wait a few seconds because the last letter
         # was a punctuation letter?
         if self.punct_wait_seconds > 0:
             # Yes, we should wait before showing the current letter
@@ -396,9 +396,9 @@ class FontLetterDelayHandler:
             self.time_since_last_letter_shown -= target_delay
     
             # Does the previous letter require a punctuation delay?
-            # If so, self.punct_wait_milliseconds will be set 
+            # If so, self.punct_wait_seconds will be set 
             # automatically (by the method below) to the number of 
-            # milliseconds that should be waited.
+            # seconds that should be waited.
             prev_letter = letters[letter_cursor_position].previous_letter
             if self.check_wait_punctuation(prev_letter):
                 # Yes, the previous letter needs a punctuation delay.

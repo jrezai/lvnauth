@@ -82,7 +82,7 @@ class AfterCounter:
         reusable script is run.
 
         - optional_arguments: arguments to pass to the reusable script
-        once the number of frames has been satisfied.
+        once the number of seconds has been satisfied.
         """
 
         self.seconds_to_wait:float = seconds_to_wait
@@ -107,7 +107,7 @@ class AfterCounter:
 
 class AfterManager:
     """
-    Handle running reusable scripts after X number of frames.
+    Handle running reusable scripts after X number of seconds.
 
     The same reusable script cannot be queued up multiple times.
     There is no technical reason for this; I could think of no situation
@@ -117,7 +117,7 @@ class AfterManager:
     def __init__(self, method_spawn_background_reader):
         """
         A new object used for running reusable scripts after a certain
-        number of frames have elapsed.
+        number of seconds have elapsed.
 
         Arguments:
 
@@ -310,7 +310,7 @@ class StoryReader:
             # Gets used with <rest>.
             # This pauses the reading of the main script, regardless if the
             # mouse is clicked. It forces the main story reader to pause for
-            # a specific number of frames.
+            # a specific number of seconds.
             self.rest_handler = RestHandler()
 
             # Gets used with <wait_for_animation>
@@ -1031,12 +1031,12 @@ class StoryReader:
                 max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
         elif command_name == "font_text_letter_delay":
-            # Set the number of frames to skip when applying
+            # Set the number of seconds to skip when applying
             # the gradual dialog text animation (letter by letter).
             self._font_text_delay(arguments=arguments)
 
         elif command_name == "font_text_delay_punc":
-            # Set the number of frames to skip
+            # Set the number of seconds to skip
             # *after* a specific letter is blitted.
             self._font_text_delay_punc(arguments=arguments)
 
@@ -2199,7 +2199,7 @@ class StoryReader:
     def elapse_halt_timer(self):
         """
         If we're in automated halt mode, elapse the wait counter
-        until the required number of frames have elapsed.
+        until the required number of seconds have elapsed.
         """
 
         # Get the story reader that's not a reusable script reader,
@@ -4089,14 +4089,14 @@ class StoryReader:
 
     def _font_text_delay_punc(self, arguments, sprite_object: sd.SpriteObject = None):
         """
-        Set the number of frames to skip *after* a specific letter has
+        Set the number of seconds to skip *after* a specific letter has
         finished being blitted.
 
         Arguments:
 
         - arguments: an int between 0 and 150.
-        For example: a value of 2 means: apply the letter by letter animation
-        every 2 frames. A value of 0 means apply the animation at every frame.
+        For example: a value of 0.5 means: apply the letter by letter animation
+        every half a second. A value of 0 means no extra delay.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4155,16 +4155,16 @@ class StoryReader:
 
     def _font_text_delay(self, arguments, sprite_object: sd.SpriteObject = None):
         """
-        Set the number of milliseconds to skip when animating letter-by-letter
-        dialog text.
+        Set the number of seconds to elapse (wait) when animating
+        letter-by-letter dialog text.
         Does not apply to letter fade-ins.
 
         Arguments:
 
-        - arguments: a float for milliseconds.
-        For example: a value of 1000 means: apply the letter by letter animation
-        every 1 second (so each second will display a letter).
-        The minimum value is 
+        - arguments: a float for seconds.
+        For example: a value of 0.5 means: apply the letter by letter animation
+        every half a second (so each second will display a letter).
+        The minimum is 0 seconds.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4183,8 +4183,8 @@ class StoryReader:
 
         text_wait_seconds = text_speed_delay.number_of_seconds
 
-        # Don't allow the wait time to be less than 0 or more than 10000
-        # 10000 milliseconds means 10 seconds.
+        # Don't allow the wait time to be less than 0 seconds
+        # or more than 10 seconds.
         
         # Minimum 0 seconds
         text_wait_seconds = max(text_wait_seconds, 0)
@@ -4420,7 +4420,8 @@ class StoryReader:
 
     def _sprite_text_font_delay(self, arguments: str):
         """
-        Set the number of frames to skip when animating letter-by-letter dialog text.
+        Set the number of seconds to elapse when animating letter-by-letter
+        dialog text.
         Does not apply to letter fade-ins.
         """
 
@@ -4437,13 +4438,15 @@ class StoryReader:
         # Split tuple
         sprite, command_arguments = sprite_details
 
-        # Set the number of frames to skip when animating letter-by-letter dialog text.
+        # Set the number of seconds to elapse (wait) when animating 
+        # letter-by-letter dialog text.
         # Does not apply to letter fade-ins.
-        self._font_text_delay(arguments=command_arguments.value, sprite_object=sprite)
+        self._font_text_delay(arguments=command_arguments.value,
+                              sprite_object=sprite)
 
     def _sprite_text_font_delay_punc(self, arguments: str):
         """
-        Set the number of frames to skip *after* a specific letter has
+        Set the number of seconds to elapse (wait) *after* a specific letter has
         finished being blitted.
         """
 
@@ -4460,8 +4463,8 @@ class StoryReader:
         # Split tuple
         sprite, command_arguments = sprite_details
 
-        # Set the number of frames to skip *after* a specific letter has
-        # finished being blitted.
+        # Set the number of seconds to elapse (wait) *after* a specific 
+        # letter has finished being blitted.
         self._font_text_delay_punc(
             arguments=command_arguments.value, sprite_object=sprite
         )

@@ -2129,7 +2129,9 @@ class WizardWindow:
                            "Note: this command only works with letters on the same line.",
                            scale_from_value=0,
                            scale_to_value=10,
-                           scale_instructions="The number of seconds to skip (0 to 10):",
+                           scale_instructions="The number of seconds to delay (0 to 10):\n"
+                           "A decimal value such as 0.5 can also be used.\n"
+                           "0.5 means half a second.",
                            scale_default_value=1,
                            group_name=GroupName.SPEED)
     
@@ -2266,7 +2268,9 @@ class WizardWindow:
                                      "Note: the sprite must already be visible.",
                                      scale_from_value=0,
                                      scale_to_value=10,
-                                     scale_instructions="The number of seconds to skip (0 to 10):",
+                                     scale_instructions="The number of seconds to delay (0 to 10):\n"
+                                     "A decimal value such as 0.5 can also be used.\n"
+                                     "0.5 means half a second.",
                                      scale_default_value=1,
                                      group_name=GroupName.SPEED)
 
@@ -3958,7 +3962,7 @@ class SharedPages:
             and return a frame that contains the widgets.
             """
     
-            # For example: "Number of frames to skip:"
+            # For example: "Number of seconds to elapse:"
             spinbox_1_instructions = self.kwargs.get("spinbox_1_instructions")
             spinbox_2_instructions = self.kwargs.get("spinbox_2_instructions")
     
@@ -3970,7 +3974,7 @@ class SharedPages:
             self.spinbox_from_value = self.kwargs.get("spinbox_from_value")
             self.spinbox_to_value = self.kwargs.get("spinbox_to_value")
     
-            # For example: "number of frames to skip"
+            # For example: "number of seconds to elapse"
             # Used in a messagebox missing-field sentence.
             self.subject_sentence_1 = self.kwargs.get("subject_sentence_1")
             self.subject_sentence_2 = self.kwargs.get("subject_sentence_2")
@@ -5320,7 +5324,7 @@ class SharedPages:
     class CurrentValue(WizardListing):
         """
         <character_fade_current_value: general alias, fade value>
-        <character_fade_delay: general alias, number of frames to skip>
+        <character_fade_delay: general alias, number of seconds to elapse>
         
         1 Entry widget
         1 Spinbox widget.
@@ -5555,11 +5559,11 @@ class SharedPages:
             if self.show_delay_widgets:
                 
                 # So the user knows what the spinbox is for.
-                # Example: "The number of frames to elapse:"
+                # Example: "The number of seconds to elapse:"
                 spinbox_instructions = self.kwargs.get("spinbox_instructions")
                 
-                # Such as 'number of frames to delay level'; used for the message box
-                # when the amount is missing
+                # Such as 'number of seconds to delay level'; used for the 
+                # message box when the amount is missing
                 self.amount_name = self.kwargs.get("amount_name")
             
                 self.lbl_amount = ttk.Label(frame_content, text=spinbox_instructions)
@@ -7651,8 +7655,7 @@ class Font_TextDelayPunc(WizardListing):
         """
         label = 'Previous letter:' entry (max 1 character)
         
-        label = 'The number of frames to skip' (1 to 120)'
-        labelscale
+        label = 'The number of seconds to elapse'.
         """
         
         frame_content = ttk.Frame(self.parent_frame)
@@ -7673,28 +7676,26 @@ class Font_TextDelayPunc(WizardListing):
                                            max_length=1,
                                            width=5)
 
-        lbl_scale_instructions = ttk.Label(frame_content,
+        lbl_spinbox_instructions = ttk.Label(frame_content,
                                      text=scale_instructions)
         
-        self.v_scale_value = tk.IntVar()
 
-        self.scale = ttk.LabeledScale(frame_content,
+        self.v_seconds = tk.DoubleVar()
+        self.sb_seconds = ttk.Spinbox(frame_content,
                                  from_=scale_from_value,
                                  to=scale_to_value,
-                                 variable=self.v_scale_value)
+                                 textvariable=self.v_seconds,
+                                 increment=0.1,
+                                 width=7)
 
-        self.v_scale_value.set(scale_default_value)
         
         lbl_previous_letter.grid(row=0, column=0, sticky="w")
         self.entry_letter.grid(row=0, column=1, sticky="w", padx=(5, 0))
 
-        lbl_scale_instructions.grid(row=1,
-                                    column=0,
-                                    columnspan=2,
-                                    sticky="w",
-                                    pady=(15, 0))
+        lbl_spinbox_instructions.grid(
+            row=1, column=0, columnspan=2, sticky="w", pady=(15, 0))
         
-        self.scale.grid(row=2, column=0, sticky="nw")
+        self.sb_seconds.grid(row=2, column=0, sticky="nw")
 
         return frame_content
     
@@ -7708,15 +7709,15 @@ class Font_TextDelayPunc(WizardListing):
             return
         
         previous_letter = command_class_object.previous_letter
-        number_of_milliseconds = command_class_object.number_of_seconds
+        number_of_seconds = command_class_object.number_of_seconds
         
         try:
-            number_of_milliseconds = int(number_of_milliseconds)
+            number_of_seconds = float(number_of_seconds)
         except ValueError:
-            number_of_milliseconds = 1
+            number_of_seconds = 1
 
         self.entry_letter.insert(0, previous_letter)
-        self.v_scale_value.set(number_of_milliseconds)
+        self.v_seconds.set(number_of_seconds)
         
         # SpriteTextDelayPunc has 2 additional widgets:
         # an entry widget and a combobox.
@@ -7739,8 +7740,16 @@ class Font_TextDelayPunc(WizardListing):
                                  message="Please type a letter.")
             return
         
+        # The delay in seconds should be between 0 and 10 seconds.
+        seconds = self.v_seconds.get()
+        if seconds < 0 or seconds > 10:
+            messagebox.showerror(parent=self.parent_frame.winfo_toplevel(), 
+                                 title="Delay",
+                                 message="Delay must be between 0 and 10 seconds.")
+            return
+        
         user_input = {"Letter": letter,
-                      "DelayFrames": self.v_scale_value.get()}
+                      "DelaySeconds": self.v_seconds.get()}
 
         return user_input
     
@@ -7755,7 +7764,7 @@ class Font_TextDelayPunc(WizardListing):
             return
 
         letter = user_inputs.get("Letter")
-        delay_frames = user_inputs.get("DelayFrames")
+        delay_seconds = user_inputs.get("DelaySeconds")
         
         # If it's being used in a sprite_text related page,
         # such as <sprite_font>, then check for the two common
@@ -7768,10 +7777,10 @@ class Font_TextDelayPunc(WizardListing):
             sprite_type = sprite_type_and_alias.get("SpriteType")
             sprite_alias = sprite_type_and_alias.get("SpriteAlias")
     
-            return f"<{self.command_name}: {sprite_type}, {sprite_alias}, {letter}, {delay_frames}>"  
+            return f"<{self.command_name}: {sprite_type}, {sprite_alias}, {letter}, {delay_seconds}>"  
 
         else:
-            return f"<{self.command_name}: {letter}, {delay_frames}>"
+            return f"<{self.command_name}: {letter}, {delay_seconds}>"
         
         
         
@@ -8201,7 +8210,7 @@ class SceneWithFadeFrame:
 class SceneWithFade(WizardListing):
     """
     <scene_with_fade: hex color, fade in speed (1-100), fade out speed (1-100),
-    fade hold frame count (number of frames to stay at full opacity,
+    fade hold frame count (number of seconds to stay at full opacity,
     chapter name, scene name>
     """
 
