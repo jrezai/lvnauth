@@ -4621,23 +4621,8 @@ class SharedPages:
                 
                 # Do we have a specific side to check?
                 case cc.MovementStopCondition(_, side_to_check, stop_location):
-                
-                    # Yes, we have a specific side to check.
-                
-                    # if 'side of sprite' is an empty string, 
-                    # set self.cb_side_to_check to index 0, which is 
-                    # "Determine automatically"
-                    if not side_to_check:
-                        self.cb_side_to_check.current(0)
-                    else:
-                        side_to_check = side_to_check.lower()
-                        
-                        # Show the 'side to check' in the combobox
-                        if side_to_check in ("left", "right", "top", "bottom"):
-                            WizardListing.\
-                                set_combobox_readonly_text(self.cb_side_to_check,
-                                                           side_to_check)
                     
+                    # Yes, we have a specific side to check.
                     if stop_location:
                         stop_location = stop_location.lower()
                     
@@ -4649,7 +4634,31 @@ class SharedPages:
                         # Show the spinbox widget.
                         self.cb_stop_location.current(0)
                         self.spinbox_pixel_location.set(stop_location)
+                    else:
+                        
+                        # Show the stop location in the combobox.
+                        WizardListing.\
+                            set_combobox_readonly_text(self.cb_stop_location,
+                                                       stop_location)
+                        
+                        # Causes the pixel coordinate spinbox to ungrid.
+                        self.hide_pixel_widgets()                                  
                     
+                    # if 'side of sprite' is an empty string, 
+                    # set self.cb_side_to_check to index 0, which is 
+                    # "Determine automatically"
+                    if not side_to_check:
+                        self.cb_side_to_check.current(0)
+
+                    else:
+                        side_to_check = side_to_check.lower()
+                        
+                        # Show the 'side to check' in the combobox
+                        if side_to_check in ("left", "right", "top", "bottom"):
+                            WizardListing.\
+                                set_combobox_readonly_text(self.cb_side_to_check,
+                                                           side_to_check)                      
+
                 case cc.MovementStopConditionShorter(_, stop_location):
                     # The stop location is a fixed section, such as 'left', 
                     # 'right', etc.
