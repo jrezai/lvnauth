@@ -1491,7 +1491,7 @@ class SpriteObject:
             # If there's a current fade value (even zero or 255) and the 
             # sprite is still fading, then proceed to evaluate if a fade
             # is still needed.
-            if self.current_fade_value.current_fade_value or self.is_fading:
+            if self.current_fade_value.current_fade_value >= 0 or self.is_fading:
                 
                 # Proceed to check if a fade is still needed or not.
                 
@@ -1727,6 +1727,11 @@ class SpriteObject:
             # Reset the fade_until value
             self.fade_properties =\
                 self.fade_properties._replace(fade_until = None)
+            
+            # If the fade value is at 255 (full opacity), treat it as having
+            # no fade at all.
+            if self.current_fade_value.current_fade_value == 255:
+                self.current_fade_value = None
 
             # Should we run a specific script now that the fade animation
             # has stopped for this sprite?
@@ -1882,7 +1887,7 @@ class SpriteObject:
         """
 
         # Fade not applied to the sprite? return
-        if not self.current_fade_value:
+        if self.current_fade_value is None:
             return
 
         replaced_image = False
