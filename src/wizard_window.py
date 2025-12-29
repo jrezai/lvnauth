@@ -7713,7 +7713,7 @@ class Font_TextDelayPunc(WizardListing):
         
         try:
             number_of_seconds = float(number_of_seconds)
-        except ValueError:
+        except (ValueError, tk.TclError):
             number_of_seconds = 1
 
         self.entry_letter.insert(0, previous_letter)
@@ -7741,7 +7741,11 @@ class Font_TextDelayPunc(WizardListing):
             return
         
         # The delay in seconds should be between 0 and 10 seconds.
-        seconds = self.v_seconds.get()
+        try:
+            seconds = self.v_seconds.get()
+        except tk.TclError:
+            seconds = -1
+        
         if seconds < 0 or seconds > 10:
             messagebox.showerror(parent=self.parent_frame.winfo_toplevel(), 
                                  title="Delay",
@@ -7765,6 +7769,10 @@ class Font_TextDelayPunc(WizardListing):
 
         letter = user_inputs.get("Letter")
         delay_seconds = user_inputs.get("DelaySeconds")
+        
+        # Use an integer where possible, to avoid numbers like 2 showing as 2.0
+        if delay_seconds.is_integer():
+            delay_seconds = int(delay_seconds)
         
         # If it's being used in a sprite_text related page,
         # such as <sprite_font>, then check for the two common
