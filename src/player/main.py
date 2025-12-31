@@ -292,7 +292,7 @@ class Main:
             # Handle drawing
             story.on_render()
 
-            # For debugging
+            # Update the screen
             pygame.display.flip()
             
             # The number of seconds elapsed in this frame
