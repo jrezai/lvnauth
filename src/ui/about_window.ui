@@ -114,7 +114,7 @@
               <object class="tk.Text" id="text_license" named="True">
                 <property name="height">10</property>
                 <property name="state">disabled</property>
-                <property name="text" translatable="yes">Copyright 2023-2025 Jobin Rezai
+                <property name="text" translatable="yes">Copyright 2023-2026 Jobin Rezai
 
 LVNAuth is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published
