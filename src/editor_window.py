@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -2907,7 +2907,7 @@ class OpenManager:
 
                 chapter_script = value[0]
                 scenes_dict = value[1]
-
+                
                 # Get the display orders as an int, so we can sort them.
                 scenes_display_order = [int(item) for item in scenes_dict.keys()]
                 scenes_display_order.sort()
@@ -2927,6 +2927,8 @@ class OpenManager:
 
                     scene_name = scene_info[0]
                     scene_script = scene_info[1]
+                    
+                    
 
                     # Prepare the scene dictionary to be added to the 'main' scenes dictionary.
                     scenes[scene_name] = scene_script
@@ -2938,10 +2940,10 @@ class OpenManager:
 
                 ProjectSnapshot.chapters_and_scenes[chapter_name] = [chapter_script, scenes.copy()]
 
-            # Is there a startup script? Set the tag for it in the treeview widget so it
-            # shows as a different colour.
-            if startup_script_item_iid:
-                Passer.editor.treeview_scripts.item(startup_script_item_iid, tags=("startup_script",))
+        # Is there a startup script? Set the tag for it in the treeview widget so it
+        # shows as a different colour.
+        if startup_script_item_iid:
+            Passer.editor.treeview_scripts.item(startup_script_item_iid, tags=("startup_script",))
 
     def _populate_treeview_widgets(self):
         """
@@ -3130,22 +3132,26 @@ class SaveManager:
 
     def _get_chapters_and_scenes(self) -> Dict:
         """
-        Get the chapter names, chapter scripts, scene names and scene scripts and put them
-        into a dictionary that will eventually get converted to JSON.
-        :return: dict
+        Get the chapter names, chapter scripts, scene names and scene
+        scripts and put them into a dictionary that will eventually get
+        converted to JSON.
+        
+        Return: dict
         """
 
-        # We'll use the chapters/scenes treeview to get the chapter/scene names, because that is
-        # the correct order of the chapters and scenes.
+        # We'll use the chapters/scenes treeview to get the chapter/scene 
+        # names, because that is the correct order of the chapters and scenes.
 
         builder = {}
 
         Passer.editor.treeview_scripts: ttk.Treeview
 
         # Loop through the chapters
-        for chapter_counter, chapter_item_iid in enumerate(Passer.editor.treeview_scripts.get_children()):
+        for chapter_counter, chapter_item_iid \
+            in enumerate(Passer.editor.treeview_scripts.get_children()):
 
-            chapter_name = Passer.editor.treeview_scripts.item(chapter_item_iid).get("text")
+            chapter_name = Passer.editor.treeview_scripts\
+                .item(chapter_item_iid).get("text")
 
             value = ProjectSnapshot.chapters_and_scenes.get(chapter_name)
             # value should now have this format:
@@ -3158,11 +3164,13 @@ class SaveManager:
 
             # Loop through the scenes in the current chapter
             for scene_counter, scene_item_iid in enumerate(
-                    Passer.editor.treeview_scripts.get_children(chapter_item_iid)):
+                    Passer.editor.treeview_scripts.\
+                    get_children(chapter_item_iid)):
                 # for scene_counter, scene_name_and_script in enumerate(scenes_dict.items()):
 
                 # Get the scene treeview item's details, so we can get the text.
-                scene_details = Passer.editor.treeview_scripts.item(scene_item_iid)
+                scene_details =\
+                    Passer.editor.treeview_scripts.item(scene_item_iid)
 
                 # The text contains the scene name
                 scene_name = scene_details.get("text")
@@ -3176,8 +3184,10 @@ class SaveManager:
                 # scene_counter is used for the display order
                 scenes[scene_counter] = [scene_name, scene_script]
 
-            # Put all the scenes of the current chapter into the 'final' dictionary
-            builder[chapter_counter] = {chapter_name: [chapter_script, scenes.copy()]}
+            # Put all the scenes of the current chapter into the 
+            # 'final' dictionary
+            builder[chapter_counter] =\
+                {chapter_name: [chapter_script, scenes.copy()]}
 
         return builder
 
@@ -3230,10 +3240,9 @@ class SaveManager:
                 "Music": music,
                 "ChaptersAndScenes": chapters_and_scenes,
                 "ReusableScripts": reusable_scripts}
-
-        self.json_data = json.dumps(data,
-                                    indent=4,
-                                    sort_keys=True)
+        
+        # This will be used to save the file to a project file (.lvnap)
+        self.json_data = json.dumps(data, indent=4, sort_keys=True)
 
     def save(self):
         """

@@ -1,0 +1,154 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings>
+      <setting id="name">Scale Dialog</setting>
+      <setting id="description">Used for initiating a scale animation in the Wizard window.</setting>
+      <setting id="module_name">scale_dialog</setting>
+      <setting id="template">application</setting>
+      <setting id="main_widget">frame_scale</setting>
+      <setting id="main_classname">ScaleDialog</setting>
+      <setting id="main_menu" />
+      <setting id="output_dir" />
+      <setting id="output_dir2" />
+      <setting id="import_tkvariables">False</setting>
+      <setting id="use_ttk_styledefinition_file">False</setting>
+      <setting id="use_i18n">False</setting>
+      <setting id="all_ids_attributes">False</setting>
+      <setting id="generate_code_onsave">False</setting>
+      <setting id="use_window_centering_code">False</setting>
+      <setting id="ttk_style_definition_file" />
+    </settings>
+    <customwidgets>
+      <customwidget path="../custom_pygubu_widgets.py" />
+    </customwidgets>
+  </project>
+  <object class="ttk.Frame" id="frame_scale" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame_inner" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+        </layout>
+        <child>
+          <object class="ttk.Frame" id="frame_alias" named="True">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="lbl_alias" named="True">
+                <property name="text" translatable="yes">&lt;type&gt; alias:</property>
+                <property name="textvariable">string:v_alias_title</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="lvnauthwidgets.entrylimitwidget" id="entry_alias" named="True">
+                <property name="textvariable">string:v_alias</property>
+                <property name="width">30</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame_scale_speed" named="True">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="pady">15</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="0" name="weight">1</property>
+              <property type="row" id="1" name="weight">1</property>
+            </containerlayout>
+            <child>
+              <object class="ttk.Label" id="lbl_scale_speed" named="True">
+                <property name="text" translatable="yes">Scale speed &lt;scale info&gt;:</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.LabeledScale" id="scale_speed" named="True">
+                <property name="variable">int:v_speed</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                  <property name="sticky">ew</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame_scale_until" named="True">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="pady">0 15</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+            <containerlayout manager="grid">
+              <property type="col" id="0" name="weight">1</property>
+              <property type="row" id="1" name="weight">1</property>
+            </containerlayout>
+            <child>
+              <object class="ttk.Label" id="lbl_stop_scaling_title" named="True">
+                <property name="text" translatable="yes">Stop scaling when the scale reaches... (0 to 100)
+Decimal values like 1.1 can be used as well.
+For example: a value of 2 means 'Stop scaling when at twice the size'</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="columnspan">2</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Spinbox" id="sb_scale_until" named="True">
+                <property name="from_">0</property>
+                <property name="increment">0.1</property>
+                <property name="textvariable">double:v_scale_until</property>
+                <property name="to">100</property>
+                <property name="width">8</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

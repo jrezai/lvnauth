@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -21,7 +21,7 @@ import pygame
 import sprite_definition as sd
 from enum import Enum, auto
 from typing import NamedTuple
-
+from animation_speed import AnimationSpeed
 
 
 #class Color(NamedTuple):
@@ -231,244 +231,243 @@ class DialogRectangle:
 
         self._prepare_outro_animation()
 
-    def convenient_animation_speed_to_float(self,
+    def convenient_animation_speed_to_value(self,
                                             int_speed: int,
-                                            animation_type: str) -> float:
+                                            animation_type: str) -> int:
         """
-        Convert a regular convenient value, such as 5, to a float
-        value that can be used for incremental animation speeds
-        such as 1.5
+        Convert a regular convenient value, such as 5, to a value
+        that can be used for incremental animation speeds.
         """
 
-        fade_float_value_speeds = """0.5
-0.6
-0.7
-0.8
-0.9
-1
-1.1
-1.2
-1.3
-1.4
-1.5
-1.6
-1.7
-1.8
-1.9
-2
-2.1
-2.2
-2.3
-2.4
-2.5
-2.6
-2.7
-2.8
-2.9
-3
-3.1
-3.2
-3.3
-3.4
-3.5
-3.6
-3.7
-3.8
-3.9
-4
-4.1
-4.2
-4.3
-4.4
-4.5
-4.6
-4.7
-4.8
-4.9
-5
-5.1
-5.2
-5.3
-5.4
-5.5
-5.6
-5.7
-5.8
-5.9
-6
-6.09
-6.19
-6.29
-6.39
-6.49
-6.59
-6.69
-6.79
-6.89
-6.99
-7.09
-7.19
-7.29
-7.39
-7.49
-7.59
-7.69
-7.79
-7.89
-7.99
-8.09
-8.19
-8.29
-8.39
-8.49
-8.59
-8.69
-8.79
-8.89
-8.99
-9.09
-9.19
-9.29
-9.39
-9.49
-9.59
-9.69
-9.79
-9.89
-9.99
-10.1
-10.2
-10.3
-10.4"""
+        fade_value_speeds = """20
+30
+40
+50
+60
+70
+80
+90
+100
+110
+120
+130
+140
+150
+160
+170
+180
+190
+200
+210
+220
+230
+240
+250
+260
+270
+280
+290
+300
+310
+320
+330
+340
+350
+360
+370
+380
+390
+400
+410
+420
+430
+440
+450
+460
+470
+480
+490
+500
+510
+520
+530
+540
+550
+560
+570
+580
+590
+600
+610
+620
+630
+640
+650
+660
+670
+680
+690
+700
+710
+720
+730
+740
+750
+760
+770
+780
+790
+800
+810
+820
+830
+840
+850
+860
+870
+880
+890
+900
+910
+920
+930
+940
+950
+960
+970
+980
+990
+1000
+1010"""
             
 
-        movement_float_value_speeds = """0.5
-0.75
-1
-1.25
-1.5
-1.75
-2
-2.25
-2.5
-2.75
-3
-3.25
-3.5
-3.75
-4
-4.25
-4.5
-4.75
-5
-5.25
-5.5
-5.75
-6
-6.25
-6.5
-6.75
-7
-7.25
-7.5
-7.75
-8
-8.25
-8.5
-8.75
-9
-9.25
-9.5
-9.75
-10
-10.25
-10.5
-10.75
-11
-11.25
-11.5
-11.75
-12
-12.25
-12.5
-12.75
-13
-13.25
-13.5
-13.75
-14
-14.25
-14.5
-14.75
-15
-15.25
-15.5
-15.75
-16
-16.25
-16.5
-16.75
-17
-17.25
-17.5
-17.75
-18
-18.25
-18.5
-18.75
-19
-19.25
-19.5
-19.75
-20
-20.25
-20.5
-20.75
-21
-21.25
-21.5
-21.75
-22
-22.25
-22.5
-22.75
-23
-23.25
-23.5
-23.75
-24
-24.25
-24.5
-24.75
-25
-25.25"""
+        movement_value_speeds = """70
+95
+120
+145
+170
+195
+220
+245
+270
+295
+320
+345
+370
+395
+420
+445
+470
+495
+520
+545
+570
+595
+620
+645
+670
+695
+720
+745
+770
+795
+820
+845
+870
+895
+920
+945
+970
+995
+1020
+1045
+1070
+1095
+1120
+1145
+1170
+1195
+1220
+1245
+1270
+1295
+1320
+1345
+1370
+1395
+1420
+1445
+1470
+1495
+1520
+1545
+1570
+1595
+1620
+1645
+1670
+1695
+1720
+1745
+1770
+1795
+1820
+1845
+1870
+1895
+1920
+1945
+1970
+1995
+2020
+2045
+2070
+2095
+2120
+2145
+2170
+2195
+2220
+2245
+2270
+2295
+2320
+2345
+2370
+2395
+2420
+2445
+2470
+2495
+2520
+2545"""
 
         # Key: int convenient value (1 to 100)
-        # Value: float value used in animation math.
+        # Value: int value used in animation math.
         speed_mapping = {}
 
-        # Get the float speeds depending on the type of animation
+        # Get the int value speeds depending on the type of animation
         # because the animation speeds will differ for fade vs non-fade.
         if "fade" in animation_type:
-            float_values = fade_float_value_speeds
+            speed_values = fade_value_speeds
         else:
-            float_values = movement_float_value_speeds
+            speed_values = movement_value_speeds
         
         # Get a list of float values.
-        float_values = float_values.split()
+        speed_values = speed_values.split()
         
         # Set the default speed to convenient value 10
-        default_speed = float(float_values[9])
+        default_speed = float(speed_values[9])
 
         # Populate the speed_mapping dictionary.
-        for idx, f in enumerate(float_values):
+        for idx, f in enumerate(speed_values):
             speed_mapping[idx + 1] = float(f)
 
         # Get the requested speed and if the speed isn't available,
         # use the default speed.
-        float_speed = speed_mapping.get(int_speed, default_speed)
+        animation_speed = speed_mapping.get(int_speed, default_speed)
         
-        return float_speed
+        return animation_speed
 
     def _prepare_intro_animation(self):
 
@@ -498,13 +497,31 @@ class DialogRectangle:
 
         # Set the current fade value to the same value as the initial fade
         self.fade_current_value = initial_alpha
-
+        
         # Set the intro animation speed by converting the convenient speed
-        # value (1-100) into a float value that we can use.
-        self.animation_speed =\
-            self.convenient_animation_speed_to_float(
-                self.animation_speed_convenient,
-                self.intro_animation.name.lower())
+        # value (1-100) into a value that we can use.
+        if "fade" in self.intro_animation.name.lower():
+            
+            # Fade speed
+            
+            self.animation_speed =\
+                AnimationSpeed.get_sequence_value(
+                    initial_value=20,
+                    increment_by=10,
+                    max_convenient_row=100,
+                    convenient_row_number=self.animation_speed_convenient)
+            
+        else:
+            
+            # Movement speed
+            
+            self.animation_speed =\
+                AnimationSpeed.get_sequence_value(
+                    initial_value=70,
+                    increment_by=25,
+                    max_convenient_row=100,
+                    convenient_row_number=self.animation_speed_convenient)            
+
 
         # Rectangle width (for borders)
         self.width = self.width_rectangle
@@ -649,11 +666,30 @@ class DialogRectangle:
             #StorySettings.active_scene.unload_script(StorySettings.waiting_arrow_script_alias)
 
         # Set the outro animation speed by converting the convenient speed
-        # value (1-100) into a float value that we can use.
-        self.animation_speed =\
-            self.convenient_animation_speed_to_float(
-                self.animation_speed_convenient,
-                self.outro_animation.name.lower())
+        # value (1-100) into a value that we can use.
+        if "fade" in self.outro_animation.name.lower():
+            
+            # Fade speed
+            
+            self.animation_speed =\
+                AnimationSpeed.get_sequence_value(
+                    initial_value=20,
+                    increment_by=10,
+                    max_convenient_row=100,
+                    convenient_row_number=self.animation_speed_convenient)
+            
+        else:
+            
+            # Movement speed
+            
+            self.animation_speed =\
+                AnimationSpeed.get_sequence_value(
+                    initial_value=70,
+                    increment_by=25,
+                    max_convenient_row=100,
+                    convenient_row_number=self.animation_speed_convenient)            
+
+
 
         # Reset the text, so it doesn't show any text while
         # the outro animation is occurring.
@@ -749,7 +785,7 @@ class DialogRectangle:
 
             elif self.outro_animation == RectangleOutroAnimation.GO_RIGHT:
                 # Calculate the animation
-                self.rect.x += self.animation_speed
+                self.rect.x += self.animation_speed * AnimationSpeed.delta
 
                 # Is the animation satisfied?
                 if self.rect.x >= self.rect_destination.x:
@@ -759,7 +795,7 @@ class DialogRectangle:
 
             elif self.outro_animation == RectangleOutroAnimation.GO_LEFT:
                 # Calculate the animation
-                self.rect.x -= self.animation_speed
+                self.rect.x -= self.animation_speed * AnimationSpeed.delta
 
                 # Is the animation satisfied?
                 if self.rect.x <= self.rect_destination.x:
@@ -769,7 +805,7 @@ class DialogRectangle:
 
             elif self.outro_animation == RectangleOutroAnimation.GO_UP:
                 # Calculate the animation
-                self.rect.y -= self.animation_speed
+                self.rect.y -= self.animation_speed * AnimationSpeed.delta
 
                 # Is the animation satisfied?
                 if self.rect.y <= self.rect_destination.y:
@@ -779,7 +815,7 @@ class DialogRectangle:
 
             elif self.outro_animation == RectangleOutroAnimation.GO_DOWN:
                 # Calculate the animation
-                self.rect.y += self.animation_speed
+                self.rect.y += self.animation_speed * AnimationSpeed.delta
                 # Is the animation satisfied?
                 if self.rect.y >= self.rect_destination.y:
                     self.rect.y = self.rect_destination.y
@@ -788,9 +824,11 @@ class DialogRectangle:
         
             elif self.outro_animation == RectangleOutroAnimation.FADE_OUT:
                 # Calculate the animation
-                self.fade_current_value -= self.animation_speed
+                self.fade_current_value -= \
+                    self.animation_speed * AnimationSpeed.delta
     
-                # Clear the rectangle surface because we're going to draw a new rectangle.
+                # Clear the rectangle surface because we're going to 
+                # draw a new rectangle.
                 # self.surface.fill((0, 0, 0, 0))
 
                 # Is the animation satisfied?
@@ -812,7 +850,7 @@ class DialogRectangle:
                     if self.rect.height > self.rect_destination.height:
 
                         # The height hasn't been satisfied yet. Decrease its height.
-                        self.rect.height -= self.animation_speed
+                        self.rect.height -= self.animation_speed * AnimationSpeed.delta
                         
                         # Is the rectangle's height less than the destination rect? Make it the same size.
                         # This is like trimming.
@@ -825,7 +863,7 @@ class DialogRectangle:
                         # The height is satisfied. Now make the rectangle less wide.
 
                         # Decrease the width
-                        self.rect.width -= self.animation_speed
+                        self.rect.width -= self.animation_speed * AnimationSpeed.delta
 
                         # Has the width been satisfied?
                         if self.rect.width <= self.rect_destination.width:
@@ -851,7 +889,7 @@ class DialogRectangle:
                     if self.rect.width > self.rect_destination.width:
 
                         # The width hasn't been satisfied yet. Decrease its width.
-                        self.rect.width -= self.animation_speed
+                        self.rect.width -= self.animation_speed * AnimationSpeed.delta
                         
                         # Is the rectangle's width less wide than the destination rect? Make it the same size.
                         # This is like trimming.
@@ -864,7 +902,7 @@ class DialogRectangle:
                         # The width is satisfied. Now make the rectangle less tall.
                         
                         # Decrease the height
-                        self.rect.height -= self.animation_speed
+                        self.rect.height -= self.animation_speed * AnimationSpeed.delta
 
                         # Has the height been satisfied?
                         if self.rect.height <= self.rect_destination.height:
@@ -887,7 +925,7 @@ class DialogRectangle:
                     if self.rect.width > self.rect_destination.width:
 
                         # The width hasn't been satisfied yet. Decrease its width.
-                        self.rect.width -= self.animation_speed
+                        self.rect.width -= self.animation_speed * AnimationSpeed.delta
                         
                         # Has the rectangle's width reached the destination rect? Make it the same size, just in case.
                         # This is like trimming.
@@ -906,7 +944,7 @@ class DialogRectangle:
                     if self.rect.height > self.rect_destination.height:
 
                         # The height hasn't been satisfied yet. Decrease its height.
-                        self.rect.height -= self.animation_speed
+                        self.rect.height -= self.animation_speed * AnimationSpeed.delta
                         
                         # Has the rectangle's height reached the destination rect? Make it the same size, just in case.
                         # This is like trimming.
@@ -1017,7 +1055,7 @@ class DialogRectangle:
 
         elif self.intro_animation == RectangleIntroAnimation.LEFT_TO_RIGHT:
             # Calculate the animation
-            self.rect.x += self.animation_speed
+            self.rect.x += self.animation_speed * AnimationSpeed.delta
 
             # Is the animation satisfied?
             if self.rect.x >= self.rect_destination.x:
@@ -1027,7 +1065,7 @@ class DialogRectangle:
 
         elif self.intro_animation == RectangleIntroAnimation.RIGHT_TO_LEFT:
             # Calculate the animation
-            self.rect.x -= self.animation_speed
+            self.rect.x -= self.animation_speed * AnimationSpeed.delta
 
             # Is the animation satisfied?
             if self.rect.x <= self.rect_destination.x:
@@ -1037,7 +1075,7 @@ class DialogRectangle:
 
         elif self.intro_animation == RectangleIntroAnimation.FADE_IN:
             # Calculate the animation
-            self.fade_current_value += self.animation_speed
+            self.fade_current_value += self.animation_speed * AnimationSpeed.delta
 
             # Is the animation satisfied?
             if self.fade_current_value >= self.alpha:
@@ -1064,7 +1102,7 @@ class DialogRectangle:
                 if self.rect.height < self.rect_destination.height:
 
                     # The height hasn't been satisfied yet. Increase its height.
-                    self.rect.height += self.animation_speed
+                    self.rect.height += self.animation_speed * AnimationSpeed.delta
 
                     # Is the rectangle's height taller than the destination rect? Make it the same size.
                     # This is like trimming.
@@ -1077,7 +1115,7 @@ class DialogRectangle:
                     # The height is satisfied. Now make the rectangle wider.
 
                     # Increase the width
-                    self.rect.width += self.animation_speed
+                    self.rect.width += self.animation_speed * AnimationSpeed.delta
 
                     # Has the width been satisfied?
                     if self.rect.width >= self.rect_destination.width:
@@ -1096,7 +1134,7 @@ class DialogRectangle:
                 if self.rect.width < self.rect_destination.width:
 
                     # The width hasn't been satisfied yet. Increase its width.
-                    self.rect.width += self.animation_speed
+                    self.rect.width += self.animation_speed * AnimationSpeed.delta
 
                     # Is the rectangle's width wider than the destination rect? Make it the same size.
                     # This is like trimming.
@@ -1109,7 +1147,7 @@ class DialogRectangle:
                     # The width is satisfied. Now make the rectangle taller.
 
                     # Increase the height
-                    self.rect.height += self.animation_speed
+                    self.rect.height += self.animation_speed * AnimationSpeed.delta
 
                     # Has the height been satisfied?
                     if self.rect.height >= self.rect_destination.height:
@@ -1131,7 +1169,7 @@ class DialogRectangle:
                 if self.rect.width < self.rect_destination.width:
 
                     # The width hasn't been satisfied yet. Increase its width.
-                    self.rect.width += self.animation_speed
+                    self.rect.width += self.animation_speed * AnimationSpeed.delta
 
                     # Has the rectangle's width reached the destination rect?
                     # Make it the same size, just in case.
@@ -1151,7 +1189,7 @@ class DialogRectangle:
                 if self.rect.height < self.rect_destination.height:
 
                     # The height hasn't been satisfied yet. Increase its height.
-                    self.rect.height += self.animation_speed
+                    self.rect.height += self.animation_speed * AnimationSpeed.delta
 
                     # Has the rectangle's height reached the destination rect? 
                     # Make it the same size, just in case.

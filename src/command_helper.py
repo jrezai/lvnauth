@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -57,41 +57,32 @@ class CommandHelper:
         "character_hide": cc.SpriteShowHide,
         "character_flip_both": cc.SpriteShowHide,
         "character_flip_horizontal": cc.SpriteShowHide,
-        "character_flip_vertical": cc.SpriteShowHide, 
-        "character_after_fading_stop": cc.FadeStopRunScript,
+        "character_flip_vertical": cc.SpriteShowHide,
+        "character_start_tinting": cc.SpriteTintBright,
+        "character_focus": cc.SpriteTintSolo,
+        "character_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "character_fade_current_value": cc.FadeCurrentValue,
-        "character_fade_delay": cc.FadeDelay,
-        "character_fade_speed": cc.FadeSpeed,
-        "character_fade_until": cc.FadeUntilValue,
-        "character_start_fading": cc.SpriteShowHide,
+        "character_start_fading": cc.FadeStart,
         "character_stop_fading": cc.SpriteShowHide,
-        "character_after_rotating_stop": cc.RotateStopRunScript,
+        "character_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "character_rotate_current_value": cc.RotateCurrentValue,
-        "character_rotate_delay": cc.RotateDelay,
-        "character_rotate_speed": cc.RotateSpeed,
-        "character_rotate_until": cc.RotateUntil,
-        "character_start_rotating": cc.SpriteShowHide,
+        "character_start_rotating": cc.RotateStart,
         "character_stop_rotating": cc.SpriteShowHide,
-        "character_after_scaling_stop": cc.ScaleStopRunScript,
-        "character_scale_by": cc.ScaleBy,
+        "character_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "character_scale_current_value": cc.ScaleCurrentValue,
-        "character_scale_delay": cc.ScaleDelay,
-        "character_scale_until": cc.ScaleUntil,
-        "character_start_scaling": cc.SpriteShowHide,
+        "character_start_scaling": cc.ScaleStart,
         "character_stop_scaling": cc.SpriteShowHide,
-        "character_after_movement_stop": cc.MovementStopRunScript,
+        "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "character_stop_movement_condition": cc.MovementStopCondition,
-        "character_move": cc.MovementSpeed,
-        "character_move_delay": cc.MovementDelay,
-        "character_start_moving": cc.SpriteShowHide,
+        "character_start_moving": cc.MoveStart,
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
         "character_set_center": cc.SpriteCenter,
         "character_center_x_with": cc.SpriteCenterWith,
-        "character_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "character_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "character_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "character_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "character_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "character_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "text_dialog_define": cc.DialogRectangleDefinition,
         "halt_auto": cc.HaltAuto,
         "continue": cc.Continue,
@@ -100,96 +91,80 @@ class CommandHelper:
         "dialog_sprite_hide": cc.SpriteShowHide,
         "dialog_sprite_flip_both": cc.SpriteShowHide,
         "dialog_sprite_flip_horizontal": cc.SpriteShowHide,
-        "dialog_sprite_flip_vertical": cc.SpriteShowHide, 
-        "dialog_sprite_after_fading_stop": cc.FadeStopRunScript,
+        "dialog_sprite_flip_vertical": cc.SpriteShowHide,
+        "dialog_sprite_start_tinting": cc.SpriteTintBright,
+        "dialog_sprite_focus": cc.SpriteTintSolo,
+        "dialog_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_fade_current_value": cc.FadeCurrentValue,
-        "dialog_sprite_fade_delay": cc.FadeDelay,
-        "dialog_sprite_fade_speed": cc.FadeSpeed,
-        "dialog_sprite_fade_until": cc.FadeUntilValue,
-        "dialog_sprite_start_fading": cc.SpriteShowHide,
+        "dialog_sprite_start_fading": cc.FadeStart,
         "dialog_sprite_stop_fading": cc.SpriteShowHide,
-        "dialog_sprite_after_rotating_stop": cc.RotateStopRunScript,
+        "dialog_sprite_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_rotate_current_value": cc.RotateCurrentValue,
-        "dialog_sprite_rotate_delay": cc.RotateDelay,
-        "dialog_sprite_rotate_speed": cc.RotateSpeed,
-        "dialog_sprite_rotate_until": cc.RotateUntil,
-        "dialog_sprite_start_rotating": cc.SpriteShowHide,
+        "dialog_sprite_start_rotating": cc.RotateStart,
         "dialog_sprite_stop_rotating": cc.SpriteShowHide,
-        "dialog_sprite_after_scaling_stop": cc.ScaleStopRunScript,
-        "dialog_sprite_scale_by": cc.ScaleBy,
+        "dialog_sprite_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_scale_current_value": cc.ScaleCurrentValue,
-        "dialog_sprite_scale_delay": cc.ScaleDelay,
-        "dialog_sprite_scale_until": cc.ScaleUntil,
-        "dialog_sprite_start_scaling": cc.SpriteShowHide,
+        "dialog_sprite_start_scaling": cc.ScaleStart,
         "dialog_sprite_stop_scaling": cc.SpriteShowHide,
-        "dialog_sprite_after_movement_stop": cc.MovementStopRunScript,
+        "dialog_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "dialog_sprite_stop_movement_condition": cc.MovementStopCondition,
-        "dialog_sprite_move": cc.MovementSpeed,
-        "dialog_sprite_move_delay": cc.MovementDelay,
-        "dialog_sprite_start_moving": cc.SpriteShowHide,
+        "dialog_sprite_start_moving": cc.MoveStart,
         "dialog_sprite_stop_moving": cc.SpriteShowHide,
         "dialog_sprite_set_position_x": cc.SpritePosition,
         "dialog_sprite_set_position_y": cc.SpritePosition,
         "dialog_sprite_set_center": cc.SpriteCenter,
         "dialog_sprite_center_x_with": cc.SpriteCenterWith,
-        "dialog_sprite_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "dialog_sprite_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "dialog_sprite_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "dialog_sprite_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "dialog_sprite_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "dialog_sprite_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "load_object": cc.SpriteLoad,
         "object_show": cc.SpriteShowHide,
         "object_hide": cc.SpriteShowHide,
         "object_flip_both": cc.SpriteShowHide,
         "object_flip_horizontal": cc.SpriteShowHide,
-        "object_flip_vertical": cc.SpriteShowHide, 
-        "object_after_fading_stop": cc.FadeStopRunScript,
+        "object_flip_vertical": cc.SpriteShowHide,
+        "object_start_tinting": cc.SpriteTintBright,
+        "object_focus": cc.SpriteTintSolo,
+        "object_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
         "object_fade_current_value": cc.FadeCurrentValue,
-        "object_fade_delay": cc.FadeDelay,
-        "object_fade_speed": cc.FadeSpeed,
-        "object_fade_until": cc.FadeUntilValue,
-        "object_start_fading": cc.SpriteShowHide,
+        "object_start_fading": cc.FadeStart,
         "object_stop_fading": cc.SpriteShowHide,
-        "object_after_rotating_stop": cc.RotateStopRunScript,
+        "object_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
         "object_rotate_current_value": cc.RotateCurrentValue,
-        "object_rotate_delay": cc.RotateDelay,
-        "object_rotate_speed": cc.RotateSpeed,
-        "object_rotate_until": cc.RotateUntil,
-        "object_start_rotating": cc.SpriteShowHide,
+        "object_start_rotating": cc.RotateStart,
         "object_stop_rotating": cc.SpriteShowHide,
-        "object_after_scaling_stop": cc.ScaleStopRunScript,
-        "object_scale_by": cc.ScaleBy,
+        "object_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
         "object_scale_current_value": cc.ScaleCurrentValue,
-        "object_scale_delay": cc.ScaleDelay,
-        "object_scale_until": cc.ScaleUntil,
-        "object_start_scaling": cc.SpriteShowHide,
+        "object_start_scaling": cc.ScaleStart,
         "object_stop_scaling": cc.SpriteShowHide,
-        "object_after_movement_stop": cc.MovementStopRunScript,
+        "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "object_stop_movement_condition": cc.MovementStopCondition,
-        "object_move": cc.MovementSpeed,
-        "object_move_delay": cc.MovementDelay,
-        "object_start_moving": cc.SpriteShowHide,
+        "object_start_moving": cc.MoveStart,
         "object_stop_moving": cc.SpriteShowHide,
         "object_set_position_x": cc.SpritePosition,
         "object_set_position_y": cc.SpritePosition,
         "object_set_center": cc.SpriteCenter,
         "object_center_x_with": cc.SpriteCenterWith,
-        "object_on_mouse_click": cc.MouseEventRunScriptWithArguments,
-        "object_on_mouse_enter": cc.MouseEventRunScriptWithArguments,
-        "object_on_mouse_leave": cc.MouseEventRunScriptWithArguments,
+        "object_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "object_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "object_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "load_font_sprite": cc.SpriteShowHide,
         "font": cc.SpriteShowHide,
         "font_x": cc.FontStartPosition,
         "font_y": cc.FontStartPosition,
-        "font_text_delay": cc.FontTextDelay,
+        "font_text_letter_delay": cc.FontTextDelay,
         "font_text_delay_punc": cc.FontTextDelayPunc,
-        "font_text_fade_speed": cc.FontTextFadeSpeed,
+        "font_text_fade_all_speed": cc.FontTextFadeSpeed,
+        "font_text_fade_letter_speed": cc.FontTextFadeSpeed,
         "font_intro_animation": cc.FontIntroAnimation,
         "sprite_font": cc.SpriteText,
         "sprite_font_x": cc.SpriteText,
         "sprite_font_y": cc.SpriteText,
-        "sprite_font_delay": cc.SpriteTextDelay,
-        "sprite_font_delay_punc": cc.SpriteTextDelayPunc,
+        "sprite_font_text_letter_delay": cc.SpriteTextDelay,
+        "sprite_font_text_delay_punc": cc.SpriteTextDelayPunc,
         "sprite_font_intro_animation": cc.SpriteFontIntroAnimation,
-        "sprite_font_fade_speed": cc.SpriteFontFadeSpeed,
+        "sprite_font_fade_all_speed": cc.SpriteFontFadeSpeed,
+        "sprite_font_fade_letter_speed": cc.SpriteFontFadeSpeed,
         "sprite_text": cc.SpriteText,
         "sprite_text_clear": cc.SpriteTextClear,
         "scene_with_fade": cc.SceneWithFade,
@@ -236,7 +211,7 @@ class CommandHelper:
                             string=command_line)
     
         if result:
-            return result.groupdict()    
+            return result.groupdict()
     
     @staticmethod
     def get_arguments(class_namedtuple, given_arguments: str):
@@ -497,7 +472,41 @@ class CommandHelper:
                             arguments =\
                                 CommandHelper._get_optional_arguments(arguments, 2)                
                 
+                case "character_start_tinting" | "object_start_tinting" | "dialog_sprite_start_tinting":
                     
+                    if isinstance(arguments, list) and len(arguments) == 3:
+                        # Use the 3-argument version of the class.
+                        command_cls = cc.SpriteTintRegular
+                        
+                    elif isinstance(arguments, list) and len(arguments) == 4:
+                        # 4-argument version of the class, where the 4th
+                        # argument is for the optional 'bright' keyword.
+                        command_cls = cc.SpriteTintBright                   
+                
+                case "character_after_fading_stop" | \
+                    "character_after_rotating_stop" | \
+                    "character_after_scaling_stop" | \
+                    "character_after_movement_stop" | \
+                    "dialog_sprite_after_fading_stop" | \
+                    "dialog_sprite_after_rotating_stop" | \
+                    "dialog_sprite_after_scaling_stop" | \
+                    "dialog_sprite_after_movement_stop" | \
+                    "object_after_fading_stop" | \
+                    "object_after_rotating_stop" | \
+                    "object_after_scaling_stop" | \
+                    "object_after_movement_stop":
+                    
+                    if isinstance(arguments, list) and len(arguments) == 2:
+                        # Use the 2-argument version of the class.
+                        command_cls = cc.SpriteStopRunScriptNoArguments
+                        
+                    elif isinstance(arguments, list) and len(arguments) >= 3:
+                        # 3-argument version of the class, where the 3rd
+                        # argument is for multiple optional arguments.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 2)
+                        
+
                 # Mouse related commands such as <character_on_mouse_click> 
                 # can have 2 or 3 arguments. If we have 2 arguments here, use the 
                 # 2 argument class version.
@@ -513,14 +522,14 @@ class CommandHelper:
                     
                     if isinstance(arguments, list) and len(arguments) == 2:
                         # Use the 2-argument version of the class.
-                        command_cls = cc.MouseEventRunScriptNoArguments
+                        command_cls = cc.SpriteStopRunScriptNoArguments
                         
                     elif isinstance(arguments, list) and len(arguments) >= 3:
                         # 3-argument version of the class, where the 3rd
                         # argument is for multiple optional arguments.
                         arguments =\
                             CommandHelper._get_optional_arguments(arguments, 2)
-                    
+
                 case "wait_for_animation":
                     # <wait_for_animation> can have 1 argument or 3 arguments.
                     

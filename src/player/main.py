@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -25,6 +25,7 @@ import web_handler
 from active_story import ActiveStory
 from file_reader import FileReader
 from shared_components import Passer
+from animation_speed import AnimationSpeed
 from datetime import datetime
 from launch_window import LaunchWindow
 from player_config_handler import PlayerConfigHandler
@@ -174,7 +175,10 @@ class Main:
                 story_info.get("Episode"))
 
     def begin(self):
-
+        """
+        Start the pygame loop.
+        """
+        
         # Read the .lvna file from the provided argument command switch.
         # The path to the .lvna file will be in args.file
         data_requester = FileReader(args.file)
@@ -245,14 +249,19 @@ class Main:
         # the story reader object hadn't been initialized yet.
         Passer.web_handler.callback_method_finished =\
             Passer.active_story.reader.on_web_request_finished
-
-        # Holds the number of milliseconds elapsed in each frame
-        milliseconds_elapsed = 0
+        
+        # Delta is time in seconds since last frame.
+        # Used for FPS setting independent physics.
+        AnimationSpeed.delta = 0
+        
+        # Frames per second
+        FPS = 60
+        
+        # Used for converting milliseconds to seconds 
+        # (for delta time in seconds)
+        MS_PER_SECOND = 1000
 
         while story.story_running:
-
-            # The number of milliseconds elapsed in this frame
-            milliseconds_elapsed = clock.tick(60)
 
             main_surface.fill((0, 0, 0))
 
@@ -282,10 +291,13 @@ class Main:
 
             # Handle drawing
             story.on_render()
-            
 
-            # For debugging
+            # Update the screen
             pygame.display.flip()
+            
+            # The number of seconds elapsed in this frame
+            delta_raw = clock.tick(FPS)
+            AnimationSpeed.delta = delta_raw / MS_PER_SECOND
             
     def check_queue(self):
         """

@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -123,7 +123,7 @@ class Passer:
     
     # Used for verifying a license key.
     # This variable will be used throughout the visual novel for 
-    # interacting with flask and the database (for web-enabled visual novels).    
+    # interacting with FastAPI and the database (for web-enabled visual novels).    
     web_handler: WebHandler = None
     
     # Used for specifying a custom chapter/scene

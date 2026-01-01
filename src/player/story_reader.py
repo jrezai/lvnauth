@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -32,6 +32,8 @@ import file_reader
 import dialog_rectangle
 import font_handler
 import logging
+
+import sprite_definition
 import sprite_definition as sd
 import cover_screen_handler
 import font_handler
@@ -46,6 +48,8 @@ from typing import Tuple
 # from font_handler import ActiveFontHandler
 from typing import Dict
 from shared_components import Passer
+from animation_speed import AnimationSpeed
+from tint_handler import TintStatus
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -66,44 +70,44 @@ class AfterCounter:
     """
     Used with the AfterManager class.
 
-    Purpose: to keep track of how many frames need to be skipped
-    and how many frames have been skipped so far.
+    Purpose: to keep track of how many seconds need to elapse
+    and how many seconds have elapsed so far.
     """
 
-    def __init__(self, frames_to_skip: int, optional_arguments: str = None):
+    def __init__(self, seconds_to_wait: float, optional_arguments: str = None):
         """
         Arguments:
 
-        - frames_to_skip: the number of frames to elapse
-        until the reusable script is run.
+        - seconds_to_wait: the number of seconds to elapse until the
+        reusable script is run.
 
         - optional_arguments: arguments to pass to the reusable script
-        once the number of frames has been satisfied.
+        once the number of seconds has been satisfied.
         """
 
-        self.frames_to_skip = frames_to_skip
-        self.frames_skipped_so_far = 0
+        self.seconds_to_wait:float = seconds_to_wait
+        self.seconds_waited_so_far:float = 0
 
         self.optional_arguments = optional_arguments
 
     def elapse(self):
         """
-        Elapse/increment by 1 frame.
+        Elapse/increment by delta time.
         """
-        self.frames_skipped_so_far += 1
+        self.seconds_waited_so_far += AnimationSpeed.delta
 
     def is_ready(self) -> bool:
         """
-        Return True if the number of frames that has been skipped
+        Return True if the number of seconds that has been skipped
         has reached its limit.
         """
 
-        return self.frames_skipped_so_far >= self.frames_to_skip
+        return self.seconds_waited_so_far >= self.seconds_to_wait
 
 
 class AfterManager:
     """
-    Handle running reusable scripts after X number of frames.
+    Handle running reusable scripts after X number of seconds.
 
     The same reusable script cannot be queued up multiple times.
     There is no technical reason for this; I could think of no situation
@@ -113,7 +117,7 @@ class AfterManager:
     def __init__(self, method_spawn_background_reader):
         """
         A new object used for running reusable scripts after a certain
-        number of frames have elapsed.
+        number of seconds have elapsed.
 
         Arguments:
 
@@ -129,28 +133,24 @@ class AfterManager:
         # We'll need this method in the tick_elapse() method.
         self.method_spawn_background_reader = method_spawn_background_reader
 
-    def add_timer(
-        self,
-        reusable_script_name: str,
-        frames_to_skip: int,
-        optional_arguments: str | None = None,
-    ):
+    def add_timer(self, reusable_script_name: str, seconds_to_wait: int,
+        optional_arguments: str | None = None):
         """
         Add the given reusable script to a queue so that after X number of
-        frames has been elapsed, run the reusable script and then remove it
+        seconds have elapsed, run the reusable script and then remove it
         from the queue.
         """
 
-        if not reusable_script_name and not frames_to_skip:
+        if not reusable_script_name and not seconds_to_wait:
             return
 
         # Only allow each reusable script to be in the queue one-time.
         if reusable_script_name in self.scripts_and_timers:
             return
 
-        counter = AfterCounter(
-            frames_to_skip=frames_to_skip, optional_arguments=optional_arguments
-        )
+        counter = \
+            AfterCounter(seconds_to_wait=seconds_to_wait,
+                         optional_arguments=optional_arguments)
 
         # Add to dictionary
         self.scripts_and_timers[reusable_script_name] = counter
@@ -178,7 +178,7 @@ class AfterManager:
 
     def tick_elapse(self):
         """
-        Increment all the items in the queue by 1 and then
+        Increment all the items in the queue by delta time and then
         run reusable scripts that need to run.
 
         This method gets run every frame of the story,
@@ -193,7 +193,7 @@ class AfterManager:
         counter: AfterCounter
         for reusable_script_name, counter in self.scripts_and_timers.items():
 
-            # Increment this timer by 1 frame.
+            # Increment this timer by delta time.
             counter.elapse()
 
             # Is this queue ready to run the script?
@@ -212,20 +212,10 @@ class AfterManager:
             # Remove expired timer
             del self.scripts_and_timers[reusable_script_name]
 
-            if optional_arguments:
-                with_arguments = True
-
-                # Combine the reusable script name with the optional arguments
-                # because it gets passed all as one string when spawning
-                # a background reader.
-                reusable_script_name = f"{reusable_script_name},{optional_arguments}"
-            else:
-                with_arguments = False
-
             # Spawn a new background reader so we can run
             # the reusable script that we're iterating on.
             self.method_spawn_background_reader(
-                reusable_script_name, with_arguments=with_arguments
+                reusable_script_name, arguments=optional_arguments
             )
 
 
@@ -247,7 +237,6 @@ class StoryReader:
         "character_stop_movement_condition",
         "character_move",
         "character_start_moving",
-        "character_move_delay",
         "call",
     )
 
@@ -321,7 +310,7 @@ class StoryReader:
             # Gets used with <rest>.
             # This pauses the reading of the main script, regardless if the
             # mouse is clicked. It forces the main story reader to pause for
-            # a specific number of frames.
+            # a specific number of seconds.
             self.rest_handler = RestHandler()
 
             # Gets used with <wait_for_animation>
@@ -339,15 +328,15 @@ class StoryReader:
             self.pause_main_script = False
 
             # When halted in auto-mode, a mouse click or keyboard press won't
-            # advance the story. Instead, the story will be advanced automatically
-            # after X number of frames have elapsed.
-            self.halt_main_script_auto_mode_frames = 0
+            # advance the story. Instead, the story will be advanced 
+            # automatically after X number of seconds have elapsed.
+            self.halt_main_script_auto_mode_seconds_reach = 0
 
-            # This will increment until we reach the frame count above.
-            self.halt_main_script_frame_counter = 0
+            # This will increment until we reach the seconds count above.
+            self.halt_main_script_seconds_counter = 0
 
             # Used for starting a timer which runs a reusable script
-            # after X number of frames have elapsed.
+            # after X number of seconds have elapsed.
             self.after_manager = AfterManager(
                 method_spawn_background_reader=self.spawn_new_background_reader
             )
@@ -534,7 +523,8 @@ class StoryReader:
         # Progress the main story script.
         self.read_story()
 
-        # Increment all After timers (if any) by 1 frame.
+        # Increment all After timers (if any) by the number of seconds
+        # that have elapsed since the last frame in delta time.
         self.after_manager.tick_elapse()
 
         # If this is the main story reader, read the background readers.
@@ -987,14 +977,20 @@ class StoryReader:
         elif command_name == "sprite_font_y":
             self._sprite_text_start_position(False, arguments)
 
-        elif command_name == "sprite_font_delay":
+        elif command_name == "sprite_font_text_letter_delay":
             self._sprite_text_font_delay(arguments=arguments)
 
         elif command_name == "sprite_font_delay_punc":
             self._sprite_text_font_delay_punc(arguments=arguments)
 
-        elif command_name == "sprite_font_fade_speed":
-            self._sprite_text_font_fade_speed(arguments=arguments)
+        elif command_name == "sprite_font_fade_all_speed":
+            self._sprite_text_font_fade_speed(arguments=arguments,
+                                              max_speed=10)
+            
+        elif command_name == "sprite_font_fade_letter_speed":
+            self._sprite_text_font_fade_speed(
+                arguments=arguments,
+                max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
         elif command_name == "sprite_font_intro_animation":
             self._sprite_text_font_intro(arguments=arguments)
@@ -1018,19 +1014,29 @@ class StoryReader:
             # relative to the dialog rectangle.
             self._font_start_position(x=False, arguments=arguments)
 
-        elif command_name == "font_text_fade_speed":
-            # Set the speed of letter by letter fade-in and
-            # overall fade-in dialog text.
+        elif command_name == "font_text_fade_all_speed":
+            # Set the speed of the overall fade-in dialog text.
+            # This is not for letter by letter fade-ins.
             # The speed range is 1 (slowest) to 10 (fastest)
-            self._font_text_fade_speed(arguments=arguments)
+            self._font_text_fade_speed(arguments=arguments,
+                                       max_speed=10)
+            
+        elif command_name == "font_text_fade_letter_speed":
+            # Set the speed of the letter-by-letter fade-in dialog text.
+            # This is not for all letter fade-ins.
+            # The speed range is 1 (slowest) 
+            # to AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
+            self._font_text_fade_speed(
+                arguments=arguments,
+                max_speed=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN)
 
-        elif command_name == "font_text_delay":
-            # Set the number of frames to skip when applying
+        elif command_name == "font_text_letter_delay":
+            # Set the number of seconds to skip when applying
             # the gradual dialog text animation (letter by letter).
             self._font_text_delay(arguments=arguments)
 
         elif command_name == "font_text_delay_punc":
-            # Set the number of frames to skip
+            # Set the number of seconds to skip
             # *after* a specific letter is blitted.
             self._font_text_delay_punc(arguments=arguments)
 
@@ -1125,16 +1131,16 @@ class StoryReader:
         elif command_name == "halt_auto":
             """
             Same as <halt> except it won't respond to mouse or keyboard
-            events until X number of frames have elapsed.
+            events until X number of seconds have elapsed.
 
             In other words, it will automatically 'click'
-            after X number of frames.
+            after X number of seconds.
             """
             self._halt_auto(arguments=arguments)
 
         elif command_name == "rest":
             """
-            Same as <halt> except the number of frames to pause is specified
+            Same as <halt> except the number of seconds to pause is specified
             and the pause can't be skipped (only pauses the main reader,
             not background readers).
             """
@@ -1398,21 +1404,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
-        elif command_name == "character_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_move":
-            self._set_movement_speed(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_start_moving":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.CHARACTER,
@@ -1455,30 +1446,53 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "character_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_move_delay":
-            self._set_movement_delay(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "call":
 
             if "," in arguments:
-                use_arguments = True
+                class_type = cc.CallWithArguments
             else:
-                use_arguments = False
+                class_type = cc.CallWithNoArguments
+                
+            call_class = self._get_arguments(class_namedtuple=class_type,
+                                             given_arguments=arguments,
+                                             num_of_fixed_groups=1)
+            
+            if class_type == cc.CallWithArguments:
+                arguments = call_class.arguments
+            else:
+                arguments = None
+            
             self.spawn_new_background_reader(
-                reusable_script_name=arguments, with_arguments=use_arguments
+                reusable_script_name=call_class.reusable_script_name,
+                arguments=arguments
             )
+
+        elif command_name == "character_start_tinting":
+            self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
+                              arguments=arguments)
+                    
+        elif command_name == "character_focus":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.CHARACTER,
+                arguments=arguments)
+
+        elif command_name == "object_start_tinting":
+            self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
+                              arguments=arguments)
+            
+        elif command_name == "object_focus":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.OBJECT,
+                arguments=arguments)
+            
+        elif command_name == "dialog_sprite_start_tinting":
+            self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                              arguments=arguments)
+            
+        elif command_name == "dialog_sprite_focus":
+            self._tint_sprite_solo(
+                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                arguments=arguments)
 
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -1491,21 +1505,6 @@ class StoryReader:
 
         elif command_name == "after_cancel_all":
             self.after_cancel_all()
-
-        elif command_name == "character_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_until":
-            self._sprite_fade_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
 
         elif command_name == "character_fade_current_value":
             self._sprite_current_fade_value(
@@ -1522,21 +1521,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
-        elif command_name == "character_fade_speed":
-            self._sprite_fade_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_speed":
-            self._sprite_fade_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_speed":
-            self._sprite_fade_speed(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_after_fading_stop":
             self._sprite_after_fading_stop(
                 sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
@@ -1549,21 +1533,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_after_fading_stop":
             self._sprite_after_fading_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_fade_delay":
-            self._sprite_fade_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_fade_delay":
-            self._sprite_fade_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_fade_delay":
-            self._sprite_fade_delay(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -1609,36 +1578,6 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "character_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_scale_by":
-            self._sprite_scale_by(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_scale_until":
-            self._sprite_scale_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_scale_current_value":
             self._sprite_scale_current_value(
                 sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
@@ -1666,21 +1605,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_after_scaling_stop":
             self._sprite_after_scaling_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_scale_delay":
-            self._sprite_scale_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_scale_delay":
-            self._sprite_scale_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_scale_delay":
-            self._sprite_scale_delay(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -1741,36 +1665,6 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
-        elif command_name == "character_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_until":
-            self._sprite_rotate_until(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_rotate_speed":
-            self._sprite_rotate_speed(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_speed":
-            self._sprite_rotate_speed(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_speed":
-            self._sprite_rotate_speed(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
         elif command_name == "character_after_rotating_stop":
             self._sprite_after_rotating_stop(
                 sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
@@ -1783,21 +1677,6 @@ class StoryReader:
 
         elif command_name == "dialog_sprite_after_rotating_stop":
             self._sprite_after_rotating_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
-            )
-
-        elif command_name == "character_rotate_delay":
-            self._sprite_rotate_delay(
-                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
-            )
-
-        elif command_name == "object_rotate_delay":
-            self._sprite_rotate_delay(
-                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
-            )
-
-        elif command_name == "dialog_sprite_rotate_delay":
-            self._sprite_rotate_delay(
                 sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
             )
 
@@ -2320,26 +2199,27 @@ class StoryReader:
     def elapse_halt_timer(self):
         """
         If we're in automated halt mode, elapse the wait counter
-        until the required number of frames have elapsed.
+        until the required number of seconds have elapsed.
         """
 
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        if main_reader.halt_main_script_auto_mode_frames:
+        if main_reader.halt_main_script_auto_mode_seconds_reach:
             # We're in auto-halt mode
 
-            # Have we reached the number of frames that we need to wait?
+            # Have we reached the number of seconds that we need to wait?
             if (
-                main_reader.halt_main_script_frame_counter
-                >= main_reader.halt_main_script_auto_mode_frames
+                main_reader.halt_main_script_seconds_counter
+                >= main_reader.halt_main_script_auto_mode_seconds_reach
             ):
 
                 # Yes, we've reached the amount needed to wait.
 
                 # Now we can reset the counter and unhalt the story.
-                # The unhalt() method below will reset the halt_auto counter variables.
+                # The unhalt() method below will reset the halt_auto 
+                # counter variables.
                 main_reader.unhalt()
 
             else:
@@ -2351,22 +2231,24 @@ class StoryReader:
                 # dialog letters have finished being displayed.
                 # Reason: if we don't have this check, halt_auto's counter might
                 # finish before all the letters have finished being displayed.
-                if main_reader.active_font_handler.font_animation.is_start_animating:
+                if main_reader.active_font_handler.font_animation.\
+                   is_start_animating:
                     return
 
-                # Increment the frame counter
-                main_reader.halt_main_script_frame_counter += 1
+                # Increment the seconds counter
+                main_reader.\
+                    halt_main_script_seconds_counter += AnimationSpeed.delta
 
-    def halt(self, automate_after_frame_count: int = 0):
+    def halt(self, automate_after_seconds_count: int = 0):
         """
         Pause the reading of the main script
         until the user clicks the mouse.
 
         Arguments:
 
-        - automate_after_frame_count: if specified (>0), it will be considered
+        - automate_after_seconds_count: if specified (>0), it will be considered
         an automatic halt, which means that the keyboard and mouse won't
-        progress the story. Instead X number of frames must elapse first,
+        progress the story. Instead X number of seconds must elapse first,
         and then the story will unhalt automatically.
         """
 
@@ -2388,7 +2270,8 @@ class StoryReader:
         main_reader.halt_main_script = True
 
         # Automated halt flag (if > 0)
-        main_reader.halt_main_script_auto_mode_frames = automate_after_frame_count
+        main_reader.halt_main_script_auto_mode_seconds_reach =\
+            automate_after_seconds_count
 
         # So <continue> can't be used after using the <halt> command.
         main_reader.active_font_handler.next_letter_x_position_continue = None
@@ -2418,13 +2301,23 @@ class StoryReader:
 
         # because if we're in a reusable script, it won't
         # have a FontAnimation object.
-        font_animation = self.get_main_story_reader().active_font_handler.font_animation
+        font_animation = \
+            self.get_main_story_reader().active_font_handler.font_animation
 
         # This will be True if the dialog text is being animated.
         if font_animation.is_start_animating:
 
             # The dialog text is being animated/shown, so speed it up.
-            font_animation.faster_text_mode = True
+            
+            # Is it already sped up?
+            if font_animation.faster_text_mode:
+                
+                # It's already sped up, so set the opacity to 255
+                # on all the letters.
+                font_animation.make_all_letters_opaque()
+                
+            else:
+                font_animation.faster_text_mode = True
 
             # So the caller can know that the text has been sped up.
             return True
@@ -2454,10 +2347,10 @@ class StoryReader:
 
         # Reset halt_auto variables, if they were used.
         # Note: these two variables need to be here, *after* stop_intro_animation() above,
-        # because stop_intro_animation() will try and run reusable_on_halt, which we shouldn't
-        # if we just came out of halt_auto.
-        main_reader.halt_main_script_auto_mode_frames = 0
-        main_reader.halt_main_script_frame_counter = 0
+        # because stop_intro_animation() will try and run reusable_on_halt, 
+        # which we shouldn't if we just came out of halt_auto.
+        main_reader.halt_main_script_auto_mode_seconds_reach = 0
+        main_reader.halt_main_script_seconds_counter = 0
 
         # Clear the current letter list because we should make way for
         # other dialog text.
@@ -2626,147 +2519,6 @@ class StoryReader:
 
         # sprite.sudden_rotate_change = True
 
-    def _sprite_rotate_until(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set when to stop rotating a sprite.
-        Example: 90  (90 means when the sprite reaches a 90-degree angle)
-
-        If the rotation value is a negative number, such as -1, it will
-        cause the rotation to occur continuously without stopping, by setting
-        the .rotate_until variable to None.
-
-        Arguments:
-         - sprite_type: so we can know which dictionary to get the sprite from.
-         - arguments: sprite general alias, angle (float)
-
-        Return: None
-        """
-
-        rotate_until: cc.RotateUntil
-        rotate_until = self._get_arguments(
-            class_namedtuple=cc.RotateUntil, given_arguments=arguments
-        )
-
-        if not rotate_until:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_until.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Rotate continuously?
-        # if isinstance(rotate_until, int) and rotate_until < 0:
-        if rotate_until.rotate_until.lower() == "forever":
-            # Rotate continuously.
-            sprite.rotate_until = None
-        else:
-
-            # Attempt to convert the rotate_until to a float
-            # because the rotate_until value is currently a str.
-            try:
-                rotate_float = float(rotate_until.rotate_until)
-            except ValueError:
-                return
-
-            rotate_until = rotate_until._replace(rotate_until=rotate_float)
-
-            # Set the property for the character sprite to know when to stop the rotating animation.
-            sprite.rotate_until = rotate_until
-
-    def _sprite_rotate_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's rotate animation.
-        This is used to create an extra-slow rotating effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite general alias, number of frames to skip (int)
-
-        Return: None
-        """
-
-        rotate_delay: cc.RotateDelay
-        rotate_delay = self._get_arguments(
-            class_namedtuple=cc.RotateDelay, given_arguments=arguments
-        )
-
-        if not rotate_delay:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        rotate_delay_main = sd.RotateDelayMain(rotate_delay=rotate_delay)
-
-        # Set the property for the sprite so when the rotate animation
-        # is working, it'll read this variable value and delay the rotate effect.
-        sprite.rotate_delay_main = rotate_delay_main
-
-    def _sprite_rotate_speed(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set the rotation speed of a sprite.
-        Example: 0.50
-        A positive value will rotate the sprite counterclockwise.
-        A negative value (such as -0.50) will rotate the sprite clockwise.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, rotation speed, rotation direction
-
-        Return: None
-        """
-
-        rotate_speed: cc.RotateSpeed
-        rotate_speed = self._get_arguments(
-            class_namedtuple=cc.RotateSpeed, given_arguments=arguments
-        )
-
-        if not rotate_speed:
-            return
-
-        # Get the visible character sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_speed.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Convert the user-provided percent value speed (1 to 100)
-        # from sprite.rotate_speed to a float that pygame can use.
-        # Depending on the rotation direction, the float will either be a positive
-        # float or a negative float.
-        rotate_float_value = self._sprite_rotate_speed_get_value_from_percent(
-            rotate_speed.rotate_speed, rotate_speed.rotate_direction
-        )
-
-        # Make sure we have a float value, otherwise stop here.
-        if not rotate_float_value:
-            return
-
-        # Use the new float value instead of the convenience value.
-        rotate_speed = cc.RotateSpeed(
-            rotate_speed.sprite_name, rotate_float_value, rotate_speed.rotate_direction
-        )
-
-        # Set the property for the sprite to know how fast
-        # (or slow) the rotation animation should occur,
-        # and also which direction the rotate should occur.
-        sprite.rotate_speed = rotate_speed
-
     def _sprite_after_rotating_stop(
         self, sprite_type: file_reader.ContentType, arguments
     ):
@@ -2781,25 +2533,137 @@ class StoryReader:
 
         return: None
         """
+        
+        if arguments.count(",") >=2:
+            class_type = cc.SpriteStopRunScriptWithArguments
+            optional_arguments = True
+        else:
+            class_type = cc.SpriteStopRunScriptNoArguments
+            optional_arguments = False
 
-        rotate_stop_run_script: cc.RotateStopRunScript
-        rotate_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.RotateStopRunScript, given_arguments=arguments
-        )
+        rotate_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        rotate_stop_run_script = \
+            self._get_arguments(class_namedtuple=class_type,
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=optional_arguments, 
+                                num_of_fixed_groups=2)
 
         if not rotate_stop_run_script:
             return
 
         # Get the visible sprite
+        sprite =\
+            self.story.get_visible_sprite(
+                content_type=sprite_type,
+                general_alias=rotate_stop_run_script.sprite_name)
+
+        if not sprite:
+            return
+
+        # Set the property for the character sprite so when the rotation stops, 
+        # it'll read this variable value.
+        sprite.rotate_stop_run_script = rotate_stop_run_script
+
+    def _sprite_rotate_start(self,
+                             sprite_type: file_reader.ContentType,
+                             arguments):
+        """
+        Set the rotation speed of a sprite.
+        Example: 0.50
+        A positive value will rotate the sprite counterclockwise.
+        A negative value (such as -0.50) will rotate the sprite clockwise.
+
+        Arguments:
+
+        - sprite_type: so we can know which dictionary to get the sprite from.
+        - arguments: sprite general alias, rotation speed, rotation direction
+
+        Return: None
+        """
+
+        if not arguments:
+            return
+
+        rotate_start: cc.RotateStart
+        rotate_start = self._get_arguments(
+            class_namedtuple=cc.RotateStart, given_arguments=arguments
+        )
+
+        if not rotate_start:
+            return
+
+        # Get the visible character sprite
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=rotate_stop_run_script.sprite_name
+            content_type=sprite_type, general_alias=rotate_start.sprite_name
         )
 
         if not sprite:
             return
 
-        # Set the property for the character sprite so when the rotation stops, it'll read this variable value.
-        sprite.rotate_stop_run_script = rotate_stop_run_script
+        rotate_direction = rotate_start.rotate_direction.lower()
+        if not rotate_direction in ("clockwise", "counterclockwise"):
+            return
+        
+        # Initialize the RotateCurrentValue object, we need to have
+        # it for the animation to work.
+        if sprite.rotate_current_value is None:
+            sprite.rotate_current_value = cc.RotateCurrentValue(
+                sprite_name=rotate_start.sprite_name, rotate_current_value=0
+            )
+    
+
+        # Convert the user-provided speed value from sprite.rotate_speed 
+        # to a float that pygame can use.
+        # Depending on the rotation direction, the float will either be a 
+        # positive float or a negative float.
+        rotate_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.1,
+                increment_by=0.01, 
+                max_convenient_row=220000,
+                convenient_row_number=rotate_start.rotate_speed)
+        
+        if rotate_direction == "clockwise":
+            # A positive value will rotate the sprite counterclockwise.
+            # A negative value(such as -0.50) will rotate the sprite clockwise.
+            rotate_float_value = -abs(rotate_float_value)        
+        
+        # Make sure we have a float value, otherwise stop here.
+        if not rotate_float_value:
+            return
+
+        # Use the new float value instead of the convenience value.
+        rotate_start = \
+            rotate_start._replace(rotate_speed=rotate_float_value)
+        
+        # Record the rotate direction
+        rotate_start = \
+            rotate_start._replace(rotate_direction=rotate_direction)
+
+        # Rotate continuously?
+        # if isinstance(rotate_until, int) and rotate_until < 0:
+        if rotate_start.rotate_until.lower() == "forever":
+            # Rotate continuously.
+            rotate_start = rotate_start._replace(rotate_until=None)
+        else:
+
+            # Attempt to convert the rotate_until to a float
+            # because the rotate_until value is currently a str.
+            try:
+                rotate_float = float(rotate_start.rotate_until)
+            except ValueError:
+                return
+
+            rotate_start = rotate_start._replace(rotate_until=rotate_float)
+
+
+        # Set the property for the sprite to know how fast
+        # (or slow) the rotation animation should occur,
+        # and also which direction the rotate should occur.
+        sprite.rotate_properties = rotate_start
+        
+        # Set the flag to start rotating the sprite.
+        sprite.start_rotating()
 
     def _sprite_start_or_stop_rotating(
         self,
@@ -2814,7 +2678,9 @@ class StoryReader:
         Arguments:
          - sprite_type: so we can know which dictionary to get the sprite from.
 
-         - arguments: a str with the sprite's general alias (example: 'rave')
+         - arguments: a str with the arguments to start a rotation, such as
+         the sprite alias, rotation speed, rotation direction, and whether to
+         rotate to a certain angle and then stop, or rotate forever.
 
          - start_or_stop: whether we should start the animation
         or stop the animation. Based on extract_functions.StartOrStop
@@ -2822,66 +2688,28 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the visible character sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing.
+            arguments = arguments.strip()
 
             if start_or_stop == sd.StartOrStop.START:
 
-                # Initialize the RotateCurrentValue object, we need to have
-                # it for the animation to work.
-                if sprite.rotate_current_value is None:
-                    sprite.rotate_current_value = cc.RotateCurrentValue(
-                        sprite_name=sprite_name, rotate_current_value=0
-                    )
-
-                sprite.start_rotating()
+                self._sprite_rotate_start(sprite_type=sprite_type,
+                                          arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+    
+                # Get the rotation arguments as individual fields.
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 sprite.stop_rotating()
-
-    def _sprite_scale_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's scaling animation.
-        This is used to create an extra-slow scale effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite name, number of frames to skip (int)
-
-        return: None
-        """
-
-        scale_delay: cc.ScaleDelay
-        scale_delay = self._get_arguments(
-            class_namedtuple=cc.ScaleDelay, given_arguments=arguments
-        )
-
-        if not scale_delay:
-            return
-
-        # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        scale_delay_main = sd.ScaleDelayMain(scale_delay=scale_delay)
-
-        # Set the property for the sprite so when the scaling animation
-        # is working, it'll read this variable value and delay the scale effect.
-        sprite.scale_delay_main = scale_delay_main
 
     def _sprite_start_or_stop_scaling(
         self,
@@ -2903,35 +2731,35 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the active sprite using the general alias.
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing.
+            arguments = arguments.strip()    
 
             if start_or_stop == sd.StartOrStop.START:
 
-                # Initialize the ScaleCurrentValue object, we need to have
-                # it for the animation to work.
-                if sprite.scale_current_value is None:
-                    sprite.scale_current_value = cc.ScaleCurrentValue(
-                        sprite_name=sprite_name, scale_current_value=0
-                    )
-
-                sprite.start_scaling()
+                self._sprite_scale_start(sprite_type=sprite_type,
+                                         arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+                
+                # Get the active sprite using the general alias.
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 sprite.stop_scaling()
 
     def _sprite_after_scaling_stop(
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        When a specific sprite image stops scaling, run a specific reusable script.
+        When a specific sprite image stops scaling, run a specific
+        reusable script.
 
         Arguments:
 
@@ -2940,24 +2768,33 @@ class StoryReader:
 
         return: None
         """
+        
+        class_name = (cc.SpriteStopRunScriptWithArguments
+                    if arguments.count(",") >= 2
+                    else cc.SpriteStopRunScriptNoArguments)         
 
-        scale_stop_run_script: cc.ScaleStopRunScript
-        scale_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.ScaleStopRunScript, given_arguments=arguments
-        )
+        scale_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        scale_stop_run_script =\
+            self._get_arguments(
+                class_namedtuple=class_name,
+                given_arguments=arguments,
+                unlimited_optional_arguments=arguments.count(",") >= 2,
+                num_of_fixed_groups=2)
 
         if not scale_stop_run_script:
             return
 
         # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_stop_run_script.sprite_name
-        )
+        sprite =\
+            self.story.get_visible_sprite(
+                content_type=sprite_type,
+                general_alias=scale_stop_run_script.sprite_name)
 
         if not sprite:
             return
 
-        # Set the property for the sprite so when the scale stops, it'll read this variable value.
+        # Set the property for the sprite so when the scale stops, 
+        # it'll read this variable value.
         sprite.scale_stop_run_script = scale_stop_run_script
 
     def _sprite_scale_current_value(
@@ -2997,87 +2834,84 @@ class StoryReader:
 
         # sprite.sudden_scale_change = True
 
-    def _sprite_scale_until(self, sprite_type: file_reader.ContentType, arguments):
+    def _sprite_scale_start(self,
+                            sprite_type: file_reader.ContentType,
+                            arguments):
         """
-        Set when to stop scaling a sprite.
-        Example: 2  (2 means twice as big as the original sprite)
+        Set the flag for the sprite object
+        to indicate that fading animations should start or stop.
 
         Arguments:
+         - sprite_type: so we can know which dictionary to get the sprite from.
 
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite name, scale until value
+         - arguments: a str with the arguments to start a fade, such as
+         the sprite alias, fade speed, fade stop at.
 
-        return: None
+         - start_or_stop: whether we should start the animation
+        or stop the animation.
+
+        Return: None
         """
 
-        scale_until: cc.ScaleUntil
-        scale_until = self._get_arguments(
-            class_namedtuple=cc.ScaleUntil, given_arguments=arguments
+        scale_start: cc.ScaleStart
+        scale_start = self._get_arguments(
+            class_namedtuple=cc.ScaleStart, given_arguments=arguments
         )
 
-        if not scale_until:
+        if not scale_start:
             return
 
-        # Get the active sprite
+        # Get the visible sprite based on the general alias
+        sprite: sprite_definition.SpriteObject
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_until.sprite_name
+            content_type=sprite_type,
+            general_alias=scale_start.sprite_name
         )
 
         if not sprite:
             return
-
-        # Set the property for the sprite to know when to stop the scaling animation.
-        sprite.scale_until = scale_until
-
-    def _sprite_scale_by(self, sprite_type: file_reader.ContentType, arguments):
+        
+        # Initialize the ScaleCurrentValue object, we need to have
+        # it for the animation to work.
+        if sprite.scale_current_value is None:
+            sprite.scale_current_value = cc.ScaleCurrentValue(
+                sprite_name=sprite.general_alias, scale_current_value=0
+            )        
+        
         """
         Set the scale speed of a sprite.
-        Example: 0.00050  (2 means twice as big)
-        A positive value will scale up the sprite. A negative value (such as -0.00050)
+        Example: 0.0602  (2 means twice as big)
+        A positive value will scale up the sprite. A negative value (such as -0.0602)
         will scale down a sprite.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from
-        - arguments: sprite name, scale speed, scale direction
-
-        return: None
         """
-
-        scale_by: cc.ScaleBy
-        scale_by = self._get_arguments(
-            class_namedtuple=cc.ScaleBy, given_arguments=arguments
-        )
-
-        if not scale_by:
-            return
-
-        # Get the active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=scale_by.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Convert the user-provided percent value speed (1 to 100)
-        # from scale_by.scale_by to a float that pygame can use.
-        # Depending on the scale direction, the float will either be a positive
-        # float or a negative float.
-        scale_by_float_value = self._sprite_scale_by_get_value_from_percent(
-            scale_by.scale_by, scale_by.scale_rotation
-        )
+        
+        """
+        Convert the user-provided convenient value speed (1 to 100000)
+        from scale_speed.scale_speed to a value that pygame can use.
+        Depending on the scale direction, the float will either be a positive
+        value or a negative value.
+        """
+        
+        # Get the calculable animation speed value.
+        scale_speed_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.0002,
+                increment_by=0.0002,
+                max_convenient_row=100000, 
+                convenient_row_number=scale_start.scale_speed)
 
         # Make sure we have a float value, otherwise stop here.
-        if not scale_by_float_value:
+        if not scale_speed_float_value:
             return
 
         # Use the new float value instead of the convenience value.
-        scale_by = scale_by._replace(scale_by=scale_by_float_value)
+        scale_start = scale_start._replace(scale_speed=scale_speed_float_value)
 
-        # Set the property for the sprite to know how fast
-        # (or slow) the scale animation should occur.
-        sprite.scale_by = scale_by
+        # Set the scale properties of the sprite.
+        sprite.scale_properties = scale_start
+
+        # Set the flag to start the scaling animation.
+        sprite.start_scaling()
 
     def _sprite_start_or_stop_fading(
         self,
@@ -3101,25 +2935,30 @@ class StoryReader:
         Return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
 
-            # Get the visible sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            # Remove excess spacing.
+            arguments = arguments.strip()            
 
             if start_or_stop == sd.StartOrStop.START:
-                sprite.start_fading()
+                
+                self._sprite_fade_start(sprite_type=sprite_type,
+                                        arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+                
+                # Get the visible spart based on the alias.
+                sprite = self.story.get_visible_sprite(
+                                content_type=sprite_type,
+                                general_alias=sprite_name)                
+            
                 sprite.stop_fading()
 
     def _sprite_fade_speed_get_value_from_percent(
-        self, percent, fade_direction: str
-    ) -> float | None:
+        self,
+        percent,
+        fade_direction: str) -> float | None:
         """
         Take a percent value from 1 to 100 and convert it to a float
         that we can use for the fade speed in pygame.
@@ -3142,479 +2981,85 @@ class StoryReader:
         if fade_direction not in ("fade in", "fade out"):
             return
 
-        # The fade speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.01
-0.03
-0.05
-0.07
-0.09
-0.11
-0.13
-0.15
-0.17
-0.19
-0.44
-0.69
-0.94
-1.19
-1.44
-1.69
-1.94
-2.19
-2.44
-2.59
-2.74
-2.89
-3.04
-3.19
-3.34
-3.49
-3.64
-3.79
-3.94
-4.09
-4.19
-4.29
-4.39
-4.49
-4.59
-4.69
-4.79
-4.89
-4.99
-5.09
-5.19
-5.21
-5.23
-5.25
-5.27
-5.29
-5.31
-5.33
-5.35
-5.37
-5.42
-5.47
-5.52
-5.57
-5.62
-5.67
-5.72
-5.77
-5.82
-5.87
-5.97
-6.07
-6.17
-6.27
-6.37
-6.47
-6.57
-6.67
-6.77
-6.87
-6.89
-6.91
-6.93
-6.95
-6.97
-6.99
-7.01
-7.03
-7.05
-7.13
-7.21
-7.29
-7.37
-7.45
-7.53
-7.61
-7.69
-7.77
-7.85
-7.93
-8.18
-8.43
-8.68
-8.93
-9.18
-12.00
-19.00
-30.00
-45.00
-60.00"""
-
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-        if percent_to_float is None:
-            return
-
-        if fade_direction == "fade out":
-            # Convert from a positive float to a negative float.
-            # A negative float will cause a pygame to fade out the sprite.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
-
-    def _sprite_rotate_speed_get_value_from_percent(
-        self, percent, rotate_direction: str
-    ) -> float | None:
-        """
-        Take a percent value from 1 to 100 and convert it to a float
-        that we can use for the rotation speed in pygame.
-
-        Purpose: the percentage 1-100 is only a convenience value for the user
-        when using the editor. We need to take that percent value and
-        convert it to something real that pygame can use.
-
-        Arguments:
-
-        - percent: the user-friendly value (between 1 and 100) that the editor
-        has provided us which we need to convert to a float so that it makes
-        sense for pygame.
-        """
-
-        if not rotate_direction and not percent:
-            return
-
-        # Has to be between 1 and 100 %
-        if percent > 100:
-            percent = 100
-        elif percent < 1:
-            percent = 1
-
-        rotate_direction = rotate_direction.lower()
-        if not rotate_direction in ("clockwise", "counterclockwise"):
-            return
-
-        # The rotation speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.02
-0.07
-0.12
-0.17
-0.22
-0.27
-0.32
-0.37
-0.42
-0.47
-0.52
-0.57
-0.62
-0.67
-0.72
-0.77
-0.82
-0.87
-0.92
-0.97
-1.02
-1.07
-1.12
-1.17
-1.22
-1.27
-1.32
-1.37
-1.42
-1.47
-1.52
-1.57
-1.62
-1.67
-1.72
-1.77
-1.82
-1.87
-1.92
-1.97
-2.02
-2.07
-2.12
-2.17
-2.22
-2.27
-2.32
-2.37
-2.42
-2.47
-2.52
-2.57
-2.62
-2.67
-2.72
-2.77
-2.82
-2.87
-2.92
-2.97
-3.02
-3.07
-3.12
-3.17
-3.22
-3.27
-3.32
-3.37
-3.42
-3.47
-3.52
-3.57
-3.62
-3.67
-3.72
-3.77
-3.82
-3.87
-3.92
-3.97
-4.02
-4.07
-4.12
-4.17
-4.22
-4.27
-4.32
-4.37
-4.42
-4.47
-4.72
-4.97
-5.22
-5.47
-5.92
-6.37
-6.82
-8.27
-10.72
-20.17"""
-
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-
-        if rotate_direction == "clockwise":
-            # A positive value will rotate the sprite counterclockwise.
-            # A negative value(such as -0.50) will rotate the sprite clockwise.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
-
-    def _sprite_scale_by_get_value_from_percent(
-        self, percent, scale_direction: str
-    ) -> float | None:
-        """
-        Take a percent value from 1 to 100 and convert it to a float
-        that we can use for the scale-by value in pygame.
-
-        Purpose: the percentage 1-100 is only a convenience value for the user
-        when using the editor. We need to take that percent value and
-        convert it to something real that pygame can use.
-
-        Arguments:
-
-        - percent: the user-friendly value (between 1 and 100) that the editor
-        has provided us which we need to convert to a float so that it makes
-        sense for pygame.
-
-        - scale_direction: (str) "scale up" or "scale down".
-        Internally, a positive value will scale up the sprite.
-        A negative value (such as -0.00050) will scale down a sprite.
-        We use "scale up" and "scale down" in the editor for convenience.
-        """
-
-        if not scale_direction and not percent:
-            return
-
-        if percent > 100:
-            percent = 100
-        elif percent < 1:
-            return
-
-        scale_direction = scale_direction.lower()
-        if not scale_direction in ("scale up", "scale down"):
-            return
-
-        # The scale speed (slowest to fastest). There are 100 lines in the string.
-        values = """0.0001
-0.0003
-0.0005
-0.0007
-0.0009
-0.0011
-0.0013
-0.0015
-0.0017
-0.0019
-0.0021
-0.0023
-0.0025
-0.0027
-0.0029
-0.0031
-0.0033
-0.0035
-0.0037
-0.0039
-0.0041
-0.0043
-0.0045
-0.0047
-0.0049
-0.0051
-0.0053
-0.0055
-0.0057
-0.0059
-0.0061
-0.0063
-0.0065
-0.0067
-0.0069
-0.0071
-0.0073
-0.0075
-0.0077
-0.0079
-0.0081
-0.0083
-0.0085
-0.0087
-0.0089
-0.0091
-0.0093
-0.0095
-0.0097
-0.0099
-0.0101
-0.0103
-0.0105
-0.0107
-0.0109
-0.0111
-0.0113
-0.0115
-0.0117
-0.0119
-0.0121
-0.0123
-0.0125
-0.0127
-0.0129
-0.0131
-0.0133
-0.0135
-0.0137
-0.0139
-0.0141
-0.0143
-0.0145
-0.0147
-0.0149
-0.0151
-0.0153
-0.0155
-0.0157
-0.0159
-0.0161
-0.0163
-0.0165
-0.0167
-0.0169
-0.0171
-0.0173
-0.0175
-0.0177
-0.0179
-0.0194
-0.0209
-0.0224
-0.0239
-0.0259
-0.0344
-0.0429
-0.0514
-0.0599
-0.0684
-"""
-
-        # Create a list from the values
-        values = values.split()
-
-        # Key: percent value (int) - 1 to 100
-        # Value: float value that pygame needs
-        percent_mapping = {}
-        for counter, value in enumerate(values):
-            percent_mapping[counter + 1] = float(value)
-
-        percent_to_float = percent_mapping.get(percent)
-
-        if scale_direction == "scale down":
-            # A positive value will scale up the sprite.
-            # A negative value(such as -0.00050) will scale down a sprite.
-            percent_to_float = -abs(percent_to_float)
-        return percent_to_float
-
-    def _sprite_fade_speed(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set the fade-speed of a sprite.
-        Example: 0.05
-        A positive value will fade-in the sprite. A negative value (such as -0.05)
-        will fade out a sprite.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, fade speed (example: 0.05 (fade in) or -0.05 (fade out))
-
-        return: None
-        """
-
-        fade_speed: cc.FadeSpeed
-        fade_speed = self._get_arguments(
-            class_namedtuple=cc.FadeSpeed, given_arguments=arguments
-        )
-
-        if not fade_speed:
-            return
-
-        # Get the visible sprite based on the general alias
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_speed.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Convert the user-provided percent value speed (1 to 100)
-        # from fade_speed.fade_speed to a float that pygame can use.
+        # The fade speed (slowest to fastest).
+        # There are 100 lines in the string.
+        
+        # Convert the user-provided convenient speed value
+        # from percent to a float that pygame can use.
         # Depending on the fade direction, the float will either be a positive
         # float or a negative float.
-        fade_float_value = self._sprite_fade_speed_get_value_from_percent(
-            fade_speed.fade_speed, fade_speed.fade_direction
-        )
+        fade_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=5,
+                increment_by=4.5,
+                max_convenient_row=100,
+                convenient_row_number=percent)        
 
         # Make sure we have a float value, otherwise stop here.
         if not fade_float_value:
             return
 
-        # Use the new float value instead of the convenience value.
-        fade_speed = cc.FadeSpeed(
-            fade_speed.sprite_name, fade_float_value, fade_speed.fade_direction
+        #if fade_direction == "fade out":
+            ## Convert from a positive float to a negative float.
+            ## A negative float will cause a pygame to fade out the sprite.
+            #percent_to_float = -abs(percent_to_float)
+        return fade_float_value
+
+    def _sprite_fade_start(self,
+                           sprite_type: file_reader.ContentType,
+                           arguments):
+        """
+        Set the flag for the sprite object
+        to indicate that fading animations should start or stop.
+
+        Arguments:
+         - sprite_type: so we can know which dictionary to get the sprite from.
+
+         - arguments: a str with the arguments to start a fade, such as
+         the sprite alias, fade speed, fade stop at.
+
+         - start_or_stop: whether we should start the animation
+        or stop the animation.
+
+        Return: None
+        """
+
+        fade_start: cc.FadeStart
+        fade_start = self._get_arguments(
+            class_namedtuple=cc.FadeStart, given_arguments=arguments
         )
+
+        if not fade_start:
+            return
+
+        # Get the visible sprite based on the general alias
+        sprite: sprite_definition.SpriteObject
+        sprite = self.story.get_visible_sprite(
+            content_type=sprite_type,
+            general_alias=fade_start.sprite_name
+        )
+
+        if not sprite:
+            return
+
+        # Convert the user-provided convenient speed value
+        # from fade_speed.fade_speed to a float that pygame can use.
+        # Depending on the fade direction, the float will either be a positive
+        # float or a negative float.
+        fade_float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=0.1,
+                increment_by=0.1,
+                max_convenient_row=15000,
+                convenient_row_number=fade_start.fade_speed)        
+
+        # Make sure we have a float value, otherwise stop here.
+        if not fade_float_value:
+            return
+
+
+        # Use the new float value instead of the convenience value.
+        fade_start = fade_start._replace(fade_speed=fade_float_value)
 
         # Initialize the FadeCurrentValue object, we need to have
         # it for the animation to work.
@@ -3626,31 +3071,39 @@ class StoryReader:
 
             # Without this, the user has to explicitly use <..fade_current_value:>
             # before fading a sprite.
-            if fade_speed.fade_direction == "fade out":
-                initial_fade_value = 255
-            else:
-                initial_fade_value = 0
-
+            initial_fade_value = 255
+            
             sprite.current_fade_value = cc.FadeCurrentValue(
-                sprite_name=fade_speed.sprite_name,
+                sprite_name=fade_start.sprite_name,
                 current_fade_value=initial_fade_value,
-            )
+            )            
+            
+        else:
+            initial_fade_value = sprite.current_fade_value.current_fade_value
 
-        # Set the fade speed.
-        # A positive value will fade-in the sprite.
-        # A negative value (such as -0.05) will fade out the sprite.
-        sprite.fade_speed = fade_speed
+            
+        # Record the float fade value because we'll use this for
+        # time-accurate delta fade calculations in each frame.
+        sprite.calculated_fade_value = float(initial_fade_value)     
+
+        # Set the fade speed / fade until properties.
+        sprite.fade_properties = fade_start
+        
+        # Set the flag to start the fade animation.
+        sprite.start_fading()
 
     def _sprite_current_fade_value(
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        Set the current fade value of a sprite (0 (fully transparent) to 255 (fully opaque)).
+        Set the current fade value of a sprite (0 (fully transparent)
+        to 255 (fully opaque)).
 
         Arguments:
 
         - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general alias, current fade value (example: 'rave_normal, 255')
+        - arguments: sprite general alias, current fade value
+        (example: 'rave, 255')
 
         return: None
         """
@@ -3671,79 +3124,16 @@ class StoryReader:
         if not sprite:
             return
 
-        # Set the current fade value for the character sprite.
+        # Set the current fade value for the sprite to the specified fade value.
         sprite.current_fade_value = current_fade_value
+        
+        # The calculated fade value (float) should start at this new initial
+        # fade value too.
+        sprite.calculated_fade_value = current_fade_value.current_fade_value
 
         # sprite.sudden_fade_change = True
 
-    def _sprite_fade_until(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Set the property of a sprite to indicate that a fade animation should stop
-        when it reaches a specific fade value (0 to 255).
 
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: sprite general lias, fade value (example: 'rave, 255')
-
-        return: None
-        """
-
-        fade_until: cc.FadeUntilValue
-        fade_until = self._get_arguments(
-            class_namedtuple=cc.FadeUntilValue, given_arguments=arguments
-        )
-
-        if not fade_until:
-            return
-
-        # Get the visible/active sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_until.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Set the property for the sprite to know when a fade animation should stop.
-        sprite.fade_until = fade_until
-
-    def _sprite_fade_delay(self, sprite_type: file_reader.ContentType, arguments):
-        """
-        Specify the number of frames to skip for this sprite's fade animation.
-        This is used to create an extra-slow fade effect.
-
-        Arguments:
-
-        - sprite_type: so we can know which dictionary to get the sprite from.
-        - arguments: (str) sprite general alias, number of frames to skip (int)
-
-        return: None
-        """
-
-        fade_delay: cc.FadeDelay
-        fade_delay = self._get_arguments(
-            class_namedtuple=cc.FadeDelay, given_arguments=arguments
-        )
-
-        if not fade_delay:
-            return
-
-        # Get the visible sprite based on the general alias
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # We use the object below because it's part of a class that keeps
-        # track of the number of frames skipped.
-        fade_delay_main = sd.FadeDelayMain(fade_delay=fade_delay)
-
-        # Set the property for the sprite so when the fading animation
-        # is working, it'll read this variable value and delay the fade effect.
-        sprite.fade_delay_main = fade_delay_main
 
     def _sprite_load(self, arguments: str, sprite_type: file_reader.ContentType):
         """
@@ -3814,7 +3204,8 @@ class StoryReader:
         self, sprite_type: file_reader.ContentType, arguments
     ):
         """
-        When a specific sprite image stops fading, run a specific reusable script.
+        When a specific sprite image stops fading, run a specific
+        reusable script.
 
         Arguments:
 
@@ -3823,29 +3214,35 @@ class StoryReader:
 
         return: None
         """
+        
+        class_name = (cc.SpriteStopRunScriptWithArguments
+                    if arguments.count(",") >= 2
+                    else cc.SpriteStopRunScriptNoArguments)        
 
-        fade_stop_run_script: cc.FadeStopRunScript
-        fade_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.FadeStopRunScript, given_arguments=arguments
-        )
+        fade_stop_run_script: cc.SpriteStopRunScriptWithArguments
+        fade_stop_run_script =\
+            self._get_arguments(class_namedtuple=class_name,
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=arguments.count(",") >= 2,
+                                num_of_fixed_groups=2)
 
         if not fade_stop_run_script:
             return
 
         # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=fade_stop_run_script.sprite_name
-        )
+        sprite =\
+            self.story.get_visible_sprite(content_type=sprite_type,
+                            general_alias=fade_stop_run_script.sprite_name)
 
         if not sprite:
             return
-
-        # Set the property for the sprite so when the fade stops, it'll read this variable value.
+        
+        # Set the property for the sprite so when the fade stops, 
+        # it'll read this variable value.
         sprite.fade_stop_run_script = fade_stop_run_script
 
     def _sprite_after_movement_stop(
-        self, sprite_type: file_reader.ContentType, arguments
-    ):
+        self, sprite_type: file_reader.ContentType, arguments):
         """
         When a specific sprite image stops moving, run a specific reusable script.
 
@@ -3857,9 +3254,9 @@ class StoryReader:
         return: None
         """
 
-        movement_stop_run_script: cc.MovementStopRunScript
+        movement_stop_run_script: cc.SpriteStopRunScriptNoArguments
         movement_stop_run_script = self._get_arguments(
-            class_namedtuple=cc.MovementStopRunScript, given_arguments=arguments
+            class_namedtuple=cc.SpriteStopRunScriptNoArguments, given_arguments=arguments
         )
 
         if not movement_stop_run_script:
@@ -3881,8 +3278,8 @@ class StoryReader:
 
     def after_run(self, arguments):
         """
-        Run a reusable script after X number of frames has elapsed.
-        Example: <after: 30 (frames), reusable script here>
+        Run a reusable script after X number of seconds have elapsed.
+        Example: <after: 5 (seconds), reusable script here>
         """
 
         if arguments.count(",") > 1:
@@ -3906,7 +3303,7 @@ class StoryReader:
         # Create a timer to run the specific reusable script.
         after_manager_method.add_timer(
             reusable_script_name=after_timer.reusable_script_name,
-            frames_to_skip=after_timer.frames_elapse,
+            seconds_to_wait=after_timer.seconds_to_wait,
             optional_arguments=optional_arguments,
         )
 
@@ -3970,7 +3367,8 @@ class StoryReader:
 
         return after_manager_method
 
-    def get_optional_arguments(self, unsorted_arguments_line: str) -> Dict | None:
+    def get_optional_arguments(self,
+                               unsorted_arguments_line: str) -> Dict | None:
         """
         Parse the parameter name(s) and argument value(s) from
         the given line.
@@ -4045,52 +3443,44 @@ class StoryReader:
             with_arguments=with_arguments,
         )
 
-    def spawn_new_background_reader(
-        self, reusable_script_name: str, with_arguments: bool = False
-    ):
+    def spawn_new_background_reader(self,
+                                    reusable_script_name: str,
+                                    arguments: str = None):
         """
         Create a new background reader.
-        :param reusable_script_name: (str) the case-sensitive name of the reusable script we should load.
+        
+        Arguments:
+        - reusable_script_name: (str) the case-sensitive name of the reusable
+        script we should load.
 
-        :param with_arguments: (bool) True if arguments have been supplied (comma separated)
-        as part of the reusable_script_name.
-        For example: 'character=theo,last name=something' (two arguments in this example)
+        - arguments: (str) comma separated key=value argument pairs.
+        For example: 'character=theo,last name=something'
+        (two arguments in this example)
 
-        :return: None
+        Return: None
         """
 
-        call: cc.CallWithArguments
-
-        if not with_arguments:
-            # The class type will be CallWithNoArguments here
-            call = self._get_arguments(
-                class_namedtuple=cc.CallWithNoArguments,
-                given_arguments=reusable_script_name,
-            )
-        else:
-            call = self._get_arguments(
-                class_namedtuple=cc.CallWithArguments,
-                given_arguments=reusable_script_name,
-                unlimited_optional_arguments=True,
-            )
-
-        # If a reusable script is calling another reusable script, spawn the new background reader
-        # from the main story reader, not from the background reader that requested the reusable script.
-        # That way, all the background readers will be tied to the main story reader.
+        # If a reusable script is calling another reusable script, spawn the 
+        # new background reader from the main story reader, not from the 
+        # background reader that requested the reusable script.
+        # That way, all the background readers will be tied to the main story 
+        # reader.
         if self.background_reader_name:
             # Load the reusable script from the main story reader.
-            self.story.reader.spawn_new_background_reader(
-                reusable_script_name=call.reusable_script_name
-            )
+            self.story.reader.\
+                spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name,
+                    arguments=arguments)
             return
 
-        # Is the requested reusable script already loaded and running? Don't allow another one.
-        elif call.reusable_script_name in self.background_readers:
+        # Is the requested reusable script already loaded and running?
+        # Don't allow another one.
+        elif reusable_script_name in self.background_readers:
             return
 
-        script = self._get_reusable_script(
-            reusable_script_name=call.reusable_script_name
-        )
+        script =\
+            self._get_reusable_script(
+                reusable_script_name=reusable_script_name)
 
         if not script:
             return
@@ -4099,24 +3489,27 @@ class StoryReader:
         reader = StoryReader(
             story=self.story,
             data_requester=self.data_requester,
-            background_reader_name=call.reusable_script_name,
+            background_reader_name=reusable_script_name,
         )
 
         reader.script_lines = script.splitlines()
 
-        # Add the background reader to the main dictionary that holds the background readers.
-        self.background_readers[call.reusable_script_name] = reader
+        # Add the background reader to the main dictionary that holds 
+        # the background readers.
+        self.background_readers[reusable_script_name] = reader
 
         # Debugging
         # print("BG Reader:", call.reusable_script_name)
 
         # Was the reusable script called with parameters/arguments?
-        # Then add those arguments to argument_handler for the new background reader.
-        if with_arguments:
-            # Get the parameter names and values by recording them in a dictionary.
-            parameter_arguments = self.get_optional_arguments(
-                unsorted_arguments_line=call.arguments
-            )
+        # Then add those arguments to argument_handler for the new 
+        # background reader.
+        if arguments:
+            
+            # Get the parameter names and values by recording them 
+            # in a dictionary.
+            parameter_arguments =\
+                self.get_optional_arguments(unsorted_arguments_line=arguments)
 
             # Add the parameter names and argument values to
             # the argument handler's dictionary, so <call> reusable scripts
@@ -4191,31 +3584,6 @@ class StoryReader:
         # Start reading the new scene script.
         self.story.reader.read_story()
 
-    def _set_movement_delay(self, sprite_type: file_reader.ContentType, arguments: str):
-        """
-        Set the animation movement delay of the specified sprite.
-        :param arguments: str, such as '3, 5' (which means delay x by 3 frames, delay y by 5 frames.
-        :return: None
-        """
-        movement_delay: cc.MovementDelay
-        movement_delay = self._get_arguments(
-            class_namedtuple=cc.MovementDelay, given_arguments=arguments
-        )
-
-        if not movement_delay:
-            return
-
-        # Get the visible sprite
-        sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=movement_delay.sprite_name
-        )
-
-        if not sprite:
-            return
-
-        # Stamp the delay onto the sprite.
-        sprite.movement_delay = movement_delay
-
     def _sprite_start_or_stop_moving(
         self,
         sprite_type: file_reader.ContentType,
@@ -4235,20 +3603,26 @@ class StoryReader:
         :return: None
         """
         if arguments and isinstance(arguments, str):
-            sprite_name = arguments.strip()
-
-            # Get the visible sprite
-            sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=sprite_name
-            )
-
-            if not sprite:
-                return
+            
+            # Remove excess spacing
+            arguments = arguments.strip()
 
             if start_or_stop == sd.StartOrStop.START:
-                sprite.start_moving()
+                self._sprite_move_start(sprite_type=sprite_type,
+                                        arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
+                
+                sprite_name = arguments
+    
+                # Get the visible sprite
+                sprite = self.story.get_visible_sprite(
+                    content_type=sprite_type, general_alias=sprite_name
+                )
+    
+                if not sprite:
+                    return                
+                
                 # The user wants to stop moving this object.
                 sprite.stop_moving()
 
@@ -4256,25 +3630,212 @@ class StoryReader:
                 # don't apply, so clear the stop condition here (if any).
                 sprite.movement_stop_run_script = None
 
-    def _set_movement_speed(self, sprite_type: file_reader.ContentType, arguments: str):
+    def _tint_sprite(self,
+                   sprite_type: file_reader.ContentType,
+                   arguments: str):
         """
-        Set the movement speed of the character sprite.
-
-        :param arguments: str that looks like this: 'character sprite general alias, x, x_direction, y, y_direction'
-                          character sprite name: the name of the sprite
-                          x value is the number of pixels to move horizontally
-                          x_direction is a string ("left" or "right")
-                          y value is the number of pixels to move vertically
-                          y_direction is a string ("up" or "down")
-        :return: None
+        Start a tint animation on a particular sprite.
+        
+        Arguments:
+        
+        - sprite_type: whether it's a character, object, etc.
+        
+        - arguments: the alias of the sprite, speed of animation,
+        tint destination, and optional 'bright' keyword if it's a glow tint
+        instead of a regular tint.
         """
-
-        movement_speed: cc.MovementSpeed
-        movement_speed = self._get_arguments(
-            class_namedtuple=cc.MovementSpeed, given_arguments=arguments
+        tint: cc.SpriteTintBright
+        tint = self._get_arguments(
+            class_namedtuple=cc.SpriteTintBright,
+            given_arguments=arguments
         )
 
-        if not movement_speed:
+        # Not successful with a SpriteTintBright class?
+        if not tint:
+            
+            # Try to get the arguments with a SpriteTintRegular class instead.
+            # This is the last attempt.
+            tint = self._get_arguments(
+                class_namedtuple=cc.SpriteTintRegular,
+                given_arguments=arguments
+            )
+            
+            if not tint:
+                return
+            
+        elif tint.bright_keyword.strip().lower() != "bright":
+            return
+
+        # Get the active/visible sprite based on the general alias
+        sprite: sd.SpriteObject
+        sprite = self.story.get_visible_sprite(
+            content_type=sprite_type,
+            general_alias=tint.general_alias
+        )
+
+        if not sprite:
+            return
+        
+        # Convert the convenient speed (1-100) to a value that
+        # we can use in the animation.
+        float_value = \
+            AnimationSpeed.get_sequence_value(
+                initial_value=15.5,
+                increment_by=15.5,
+                max_convenient_row=100,
+                convenient_row_number=tint.speed)
+        
+        speed = float_value
+        
+        # Set the speed and destination tint value.
+        if isinstance(tint, cc.SpriteTintRegular):
+            sprite.tint_handler.\
+                start_tint_regular(speed=speed,
+                                   destination_tint=tint.dest_tint)
+            
+        elif isinstance(tint, cc.SpriteTintBright):
+            sprite.tint_handler.start_tint_glow(speed=speed,
+                                                destination_tint=tint.dest_tint)
+
+    def _tint_sprite_solo(self,
+                          sprite_type: file_reader.ContentType,
+                          arguments: str):
+        """
+        Set all visible sprites to tinted, if they're currently not tinted,
+        except the given sprite alias. Use a preset animation speed and
+        preset tint amount, for convenience.
+        
+        Then make sure the given sprite has no tint, making it appear
+        that it has the main focus.
+        """
+        
+        tint: cc.SpriteTintSolo
+        tint = self._get_arguments(
+            class_namedtuple=cc.SpriteTintSolo,
+            given_arguments=arguments
+        )
+
+        # Not successful with a SpriteTintSolo class? Return.
+        if not tint:
+            return
+        
+        arguments_to_run = []
+        
+        # Get the dictionary for the sprites we need to check.
+        if sprite_type == file_reader.ContentType.CHARACTER:
+            sprite_group_to_check = sd.Groups.character_group
+            
+        elif sprite_type == file_reader.ContentType.OBJECT:
+            sprite_group_to_check = sd.Groups.object_group
+            
+        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+            sprite_group_to_check = sd.Groups.dialog_group
+        else:
+            return
+        
+        alias_found = False
+        
+        # Enumerate over all visible sprites.
+        sprite_name: str
+        sprite: sd.SpriteObject
+        for sprite_name, sprite in sprite_group_to_check.sprites.items():
+            
+            # Found the given sprite and it's visible or pending
+            # to become visible?
+            if sprite.general_alias == tint.general_alias \
+               and any((sprite.visible, sprite.pending_show)) \
+               and not sprite.pending_hide:
+                
+                # We found the sprite we want; don't do anything with this 
+                # sprite yet until after the loop is finished.
+                # We just wanted to make sure the sprite exists and is visible.
+                alias_found = True
+                
+                continue
+            
+            # If the 'other' sprite is visible and is not tinted,
+            # make it tinted.
+            if any((sprite.visible, sprite.pending_show)) \
+               and not sprite.pending_hide \
+               and not sprite.tint_handler.is_dirty_with_tint():
+                
+                # The other sprite is tinted.
+                # Make it untinted.
+                
+                # The alias of a sprite than is not the solo one we want,
+                # but is visible on the display surface, so we need to 
+                # untint it.
+                other_sprite_alias = sprite.general_alias
+                
+                # Medium speed
+                animation_speed = 50
+                
+                # Medium tint amount
+                tint_amount = 120
+                
+                # Generate the comma separated arguments.
+                arguments =\
+                    f"{other_sprite_alias}, {animation_speed}, {tint_amount}"
+                
+                # Add the arguments for the 'other' sprites to a list
+                # so we can enumerate it later.
+                arguments_to_run.append(arguments)
+                
+        # The loop is finished. Did we find the general alias that was asked?
+        if alias_found:
+            
+            # The sprite that needs to be solo untinted was found.
+            # Make sure the sprite is not tinted.
+            
+            # Medium speed
+            animation_speed = 50
+            
+            # Tint to 255 (no tint)
+            tint_amount = 255
+            
+            arguments =\
+                f"{tint.general_alias}, {animation_speed}, {tint_amount}"
+            
+            # Tint the sprite alias that needs to be tinted solo.
+            # If the sprite is already untinted, the method below will
+            # just return, so it's safe to run it self._tint_sprite()
+            # on a sprite that is untinted.
+            self._tint_sprite(sprite_type=sprite_type,
+                              arguments=arguments)
+            
+            # Enumerate the list of 'other' sprites that need to be tinted.
+            for arguments_line in arguments_to_run:
+                self._tint_sprite(sprite_type=sprite_type,
+                                  arguments=arguments_line)                
+            
+    def _sprite_move_start(self,
+                            sprite_type: file_reader.ContentType,
+                            arguments: str):
+        """
+        Start a movement animation on a particular sprite.
+
+        Arguments:
+        
+        - sprite_type: whether it's a character, object, etc.
+        
+        - arguments: str that looks like this:
+        'character sprite general alias, x, x_direction, y, y_direction'
+        
+        character sprite name: the name of the sprite
+        x value is the number of pixels to move horizontally
+        x_direction is a string ("left" or "right")
+        y value is the number of pixels to move vertically
+        y_direction is a string ("up" or "down")
+        
+        Return: None
+        """
+
+        move_start: cc.MoveStart
+        move_start = self._get_arguments(
+            class_namedtuple=cc.MoveStart, given_arguments=arguments
+        )
+
+        if not move_start:
             return
 
         """
@@ -4287,39 +3848,71 @@ class StoryReader:
         """
 
         # Set the directions to lowercase
-        movement_speed._replace(x_direction=movement_speed.x_direction.lower())
-        movement_speed._replace(y_direction=movement_speed.y_direction.lower())
+        move_start._replace(x_direction=move_start.x_direction.lower())
+        move_start._replace(y_direction=move_start.y_direction.lower())
 
         # Horizontal direction going left? Set the X to a negative int.
-        if movement_speed.x_direction == "left":
-            movement_speed = movement_speed._replace(x=-abs(movement_speed.x))
+        if move_start.x_direction == "left":
+            move_start = move_start._replace(x=-abs(move_start.x))
 
         # Vertical direction going up? Set the Y to a negative int.
-        if movement_speed.y_direction == "up":
-            movement_speed = movement_speed._replace(y=-abs(movement_speed.y))
+        if move_start.y_direction == "up":
+            move_start = move_start._replace(y=-abs(move_start.y))
 
         # Get the visible sprite
         sprite = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=movement_speed.sprite_name
+            content_type=sprite_type, general_alias=move_start.sprite_name
         )
 
         if not sprite:
             return
 
         # Stamp the speed onto the sprite.
-        sprite.movement_speed = movement_speed
+        sprite.move_properties = move_start
+        
+        # Set the flag to start a movement animation.
+        sprite.start_moving()
+        
+    @staticmethod
+    def try_get_arguments_attribute(unknown_object) -> str | None:
+        """
+        Determine if there is an 'arguments' attribute in the given
+        object. If there is, get the value of that variable and return it.
+        
+        Purpose: when we want to run a reusable script after a specific action
+        is finished (such as a finished rotation animation), there is a
+        reusable variable, which may or may not have an arguments attribute
+        for passing optional arguments to the reusable script.
+        
+        So we use this method to get the optional arguments in the given object,
+        if there is an arguments attribute.
+        
+        Arguments:
+        
+        - unknown_object: an 'after' related object attached to a sprite object.
+        It could be a fade_after object, rotate_after object, etc.
+        This object always has 'reusable_script_name', but it may not
+        always have an 'arguments' attribute, which is what this method is for.
+        """
+        if hasattr(unknown_object, "arguments"):
+            return unknown_object.arguments
+        else:
+            return None    
 
     @staticmethod
     def _get_arguments(
         class_namedtuple,
         given_arguments: str,
-        unlimited_optional_arguments: bool = False):
+        unlimited_optional_arguments: bool = False,
+        num_of_fixed_groups: int = 1):
         """
         Take the given string arguments (comma separated) and turn them
         into a namedtuple class.
 
         For example: if 'given_arguments' contains '5, 4'
-        then this method will return an object in the given class in 'class_namedtuple'.
+        then this method will return an object in the given class in
+        'class_namedtuple'.
+        
         That object may be something like: MovementSpeed and its fields, X and Y 
         will be set to int (based on the arguments example '5, 4').
 
@@ -4364,7 +3957,14 @@ class StoryReader:
         if unlimited_optional_arguments:
 
             # Variable number of arguments.
-            pattern = r"^([^,]+),\s*(.*)$"
+            
+            # First group fixed, the rest variable?
+            if num_of_fixed_groups == 1:
+                pattern = r"^([^,]+),\s*(.*)$"
+                
+            # First two groups fixed, the rest variable?
+            elif num_of_fixed_groups == 2:
+                pattern = r"^([^,]+),\s*([^,]+),\s*(.*)$"
 
             # Make sure the minimum number of arguments is satisfied.
             if field_count > given_arguments.count(",") + 1:
@@ -4402,8 +4002,8 @@ class StoryReader:
         
         # If the class contains a single string field named 'arguments', then
         # that means a variable number of arguments are to be expected.
-        # For example, with the <remote_save> command, which only takes on argument
-        # string. Treat that as one argument string.
+        # For example, with the <remote_save> command, which only takes an 
+        # argument string. Treat that as one argument string.
         # For example: "favcolor=Blue, favpet=Cat" as one string.
         if field_count == 1 and expected_argument_types[0] is str and \
         tuple(class_namedtuple.__annotations__.keys())[0] == "arguments":
@@ -4438,15 +4038,23 @@ class StoryReader:
 
         return generate_class
 
-    def _font_text_fade_speed(self, arguments, sprite_object: sd.SpriteObject = None):
+    def _font_text_fade_speed(self,
+                              arguments,
+                              max_speed: int,
+                              sprite_object: sd.SpriteObject = None):
         """
-        Set the gradual text fade speed of the dialog text.
-        It applies to both letter by letter fade-in and overall fade-in.
+        Set the text fade speed of the dialog text.
+        It applies to both a letter by letter text fade in and a full fade-in
+        text.
 
         Arguments:
 
-        - arguments: an int between 1 and 10.
-        1 is the slowest speed, 10 is the fastest speed.
+        - arguments: an int between 1 and 10 (full text fade in) or 1 to 1200
+        (gradual letter by letter fade in)
+        
+        - max_speed: if it's for a full text fade-in (all letters at the
+        same time), then the max is 10. If it's for gradual letter by letter
+        fade in, the max is 1200.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4461,9 +4069,9 @@ class StoryReader:
 
         fade_speed = fade_speed.fade_speed
 
-        # Don't allow the speed to be less than 1 or more than 10
-        if fade_speed > 10:
-            fade_speed = 10
+        # Don't allow the speed to be less than 1 or more than the max.
+        if fade_speed > max_speed:
+            fade_speed = max_speed
         elif fade_speed < 1:
             fade_speed = 1
 
@@ -4481,14 +4089,14 @@ class StoryReader:
 
     def _font_text_delay_punc(self, arguments, sprite_object: sd.SpriteObject = None):
         """
-        Set the number of frames to skip *after* a specific letter has
+        Set the number of seconds to skip *after* a specific letter has
         finished being blitted.
 
         Arguments:
 
         - arguments: an int between 0 and 150.
-        For example: a value of 2 means: apply the letter by letter animation
-        every 2 frames. A value of 0 means apply the animation at every frame.
+        For example: a value of 0.5 means: apply the letter by letter animation
+        every half a second. A value of 0 means no extra delay.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4502,26 +4110,27 @@ class StoryReader:
         )
 
         previous_letter = delay_punc.previous_letter
-        delay_frame_count = delay_punc.number_of_frames
+        delay_seconds = delay_punc.number_of_seconds
 
-        # Don't allow the speed to be less than 0 or more than 150
-        if delay_frame_count > 150:
-            delay_frame_count = 150
-        elif delay_frame_count < 0:
-            delay_frame_count = 0
+        # Don't allow the delay to be less than 0 or more than 10 seconds
+        if delay_seconds > 10:
+            delay_seconds = 10
+        elif delay_seconds < 0:
+            delay_seconds = 0
 
-        # Get the font handler of either the sprite object (dialog sprite, object, character)
-        # or the dialog rectangle.
+        # Get the font handler of either the sprite object (dialog sprite, 
+        # object, character) or the dialog rectangle.
         if sprite_object:
             # Sprite object font handler
             subject_font_handler = sprite_object.active_font_handler
         else:
             # Dialog rectangle font handler
-            subject_font_handler = self.get_main_story_reader().active_font_handler
+            subject_font_handler =\
+                self.get_main_story_reader().active_font_handler
 
         # Add the after-previous-letter delay setting.
-        subject_font_handler.font_animation.set_letter_delay(
-            previous_letter, delay_frame_count
+        subject_font_handler.font_animation.letter_delay_handler.set_letter_delay(
+            previous_letter, delay_seconds
         )
 
     def get_main_story_reader(self):
@@ -4546,14 +4155,16 @@ class StoryReader:
 
     def _font_text_delay(self, arguments, sprite_object: sd.SpriteObject = None):
         """
-        Set the number of frames to skip when animating letter-by-letter dialog text.
+        Set the number of seconds to elapse (wait) when animating
+        letter-by-letter dialog text.
         Does not apply to letter fade-ins.
 
         Arguments:
 
-        - arguments: an int between 0 and 600.
-        For example: a value of 2 means: apply the letter by letter animation
-        every 2 frames. A value of 0 means apply the animation at every frame.
+        - arguments: a float for seconds.
+        For example: a value of 0.5 means: apply the letter by letter animation
+        every half a second (so each second will display a letter).
+        The minimum is 0 seconds.
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
@@ -4570,14 +4181,16 @@ class StoryReader:
             class_namedtuple=cc.FontTextDelay, given_arguments=arguments
         )
 
-        text_speed_delay = text_speed_delay.number_of_frames
+        text_wait_seconds = text_speed_delay.number_of_seconds
 
-        # Don't allow the speed to be less than 0 or more than 600
-        # 600 means 10 seconds (60 frames X 10).
-        if text_speed_delay > 600:
-            text_speed_delay = 600
-        elif text_speed_delay < 0:
-            text_speed_delay = 0
+        # Don't allow the wait time to be less than 0 seconds
+        # or more than 10 seconds.
+        
+        # Minimum 0 seconds
+        text_wait_seconds = max(text_wait_seconds, 0)
+        
+        # Maximum 10 seconds per letter
+        text_wait_seconds = min(text_wait_seconds, 10)
 
         # Type-hint
         subject_font_handler: font_handler.ActiveFontHandler
@@ -4590,12 +4203,13 @@ class StoryReader:
             subject_font_handler = self.get_main_story_reader().active_font_handler
 
         # Record the delay value
-        subject_font_handler.font_animation.font_text_delay = text_speed_delay
+        subject_font_handler.font_animation.\
+            letter_delay_handler.font_text_delay = text_speed_delay.number_of_seconds
 
-        # For the initial text frame, consider the text delay limit having been reached,
-        # so that the delay doesn't occur before the first letter has been shown.
-        # Without this, the text delay will apply before the first letter has been shown.
-        subject_font_handler.font_animation.gradual_delay_counter = text_speed_delay
+        ## For the initial text frame, consider the text delay limit having been reached,
+        ## so that the delay doesn't occur before the first letter has been shown.
+        ## Without this, the text delay will apply before the first letter has been shown.
+        #subject_font_handler.font_animation.gradual_delay_counter = text_speed_delay
 
     def _font_start_position(
         self, x: bool, arguments: str, sprite_object: sd.SpriteObject = None
@@ -4766,10 +4380,21 @@ class StoryReader:
             arguments=command_arguments.value, sprite_object=sprite
         )
 
-    def _sprite_text_font_fade_speed(self, arguments: str):
+    def _sprite_text_font_fade_speed(self,
+                                     arguments: str,
+                                     max_speed: int):
         """
         Set the gradual text fade speed of the dialog text.
         It applies to both letter by letter fade-in and overall fade-in.
+        
+        Arguments:
+        
+        - arguments: a string in the format: sprite type, general alias, value
+        
+        - max_speed: if the fade in is for all the text fading in at the same
+        time, then the max speed is 10. If it's for letter-by-letter fade-in,
+        then the max speed will be in
+        AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
         """
 
         # Type-hints
@@ -4788,12 +4413,15 @@ class StoryReader:
         # Set the gradual text fade speed of the dialog text.
         # It applies to both letter by letter fade-in and overall fade-in.
         self._font_text_fade_speed(
-            arguments=command_arguments.value, sprite_object=sprite
+            arguments=command_arguments.value,
+            max_speed=max_speed,
+            sprite_object=sprite
         )
 
     def _sprite_text_font_delay(self, arguments: str):
         """
-        Set the number of frames to skip when animating letter-by-letter dialog text.
+        Set the number of seconds to elapse when animating letter-by-letter
+        dialog text.
         Does not apply to letter fade-ins.
         """
 
@@ -4810,13 +4438,15 @@ class StoryReader:
         # Split tuple
         sprite, command_arguments = sprite_details
 
-        # Set the number of frames to skip when animating letter-by-letter dialog text.
+        # Set the number of seconds to elapse (wait) when animating 
+        # letter-by-letter dialog text.
         # Does not apply to letter fade-ins.
-        self._font_text_delay(arguments=command_arguments.value, sprite_object=sprite)
+        self._font_text_delay(arguments=command_arguments.value,
+                              sprite_object=sprite)
 
     def _sprite_text_font_delay_punc(self, arguments: str):
         """
-        Set the number of frames to skip *after* a specific letter has
+        Set the number of seconds to elapse (wait) *after* a specific letter has
         finished being blitted.
         """
 
@@ -4833,8 +4463,8 @@ class StoryReader:
         # Split tuple
         sprite, command_arguments = sprite_details
 
-        # Set the number of frames to skip *after* a specific letter has
-        # finished being blitted.
+        # Set the number of seconds to elapse (wait) *after* a specific 
+        # letter has finished being blitted.
         self._font_text_delay_punc(
             arguments=command_arguments.value, sprite_object=sprite
         )
@@ -5170,7 +4800,7 @@ class StoryReader:
         # the main script reader must stay paused.
         web_handler.WebWorker.decrease_usage_count()
 
-        print("FastAPI response received:", receipt)
+        # print("FastAPI response received:", receipt)
 
         response_text = receipt.get_response_text()
 
@@ -5294,33 +4924,32 @@ class StoryReader:
         """
         Use a timed <halt> command which is like a normal <halt> command
         but will not respond to mouse clicks or keyboard presses
-        until X number of frames has passed.
+        until X number of seconds has passed.
 
         Arguments:
 
-        - arguments: this is the number of frames to elapse while halting.
+        - arguments: this is the number of seconds to elapse while halting.
 
         Return: None
         """
         halt_auto: cc.HaltAuto
         halt_auto = self._get_arguments(
-            class_namedtuple=cc.HaltAuto, given_arguments=arguments
-        )
+            class_namedtuple=cc.HaltAuto, given_arguments=arguments)
 
         if not halt_auto:
             return
 
-        # Make sure the number of frames is an integer.
+        # Make sure the number of seconds is a float.
         try:
-            frames_to_elapse = int(halt_auto.number_of_frames)
+            seconds_to_elapse = float(halt_auto.number_of_seconds)
         except ValueError:
             return
         else:
             # Don't allow zero or a negative value.
-            if frames_to_elapse <= 0:
+            if seconds_to_elapse <= 0:
                 return
 
-        self.halt(automate_after_frame_count=frames_to_elapse)
+        self.halt(automate_after_seconds_count=seconds_to_elapse)
 
     def _no_clear(self):
         """
@@ -5335,7 +4964,7 @@ class StoryReader:
 
     def _rest(self, arguments: str):
         """
-        Pause the main story reader for X number of frames.
+        Pause the main story reader for X number of seconds.
         This is similar to <halt> except it's not interactive (mouse-clicking)
         will not unrest it.
 
@@ -5343,30 +4972,31 @@ class StoryReader:
         on dialog text. It can rest without a dialog rectangle, whereas
         <halt_auto> requires a dialog rectangle to be visible.
 
-        It forces the main reader to pause. It has
-        no effect on background readers.
+        It forces the main reader to pause. It has no effect on
+        background readers.
         """
         rest: cc.Rest
-        rest = self._get_arguments(class_namedtuple=cc.Rest, given_arguments=arguments)
+        rest = self._get_arguments(class_namedtuple=cc.Rest,
+                                   given_arguments=arguments)
 
         if not rest:
             return
 
-        # Make sure the number of frames is an integer.
+        # Make sure the number of seconds is a float.
         try:
-            frames_to_elapse = int(rest.number_of_frames)
+            seconds_to_elapse = float(rest.number_of_seconds)
         except ValueError:
             return
         else:
             # Don't allow zero or a negative value.
-            if frames_to_elapse <= 0:
+            if seconds_to_elapse <= 0:
                 return
 
         # Get the story reader that's not a reusable script reader,
         # because everything in this method involves the main reader only.
         main_reader = self.get_main_story_reader()
 
-        main_reader.rest_handler.setup(frames_reach=frames_to_elapse)
+        main_reader.rest_handler.setup(seconds_reach=seconds_to_elapse)
 
     def get_sprite_type_from_command(
         self, command_name: str
@@ -5388,14 +5018,17 @@ class StoryReader:
         """
 
         class_name = (
-            cc.MouseEventRunScriptWithArguments
+            cc.SpriteStopRunScriptWithArguments
             if arguments.count(",") >= 2
-            else cc.MouseEventRunScriptNoArguments
+            else cc.SpriteStopRunScriptNoArguments
         )
 
-        mouse_run_script: cc.MouseEventRunScriptWithArguments
+        mouse_run_script: cc.SpriteStopRunScriptWithArguments
         mouse_run_script = self._get_arguments(
-            class_namedtuple=class_name, given_arguments=arguments
+            class_namedtuple=class_name,
+            given_arguments=arguments,
+            unlimited_optional_arguments=arguments.count(",")>=2,
+            num_of_fixed_groups=2
         )
 
         if not mouse_run_script:
@@ -5403,38 +5036,30 @@ class StoryReader:
 
         # Determine the sprite type that the command will be applied to
         # based on the command name.
-        sprite_type = self.get_sprite_type_from_command(command_name=command_name)
+        sprite_type =\
+            self.get_sprite_type_from_command(command_name=command_name)
 
         # Get the visible sprite based on the general alias
         # Used for setting a reusable script to run when specific
         # mouse events occur on the sprite.
         existing_sprite: sd.SpriteObject = self.story.get_visible_sprite(
-            content_type=sprite_type, general_alias=mouse_run_script.sprite_name
+            content_type=sprite_type,
+            general_alias=mouse_run_script.sprite_name
         )
 
         if not existing_sprite:
             return
 
-        if class_name == cc.MouseEventRunScriptWithArguments:
-            reusable_script_name = (
-                mouse_run_script.reusable_script_name
-                + ", "
-                + mouse_run_script.arguments
-            )
-
-        elif class_name == cc.MouseEventRunScriptNoArguments:
-            reusable_script_name = mouse_run_script.reusable_script_name
-
         # Set the name of the reusable script to run when a specific
         # mouse event occurs.
         if "_mouse_enter" in command_name:
-            existing_sprite.on_mouse_enter_run_script = reusable_script_name
+            existing_sprite.on_mouse_enter_run_script = mouse_run_script
 
         elif "_mouse_leave" in command_name:
-            existing_sprite.on_mouse_leave_run_script = reusable_script_name
+            existing_sprite.on_mouse_leave_run_script = mouse_run_script
 
         elif "_mouse_click" in command_name:
-            existing_sprite.on_mouse_click_run_script = reusable_script_name
+            existing_sprite.on_mouse_click_run_script = mouse_run_script
 
     def _wait_for_animation(self, arguments: str):
         """
@@ -5495,7 +5120,9 @@ class StoryReader:
 
     def _scene_with_fade(self, arguments: str):
         """
-        Gradually fade in, then fade-out a color that covers the entire pygame window.
+        Gradually fade in, then fade-out a color that covers the entire
+        pygame window.
+        
         Right before it starts fading out, play a specific scene.
         This is used when transitioning between scenes.
         """
@@ -5515,13 +5142,15 @@ class StoryReader:
         direction = cover_screen_handler.FadeDirection.FADE_IN
         initial_fade = 0
 
-        incremental_fade_in_speed = self._sprite_fade_speed_get_value_from_percent(
-            percent=scene_with_fade.fade_in_speed, fade_direction="fade in"
-        )
+        incremental_fade_in_speed =\
+            self._sprite_fade_speed_get_value_from_percent(
+            percent=scene_with_fade.fade_in_speed,
+            fade_direction="fade in")
 
-        incremental_fade_out_speed = self._sprite_fade_speed_get_value_from_percent(
-            percent=scene_with_fade.fade_out_speed, fade_direction="fade out"
-        )
+        incremental_fade_out_speed =\
+            self._sprite_fade_speed_get_value_from_percent(
+            percent=scene_with_fade.fade_out_speed,
+            fade_direction="fade out")
 
         # None and zero are not proper values and will result to an exception.
         if not all([incremental_fade_in_speed, incremental_fade_out_speed]):
@@ -5536,7 +5165,7 @@ class StoryReader:
             initial_fade_value=initial_fade,
             fade_in_speed_incremental=incremental_fade_in_speed,
             fade_out_speed_incremental=incremental_fade_out_speed,
-            hold_frame_count=scene_with_fade.fade_hold_for_frame_count,
+            hold_seconds=scene_with_fade.fade_hold_seconds,
             chapter_name=scene_with_fade.chapter_name,
             scene_name=scene_with_fade.scene_name,
             fade_direction=direction,
@@ -6103,8 +5732,10 @@ class WaitForAnimationHandler:
         self.wait_list = []
 
     def enable_wait_for(
-        self, sprite_type: str, general_alias: str = None, animation_type: str = None
-    ):
+        self,
+        sprite_type: str,
+        general_alias: str = None,
+        animation_type: str = None):
         """
         Record a new reason to pause the main story reader.
         Reusable scripts are not affected.
@@ -6140,6 +5771,8 @@ class WaitForAnimationHandler:
                 animation_type_to_check = sd.SpriteAnimationType.ROTATE
             elif animation_type == "scale":
                 animation_type_to_check = sd.SpriteAnimationType.SCALE
+            elif animation_type == "tint":
+                animation_type_to_check = sd.SpriteAnimationType.TINT
             elif animation_type == "all":
                 animation_type_to_check = ("all",)
             elif animation_type == "any":
@@ -6153,18 +5786,19 @@ class WaitForAnimationHandler:
 
     def check_wait(self) -> bool:
         """
-        Check the wait list to see if the main reader should pause
-        until one or more sprites' animations have stopped.
+        Check the wait list to see if the main reader should pause until
+        one or more sprites' animations have stopped.
 
-        Return: True if the main story reader should wait
-        or False if there is no need for the main reader to wait for animation(s) to finish.
+        Return: True if the main story reader should wait or False if there
+        is no need for the main reader to wait for animation(s) to finish.
         """
         if not self.wait_list:
             return False
 
         remove_indexes = []
 
-        # Loop through wait_list to see what animation(s) we need to wait for (if any).
+        # Loop through wait_list to see what animation(s) we need to 
+        # wait for (if any).
         for idx, wait_info in enumerate(self.wait_list):
 
             # Initialize
@@ -6172,7 +5806,8 @@ class WaitForAnimationHandler:
 
             if isinstance(wait_info, str) and wait_info == "cover":
                 # Wait for a screen fade-in / fade-out animation to finish
-                # (even if the screen is fully faded-in, it's still considered to be animating)
+                # (even if the screen is fully faded-in, it's still considered 
+                # to be animating)
                 if Passer.active_story.cover_screen_handler.is_cover_animating:
                     wait = True
 
@@ -6193,7 +5828,8 @@ class WaitForAnimationHandler:
             if wait:
                 return True
             else:
-                # The wait rule is not animating, so remove it from the wait list later.
+                # The wait rule is not animating, so remove it from the wait 
+                # list later.
                 remove_indexes.append(idx)
         else:
 
@@ -6213,8 +5849,7 @@ class WaitForAnimationHandler:
     def _is_sprite_animating(
         sprite_group: sd.SpriteGroup,
         general_alias: str | None,
-        animation_type: sd.SpriteAnimationType | str,
-    ) -> bool | None:
+        animation_type: sd.SpriteAnimationType | str) -> bool | None:
         """
         Check if a specific type of animation is currently occurring.
 
@@ -6223,7 +5858,8 @@ class WaitForAnimationHandler:
             - sprite_group: the sprite group we should check sprites in
             - general_alias: we use the general alias to find a matching sprite
             that is visible.
-            - animation_type: the type of animation to check for, or 'all', or 'any'.
+            - animation_type: the type of animation to check for, or 'all',
+            or 'any'.
 
         Return: True if the given type of animation is occurring for the given
         sprite alias in the given sprite group.
@@ -6269,6 +5905,11 @@ class WaitForAnimationHandler:
                     and sprite_object.is_scaling
                 ):
                     return True
+                elif (
+                    animation_type == sd.SpriteAnimationType.TINT
+                    and sprite_object.tint_handler.status == TintStatus.ANIMATING
+                ):
+                    return True
 
             elif isinstance(animation_type, str):
                 # Check if all the animations are occurring on the sprite.
@@ -6280,6 +5921,7 @@ class WaitForAnimationHandler:
                         sprite_object.is_moving,
                         sprite_object.is_rotating,
                         sprite_object.is_scaling,
+                        sprite_object.tint_handler.status == TintStatus.ANIMATING
                     ]
                 ):
                     return True
@@ -6293,6 +5935,7 @@ class WaitForAnimationHandler:
                         sprite_object.is_moving,
                         sprite_object.is_rotating,
                         sprite_object.is_scaling,
+                        sprite_object.tint_handler.status == TintStatus.ANIMATING
                     ]
                 ):
                     return True
@@ -6318,8 +5961,8 @@ class WaitForAnimationHandler:
         return (
             sprite_object.is_fading
             and isinstance(sprite_object.current_fade_value, cc.FadeCurrentValue)
-            and isinstance(sprite_object.fade_until, cc.FadeUntilValue)
-            and sprite_object.current_fade_value != sprite_object.fade_until.fade_value
+            and sprite_object.fade_properties.fade_until is not None
+            and sprite_object.current_fade_value != sprite_object.fade_properties.fade_until
         )
 
 

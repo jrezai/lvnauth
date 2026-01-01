@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -59,11 +59,18 @@ class Continue(NamedTuple):
 
 
 class HaltAuto(NamedTuple):
-    number_of_frames: int
+    number_of_seconds: float
+
+
+
+class CenterSprite(NamedTuple):
+    sprite_name: str
+    x: int
+    y: int
 
 
 class Rest(NamedTuple):
-    number_of_frames: int
+    number_of_seconds: float
 
 
 class WaitForAnimation(NamedTuple):
@@ -80,7 +87,7 @@ class SceneWithFade(NamedTuple):
     hex_color: str
     fade_in_speed: int
     fade_out_speed: int
-    fade_hold_for_frame_count: int
+    fade_hold_seconds: int
     chapter_name: str
     scene_name: str
 
@@ -127,14 +134,14 @@ class SpriteText(NamedTuple):
 class SpriteTextDelay(NamedTuple):
     sprite_type: str
     general_alias: str
-    number_of_frames: int
+    number_of_seconds: int
     
     
 class SpriteTextDelayPunc(NamedTuple):
     sprite_type: str
     general_alias: str
     previous_letter: str
-    number_of_frames: int
+    number_of_seconds: int
     
 
 class SpriteFontIntroAnimation(NamedTuple):
@@ -152,17 +159,24 @@ class SpriteFontFadeSpeed(NamedTuple):
 class SpriteTextClear(NamedTuple):
     sprite_type: str
     general_alias: str
-
-
-class MouseEventRunScriptNoArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
     
     
-class MouseEventRunScriptWithArguments(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-    arguments: str
+    
+class SpriteTintRegular(NamedTuple):
+    general_alias: str
+    speed: int
+    dest_tint: int
+    
+    
+class SpriteTintBright(NamedTuple):
+    general_alias: str
+    speed: int
+    dest_tint: int
+    bright_keyword: str
+    
+    
+class SpriteTintSolo(NamedTuple):
+    general_alias: str
 
 
 class Flip(NamedTuple):
@@ -174,12 +188,12 @@ class FontTextFadeSpeed(NamedTuple):
 
 
 class FontTextDelay(NamedTuple):
-    number_of_frames: int
+    number_of_seconds: float
 
     
 class FontTextDelayPunc(NamedTuple):
     previous_letter: str
-    number_of_frames: int
+    number_of_seconds: float
 
 
 class FontStartPosition(NamedTuple):
@@ -195,13 +209,13 @@ class FontOutroAnimation(NamedTuple):
 
 
 class AfterWithArguments(NamedTuple):
-    frames_elapse: int
+    seconds_to_wait: float
     reusable_script_name: str
     arguments: str
 
     
 class AfterWithoutArguments(NamedTuple):
-    frames_elapse: int
+    seconds_to_wait: float
     reusable_script_name: str
     
 
@@ -266,7 +280,7 @@ class RemoteCallWithArguments(NamedTuple):
 # Sprite classes
 
 
-class MovementSpeed(NamedTuple):
+class MoveStart(NamedTuple):
     sprite_name: str
     x: int
     x_direction: str
@@ -274,15 +288,27 @@ class MovementSpeed(NamedTuple):
     y_direction: str
 
 
-class MovementDelay(NamedTuple):
-    sprite_name: str
-    x: int
-    y: int
-
-
-class MovementStopRunScript(NamedTuple):
+# Used for multiple commands, such as:
+# character_after_fading_stop
+# object_after_scaling_stop
+# dialog_sprite_after_rotating_stop
+# character_after_movement_stop
+# character_on_mouse_enter, mouse_leave, mouse_click
+class SpriteStopRunScriptNoArguments(NamedTuple):
     sprite_name: str
     reusable_script_name: str
+    
+    
+# Used for multiple commands, such as:
+# character_after_fading_stop
+# object_after_scaling_stop
+# dialog_sprite_after_rotating_stop
+# character_after_movement_stop
+# character_on_mouse_enter, mouse_leave, mouse_click
+class SpriteStopRunScriptWithArguments(NamedTuple):
+    sprite_name: str
+    reusable_script_name: str
+    arguments: str
 
     
 # Used when the 'side to check' is specified (3 arguments)
@@ -326,49 +352,22 @@ class SpriteLoad(NamedTuple):
     sprite_general_alias: str
 
 
-class FadeUntilValue(NamedTuple):
-    sprite_name: str
-    fade_value: float
-
-
 class FadeCurrentValue(NamedTuple):
     sprite_name: str
     current_fade_value: int
 
 
-class FadeSpeed(NamedTuple):
+    
+class FadeStart(NamedTuple):
     sprite_name: str
     fade_speed: float
-    fade_direction: str  # "fade in" or "fade out"
+    fade_until: int
 
 
-class FadeStopRunScript(NamedTuple):
+
+class ScaleStart(NamedTuple):
     sprite_name: str
-    reusable_script_name: str
-
-
-class FadeDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    fade_delay: int
-
-
-class ScaleDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip by
-    scale_delay: int
-
-
-class ScaleBy(NamedTuple):
-    sprite_name: str
-    scale_by: float
-    scale_rotation: str
-
-
-class ScaleUntil(NamedTuple):
-    sprite_name: str
+    scale_speed: float
     scale_until: float
 
 
@@ -377,34 +376,15 @@ class ScaleCurrentValue(NamedTuple):
     scale_current_value: float
 
 
-class ScaleStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
 class RotateCurrentValue(NamedTuple):
     sprite_name: str
     rotate_current_value: float
+    
+    
 
-
-class RotateSpeed(NamedTuple):
+class RotateStart(NamedTuple):
     sprite_name: str
-    rotate_speed: float
     rotate_direction: str
-
-
-class RotateStopRunScript(NamedTuple):
-    sprite_name: str
-    reusable_script_name: str
-
-
-class RotateUntil(NamedTuple):
-    sprite_name: str
+    rotate_speed: float
     rotate_until: str  # str because the word 'forever' can be used.
-
-
-class RotateDelay(NamedTuple):
-    sprite_name: str
-
-    # The number of frames to skip when rotating a sprite.
-    rotate_delay: int
+    

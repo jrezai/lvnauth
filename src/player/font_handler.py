@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -17,7 +17,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 from __future__ import annotations
+from animation_speed import AnimationSpeed
 
 
 """
@@ -34,7 +36,7 @@ import audio_player
 from typing import Dict, List, Tuple, TYPE_CHECKING
 from enum import Enum, auto
 from shared_components import Passer
-from datetime import datetime
+import time
 
 if TYPE_CHECKING:
     # Only gets imported for type checking
@@ -82,6 +84,9 @@ class Letter:
         if opacity > 255:
             opacity = 255
             
+        elif opacity < 0:
+            opacity = 0
+            
         if self.opacity == opacity:
             return
         
@@ -108,12 +113,361 @@ class FontAnimationShowingType(Enum):
     GRADUAL_LETTER = auto()
     GRADUAL_LETTER_FADE_IN = auto()
 
+
+class FontLetterDelayHandler:
+    """
+    Used for calculating and elapsing second delays when showing
+    letter by letter gradual font animations (non-fading).
     
+    This prioritizes time accuracy over over frame-by-frame consistency.
+    If the frame rate drops, the text will advance by multiple 
+    characters in one frame to keep time with the clock.
+    """
+    def __init__(self, sprite_mode: bool):
+        
+        # Punctuation delay
+        # Key: (str) letter
+        # Value: (float) number of seconds to delay
+        # Used for gradual letter text displays (not gradual letter fading)
+        self.letter_delays = {}
+        
+        # For measuring the speed of gradual letter by letter (non-fade)
+        # at different frame rates. Used for development-only.
+        self.start_time = None
+
+        # The number of seconds to delay when applying gradual text 
+        # animation.
+        # For letter-by-letter animation only (not *any* fade-ins.)
+        self.font_text_delay: float = 0.10
+        
+        # For keeping track of the number of seconds that have been elapsed 
+        # so far for gradual text display animation.
+        self.time_since_last_letter_shown: float = 0
+        
+        # The number of characters that should be visible based on time.
+        self.count_letters_should_be_visible:int = 0
+        
+        # The number of seconds to wait due to reaching a punctuation 
+        # letter. This is separate from the regular gradual text delay.
+        self.punct_wait_seconds:float = 0
+        
+        # How many seconds have been waited so far on a punctuation pause.
+        self.punct_waited_so_far:float = 0
+        
+        self.sprite_mode = sprite_mode
+        
+    def set_letter_delay(self, letter: str, delay_seconds: int):
+        """
+        Set a delay for a specific letter.
+        
+        For example, if "." is provided as the letter with a delay_seconds
+        value of 0.5, then any period that gets shown will pause for half a
+        second, before showing the next letter.
+        
+        Used with <font_text_delay_punc>
+        """
+
+        if not letter:
+            return
+        elif len(letter) > 1:
+            return
+        elif not isinstance(letter, str):
+            return
+        elif not isinstance(delay_seconds, int) \
+             and not isinstance(delay_seconds, float):
+            return
+        elif delay_seconds < 0:
+            return
+        
+        # If the value is 0 (zero), remove the delay rule if the letter exists.
+        if delay_seconds == 0:
+            if letter in self.letter_delays:
+                del self.letter_delays[letter]
+        else:
+            
+            # Add or update letter delay.
+            self.letter_delays[letter] = delay_seconds
+
+    def get_font_after_letter_delay(self, letter: str) -> int:
+        """
+        Get the number of seconds to delay after a specific
+        letter is shown.
+    
+        A letter's delay is set using the command: <font_text_delay_punc>
+        """
+        delay_seconds =\
+            self.letter_delays.get(letter, 0)
+        
+        return delay_seconds
+    
+    def check_wait_punctuation(self, previous_letter: str) -> bool:
+        """
+        Check if the given letter is a letter that should be cause a delay
+        for X number of seconds. If so, set a variable to the number of
+        seconds that should be waited (self.punct_wait_seconds).
+        
+        Return: True if the given letter should cause a delay. The caller then
+        should wait before showing the next letter.
+        
+        Return: False if the given letter is a normal letter with no delay
+        required.
+        """
+        
+        # Was the previous letter a letter that should 
+        # cause this new letter to delay for X number of seconds?
+        # (ie: if the previous letter was a ".")
+        self.punct_wait_seconds =\
+            self.get_font_after_letter_delay(previous_letter)
+        
+        # Should we wait a few seconds because the last letter
+        # was a punctuation letter?
+        if self.punct_wait_seconds > 0:
+            # Yes, we should wait before showing the current letter
+            # because the last letter had a punctuation delay.
+            # Check again in the next frame to find out if enough
+            # time has elapsed in the next frame.
+            return True
+        
+        return False
+    
+    def update(self, 
+               delta: float, 
+               letter_cursor_position: int, 
+               letters: List[Letter], 
+               fast_mode: bool = False) -> Tuple[int, bool] | int | None:
+        """
+        Advances the text index using delta time. Uses a while loop to ensure 
+        the cursor letter index catches up by making multiple letters opaque
+        if needed, if the frame rate is slow. The purpose is to ensure
+        the making-letters-opaque process finishes making all the letters
+        opaque at the roughly the same time, regardless of the frame rate.
+        
+        It prioritizes time-accuracy rather than making sure it's always one
+        letter per frame.
+        
+        Return: a tuple (int, bool) to indicate where the letter cursor
+        has stopped/finished, and True to indiciate that all the letters
+        have been made opaque so the caller should stop animating the text.
+        
+        Return: None if no letters should be shown in the current frame
+        by the caller due to an unfinished punctuation delay.
+        
+        Return: an int that represents the letter cursor position, to let
+        the caller of this method know how far the letters have been made
+        opaque, ready to be passed in again to this method in the next frame.
+        
+        Arguments:
+        
+        - delta: the number of seconds elapsed since the last frame.
+        
+        - letter_cursor_position: where we are in the visibility cursor
+        when showing letter-by-letter non-fading letters. This is a reference
+        to FontAnimation's self.gradual_letter_cursor_position
+        
+        - letters: a list of letter objects that need to eventually all be
+        displayed. We use this list to show letters gradually by changing
+        their opacity levels to 255. This variable is a reference to
+        FontAnimation's self.letters, not a copy. So any changes we make to
+        this list inside this method affects the caller of this method's
+        list instance too.
+        
+        - fast_mode: whether the dialogue text animation is in fast-mode.
+        Fast-mode is when the viewer has clicked on the visual novel to
+        accelerate the text animation.
+        """
+    
+        ### 1. Handle Punctuation Delays (seconds-based, not milliseconds) ---
+        
+        # Is there a punctuation delay we need to enforce?
+        # Enforce a punctuation delay if:
+        # 1) The VN is not in fast-mode
+        # 2) The VN has been told to wait for a punctuation delay
+        # since the last letter was shown.
+        if not fast_mode and self.punct_wait_seconds > 0:
+            
+            # Check if we've waited long enough for the punct delay.
+            if self.punct_waited_so_far < self.punct_wait_seconds:
+                
+                # No, we have not waited long enough.
+                
+                # Increment the punctuation delay counter.
+                self.punct_waited_so_far += delta
+                
+                # We haven't waited long enough for a punctuation delay.
+                # Return and check again in the next frame.                
+                return
+            else:
+                # Yes, we've waited long enough for a punctuation delay.
+                # Reset the wait variables.                
+                self.punct_wait_seconds = 0
+                self.punct_waited_so_far = 0
+                
+        """
+        At this point, no punctuation delay waiting is needed because
+        the checks have already been done at the top.
+        """        
+    
+        ### Time Accumulation
+        
+        # Accumulate the time elapsed since the last frame
+        self.time_since_last_letter_shown += delta
+    
+        # Target delay in seconds
+        # If we're in fast-mode or if no delay has been set (0 zero),
+        # then set the delay speed to a fast value.
+        if fast_mode or not self.font_text_delay:
+            target_delay = 0.012
+        else:
+            target_delay = self.font_text_delay
+    
+        # Calculate how many letters we're allowed to show to keep sync 
+        # with time.
+        chars_to_process =\
+            int(self.time_since_last_letter_shown // target_delay)
+    
+        # Too soon to display another letter? Return.
+        # This way, if the frame rate is really fast, it should return 
+        # here often.
+        if chars_to_process == 0:
+            return
+
+        # print(f"{chars_to_process=}")
+    
+        # To let this method know to return the current latest cursor position
+        # after it's finished, so the caller knows which letter needs to be
+        # shown next in the next frame.    
+        letter_position_advanced = False
+        
+        # This gets set to True if there are no more letters to show.
+        is_finished = False
+    
+        # Make opaque as many letters as we're allowed in this frame.
+        for _ in range(chars_to_process):
+
+            ### Handle Spaces Quickly
+            
+            # If we're on a space letter, make it opaque now.
+            # Make all consecutive spaces opaque.
+            while letters[letter_cursor_position].is_space:
+                
+                # The current letter is a space, so quickly show it.
+                letters[letter_cursor_position].set_opacity(255)
+                
+                # No more letters to advance? Consider it done.
+                if letter_cursor_position + 1 >= len(letters):
+                    is_finished = True
+                    break
+                else:
+                    # Advance by one letter, because this letter was 
+                    # just a space.
+                    letter_cursor_position += 1
+                    letter_position_advanced = True
+                
+                
+            # No more letters to show? Finish the letter for-loop now.
+            if is_finished:
+                break
+
+            # Make the current non-space letter opaque now.
+            letters[letter_cursor_position].set_opacity(255)
+          
+            # Play a sound for this letter, if configured to do so. 
+            # Play a sound for every 3rd letter in fast-mode to help prevent 
+            # audio problems.
+            if not self.sprite_mode:
+                should_play = not fast_mode or (letter_cursor_position % 3 == 0)
+                if should_play:
+                    Passer.active_story.audio_player.play_audio(
+                            audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
+                            audio_channel=audio_player.AudioChannel.TEXT)
+
+
+            # No more letters to advance? Consider it done.
+            if letter_cursor_position + 1 >= len(letters):
+                is_finished = True
+                break
+            else:
+                # Yes, there are more letters to advance.
+                # Advance the cursor by 1 letter if we haven't already done so.
+                letter_cursor_position += 1
+                letter_position_advanced = True              
+    
+            # Spend one unit of delay time from the accumulator
+            self.time_since_last_letter_shown -= target_delay
+    
+            # Does the previous letter require a punctuation delay?
+            # If so, self.punct_wait_seconds will be set 
+            # automatically (by the method below) to the number of 
+            # seconds that should be waited.
+            prev_letter = letters[letter_cursor_position].previous_letter
+            if self.check_wait_punctuation(prev_letter):
+                # Yes, the previous letter needs a punctuation delay.
+                
+                # Reset the leftover time so the text does not "sprint" 
+                # unnaturally immediately after the punctuation pause finishes.
+                self.time_since_last_letter_shown = 0
+    
+                # Return the current letter's position, for use in the 
+                # next frame.       
+                return letter_cursor_position
+    
+        ### Cleanup
+    
+        # Have all the letters finished showing? Reset the variables so
+        # we're ready for the next batch of letters if needed.    
+        if is_finished:
+            
+            # Reset variables, making them ready for the next batch
+            # of letters. There are currently no more letters to show.            
+            self.count_letters_should_be_visible = 0
+            self.time_since_last_letter_shown = 0.0
+            self.punct_wait_seconds = 0
+            
+            """
+            For debugging, to measure how long it took to make all
+            the letters in the batch opaque (letter by letter, non fade). 
+            This is useful when trying to make sure all the letters are 
+            finished showing at roughly the same time regardless of 
+            the frame rate.
+            """
+            end_time = time.perf_counter()
+            duration = end_time - self.start_time
+            # print(f"Time taken to show all letters: {duration*1000:.3f} milliseconds")
+            
+            """
+            Return the cursor position and True. True tells the caller
+            to stop the text intro animation.
+            The reason we return the cursor position even though we're done
+            showing all the letters is because more text might be needed
+            to be shown where we left off, using <no_clear>, which resumes
+            the cursor position and appends text to where we left off.
+            So the caller still needs to know where the cursor was stopped.    
+            """
+            return (letter_cursor_position, True)
+    
+        elif letter_position_advanced:
+            
+            """
+            At this point, we're not done showing all the letters yet.
+            But we need to delay a bit before showing the next letter,
+            which is why we need to return the current letter position
+            to the caller so on the next frame we'll resume where we left off.
+            """
+            
+            # The actual cursor position gets updated by the caller of this
+            # method. We just use a copy of the position in this method,
+            # which is why we return an updated copy of the position (so the
+            # caller of this method can update the real cursor position).            
+            return letter_cursor_position
+    
+
+
 class FontAnimation:
     """
     Controls the opacity level of font sprites
     (intro of dialog text)
     """
+    
     def __init__(self,
                  reset_sudden_text_finished_flag_method,
                  start_animation_type: FontAnimationShowingType = FontAnimationShowingType.SUDDEN,
@@ -142,18 +496,10 @@ class FontAnimation:
         
         self.start_animation_type = start_animation_type
 
-        self.reset_sudden_text_finished_flag_method = reset_sudden_text_finished_flag_method
+        self.reset_sudden_text_finished_flag_method =\
+            reset_sudden_text_finished_flag_method
 
         self.sprite_mode = sprite_mode
-
-        # Key: (str) letter
-        # Value: (int) number of frames to delay
-        # Used for gradual letter text displays (not gradual letter fading)
-        self.letter_delays = {}        
-
-        # The number of frames to skip when applying gradual text animation.
-        # For letter-by-letter animation only (not *any* fade-ins.)
-        self.font_text_delay: int = 0
 
         # Letter by letter fade-in speed and overall text fade-in speed
         # for dialog text (1 being the slowest, 10 being the fastest)
@@ -174,13 +520,13 @@ class FontAnimation:
         
         # Which letter index we're currently on when showing text gradually.
         self.gradual_letter_cursor_position = 0
-        
-        # For keeping track of the number of frames
-        # that have been skipped so far for gradual text display animation.
-        self.gradual_delay_counter = 0
 
         # This will eventually hold a list of Letter objects.
         self.letters = None
+        
+        # Handles letter-by-letter non-fading delay elapsing
+        # and calculations.
+        self.letter_delay_handler = FontLetterDelayHandler(self.sprite_mode)
         
         # Deals with the <no_clear> command
         self.no_clear_handler = NoClearHandler(self)
@@ -200,49 +546,9 @@ class FontAnimation:
         # to restore it from sudden-mode back to its original animation type.
         self.restore_sprite_intro_animation_type: FontAnimationShowingType | None = None
 
-    def set_letter_delay(self, letter: str, delay_frames: int):
-        """
-        Set a delay for a specific letter.
-        
-        For example, if "." is provided as the letter with a delay_frame
-        value of 30, then any period that gets shown will pause for 1 second
-        before showing the next letter.
-        
-        Used with <font_text_delay_punc>
-        """
-
-        if not letter:
-            return
-        elif len(letter) > 1:
-            return
-        elif not isinstance(letter, str):
-            return
-        elif not isinstance(delay_frames, int):
-            return
-        elif delay_frames < 0:
-            return
-        
-        # If the value is 0 (zero), remove the delay rule if the letter exists.
-        if delay_frames == 0:
-            if letter in self.letter_delays:
-                del self.letter_delays[letter]
-        else:
-            
-            # Add or update letter delay.
-            self.letter_delays[letter] = delay_frames
-
-    def get_font_after_letter_delay(self, letter: str) -> int:
-        """
-        Get the number of frames to delay after a specific letter is shown.
-    
-        A letter's delay is set using the command: <font_text_delay_punc>
-        """
-        delay_frames =\
-            self.letter_delays.get(letter, 0)
-        
-        return delay_frames
-
-    def get_font_text_fade_speed(self, full_text_fade_in: bool = False) -> int:
+    def get_font_text_fade_speed(self,
+                                 full_text_fade_in: bool = False,
+                                 get_max_speed: bool = False) -> int:
         """
         Return the speed of the gradual fade-in dialog text.
         This speed applies to:
@@ -260,50 +566,75 @@ class FontAnimation:
         while fading. If we use the same fade speeds for letter-by-letter and
         full text, then full text fade ins will appear too slow. So we use this
         to know if we should fade in using a different fade speed map.
+        
+        - get_max_speed: if the user has clicked to proceed faster, this will
+        be True, so we use this flag to know if we need to return the fastest
+        speed for either full text fade in or letter by letter fade in,
+        depending on the first argument, full_tax_fade_in (bool).
         """
-
-        letter_by_letter_speed_mapping =\
-            {1: 0.50,
-             2: 1,
-             3: 2.50,
-             4: 3.50,
-             5: 5,
-             6: 5.50,
-             7: 6,
-             8: 6.50,
-             9: 7,
-             10: 8}
-
-        full_text_speed_mapping =\
-            {1: 1.50,
-             2: 3,
-             3: 5.50,
-             4: 8.50,
-             5: 10,
-             6: 12.50,
-             7: 14,
-             8: 16.50,
-             9: 18,
-             10: 20}
 
         if full_text_fade_in:
+            
+            # Should we return the fastest speed possible?
+            if get_max_speed:
+                requested_convenient_speed = 10
+            else:
+                requested_convenient_speed = self.font_text_fade_speed
+            
             # Default the speed to 5
-            speed = full_text_speed_mapping.get(self.font_text_fade_speed, 5)
+            if not requested_convenient_speed:
+                row_number = 5
+                
+            elif requested_convenient_speed > 10 or requested_convenient_speed < 1:
+                row_number = 5
+                
+            else:
+                row_number = requested_convenient_speed
+                
+            float_value = \
+                AnimationSpeed.get_sequence_value(
+                    initial_value=50,
+                    increment_by=150,
+                    max_convenient_row=10,
+                    convenient_row_number=row_number)
+            
+            speed = float_value
+            
         else:
-            # Default the speed to 5
-            speed = letter_by_letter_speed_mapping.get(self.font_text_fade_speed, 5)
+            # Gradual letter fade in speed
+            
+            max_rows =\
+                AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
+            
+            # Should we return the fastest speed possible?
+            if get_max_speed:
+                requested_convenient_speed =\
+                    AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN
+            else:
+                requested_convenient_speed = self.font_text_fade_speed            
+            
+            # Default the speed to 500
+            if not requested_convenient_speed:
+                requested_convenient_speed = 500
+                
+            elif requested_convenient_speed > max_rows \
+                 or requested_convenient_speed < 1:
+                
+                requested_convenient_speed = 500
+                
+            # debug
+            # requested_convenient_speed = 5
+            
+            float_value = \
+                AnimationSpeed.get_sequence_value(
+                    initial_value=25,
+                    increment_by=5,
+                    max_convenient_row=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN,
+                    convenient_row_number=requested_convenient_speed)
+
+            speed = float_value
         
         return speed
-
-    def get_font_text_delay(self) -> int:
-        """
-        Return the number of frames to skip when animating gradual
-        dialog text.
-        For example, if the value is 2, it means to run the text
-        animation after skipping 2 frames. If the value is zero, it means
-        to run the text animation on every frame.
-        """
-        return self.font_text_delay
         
     def start_show_animation(self, letters: List[Letter]):
         """
@@ -346,7 +677,7 @@ class FontAnimation:
         
     def get_start_opacity_level(self) -> int:
         """
-        Get the opacity level a newly added letter should be at
+        Get the opacity level a newly added letter,
         based on the current animation type.
         """
         if self.start_animation_type in (FontAnimationShowingType.SUDDEN,):
@@ -360,46 +691,96 @@ class FontAnimation:
             # starting animation is currently unknown - default to 255 opacity.
             return 255
 
-    def get_text_fade_speed(self) -> Tuple:
+    def get_one_letter_fade_speed(self,
+                                  letter_number: int,
+                                  letter_opacity: float) -> float:
         """
-        Return the speed of the gradual letter fade-in animation
-        for 3 letters, as a tuple.
         
-        Why 3? There letter-by-letter fade-in animation occurs for 3 letters
-        at the same time. The first letter gets faded-in the fastest,
-        the second letter gets faded-in medium, the third letter gets faded-in
-        the slowest.
+        Get the given letter number's (1 to 3) current opacity level and
+        if it's zero, use the base speed in the initial opacity increment.
         
-        Example return value:
+        If the opacity level is not zero, don't add the base speed because
+        the base speed will have already been used on the letter.
         
-        (25, 15, 5)
-        Which means:
-        fade-in letter 1 by 25 opacity
-        fade-in letter 2 by 15 opacity
-        fade-in letter 3 by 5 opacity
+        The base speed is used to give the first letter a head start when
+        fading in, followed by the second letter, and finally the third letter.
+        
+        This method is only used for gradual letter-by-letter fade-ins.
+        
+        Arguments:
+        
+        - letter_number: the letter number that is being faded in. This can
+        only be 1, 2 or 3.
+        
+        - letter_opacity: we use this to determine if a base speed (head start)
+        needs to be applied to the current letter's fade in or not. If it's
+        at opacity zero, a base speed is added, based on the letter number.
         """
         
         if self.faster_text_mode:
+            
             # If we're in fast-mode (the user clicked the mouse button),
-            # then default to a speed of 10.
-            fade_in_speed = 10           
+            # then get the fastest fade-in speed.
+            fade_in_speed =\
+                self.get_font_text_fade_speed(get_max_speed=True)
+            
         else:
             # Run the method that will return the text speed
             # setting as defined by the story script.
-            # Example value (int): 1 to 10 (1 being the slowest, 10 being the fastest)
             fade_in_speed = self.get_font_text_fade_speed()
             
+        if letter_number not in (1, 2, 3):
+            return
 
-        # We'll start with this speed as the starting point
-        base_start = (15, 5, -5)
-
-        # We're going to increment the opacity of the letters by this much.
-        increment_base_speed_by = 10 * fade_in_speed
+        # We'll start with this opacity boost as the starting point.
+        # It helps to avoid a 'catterpillar' fade-in effect. This causes 
+        # the fade-in to last longer near the end of the text, making it 
+        # look nicer.
+        # base_start = (24, 4, 8)
+        base_start = (24, 8, 4)
         
-        return (base_start[0] + increment_base_speed_by,
-                base_start[1] + increment_base_speed_by,
-                base_start[2] + increment_base_speed_by)
+        # Initialize
+        increase_opacity_by = 0
+        
+        # First time increasing the opacity on this letter?
+        # Add a base start boost.
+        if letter_opacity == 0:
+            increase_opacity_by = base_start[letter_number - 1]
 
+        increase_opacity_by = (increase_opacity_by + fade_in_speed) \
+            * AnimationSpeed.delta
+
+        return increase_opacity_by
+
+    def make_all_letters_opaque(self):
+        """
+        Set the opacity of all the letters to 255.
+        
+        The user has clicked twice to make the dialogue text appear suddently.
+        """
+        letter: Letter
+        for letter in self.letters:
+            letter.set_opacity(255)
+            
+    def set_gradual_cursor_to_end(self):
+        """
+        Set the gradual letter-by-letter cursor position to the end, ready
+        to display more text at the stopped position if needed.
+        
+        Purpose: if the user clicks once or twice to advance the text faster
+        or instantly, respectively, and there's a <no_clear> command, it will
+        instantly show the text up to <no_clear>. We then use this method to
+        move the virtual cursor to the end of where it stopped at <no_clear>,
+        so once the user clicks the story again to resume where it left off,
+        the cursor won't be at the original location that the user clicked,
+        but where the text stopped.
+        
+        This is also important to prevent letter-by-letter audio from playing
+        from where the user clicked, causing unnecessary audio from playing for
+        letters that are already visible.
+        """
+        self.gradual_letter_cursor_position = len(self.letters)
+                
     def animate(self) -> bool | None:
         """
         Increase the opacity of the letters in the dialog text (self.letters),
@@ -415,9 +796,10 @@ class FontAnimation:
         # Not animating and not in sudden-mode?
         # There is nothing to animate, so return.
 
-        # However, if we are in sudden-mode, we must run this method until the end, because
-        # the end of this method will run stop_intro_animation(), which needs to happen for
-        # the on_halt script run, even when in sudden-mode.
+        # However, if we are in sudden-mode, we must run this method until 
+        # the end, because the end of this method will run 
+        # stop_intro_animation(), which needs to happen for the on_halt 
+        # script run, even when in sudden-mode.
         if not self.is_start_animating and \
                 self.start_animation_type != FontAnimationShowingType.SUDDEN:
             return
@@ -441,8 +823,8 @@ class FontAnimation:
             # Has the user clicked to make the text go faster?
             if self.faster_text_mode:
                 # Set the speed to full speed.
-                # 20 here refers to the opacity increment per frame.
-                fade_in_speed = 20
+                # 2000 here refers to a fast fade-in speed (almost instant).
+                fade_in_speed = 2000
             else:
                 # The text is going at a normal speed.
                 
@@ -450,7 +832,7 @@ class FontAnimation:
                 fade_in_speed = self.get_font_text_fade_speed(True)
 
             # self.current_font_fade_value += 15
-            self.current_font_fade_value += fade_in_speed
+            self.current_font_fade_value += fade_in_speed * AnimationSpeed.delta
             
             if self.current_font_fade_value > 255:
                 self.current_font_fade_value = 255            
@@ -483,7 +865,8 @@ class FontAnimation:
             if self.current_font_fade_value >= 255:
                 stop_intro = True
                 
-        elif self.start_animation_type == FontAnimationShowingType.GRADUAL_LETTER_FADE_IN:
+        elif self.start_animation_type == \
+             FontAnimationShowingType.GRADUAL_LETTER_FADE_IN:
 
             def increase_opacity_three_letters():
                 """
@@ -493,14 +876,14 @@ class FontAnimation:
                 The third letter will fade-in the slowest.
                 """
 
-                # Get the fade-in speeds of 3 letters as a tuple.
-                # Example: (45, 35, 25)
-                gradual_fade_in_speeds: Tuple =\
-                    self.get_text_fade_speed()
+                ## Get the fade-in speeds of 3 letters as a tuple.
+                ## Example: (45, 35, 25)
+                #gradual_fade_in_speeds: Tuple =\
+                    #self.get_one_letter_fade_speed()
                 
-                first_letter_speed = gradual_fade_in_speeds[0]
-                second_letter_speed = gradual_fade_in_speeds[1]
-                third_letter_speed = gradual_fade_in_speeds[2]
+                #first_letter_speed = gradual_fade_in_speeds[0]
+                #second_letter_speed = gradual_fade_in_speeds[1]
+                #third_letter_speed = gradual_fade_in_speeds[2]
 
                 letters_count = len(self.letters)
 
@@ -509,12 +892,12 @@ class FontAnimation:
                 opacity_changed = False
 
                 letter: Letter
-                for idx, letter in enumerate(self.letters):
+                for idx_search_letter_1, letter in enumerate(self.letters):
 
                     # Don't gradually fade-in space characters 
                     # because they're invisible.
                     if letter.is_space:
-                        self.letters[idx].set_opacity(255)
+                        self.letters[idx_search_letter_1].set_opacity(255)
                         continue
                     
                     # If this letter is at full opacity already,
@@ -527,33 +910,87 @@ class FontAnimation:
                     # Set this to indicate that there might be more letters
                     # in the next frame that may need the opacity changed.
 
-                    # In other words, we're not done fading in the text yet.
+                    # In other words, we're not done fading-in the text yet.
                     opacity_changed = True
 
+                    increase_by_first_letter =\
+                        self.get_one_letter_fade_speed(
+                            letter_number=1,
+                            letter_opacity=self.letters[idx_search_letter_1].opacity)
+                    
                     # Increase the opacity of the letter we're on.
-                    self.letters[idx].increase_opacity_by(first_letter_speed)
+                    self.letters[idx_search_letter_1].increase_opacity_by(increase_by_first_letter)
 
-                    # Increase the next letter's opacity by this much.
-                    increase_next_by = second_letter_speed
+                    ## Increase the next letter's opacity by this much.
+                    #increase_next_by = second_letter_speed
 
                     # Increase the opacity of the second letter a little bit
-                    if idx + 1 <= letters_count - 1:
+                    if idx_search_letter_1 + 1 <= letters_count - 1:
+                        
+                        # Keep searching for letter 2 until a non-space character
+                        # is found or until the end of the letters is reached.
+                        for idx_search_letter_2, letter in enumerate(self.letters[idx_search_letter_1 + 1:], start=idx_search_letter_1+1):
+                                
+                            # Make sure it's not a space character.
+                            if self.letters[idx_search_letter_2].is_space:
+                                self.letters[idx_search_letter_2].set_opacity(255)
+                                continue
+                            
+                            # Only start increasing the opacity of letter 2
+                            # if letter 1 is at least at 120 opacity
+                            if self.letters[idx_search_letter_1].opacity < 120:
+                                break                            
+                        
+                            increase_by_second_letter =\
+                                self.get_one_letter_fade_speed(
+                                    letter_number=2,
+                                    letter_opacity=self.letters[idx_search_letter_2].opacity)                            
+                            
+                            self.letters[idx_search_letter_2].increase_opacity_by(increase_by_second_letter)
 
-                        # Make sure it's not a space character.
-                        if not self.letters[idx + 1].is_space:
-                            self.letters[idx + 1].increase_opacity_by(increase_next_by)
+                            ## Increase the next letter's opacity by this much.
+                            #increase_next_by = third_letter_speed
+    
+                            # Increase the opacity of the third letter a little bit
+                            if idx_search_letter_2 + 1 <= letters_count - 1:
+                                
+                                # Keep searching for letter 3 until a non-space character
+                                # is found or until the end of the letters is reached.
+                                for idx_search_letter_3, letter in enumerate(self.letters[idx_search_letter_2 + 1:], start=idx_search_letter_2+1):
+                                                            
+            
+                                    # Make sure it's not a space character.
+                                    if self.letters[idx_search_letter_3].is_space:
+                                        self.letters[idx_search_letter_3].set_opacity(255)
+                                        continue
+                                    
+                                    # Only start increasing the opacity of letter 3
+                                    # if letter 2 is at least at 120 opacity
+                                    if self.letters[idx_search_letter_2].opacity < 120:
+                                        break                              
+                                    
+                                    increase_by_third_letter =\
+                                        self.get_one_letter_fade_speed(
+                                            letter_number=3,
+                                            letter_opacity=self.letters[idx_search_letter_3].opacity)                               
+                                    
+                                    self.letters[idx_search_letter_3].increase_opacity_by(increase_by_third_letter)
+                                    
+                                    # Dont' look for the next letter 3
+                                    # in this frame. We've fade-in up to 
+                                    # letter 3 already in this frame, leave 
+                                    # it until the next frame.
+                                    break
+                                
+                            # Dont' look for the next letter 2
+                            # in this frame. We've fade-in up to letter 2
+                            # already in this frame, leave it until the next 
+                            # frame.
+                            break
 
-                            # Increase the next letter's opacity by this much.
-                            increase_next_by = third_letter_speed
-
-                    # Increase the opacity of the third letter a little bit
-                    if idx + 2 <= letters_count - 1:
-
-                        # Make sure it's not a space character.
-                        if not self.letters[idx + 2].is_space:
-                            self.letters[idx + 2].increase_opacity_by(increase_next_by)
-
-                    # That's enough fading-in for this frame.
+                    # That's enough fading-in letter 1 in this frame.
+                    # We've only faded-in letter 1, because letter 2 and 3
+                    # were not available or not ready to be faded-in.
                     break
                     
                 # No opacities changed in the loop above?
@@ -568,70 +1005,83 @@ class FontAnimation:
             increase_opacity_three_letters()
 
         elif self.start_animation_type == FontAnimationShowingType.GRADUAL_LETTER:
-
-            # Was the previous letter a letter that should cause this new letter
-            # to delay for X number of frames? (ie: if the previous letter was a ".")
-            num_of_frames_to_skip =\
-                self.get_font_after_letter_delay(
-                    self.letters[self.gradual_letter_cursor_position].previous_letter)
-
-            # No delay set based on the previous letter?
-            # Check if there's a global delay setting.
-            if num_of_frames_to_skip == 0:
-
-                # Get the number of frames we should skip (delay)
-                # when showing a letter-by-letter dialog text animation.
-                num_of_frames_to_skip = self.get_font_text_delay()
-                
-            is_space =\
-                    self.letters[self.gradual_letter_cursor_position].is_space
-
-            # Don't skip this frame if:
-            # 1. There is no delay set.
-            # 2. The current letter is a space (spaces shouldn't be delayed).
-            # 3. We've delayed long enough.
-            # 4. We're in fast-text mode (the user clicked to make it go faster.)
+            """
+            Non-fading letter by letter animation.
+            """
             
-            # Don't skip any frames or we've delayed long enough?
-            # Then process the letter-by-letter animation.
-            if num_of_frames_to_skip == 0 \
-               or (is_space and num_of_frames_to_skip == 0) \
-               or self.gradual_delay_counter >= num_of_frames_to_skip \
-               or self.faster_text_mode:
+            # For debugging the gradual letter displays at different 
+            # frame rates.
+            if not self.letter_delay_handler.start_time:
+                self.letter_delay_handler.start_time = time.perf_counter()
+
+            # Advance the dialogue by 1 or more letters to catch up with
+            # the wait-time delay.
+            new_cursor_position = self.letter_delay_handler.update(\
+                delta=AnimationSpeed.delta,
+                letter_cursor_position=self.gradual_letter_cursor_position,
+                letters=self.letters,
+                fast_mode=self.faster_text_mode)
+            
+            if new_cursor_position is None:
+                # We shouldn't display any letters in this frame, due to
+                # a punctuation delay.
+                return
+            elif isinstance(new_cursor_position, tuple):
+                # All the letters have finished showing.
+                # Record the cursor position we finished at in case we need
+                # to resume where the cursor left off later in the visual 
+                # novel due to a <no_clear> command.
+                self.gradual_letter_cursor_position = new_cursor_position[0]
+                if new_cursor_position[1]:
+                    stop_intro = True
+            else:
+                # The letter cursor position has advanced/progressed, so
+                # record the current letter position. We'll need this
+                # in the next frame so we can resume the animation again.
+                self.gradual_letter_cursor_position = new_cursor_position
+                
+
+            ## Don't skip this frame if:
+            ## 1. There is no delay set.
+            ## 2. The current letter is a space (spaces shouldn't be delayed).
+            ## 3. We've delayed long enough.
+            ## 4. We're in fast-text mode (the user clicked to make it go faster.)
+            
+            ## Don't skip any frames or we've delayed long enough?
+            ## Then process the letter-by-letter animation.
+            #if num_of_milliseconds_to_delay == 0 \
+               #or (is_space and num_of_milliseconds_to_delay == 0) \
+               #or self.letter_delay_handler.time_since_last_letter_shown >= num_of_milliseconds_to_delay \
+               #or self.faster_text_mode:
                 
                 # Process the letter-by-letter animation, we don't need
                 # to delay in this frame.
 
-                self.gradual_delay_counter = 0
+            ############
+            # self.letter_delay_handler.time_since_last_letter_shown = 0
+            ############
+            
+            ## Show the letter
+            # self.letters[self.gradual_letter_cursor_position].set_opacity(255)
 
-                # Show the letter
-                self.letters[self.gradual_letter_cursor_position].set_opacity(255)
 
-                # Play a sound for this letter, if configured to do so.
-                # Don't play a sound for a space ' ' character.
-                if not is_space and not self.sprite_mode:
-                    Passer.active_story.audio_player.play_audio(
-                        audio_name=Passer.active_story.dialog_rectangle.text_sound_name,
-                        audio_channel=audio_player.AudioChannel.TEXT)
 
-                self.gradual_letter_cursor_position += 1
+            # self.gradual_letter_cursor_position += 1
 
-                # We need to have len(self.letters) - 1 for sprite text
-                # to show properly when swapping out a sprite with 
-                # gradual text that already finished animating the gradual text.
-                if self.gradual_letter_cursor_position > len(self.letters) - 1:
+            ## We need to have len(self.letters) - 1 for sprite text
+            ## to show properly when swapping out a sprite with 
+            ## gradual text that already finished animating the gradual text.
+            #if self.gradual_letter_cursor_position > len(self.letters) - 1:
+                
+                ## We're done showing the letters.
+
+                ## Set the cursor position to prepare for more sprite text
+                ## in case the sprite text gets changed later.
+                #self.gradual_letter_cursor_position = len(self.letters) - 1
+
+                ## We're done showing the letters.
+                #stop_intro = True
                     
-                    # We're done showing the letters.
-
-                    # Set the cursor position to prepare for more sprite text
-                    # in case the sprite text gets changed later.
-                    self.gradual_letter_cursor_position = len(self.letters) - 1
-
-                    # We're done showing the letters.
-                    stop_intro = True
-                    
-            else:
-                self.gradual_delay_counter += 1
 
         elif self.start_animation_type == FontAnimationShowingType.SUDDEN:
             # The text in sudden-mode has finished being displayed, so
@@ -662,7 +1112,7 @@ class FontAnimation:
         self.no_clear_handler.clear_text_check()
 
         # self.gradual_letter_cursor_position = 0
-        self.gradual_delay_counter = 0
+        self.letter_delay_handler.time_since_last_letter_shown = 0
         self.current_font_fade_value = 255
 
         # Run a reusable script now that the dialog text is finished displaying?
@@ -677,9 +1127,10 @@ class FontAnimation:
             main_reader = Passer.active_story.reader.get_main_story_reader()
 
             # Run reusable_on_halt, if we're not in halt_auto mode.
-            # halt_auto should not show on_halt animations, because it will proceed on its own.
+            # halt_auto should not show on_halt animations, because it will 
+            # proceed on its own.
             if Passer.active_story.dialog_rectangle.reusable_on_halt and \
-                    not main_reader.halt_main_script_auto_mode_frames:
+                    not main_reader.halt_main_script_auto_mode_seconds_reach:
                 Passer.active_story.reader.spawn_new_background_reader(
                     reusable_script_name=Passer.active_story.dialog_rectangle.reusable_on_halt)
 
@@ -1331,7 +1782,8 @@ class ActiveFontHandler:
 
                 # surface_to_draw_on = self.sprite_object.image
             
-            # Animate any gradual text animations (fade values).
+            # Animate any gradual text animations (gradual letter fades or 
+            # letter by letter).
             # Get a value indicating whether an animation took place or not.
             animated_this_frame = self.font_animation.animate()            
 
@@ -1348,13 +1800,69 @@ class ActiveFontHandler:
                 # Meant for sudden-mode, used later in this method.
                 blitted_a_letter = True
 
-            # If we blitted letter(s) and the font mode is sudden-mode,
-            # that means we blitted all the text for this current letter-set,
-            # In a case like that, set 'sudden_text_drawn_already' to True
-            # so we don't draw keep re-drawing the dialog rectangle for no reason
-            # in the next call to this method.
+            """
+            If we blitted letter(s) and the font mode is sudden-mode,
+            that means we blitted all the text for this current letter-set,
+            In a case like that, set 'sudden_text_drawn_already' to True
+            so we don't draw keep re-drawing the dialog rectangle for no reason
+            in the next call to this method.
+            """
             if blitted_a_letter:
                 
+                # Are we in gradual letter-by-letter font animation-mode
+                # and in fast-mode?
+                if self.font_animation.start_animation_type == \
+                   FontAnimationShowingType.GRADUAL_LETTER \
+                   and self.font_animation.faster_text_mode:
+                    
+                    # We're in gradual letter-by-letter mode
+                    # and in fast-mode. But at this point, we don't know
+                    # if it's one-click fast-mode or two-click fast-mode
+                    # where it shows the text instantly. We're about to
+                    # find out below.
+                    
+                    """
+                    The user has clicked to make the text go faster.
+                    They might have also clicked twice to make the text
+                    advance instantly. If the user has clicked twice, all
+                    the letters will be opaque and if that's the case, we should
+                    now stop animating the letters so they don't get re-drawn
+                    next frame, because all the letters are now fully opaque.
+                    
+                    We have to do this check here, after the animate() method,
+                    because if we do it before the animate() method above, the
+                    last frame, before the text is displayed in full, won't
+                    show the full opaque text - it will show opaque letters up
+                    to where the user clicked twice, and the rest of the
+                    letters will not be shown. So having this check here after
+                    the animte() method has given it a chance to blit one last
+                    time, showing all the now-opaque letters.
+                    """
+                    
+                    # Go through all the letters that should be displayed.
+                    letter: Letter
+                    for letter in self.font_animation.letters:
+                        
+                        # Did we find a letter that hasn't been fully made
+                        # opaque yet?
+                        if letter.opacity < 255:
+                            # This letter hasn't been fully animated yet.
+                            # That means the user did not click twice to 
+                            # advance the text instantly, so we should still 
+                            # animate the font intro as usual.
+                            break
+                    else:
+                        """
+                        We finished going through all the letters.
+                        This means *all* the letters are fully opaque.
+                        This also means the user has clicked twice to
+                        advance the text instantly, so stop the intro
+                        animation so we don't try to animate it on the
+                        next frame.
+                        """
+                        self.font_animation.stop_intro_animation()
+                        
+                    
                 # If we're drawing text on a sprite object, then the text
                 # will have been blitted on sprite_object.original_image
                 # So copy that surface to self.image, so it gets shown
@@ -1539,6 +2047,21 @@ class NoClearHandler:
             if self.get_start_animation_type() in \
                (FontAnimationShowingType.GRADUAL_LETTER, ):
                 
+                """
+                Move the virtual cursor position to the end, in case
+                more text gets added at the stopped position.
+                This is here because the text has been made opaque up 
+                to <no_clear>. If the user clicks again, it will
+                resume from where it stopped at <no_clear>.
+                Without this method below, it will resume animating letters
+                from where the text position was at the time
+                the user first clicked (clicked once or twice) to advance the
+                text faster or advance the text instantly.
+                With the method below, it will resume at the end of all the
+                opaque letters.
+                """                
+                self.font_animation.set_gradual_cursor_to_end()
+                
                 # Record the current cursor index of the gradual letter.
                 if self.font_animation.gradual_letter_cursor_position:
                     self.gradual_last_index =\
@@ -1571,4 +2094,3 @@ class NoClearHandler:
             # are reset, because <no_clear> has not been used recently.
             self.number_of_letters_faded_so_far = None
             self.gradual_last_index = None
-            

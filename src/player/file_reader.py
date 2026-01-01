@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -227,7 +227,7 @@ class FileReader:
                 file_sprite = BytesIO(bytes_sprite)
 
                 # Load image
-                if file_extension in (".png", ".gif"):
+                if file_extension.lower() in (".png", ".gif"):
                     surface_image = pygame.image.load(file_sprite,
                                                      "any_name" + file_extension).convert_alpha()
                 else:

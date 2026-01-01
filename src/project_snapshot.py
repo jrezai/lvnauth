@@ -1,5 +1,5 @@
 """
-Copyright 2023-2025 Jobin Rezai
+Copyright 2023-2026 Jobin Rezai
 
 This file is part of LVNAuth.
 
@@ -29,7 +29,7 @@ class ProjectSnapshot:
     EDITOR_VERSION = 1
     
     # Used in the About dialog
-    EXACT_EDITOR_VERSION = "1.0"
+    EXACT_EDITOR_VERSION = "1.1"
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
