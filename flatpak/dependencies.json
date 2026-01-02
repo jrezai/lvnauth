@@ -39,8 +39,22 @@
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/aa/4b/c08d748c8b082cee786e09b65a126d391c39b28dc75e3cea036b4b47b9dd/pygame_ce-2.5.3.tar.gz",
-			    "sha256": "dc04f0bf1a270a84eb371556298a9902b9c4ab08137c9dd10ef03fa4e7fcbfed"
+			    "url": "https://files.pythonhosted.org/packages/17/dc/fd9f264e54c7920f91a34956ae67fb888617f05c512d696bcc2b3c492587/pygame_ce-2.5.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+			    "sha256": "d2cca1789ab4f3709c3b624743469a00753c5886f6cbd19d3f2f6c98571ad5a5"
+			}
+		    ]
+		},
+		{
+		    "name": "python3-niquests",
+		    "buildsystem": "simple",
+		    "build-commands": [
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"niquests==3.13.1\" --no-build-isolation"
+		    ],
+		    "sources": [
+			{
+			    "type": "file",
+			    "url": "https://files.pythonhosted.org/packages/2c/b8/8afeb742e04020366f6c919dc4e20932649ac926b611bef79a27182adb7d/niquests-3.13.1-py3-none-any.whl",
+			    "sha256": "a32183c98100723e7a308f6a13f4a1b857a9f38465bed7c6f06bfbaf307f0bf1"
 			}
 		    ]
 		},
