@@ -85,13 +85,13 @@
 		    "name": "python3-qh3",
 		    "buildsystem": "simple",
 		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} qh3-1.4.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl --no-build-isolation"
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"qh3==1.4.2\" --no-build-isolation"
 		    ],
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/88/58/0ad93053a8c84ff9645e1fbfda8a17ad0c022c3b78985529ec6965c38e32/qh3-1.4.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-			    "sha256": "c3e2518ce442b70314892a594e21157deb13fbc436f77ad6555439cfd9912035"
+			    "url": "https://files.pythonhosted.org/packages/7b/3e/fab4c8d55fe5978d96a5fe15c62cbdf30e055d906cbf88f8305da20550d5/qh3-1.4.2.tar.gz",
+			    "sha256": "d5ac3e8e3f66ff88819205dbc67e6f771cbb80529325ca9f3bc03fa00c5c83aa"
 			}
 		    ]
 		},
