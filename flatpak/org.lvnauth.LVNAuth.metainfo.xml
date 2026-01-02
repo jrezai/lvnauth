@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright 2025 Jobin Rezai -->
+<!-- Copyright 2026 Jobin Rezai -->
 <component type="desktop-application">
   <id>org.lvnauth.LVNAuth</id>
   
@@ -7,7 +7,7 @@
   <summary>Create and play visual novels</summary>
   
   <metadata_license>MIT</metadata_license>
-  <project_license>LGPL-3.0+</project_license>
+  <project_license>LGPL-3.0-or-later</project_license>
 
   <developer id="tld.vendor">
     <name>Jobin Rezai</name>
@@ -28,6 +28,11 @@
       Compile your story into a single .lvna file, which can be opened using LVNAuth. Your viewers will need LVNAuth to view your visual novel.
     </p>
   </description>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Development</category>
+  </categories>
   
   <launchable type="desktop-id">org.lvnauth.LVNAuth.desktop</launchable>
 
@@ -58,16 +63,20 @@
   </screenshots>
 
   <releases>
-    <release version="1.0" date="2025-11-01">
-    <url type="details">https://lvnauth.org/blog/lvnauth-0.7.html</url>
+    <release version="1.1" date="2026-01-01">
+    <url type="details">https://lvnauth.org/blog/lvnauth-1.1.html</url>
       <description>
         <p>Release description</p>
           <ul>
-            <li>The license for LVNAuth has been changed from GPLv3 to LGPLv3. This change was made to provide greater flexibility for developers and users who wish to bundle LVNAuth with visual novels or integrate it into other software applications, while still keeping the core of LVNAuth libre. Since LVNAuth functions both as a visual novel editor and a player, the LGPLv3 license better suits its dual purpose and encourages broader use and distribution.</li>
-            <li>Added the ability to create and play web-connected visual novels. These are visual novels that can fetch and save data from and to a remote web server managed by LVNAuthWeb (a new terminal-based web application used for interacting with visual novels).</li>
-            <li>Added new remote commands: `*<remote_get>*`, `*<remote_save>*`, `*<remote_call>*`. These are used for getting a saved value from a remote server, saving data to a remote server, and running a remote script on a web server, respectively. This opens up the possibility to generate LVNAuth scripts on a web server, dynamically. For example, you could have a character tell you the current weather by getting the weather info from a web server, create your own AI character responses and more.</li>
-            <li>Added `*<halt_and_pause_main_script>*` and `*<unpause_main_script>*` commands to the Wizard. These two commands were introduced in version 0.6 but were not listed in the Wizard until now.</li>
-            <li>Fixed bug: using multiple optional arguments caused the visual novel to crash. This affected commands that accept multiple optional arguments, such as `*<call>*`, `*<after>*`</li>
+            <li>Animation speed is no longer directly dependent on a visual novel's FPS.</li>
+            <li>Added much finer speed control over effects such as fading, rotating, scaling, moving.</li>
+            <li>The commands font_text_delay_punc and sprite_font_text_delay_punc now take delays in seconds instead of frames.</li>
+            <li>Added a new versatile tinting effect for characters, objects, and dialog sprites. Sprites can be darkened or brightened depending on your needs.</li>
+            <li>Introduced "Focus" variant commands—character_focus, object_focus, and dialog_sprite_focus. These commands automatically tint all other sprites in a category while leaving a single sprite untinted. This is ideal for highlighting the active speaker in a scene.</li>
+            <li>Fixed a critical bug: when a scene that was not in the first chapter, was set as the startup scene, saving the visual novel and re-opening the project would cause some chapters to not load anymore. This has been fixed.</li>
+            <li>Fixed a bug where the last frame of a fade-out effect wasn't applied when the opacity reached zero. This caused a slight visibility of the sprite when it should have been completely transparent.</li>
+            <li>Fixed bug: a rotating/scaling sprite would flicker when the sprite was not fully opaque.</li>
+            <li>Many more changes... Please see the website for more release notes.</li>
           </ul>
       </description>
      </release>

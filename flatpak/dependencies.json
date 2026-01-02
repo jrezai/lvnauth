@@ -20,13 +20,13 @@
 		    "name": "python3-Pillow",
 		    "buildsystem": "simple",
 		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"Pillow==10.0.0\" --no-build-isolation"
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"Pillow==11.1.0\" --no-build-isolation"
 		    ],
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/0f/8b/2ebaf9adcf4260c00f842154865f8730cf745906aa5dd499141fb6063e26/Pillow-10.0.0.tar.gz",
-			    "sha256": "9c82b5b3e043c7af0d95792d0d20ccf68f61a1fec6b3530e718b688422727396"
+			    "url": "https://files.pythonhosted.org/packages/f3/af/c097e544e7bd278333db77933e535098c259609c4eb3b85381109602fb5b/pillow-11.1.0.tar.gz",
+			    "sha256": "368da70808b36d73b4b390a8ffac11069f8a5c85f29eff1f1b01bcf3ef5b2a20"
 			}
 		    ]
 		},
@@ -34,13 +34,13 @@
 		    "name": "python3-pygame-ce",
 		    "buildsystem": "simple",
 		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygame-ce==2.3.1\" --no-build-isolation"
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygame-ce==2.5.3\" --no-build-isolation"
 		    ],
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/29/1f/8acc9e552047358688875e7a1ef8f5b5419a7bc5c1eeee3a5beab5a995ff/pygame-ce-2.3.1.tar.gz",
-			    "sha256": "d7eab24aa97ab806e1a3b3d268d0edb8ca3b7ee47f8baa6dbf29d46c39cf3d79"
+			    "url": "https://files.pythonhosted.org/packages/aa/4b/c08d748c8b082cee786e09b65a126d391c39b28dc75e3cea036b4b47b9dd/pygame_ce-2.5.3.tar.gz",
+			    "sha256": "dc04f0bf1a270a84eb371556298a9902b9c4ab08137c9dd10ef03fa4e7fcbfed"
 			}
 		    ]
 		},
@@ -62,13 +62,13 @@
 		    "name": "python3-pygubu",
 		    "buildsystem": "simple",
 		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygubu==0.35.5\" --no-build-isolation"
+			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygubu==0.36.3\" --no-build-isolation"
 		    ],
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/b1/63/d7e50f9939f312cdc43df642958b3f5072c0d9096a702479137649ce47b3/pygubu-0.35.5-py3-none-any.whl",
-			    "sha256": "4f1bd1e8f39e2e50a1febe093062eb2c9625ac415486f0bfb0ed860ee3c776e3"
+			    "url": "https://files.pythonhosted.org/packages/33/07/9e2dc8e18c1e35b6f132bcd0cf15f376ba5e65300df4571eccbca73cbdc1/pygubu-0.36.3-py3-none-any.whl",
+			    "sha256": "8cc5df7f68b03acb0762c3cdf2ad3130b4759620e670326988e14551c7ee8767"
 			}
 		    ]
 		},
