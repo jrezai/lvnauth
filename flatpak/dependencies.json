@@ -90,8 +90,8 @@
 		    "sources": [
 			{
 			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/44/f1/f43cc3842cded9718353279f3086c02621fce65be9986ccbf788ada7c524/qh3-1.4.2-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-			    "sha256": "c8d5fbee607db24ef6c7b0bd08c21226d10782df4149b9d6f1f1516c7c85092b"
+			    "url": "https://files.pythonhosted.org/packages/88/58/0ad93053a8c84ff9645e1fbfda8a17ad0c022c3b78985529ec6965c38e32/qh3-1.4.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+			    "sha256": "c3e2518ce442b70314892a594e21157deb13fbc436f77ad6555439cfd9912035"
 			}
 		    ]
 		},
