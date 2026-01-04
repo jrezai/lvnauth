@@ -1285,18 +1285,38 @@ class DialogRectangle:
                          border_radius=self.border_radius_rounded_corners)
 
         # If the outro is being animated, don't draw the border
-        # because the border fade value can be different from the dialog's opacity,
-        # which can look odd if the two fades don't match, plus it won't update the rect
-        # properly on the last frame.
+        # because the border fade value can be different from the dialog's 
+        # opacity, which can look odd if the two fades don't match. Plus, it 
+        # won't update the rect properly on the last frame.
         if not self.animating_outro and not self.outro_complete:
-
+            
             # We're not doing an outro animation, so it's OK to draw the border.
             if self.border_alpha > 0 and self.border_width > 0:
-                pygame.draw.rect(surface=self.surface,
-                                 color=(self.border_color.r,
-                                        self.border_color.g,
-                                        self.border_color.b,
-                                        self.border_alpha),
-                                 rect=animated_rect,
-                                 width=self.border_width,
-                                 border_radius=self.border_radius_rounded_corners)
+                
+                # The radius shouldn't be larger than half the 
+                # smallest side (width or height). Otherwise, the border
+                # will be larger than the rectangle and it will look odd.
+                max_border_radius =\
+                    min(animated_rect.width, animated_rect.height) // 2
+                
+                # Apply the border size clamp
+                applied_radius =\
+                    int(min(self.border_radius_rounded_corners,
+                            max_border_radius))
+                
+                # Ensure we don't try to draw a border thicker than the 
+                # available space
+                # For example: a 1px high rect cannot have a 4px wide border
+                actual_width =\
+                    min(self.border_width,
+                        max_border_radius if max_border_radius > 0 else 1)                
+            
+                pygame.draw.rect(
+                    surface=self.surface,
+                    color=(self.border_color.r,
+                           self.border_color.g,
+                           self.border_color.b,
+                           self.border_alpha),
+                    rect=animated_rect,
+                    width=actual_width,
+                    border_radius=applied_radius)
