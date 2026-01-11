@@ -29,7 +29,7 @@ class ProjectSnapshot:
     EDITOR_VERSION = 1
     
     # Used in the About dialog
-    EXACT_EDITOR_VERSION = "1.1"
+    EXACT_EDITOR_VERSION = "1.2"
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
