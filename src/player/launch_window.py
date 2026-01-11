@@ -33,8 +33,6 @@ from web_handler import WebHandler, WebLicenseType, WebRequestPurpose
 from player_config_handler import PlayerConfigHandler
 from shared_components import Passer
 from response_code import ServerResponseReceipt, ServerResponseCode
-PROJECT_PATH = pathlib.Path(__file__).parent
-PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
 
 # We need to add the parent directory so
 # the container_handler module will be seen.
@@ -42,6 +40,15 @@ this_module_path = Path(__file__)
 one_level_up_directory = str(Path(*this_module_path.parts[0:-2]))
 sys.path.append(one_level_up_directory)
 from container_handler import ContainerHandler
+
+#PROJECT_PATH = pathlib.Path(__file__).parent
+
+# Required for 'launch_window.ui' to get seen by PyInstaller during runtime.
+PROJECT_PATH = ContainerHandler.get_absolute_path(".")
+
+#PROJECT_UI = PROJECT_PATH / ".." / "ui" / "launch_window.ui"
+PROJECT_UI = PROJECT_PATH / "ui" / "launch_window.ui"
+
 
 
 class LaunchWindow:
@@ -150,7 +157,7 @@ class LaunchWindow:
         if not icon_path:
             # Not a Snap or Flatpak package.
 
-            icon_path = Path(r"app_icon.png")
+            icon_path = ContainerHandler.get_absolute_path(r"app_icon.png")
             if not icon_path.exists():
                 # The icon is likely in a directory one level up.
                 icon_path = Path(r"../app_icon.png")

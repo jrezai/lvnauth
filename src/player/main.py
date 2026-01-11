@@ -31,8 +31,8 @@ from launch_window import LaunchWindow
 from player_config_handler import PlayerConfigHandler
 from io import BytesIO
 from typing import Dict
-from pathlib import Path
 from pygame import scrap
+from pathlib import Path
 from camera_handler import Camera
 
   
@@ -227,9 +227,11 @@ class Main:
             app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path_small()
         else:
             # Not in a Snap package.
-            app_icon_path = Path(r"app_icon_small.png")
-            if not app_icon_path.exists():
-                app_icon_path = Path(r"./player/app_icon_small.png")
+
+            app_icon_path =\
+                ContainerHandler.get_absolute_path(r"./player/app_icon_small.png")
+            #if not app_icon_path.exists():
+                #app_icon_path = Path(r"./player/app_icon_small.png")
 
         pygame.display.set_icon(pygame.image.load(app_icon_path))
 
@@ -476,7 +478,14 @@ if __name__ == "__main__":
             args.file = str(draft_path)
         else:
             # Not inside a Snap or Flatpak
-            args.file = r"../draft/draft.lvna"
+            
+            # Get the full path to draft.lvna
+            draft_lvna_full_path =\
+                ContainerHandler.get_absolute_path(r"draft/draft.lvna")
+            
+            # args.file = r"../draft/draft.lvna"
+            args.file = draft_lvna_full_path
+            
         args.show_launch = "True"
 
     if not args.file:

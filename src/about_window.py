@@ -136,8 +136,11 @@ class AboutWindow:
             lvnauth_flatpak_directory = ContainerHandler.get_flatpak_app_directory()
             lvnauth_logo_path = lvnauth_flatpak_directory / "lvnauth_logo.png"
         else:
-            # Not a Snap or Flatpak package; get the regular path (same folder as this script.)
-            lvnauth_logo_path = "lvnauth_logo.png"
+            # Not a Snap or Flatpak package; get the regular path 
+            # (same folder as this script.)
+            lvnauth_logo_path =\
+                ContainerHandler.get_absolute_path("lvnauth_logo.png")
+
 
         self.lvnauth_image = Image.open(lvnauth_logo_path)
         self.lvnauth_image = ImageTk.PhotoImage(image=self.lvnauth_image)
