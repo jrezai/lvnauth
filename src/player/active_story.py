@@ -35,6 +35,7 @@ from dialog_rectangle import DialogRectangle, \
      RectangleOutroAnimation, \
      AnchorRectangle
 from cover_screen_handler import CoverScreenHandler
+from camera_handler import Camera
 
 
 
@@ -46,7 +47,9 @@ class ActiveStory:
     def __init__(self,
                  screen_size: Tuple,
                  data_requester: file_reader.FileReader,
+                 virtual_surface: pygame.Surface,
                  main_surface: pygame.Surface,
+                 camera: Camera, 
                  draft_mode: bool = False):
         
         """
@@ -57,6 +60,9 @@ class ActiveStory:
         - data_requester: so we can load sprites and audio.
         
         - main_surface: the main pygame surface
+        
+        - camera: used for  quickly snapping a zoom/pan to the final spot if
+        the viewer clicks on the visual novel to speed it up.
         
         - draft_mode: used for knowing whether to show the draft rectangle
         or not, and whether to allow some keyboard shortcuts or not.
@@ -73,7 +79,11 @@ class ActiveStory:
         # FileReader object
         self.data_requester = data_requester
 
+        self.virtual_surface = virtual_surface
+        
         self.main_surface = main_surface
+        
+        self.camera = camera
 
         self.reader = story_reader.StoryReader(story=self,
                                                data_requester=self.data_requester,
@@ -108,7 +118,7 @@ class ActiveStory:
 
         # Used for showing the draft rectangle (mouse x/y coordinates)
         # at the top of the player window.
-        self.draft_rectangle = draft_rectangle.DraftRectangle(main_surface)
+        self.draft_rectangle = draft_rectangle.DraftRectangle(self.main_surface)
 
         # Used for knowing whether to show the draft rectangle or not,
         # and whether to allow some keyboard shortcuts or not.
@@ -266,6 +276,19 @@ class ActiveStory:
             # Advance the story if a mouse button was clicked.
             if event.type == pygame.MOUSEBUTTONDOWN:
 
+                if self.camera.is_animating_zoom_pan \
+                   and self.camera.is_animating_shake:
+                    self.camera.stop_move(jump_to_end=True)
+                    self.camera.stop_shake()
+                    
+                    return
+                
+                elif self.camera.is_animating_zoom_pan:
+                    self.camera.stop_move(jump_to_end=True)
+                    return
+                
+                elif self.camera.is_animating_shake:
+                    self.camera.stop_shake()
                 
                 # If dialog text is currently being animated/shown
                 # (ie: gradual text or fading in), then speed it up.
@@ -305,23 +328,18 @@ class ActiveStory:
             # Dialog sprites should only animate if the dialog is visible.
             sd.Groups.dialog_group.update()
             
+        # Elapse the seconds counter if the cover screen is animating.
+        self.cover_screen_handler.update()
+            
         # Consider the mouse not clicked anymore, just in case if it was
         # seen as clicked in the current frame. All the sprite group update()
         # methods above have now already dealt with the mouse click, if any,
         # so we'll reset it here until the next time the mouse is clicked again.
         MouseActionsAndCoordinates.MOUSE_UP = False
 
-    def on_render(self):
-        """
-        Handle drawing
-        :return:
-        """
-
-        sd.Groups.background_group.draw(self.main_surface)
-        sd.Groups.object_group.draw(self.main_surface)
-        sd.Groups.character_group.draw(self.main_surface)
-
-
+    def on_render_dialog_rectangle(self, surface: pygame.Surface):
+        
+        ##############################################
         if self.dialog_rectangle and self.dialog_rectangle.visible:
 
             # Note: The sequence is important here.
@@ -334,7 +352,7 @@ class ActiveStory:
             # Note: again, the sequence is important here.
             # We need to draw any dialog sprites *before* drawing the dialog box.
             # Groups.dialog_group.draw(self.dialog_rectangle.surface)
-            sd.Groups.dialog_group.draw(self.main_surface)
+            sd.Groups.dialog_group.draw(surface)
 
             
             # Is this the last dialog rectangle outro animation update?
@@ -349,12 +367,55 @@ class ActiveStory:
                 self.dialog_rectangle.next_rect_update_hide_dialog = False
 
                 self.dialog_rectangle.visible = False
+        ###############################        
 
-        self.cover_screen_handler.update()
-        self.cover_screen_handler.draw()
+    def on_render(self):
+        """
+        Handle drawing
+        :return:
+        """
 
-        # Draft rectangle (to show x/y coordinates of the mouse pointer)
-        if self.draft_mode:
-            self.draw_draft_rectangle()
+        sd.Groups.background_group.draw(self.virtual_surface)
+        sd.Groups.object_group.draw(self.virtual_surface)
+        sd.Groups.character_group.draw(self.virtual_surface)
+
+        ###############################################
+        #if self.dialog_rectangle and self.dialog_rectangle.visible:
+
+            ## Note: The sequence is important here.
+            ## We need to draw the text *before* drawing the dialog box.
+            #self.reader.active_font_handler.draw()
+
+            ## Draw the dialog rectangle on the main surface.
+            #self.dialog_rectangle.draw()
+
+            ## Note: again, the sequence is important here.
+            ## We need to draw any dialog sprites *before* drawing the dialog box.
+            ## Groups.dialog_group.draw(self.dialog_rectangle.surface)
+            #sd.Groups.dialog_group.draw(self.main_surface)
+
+            
+            ## Is this the last dialog rectangle outro animation update?
+            #if self.dialog_rectangle.next_rect_update_hide_dialog:
+
+                ## This is the last outro animation of this dialog rectangle.
+                ## Set the visibility of the dialog to False here.
+                
+                ## We set it to False here because if we set it to False earlier
+                ## then the last outro animation won't update, and it'll appear
+                ## stuck on the very last outro frame.
+                #self.dialog_rectangle.next_rect_update_hide_dialog = False
+
+                #self.dialog_rectangle.visible = False
+        ################################
+
+        ##############################
+        #self.cover_screen_handler.update()
+        #self.cover_screen_handler.draw()
+
+        ## Draft rectangle (to show x/y coordinates of the mouse pointer)
+        #if self.draft_mode:
+            #self.draw_draft_rectangle()
+        ##############################
             
             
