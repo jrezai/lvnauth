@@ -192,10 +192,11 @@ class CoverScreenHandler:
 
     def update(self):
         """
-        Elapse the frame counter and increase/decrease the fade value
-        if the elapsed frame count has reached the frame_delay value.
+        Elapse the seconds counter and increase/decrease the fade value
+        if the elapsed seconds count has reached the frame_delay value.
 
-        No rect is updated, because it's always the full size of the pygame window.
+        No rect is updated, because it's always the full size of the
+        pygame window.
         """
         
         # Not animating or no speed specified? Return.
