@@ -185,7 +185,33 @@ class ContainerHandler:
                 full_path = Path(draft_directory) / "draft" / "draft.lvna"
                 
         else:
-            full_path = ContainerHandler.get_absolute_path("draft/draft.lvna")
+            
+            # Running in Windows? Look for the 'APPDATA' environmental variable
+            # to find out.
+            appdata_dir = os.environ.get("APPDATA")
+            
+            if not appdata_dir:
+                # Running in Linux
+    
+                # Return the regular absolute path in the local directory.
+                full_path =\
+                    ContainerHandler.get_absolute_path("draft/draft.lvna")
+                
+            else:
+                # Running Windows.
+                
+                # Define the app data LVNAuth directory.
+                lvnauth_appdata_directory: Path
+                lvnauth_appdata_directory =\
+                    Path(appdata_dir) / "LVNAuth" / "draft"
+                
+                # Create the LVNAuth app data directory if it doesn't exist yet.
+                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
+                    
+                # Set the full path to the config file in app data
+                full_path = lvnauth_appdata_directory / "draft.lvna"
+            
+            # full_path = ContainerHandler.get_absolute_path("draft/draft.lvna")
             #full_path = Path(__file__).parent / "draft" / "draft.lvna"
             
         # Do we have a full path to draft.lvna?
