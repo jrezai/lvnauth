@@ -1214,6 +1214,12 @@ class StoryReader:
             Start a camera zoom and/or panning animation.
             """
             self._camera_start_shaking(arguments=arguments)
+            
+        elif command_name == "camera_stop_shaking":
+            """
+            Stop the camera shake effect, if active.
+            """
+            self._camera_stop_shaking()
 
         elif command_name == "variable_set":
             """
@@ -2411,6 +2417,12 @@ class StoryReader:
                                      target_zoom=camera.zoom,
                                      duration=camera.duration_seconds,
                                      mode=smoothing_type)
+        
+    def _camera_stop_shaking(self):
+        """
+        Stop the camera shaking effect, if active.
+        """
+        self.story.camera.stop_shake()
         
     def _camera_start_shaking(self, arguments: str):
         """

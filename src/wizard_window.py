@@ -95,6 +95,7 @@ class GroupName(Enum):
     POSITION = auto()
     MOUSE = auto()
     TINT = auto()
+    SHAKE = auto()
 
     # Font
     SPEED = auto()
@@ -2580,8 +2581,20 @@ class WizardWindow:
                         "To have the shaking effect reach the duration (seconds), start with\n"
                         "a stronger intensity, such as 10.\n\n"
                         "To prevent the borders from showing during a shake, zoom in a little\n"
-                        "using <camera_start_zoom_pan>, prior to starting the shake effect.")
+                        "using <camera_start_zoom_pan>, prior to starting the shake effect.",
+                        group_name=GroupName.SHAKE)
 
+        page_stop_camera_shaking = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_stop_shaking",
+                        command_name="camera_stop_shaking",
+                        purpose_line="Stops the camera shaking effect.",
+                        when_to_use="When you want to stop the camera shaking effect animation.",
+                        group_name=GroupName.SHAKE)
 
 
         self.pages["Home"] = default_page
@@ -2810,6 +2823,7 @@ class WizardWindow:
         Camera
         """
         self.pages["camera_start_shaking"] = page_camera_shake_start
+        self.pages["camera_stop_shaking"] = page_stop_camera_shaking
         
 
         self.active_page = default_page
