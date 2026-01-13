@@ -281,7 +281,7 @@ class Main:
         # (for delta time in seconds)
         MS_PER_SECOND = 1000
         
-        AnimationSpeed.test = 0
+        # AnimationSpeed.test = 0
 
         while story.story_running:
             
@@ -323,12 +323,12 @@ class Main:
             # Handle drawing
             story.on_render()
             
-            if not AnimationSpeed.test:
-                # camera.start_move(target_zoom=1.5,duration=5)
-                camera.start_move(target_x=670, target_y=220, target_zoom=3.5,duration=0)
-                # camera.start_shake(intensity=10, duration=15.0)
+            #if not AnimationSpeed.test:
+                ## camera.start_move(target_zoom=1.5,duration=5)
+                #camera.start_move(target_x=670, target_y=220, target_zoom=3.5,duration=0)
+                ## camera.start_shake(intensity=10, duration=15.0)
                 
-                AnimationSpeed.test = 99
+                #AnimationSpeed.test = 99
                 
 
             # Shake

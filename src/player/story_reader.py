@@ -50,6 +50,7 @@ from typing import Dict
 from shared_components import Passer
 from animation_speed import AnimationSpeed
 from tint_handler import TintStatus
+from camera_handler import SmoothingStyle
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -1201,6 +1202,18 @@ class StoryReader:
             This is used when transitioning between scenes.
             """
             self._scene_with_fade(arguments=arguments)
+            
+        elif command_name == "camera_start_moving":
+            """
+            Start a camera zoom and/or panning animation.
+            """
+            self._camera_start_moving(arguments=arguments)
+            
+        elif command_name == "camera_start_shaking":
+            """
+            Start a camera zoom and/or panning animation.
+            """
+            self._camera_start_shaking(arguments=arguments)
 
         elif command_name == "variable_set":
             """
@@ -2360,6 +2373,68 @@ class StoryReader:
         # gets blitted over with the new rectangle.
         main_reader.story.dialog_rectangle.clear_text()
 
+    def _camera_start_moving(self, arguments: str):
+        """
+        Start a camera zoom and/or panning effect.
+        """
+        
+        # If there's an existing camera movement occurring, don't allow
+        # another one. It may complicate things if we allow it.
+        if self.story.camera.is_animating_zoom_pan:
+            return
+        
+        camera: cc.CameraMovement
+        camera = self._get_arguments(
+            class_namedtuple=cc.CameraMovement, given_arguments=arguments
+        )
+        
+        if not camera:
+            return
+        
+        # Set the smoothing to lowercase so we can find the key
+        # in a dictionary.
+        camera.smoothing_style = camera.smoothing_style.lower()
+        
+        smoothing_lookup =\
+            {"constant speed": SmoothingStyle.LINEAR_CONSTANT_SPEED,
+             "start slow speed up": SmoothingStyle.IN_START_SLOW_SPEED_UP,
+             "start fast slow down": SmoothingStyle.OUT_START_FAST_SLOW_DOWN,
+             "smooth": SmoothingStyle.SMOOTH_EASE_IN_OUT,}
+        
+        smoothing_type =\
+            smoothing_lookup.get(camera.smoothing_style,
+                                 SmoothingStyle.SMOOTH_EASE_IN_OUT)
+
+        # Start a camera movement animation (zoom and/or pan).
+        self.story.camera.start_move(target_x=camera.target_x,
+                                     target_y=camera.target_y,
+                                     target_zoom=camera.zoom,
+                                     duration=camera.duration_seconds,
+                                     mode=smoothing_type)
+        
+    def _camera_start_shaking(self, arguments: str):
+        """
+        Start a shake effect.
+        """
+        
+        # If there's an existing camera shake effect occurring, don't allow
+        # another one. It may complicate things if we allow it.
+        if self.story.camera.is_animating_shake:
+            return
+        
+        camera: cc.CameraShake
+        camera = self._get_arguments(
+            class_namedtuple=cc.CameraShake, given_arguments=arguments
+        )
+        
+        if not camera:
+            return
+        elif not camera.duration_seconds or not camera.intensity:
+            return
+
+        # Start a camera shake animation.
+        self.story.camera.start_shake(camera.intensity, camera.duration_seconds)
+        
     def _variable_set(self, arguments: str):
         """
         Create a new variable if it doesn't exist

@@ -61,6 +61,8 @@ REMOTE_CALL_UI = PROJECT_PATH / "ui" / "remote_call_dialog.ui"
 ROTATE_START_UI = PROJECT_PATH / "ui" / "rotate_dialog.ui"
 FADE_START_UI = PROJECT_PATH / "ui" / "fade_dialog.ui"
 SCALE_START_UI = PROJECT_PATH / "ui" / "scale_dialog.ui"
+CAMERA_SHAKE_UI = PROJECT_PATH / "ui" / "camera_shake_dialog.ui"
+
 
 class Purpose(Enum):
     BACKGROUND = auto()
@@ -2562,6 +2564,23 @@ class WizardWindow:
                         sub_display_text="remote_call",
                         command_name="remote_call",
                         purpose_line="Runs a custom script on the server.")
+        
+        page_camera_shake_start = \
+            CameraShakeWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_start_shaking",
+                        command_name="camera_start_shaking",
+                        purpose_line="Starts a camera shake effect.\n"
+                        "The intensity will gradually get weaker until the shaking stops.\n\n"
+                        "If you start with a weak intensity, the effect may stop before\n"
+                        "the seconds duration has been reached.\n\n"
+                        "To have the shaking effect reach the duration (seconds), start with\n"
+                        "a stronger intensity, such as 10.\n\n"
+                        "To prevent the borders from showing during a shake, zoom in a little\n"
+                        "using <camera_start_zoom_pan>, prior to starting the shake effect.")
 
 
 
@@ -2786,6 +2805,11 @@ class WizardWindow:
         self.pages["remote_get"] = page_remote_get
         self.pages["remote_save"] = page_remote_save
         self.pages["remote_call"] = page_remote_call
+        
+        """
+        Camera
+        """
+        self.pages["camera_start_shaking"] = page_camera_shake_start
         
 
         self.active_page = default_page
@@ -8360,6 +8384,168 @@ class SceneWithFade(WizardListing):
         hold_seconds = user_inputs.get("HoldSeconds")
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
+
+
+class CameraShakeFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(CAMERA_SHAKE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_shake", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_intensity:tk.DoubleVar
+        self.v_intensity = builder.get_variable("v_intensity")
+        
+        # Default to an intensity of 5.
+        self.v_intensity.set(5)
+        
+        self.sb_intensity:ttk.Spinbox
+        self.sb_intensity = builder.get_object("sb_intensity")
+        
+        self.intensity_from = self.sb_intensity.cget("from")
+        self.intensity_to = self.sb_intensity.cget("to")
+        
+        self.sb_duration_seconds:ttk.Spinbox
+        self.sb_duration_seconds = builder.get_object("sb_duration_seconds")
+        
+        self.duration_from = self.sb_duration_seconds.cget("from")
+        self.duration_to = self.sb_duration_seconds.cget("to")        
+
+        self.v_duration_seconds:tk.DoubleVar
+        self.v_duration_seconds = builder.get_variable("v_duration_seconds")
+        
+        # Default to 2 seconds.
+        self.v_duration_seconds.set(2)
+        
+
+class CameraShakeWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.camera_shake_frame = CameraShakeFrame(self.frame_content)        
+        
+        self.camera_shake_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.CameraShake):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.CameraShake(intensity, duration_seconds):
+                
+                # Intensity
+                self.camera_shake_frame.v_intensity.set(intensity)                
+                
+                # Duration (seconds)
+                self.camera_shake_frame.v_duration_seconds.set(duration_seconds)
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        
+        # Intensity
+        try:
+            intensity = self.camera_shake_frame.v_intensity.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Intensity",
+                                 message=f"The intensity is expected to be a number between {self.camera_shake_frame.intensity_from} and {self.camera_shake_frame.intensity_to}.")
+            return
+        
+        # Duration in seconds
+        try:
+            duration_seconds = self.camera_shake_frame.v_duration_seconds.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Duration",
+                                 message=f"The duration is expected to be a number between {self.camera_shake_frame.duration_from} and {self.camera_shake_frame.duration_to}.")
+            return
+        
+        
+        # Missing intensity?
+        if not intensity:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Intensity",
+                                 message="Please specify the intensity (the strength) of the shake effect.")
+            self.camera_shake_frame.sb_intensity.focus()
+            return        
+
+        # Missing duration?
+        if not duration_seconds:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Duration",
+                                 message="Please specify how long the shake effect should last (in seconds).")
+            self.camera_shake_frame.sb_duration_seconds.focus()
+            return
+
+        
+        # Set intensity limits (the minimum and maximum)
+        if intensity > self.camera_shake_frame.intensity_to:
+            intensity = self.camera_shake_frame.intensity_to
+            
+        elif intensity < self.camera_shake_frame.intensity_from:
+            intensity = self.camera_shake_frame.intensity_from
+            
+        # Set duration limits (the minimum and maximum)
+        if duration_seconds > self.camera_shake_frame.duration_to:
+            duration_seconds = self.camera_shake_frame.duration_to
+            
+        elif duration_seconds < self.camera_shake_frame.duration_from:
+            duration_seconds = self.camera_shake_frame.duration_from
+            
+        # To prevent 2 from showing as 2.0
+        if intensity.is_integer():
+            intensity = int(intensity)
+            
+        if duration_seconds.is_integer():
+            duration_seconds = int(duration_seconds)
+
+        user_input = {"Intensity": intensity,
+                      "DurationSeconds": duration_seconds}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For # <camera_start_shaking>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        intensity = user_inputs.get("Intensity")
+        duration_seconds = user_inputs.get("DurationSeconds")
+
+        command_line = f"<{self.command_name}: {intensity}, {duration_seconds}>"
+            
+        return command_line
 
 
 class RotateStartFrame:

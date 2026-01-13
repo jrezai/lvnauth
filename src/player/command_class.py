@@ -90,6 +90,19 @@ class SceneWithFade(NamedTuple):
     fade_hold_seconds: int
     chapter_name: str
     scene_name: str
+    
+    
+class CameraMovement(NamedTuple):
+    target_x: int
+    target_y: int
+    zoom: float
+    duration_seconds: float
+    smoothing_style: str
+    
+    
+class CameraShake(NamedTuple):
+    intensity: float
+    duration_seconds: float
 
 
 class ConditionDefinition(NamedTuple):

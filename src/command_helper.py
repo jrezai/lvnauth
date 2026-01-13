@@ -179,7 +179,8 @@ class CommandHelper:
         "or_case": cc.ConditionDefinition,
         "remote_get": cc.RemoteGet,
         "remote_save": cc.RemoteSave,
-        "remote_call": cc.RemoteCallNoArguments
+        "remote_call": cc.RemoteCallNoArguments,
+        "camera_start_shaking": cc.CameraShake,
     }
     
     @staticmethod
