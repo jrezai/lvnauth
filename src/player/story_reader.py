@@ -44,6 +44,7 @@ import web_handler
 from re import search, findall
 from functools import partial
 from typing import Tuple
+from dataclasses import is_dataclass, fields
 
 # from font_handler import ActiveFontHandler
 from typing import Dict
@@ -2397,10 +2398,6 @@ class StoryReader:
         if not camera:
             return
         
-        # Set the smoothing to lowercase so we can find the key
-        # in a dictionary.
-        camera.smoothing_style = camera.smoothing_style.lower()
-        
         smoothing_lookup =\
             {"constant speed": SmoothingStyle.LINEAR_CONSTANT_SPEED,
              "start slow speed up": SmoothingStyle.IN_START_SLOW_SPEED_UP,
@@ -4030,16 +4027,30 @@ class StoryReader:
         <remote_save: favpet=cat, favcolour=blue, ......>
         
         Return: an object based on the class provided in 'class_namedtuple'.
+        
+        - (January 13, 2026 - Jobin Rezai) - Added dataclass support for
+        commands that use a dataclass instead of a NamedTuple.
         """
 
         # Get a list of types that the type-hint has for the given fields of the class.
         # We'll use this to find out what type of variables each argument field 
         # needs to be.
-        expected_argument_types = list(class_namedtuple.__annotations__.values())
+        if is_dataclass(class_namedtuple):
+            # Dataclass
+            expected_argument_types =\
+                [field.type for field in fields(class_namedtuple)]
+            
+            # Get the number of fields in the given class.
+            # Each field is an argument.
+            field_count = len(fields(class_namedtuple))
+        else:
+            # Regular class
+            expected_argument_types =\
+                list(class_namedtuple.__annotations__.values())
 
-        # Get the number of fields in the given class.
-        # Each field is an argument.
-        field_count = len(class_namedtuple._fields)
+            # Get the number of fields in the given class.
+            # Each field is an argument.
+            field_count = len(class_namedtuple._fields)
 
         if unlimited_optional_arguments:
 
@@ -4092,15 +4103,30 @@ class StoryReader:
         # For example, with the <remote_save> command, which only takes an 
         # argument string. Treat that as one argument string.
         # For example: "favcolor=Blue, favpet=Cat" as one string.
-        if field_count == 1 and expected_argument_types[0] is str and \
-        tuple(class_namedtuple.__annotations__.keys())[0] == "arguments":
+        if field_count == 1:
             
-            # Record the arguments as one string as part of a namedtuple,
-            # for easier access by the caller.
-            generate_class = class_namedtuple(given_arguments)
-
-            return generate_class
+            if is_dataclass(class_namedtuple):
+                # Dataclass
+                
+                # Get the first argument name (ie: "arguments" or "alias", etc.)
+                first_argument_name =\
+                    cc.get_dataclass_field_names(class_namedtuple)[0]
+            else:
+                # Regular class
+                
+                # Get the first argument name (ie: "arguments" or "alias", etc.)
+                first_argument_name =\
+                    tuple(class_namedtuple.__annotations__.keys())[0]
             
+            if expected_argument_types[0] is str \
+               and first_argument_name == "arguments":
+            
+                # Record the arguments as one string as part of a namedtuple,
+                # for easier access by the caller.
+                generate_class = class_namedtuple(given_arguments)
+    
+                return generate_class
+                
             
         # Combine the expected type (ie: class 'int') with each individual 
         # argument value (ie: '5')
