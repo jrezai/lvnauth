@@ -2581,7 +2581,7 @@ class WizardWindow:
                         "To have the shaking effect reach the duration (seconds), start with\n"
                         "a stronger intensity, such as 10.\n\n"
                         "To prevent the borders from showing during a shake, zoom in a little\n"
-                        "using <camera_start_zoom_pan>, prior to starting the shake effect.",
+                        "using <camera_start_moving>, prior to starting the shake effect.",
                         group_name=GroupName.SHAKE)
 
         page_stop_camera_shaking = \
