@@ -144,8 +144,13 @@ class EditorMainApp:
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
 
         # Maximize the editor window
-        self.mainwindow.wm_attributes("-zoomed", True)
-        
+        try:
+            # Works in Windows
+            self.mainwindow.state("zoomed")
+        except tk.TclError:
+            # Works in Linux
+            self.mainwindow.wm_attributes("-zoomed", True)
+
         # Debug button (uncomment the two lines below if debugging)
         self.btn_debug = builder.get_object("btn_debug")
         self.btn_debug.grid_forget()
@@ -1333,7 +1338,7 @@ class EditorMainApp:
             # Play the .lvna file
             EditorMainApp.play_lvna_file(lvna_file_path=compile_path,
                                          error_window_master=self.mainwindow)
-            
+
     @staticmethod
     def play_lvna_file(lvna_file_path: Path,
                        error_window_master: tk.Toplevel = None, 
@@ -1369,20 +1374,58 @@ class EditorMainApp:
         player_script_file: Path
         # Get the path to main.py (the player Python script file.)
         player_script_file = ContainerHandler.get_lvnauth_player_python_file()
+
+        # Running from PyInstaller?
+        if hasattr(sys, '_MEIPASS'):
+            
+            # Yes, running from PyInstaller.
+            
+            # Both .exe files sit in the same folder.
+            # sys.executable is startup.exe
+            # player.exe is in the same parent directory.
+            player_bin = Path(sys.executable).parent / "player.exe"
+            
+            cmd = [
+                str(player_bin),
+                "--file", lvna_file_path,
+                "--show-launch", str(show_launch_window)
+            ]
+        else:
+            
+            # Not running from PyInstaller.
+
+            # Get the path to the Python interpreter that's being used now.
+            # This is the recommended way when using subprocess.run()
+            python_executable = sys.executable
+                
+            cmd = [python_executable, 
+                player_script_file,
+                "--file",
+                lvna_file_path,
+                "--show-launch",
+                str(show_launch_window)]
+            
         
-        # Get the path to the Python interpreter that's being used now.
-        # This is the recommended way when using subprocess.run()
-        python_executable = sys.executable
+
+
+        #python_executable = ContainerHandler.get_python_interpreter()
+
+        # print("player_script_file: ", player_script_file)
 
         # subprocess.Popen(["python3", str(player_script_file), "--file", str(compile_path)],
                          # text=True)
+
         
-        result = subprocess.run([python_executable, 
-                                player_script_file,
-                                "--file",
-                                lvna_file_path,
-                                "--show-launch",
-                                str(show_launch_window)],
+        #result = subprocess.run([python_executable, 
+        #                        player_script_file,
+        #                        "--file",
+        #                        lvna_file_path,
+        #                        "--show-launch",
+        #                        str(show_launch_window)],
+        #                        text=True,
+        #                        capture_output=True)
+
+        result = subprocess.run(cmd,
                                 text=True,
                                 capture_output=True)
         

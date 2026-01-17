@@ -25,6 +25,7 @@ Changes:
 editor.foreground, editor.commands, editor.select.background
 """
 
+import os
 import configparser
 from typing import Dict
 from pathlib import Path
@@ -65,9 +66,12 @@ class ConfigHandler:
             self.config_file_path = self.config_file_path / "lvnauth.config"
             
         else:
-            # Not a snap or flatpak package? 
-            # Set a default config file path (current directory).
-            self.config_file_path = Path("lvnauth.config")
+            # Not a snap or flatpak package.
+            
+            # Set a default config file path (current directory)
+            # The config path will be in App Data if it's running from Windows.
+            self.config_file_path = self.get_config_path_absolute()
+            # self.config_file_path = Path("lvnauth.config")
         
         # Read the config file and keep it ready for reading/updating/saving.
         self.config = configparser.ConfigParser()
@@ -80,6 +84,38 @@ class ConfigHandler:
         
         self.ensure_config_file_is_up_to_date()
         
+    def get_config_path_absolute(self) -> Path:
+        """
+        Return the full path to lvnauth.config depending on where LVNAuth
+        is running from.
+        
+        The newest addition is Windows. If it's from that operating system,
+        return the full path of the App Data directory, including the
+        config file.
+        """
+
+        # Get the 'Roaming' AppData path from the environment variable.
+        appdata_dir = os.environ.get("APPDATA")
+        if not appdata_dir:
+            # Running in Linux
+
+            # Return the regular absolute path in the local directory.
+            full_path = ContainerHandler.get_absolute_path("lvnauth.config")
+        else:
+            # Running Windows.
+            
+            # Define the app data LVNAuth directory.
+            lvnauth_appdata_directory: Path
+            lvnauth_appdata_directory = Path(appdata_dir) / "LVNAuth"
+            
+            # Create the LVNAuth app data directory if it doesn't exist yet.
+            lvnauth_appdata_directory.mkdir(exist_ok=True)
+                
+            # Set the full path to the config file in app data
+            full_path = lvnauth_appdata_directory / "lvnauth.config"
+            
+        return full_path
+            
     def ensure_config_file_is_up_to_date(self):
         """
         Ensure all the default values exist under the DEFAULT section.

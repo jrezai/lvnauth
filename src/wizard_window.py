@@ -61,6 +61,9 @@ REMOTE_CALL_UI = PROJECT_PATH / "ui" / "remote_call_dialog.ui"
 ROTATE_START_UI = PROJECT_PATH / "ui" / "rotate_dialog.ui"
 FADE_START_UI = PROJECT_PATH / "ui" / "fade_dialog.ui"
 SCALE_START_UI = PROJECT_PATH / "ui" / "scale_dialog.ui"
+CAMERA_SHAKE_UI = PROJECT_PATH / "ui" / "camera_shake_dialog.ui"
+CAMERA_MOVEMENT_UI = PROJECT_PATH / "ui" / "camera_movement_dialog.ui"
+
 
 class Purpose(Enum):
     BACKGROUND = auto()
@@ -93,6 +96,8 @@ class GroupName(Enum):
     POSITION = auto()
     MOUSE = auto()
     TINT = auto()
+    SHAKE = auto()
+    ZOOM_PAN = auto()
 
     # Font
     SPEED = auto()
@@ -2562,7 +2567,58 @@ class WizardWindow:
                         sub_display_text="remote_call",
                         command_name="remote_call",
                         purpose_line="Runs a custom script on the server.")
+        
+        page_camera_shake_start = \
+            CameraShakeWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_start_shaking",
+                        command_name="camera_start_shaking",
+                        purpose_line="Starts a camera shake effect.\n"
+                        "The intensity will gradually get weaker until the shaking stops.\n\n"
+                        "If you start with a weak intensity, the effect may stop before\n"
+                        "the seconds duration has been reached.\n\n"
+                        "To have the shaking effect reach the duration (seconds), start with\n"
+                        "a stronger intensity, such as 10.\n\n"
+                        "To prevent the borders from showing during a shake, zoom in a little\n"
+                        "using <camera_start_moving>, prior to starting the shake effect.",
+                        group_name=GroupName.SHAKE)
 
+        page_stop_camera_shaking = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_stop_shaking",
+                        command_name="camera_stop_shaking",
+                        purpose_line="Stops an active camera shaking effect.",
+                        group_name=GroupName.SHAKE)
+        
+        
+        page_camera_move_start = \
+            CameraMovementFrameWizard(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Camera",
+                                      sub_display_text="camera_start_moving",
+                                      command_name="camera_start_moving",
+                                      purpose_line="Starts a zoom and/or pan camera effect.",
+                                      group_name=GroupName.ZOOM_PAN)
+        
+        page_camera_move_stop = \
+            CameraStopMovementWizard(parent_frame=self.frame_contents_outer,
+                                     header_label=self.lbl_header,
+                                     purpose_label=self.lbl_purpose,
+                                     treeview_commands=self.treeview_commands,
+                                     parent_display_text="Camera",
+                                     sub_display_text="camera_stop_moving",
+                                     command_name="camera_stop_moving",
+                                     purpose_line="Stops an active zoom and/or pan camera effect.",
+                                     group_name=GroupName.ZOOM_PAN)
 
 
         self.pages["Home"] = default_page
@@ -2786,6 +2842,15 @@ class WizardWindow:
         self.pages["remote_get"] = page_remote_get
         self.pages["remote_save"] = page_remote_save
         self.pages["remote_call"] = page_remote_call
+        
+        """
+        Camera
+        """
+        self.pages["camera_start_shaking"] = page_camera_shake_start
+        self.pages["camera_stop_shaking"] = page_stop_camera_shaking
+        
+        self.pages["camera_start_moving"] = page_camera_move_start
+        self.pages["camera_stop_moving"] = page_camera_move_stop
         
 
         self.active_page = default_page
@@ -8360,6 +8425,521 @@ class SceneWithFade(WizardListing):
         hold_seconds = user_inputs.get("HoldSeconds")
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
+
+
+class CameraMovementFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(CAMERA_MOVEMENT_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_camera_movement", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_target_x:tk.IntVar
+        self.v_target_x = builder.get_variable("v_target_x")
+        
+        self.v_target_y:tk.IntVar
+        self.v_target_y = builder.get_variable("v_target_y")
+        
+        # Default to target X, Y of 0
+        self.v_target_x.set(0)
+        self.v_target_y.set(0)
+        
+        self.v_zoom:tk.DoubleVar
+        self.v_zoom = builder.get_variable("v_zoom")
+        
+        self.sb_zoom:ttk.Spinbox
+        self.sb_zoom = builder.get_object("sb_zoom")
+        
+        self.zoom_from = self.sb_zoom.cget("from")
+        self.zoom_to = self.sb_zoom.cget("to")
+        
+        # Default to a zoom of 2
+        self.v_zoom.set(2)
+
+        self.sb_duration_seconds:ttk.Spinbox
+        self.sb_duration_seconds = builder.get_object("sb_duration_seconds")
+        
+        self.duration_from = self.sb_duration_seconds.cget("from")
+        self.duration_to = self.sb_duration_seconds.cget("to")
+        
+        self.v_duration_title:tk.DoubleVar
+        self.v_duration_title = builder.get_variable("v_duration_title")
+        
+        self.v_duration_title.set(
+            f"Duration in seconds: {self.duration_from} to {self.duration_to}:")
+
+        self.v_duration_seconds:tk.DoubleVar
+        self.v_duration_seconds = builder.get_variable("v_duration_seconds")
+        
+        # Default to 10 seconds.
+        self.v_duration_seconds.set(10)
+        
+        # Smoothing style
+        self.v_smoothing_style:tk.StringVar
+        self.v_smoothing_style = builder.get_variable("v_smoothing_style")
+        
+        # Default to 'smooth'
+        self.v_smoothing_style.set("smooth")
+
+
+class CameraMovementFrameWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.frame_camera_movement = CameraMovementFrame(self.frame_content)        
+        
+        self.frame_camera_movement.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.CameraMovement):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.CameraMovement(target_x, target_y, zoom, duration_seconds,
+                                   smoothing_style):
+                
+                # Target X
+                self.frame_camera_movement.v_target_x.set(target_x)
+                
+                # Target Y
+                self.frame_camera_movement.v_target_y.set(target_y)
+                
+                # Zoom
+                self.frame_camera_movement.v_zoom.set(zoom)
+                
+                # Duration (seconds)
+                self.frame_camera_movement.\
+                    v_duration_seconds.set(duration_seconds)
+                
+                # Smoothing style
+                if self.is_supported_smoothing_style(smoothing_style):
+                    
+                    # It's a supported smoothing style.
+                    
+                    self.frame_camera_movement.\
+                        v_smoothing_style.set(smoothing_style)
+                
+    def is_supported_smoothing_style(self, text: str) -> bool:
+        """
+        Return whether the given text is a valid smoothing style.
+        
+        This method is used for knowing whether the user-typed smoothing
+        style is a valid style or not.
+        """
+        
+        if not text:
+            return False
+        
+        text = text.lower().strip()
+        
+        smoothing_styles = ("constant speed", "start slow speed up",
+                            "start fast slow down", "smooth")
+        
+        return text in smoothing_styles
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        
+        # Target X
+        try:
+            target_x = int(self.frame_camera_movement.v_target_x.get())
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Target X",
+                                 message="X is expected to be a number.")
+            return
+        
+        
+        # Target Y
+        try:
+            target_y = int(self.frame_camera_movement.v_target_y.get())
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Target Y",
+                                 message="Y is expected to be a number.")
+            return
+        
+        
+        # Zoom
+        try:
+            zoom = float(self.frame_camera_movement.v_zoom.get())
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Zoom",
+                                 message=f"Zoom is expected to be a number between {self.frame_camera_movement.zoom_from} to {self.frame_camera_movement.zoom_to}.")
+            return
+        
+        # Duration in seconds
+        try:
+            duration_seconds = self.frame_camera_movement.v_duration_seconds.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Duration",
+                                 message=f"The duration is expected to be a number between {self.frame_camera_movement.duration_from} and {self.frame_camera_movement.duration_to}.")
+            return
+        
+        
+        # Smoothing style
+        smoothing_style =self.frame_camera_movement.v_smoothing_style.get() 
+
+        if not smoothing_style:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Smoothing Style",
+                                 message="Select a Smoothing Style from the drop-down menu.")
+            return            
+        
+        # Set Zoom range limits (the minimum and maximum)
+        if zoom > self.frame_camera_movement.zoom_to:
+            zoom = self.frame_camera_movement.zoom_to
+            
+        elif zoom < self.frame_camera_movement.zoom_from:
+            zoom = self.frame_camera_movement.zoom_from
+            
+        # Set duration limits (the minimum and maximum)
+        if duration_seconds > self.frame_camera_movement.duration_to:
+            duration_seconds = self.frame_camera_movement.duration_to
+            
+        elif duration_seconds < self.frame_camera_movement.duration_from:
+            duration_seconds = self.frame_camera_movement.duration_from
+            
+        # To prevent 2 from showing as 2.0
+        if zoom.is_integer():
+            zoom = int(zoom)
+            
+        if duration_seconds.is_integer():
+            duration_seconds = int(duration_seconds)
+
+        user_input = {"TargetX": target_x,
+                      "TargetY": target_y,
+                      "Zoom": zoom,
+                      "DurationSeconds": duration_seconds,
+                      "SmoothingStyle": smoothing_style,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For # <camera_start_moving>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        target_x = user_inputs.get("TargetX")
+        target_y = user_inputs.get("TargetY")
+        zoom = user_inputs.get("Zoom")
+        duration_seconds = user_inputs.get("DurationSeconds")
+        smoothing_style = user_inputs.get("SmoothingStyle")
+        
+        
+
+        command_line = f"<{self.command_name}: {target_x}, {target_y}, {zoom}, {duration_seconds}, {smoothing_style}>"
+            
+        return command_line
+
+
+
+class CameraShakeFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(CAMERA_SHAKE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_shake", master)
+        self.master = master
+        builder.connect_callbacks(self)
+
+        self.v_intensity:tk.DoubleVar
+        self.v_intensity = builder.get_variable("v_intensity")
+        
+        # Default to an intensity of 5.
+        self.v_intensity.set(5)
+        
+        self.sb_intensity:ttk.Spinbox
+        self.sb_intensity = builder.get_object("sb_intensity")
+        
+        self.intensity_from = self.sb_intensity.cget("from")
+        self.intensity_to = self.sb_intensity.cget("to")
+        
+        self.sb_duration_seconds:ttk.Spinbox
+        self.sb_duration_seconds = builder.get_object("sb_duration_seconds")
+        
+        self.duration_from = self.sb_duration_seconds.cget("from")
+        self.duration_to = self.sb_duration_seconds.cget("to")        
+
+        self.v_duration_seconds:tk.DoubleVar
+        self.v_duration_seconds = builder.get_variable("v_duration_seconds")
+        
+        # Default to 2 seconds.
+        self.v_duration_seconds.set(2)
+     
+     
+class CameraStopMovementWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = self.create_content_frame()
+        
+    def create_content_frame(self) -> ttk.Frame:
+        """
+        Create and return a frame that will hold the configuration contents
+        for this command.
+        """
+        
+        frame_contents = ttk.Frame(self.parent_frame)
+
+        lbl_title = ttk.Label(frame_contents,
+                              text="Stop camera result:")
+        
+        
+        self.v_stop_choice:tk.StringVar
+        self.v_stop_choice = tk.StringVar()
+        
+        # Default to 'Current spot'
+        self.v_stop_choice.set("current")
+        
+        rb_current_stop = ttk.Radiobutton(frame_contents,
+                                          text="Stop at the current spot",
+                                          value="current",
+                                          variable=self.v_stop_choice)
+        
+        rb_jump_to_end = ttk.Radiobutton(frame_contents,
+                                         text="Jump to the end of the movement",
+                                         value="jump_to_end",
+                                         variable=self.v_stop_choice)
+        
+
+        lbl_title.grid(row=0, column=0, pady=(0, 5), sticky=tk.W)
+        
+        rb_current_stop.grid(row=1, column=0, sticky=tk.W)
+        rb_jump_to_end.grid(row=2, column=0, sticky=tk.W)
+        
+        return frame_contents
+    
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: the selection (str) if there is sufficient information;
+        otherwise, None.
+        """
+
+        stop_decision = self.v_stop_choice.get()
+
+        if not stop_decision or stop_decision not in ("current", "jump_to_end"):
+        
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(),
+                                 title="Stop Selection",
+                                 message="Choose a stop selection.")
+            return
+        
+        elif stop_decision == "current":
+            stop_decision = "current spot"
+
+        elif stop_decision == "jump_to_end":
+            stop_decision = "jump to end"
+
+
+        user_input = {"StopDecision": stop_decision}
+
+        return user_input
+    
+    def generate_command(self) -> str:
+        """
+        Return the command with its parameter.
+        """
+        
+        selection = self.check_inputs()
+        if not selection:
+            return
+        
+        stop_decision = selection.get("StopDecision")
+
+        return f"<{self.command_name}: {stop_decision}>"
+        
+    def _edit_populate(self, command_class_object: cc.CameraStopWhere):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+        
+        if command_class_object.arguments == cc.CameraStopChoice.AT_CURRENT_SPOT.value:
+            self.v_stop_choice.set("current")
+            
+        elif command_class_object.arguments == cc.CameraStopChoice.JUMP_TO_END.value:
+            self.v_stop_choice.set("jump_to_end")
+            
+        else:
+            # Unknown value, choose no radio button value.
+            self.v_stop_choice.set("")
+
+
+
+class CameraShakeWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.camera_shake_frame = CameraShakeFrame(self.frame_content)        
+        
+        self.camera_shake_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.CameraShake):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.CameraShake(intensity, duration_seconds):
+                
+                # Intensity
+                self.camera_shake_frame.v_intensity.set(intensity)                
+                
+                # Duration (seconds)
+                self.camera_shake_frame.v_duration_seconds.set(duration_seconds)
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        
+        # Intensity
+        try:
+            intensity = self.camera_shake_frame.v_intensity.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Intensity",
+                                 message=f"The intensity is expected to be a number between {self.camera_shake_frame.intensity_from} and {self.camera_shake_frame.intensity_to}.")
+            return
+        
+        # Duration in seconds
+        try:
+            duration_seconds = self.camera_shake_frame.v_duration_seconds.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Duration",
+                                 message=f"The duration is expected to be a number between {self.camera_shake_frame.duration_from} and {self.camera_shake_frame.duration_to}.")
+            return
+        
+        
+        # Missing intensity?
+        if not intensity:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Intensity",
+                                 message="Please specify the intensity (the strength) of the shake effect.")
+            self.camera_shake_frame.sb_intensity.focus()
+            return        
+
+        # Missing duration?
+        if not duration_seconds:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Duration",
+                                 message="Please specify how long the shake effect should last (in seconds).")
+            self.camera_shake_frame.sb_duration_seconds.focus()
+            return
+
+        
+        # Set intensity limits (the minimum and maximum)
+        if intensity > self.camera_shake_frame.intensity_to:
+            intensity = self.camera_shake_frame.intensity_to
+            
+        elif intensity < self.camera_shake_frame.intensity_from:
+            intensity = self.camera_shake_frame.intensity_from
+            
+        # Set duration limits (the minimum and maximum)
+        if duration_seconds > self.camera_shake_frame.duration_to:
+            duration_seconds = self.camera_shake_frame.duration_to
+            
+        elif duration_seconds < self.camera_shake_frame.duration_from:
+            duration_seconds = self.camera_shake_frame.duration_from
+            
+        # To prevent 2 from showing as 2.0
+        if intensity.is_integer():
+            intensity = int(intensity)
+            
+        if duration_seconds.is_integer():
+            duration_seconds = int(duration_seconds)
+
+        user_input = {"Intensity": intensity,
+                      "DurationSeconds": duration_seconds}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For # <camera_start_shaking>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        intensity = user_inputs.get("Intensity")
+        duration_seconds = user_inputs.get("DurationSeconds")
+
+        command_line = f"<{self.command_name}: {intensity}, {duration_seconds}>"
+            
+        return command_line
 
 
 class RotateStartFrame:

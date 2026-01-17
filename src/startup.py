@@ -43,7 +43,7 @@ class StartupWindow:
         elif ContainerHandler.is_in_flatpak_package():
             app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path()
         else:
-            app_icon_path = "app_icon.png"
+            app_icon_path = ContainerHandler.get_absolute_path("app_icon.png")
         
         # App icon
         app_icon = tk.PhotoImage(file=app_icon_path)
@@ -67,6 +67,9 @@ class StartupWindow:
         self.btn_play_file.image = play_image
         self.btn_play_file.configure(command=self.on_play_button_clicked,
                                   image=self.btn_play_file.image)
+        
+        self.lbl_version = builder.get_object("lbl_version")
+        self.lbl_version.configure(text=f"Version {ProjectSnapshot.EXACT_EDITOR_VERSION} ({ProjectSnapshot.RELEASE_DATE})")
         
         builder.connect_callbacks(self)
 

@@ -1,7 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="tk.Toplevel" id="startup_window" named="True">
-    <property name="geometry">470x160</property>
+    <property name="geometry">470x190</property>
     <property name="height">200</property>
     <property name="resizable">none</property>
     <property name="title" translatable="yes">LVNAuth</property>
@@ -128,6 +132,31 @@
                     </layout>
                   </object>
                 </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame3">
+            <property name="height">200</property>
+            <property name="relief">sunken</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">2</property>
+              <property name="sticky">sew</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="lbl_version" named="True">
+                <property name="font">TkTooltipFont</property>
+                <property name="text" translatable="yes">&lt;Version Info&gt;</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">5</property>
+                  <property name="pady">5</property>
+                  <property name="row">0</property>
+                  <property name="sticky">ew</property>
+                </layout>
               </object>
             </child>
           </object>

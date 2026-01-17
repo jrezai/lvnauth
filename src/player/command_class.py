@@ -23,7 +23,40 @@ Change logs
 - (Jobin Rezai - July 12, 2025) - Added RemoteWithGet class.
 """
 
-from typing import NamedTuple
+from typing import NamedTuple, List
+from dataclasses import dataclass, fields
+from enum import Enum, auto
+
+
+def get_dataclass_field_names(class_blueprint) -> List:
+    """
+    Return a list of field names in a dataclass.
+    Get the public names, not the _private names. Reason: if a dataclass
+    is using a getter/setter, getting the field names the regular way will
+    give us the private names starting with an underscore. This function
+    removes the underscore from the field names.
+    
+    Example: ['alias', 'arguments']
+    """
+    field_names = []
+    
+    # Enumerate the dataclass fields
+    for field in fields(class_blueprint):
+        
+        # Get the name of the dataclass
+        # Example: 'arguments'
+        name = field.name
+        
+        # If the name starts with an underscore, strip it for the 
+        # 'public' version
+        # Example: _count becomes count
+        if name.startswith('_'):
+            name = name[1:]
+            
+        field_names.append(name)
+        
+    return field_names
+
 
 
 class DialogRectangleDefinition(NamedTuple):
@@ -90,7 +123,62 @@ class SceneWithFade(NamedTuple):
     fade_hold_seconds: int
     chapter_name: str
     scene_name: str
-
+    
+    
+@dataclass
+class CameraMovement:
+    target_x: int
+    target_y: int
+    zoom: float
+    _duration_seconds: float
+    smoothing_style: str
+    
+    @property
+    def duration_seconds(self) -> float:
+        return self._duration_seconds
+    
+    @duration_seconds.setter
+    def duration_seconds(self, value: float):
+        """
+        Enforce clamping to between 0.01 and 100.
+        """
+        self._duration_seconds = max(0.01, min(value, 100.0))
+    
+    def __post_init__(self):
+        # Make sure the smoothing style is lowercase
+        self.smoothing_style = self.smoothing_style.lower()
+    
+    
+    
+class CameraShake(NamedTuple):
+    intensity: float
+    duration_seconds: float
+    
+    
+class CameraStopChoice(Enum):
+    
+    # We don't use 'auto' here because when editing the command via 
+    # the context menu, we instantiate the CameraStopWhere class using 
+    # one of the strings below, so the enum values below need to accept
+    # those string values.
+    AT_CURRENT_SPOT = "current spot"
+    JUMP_TO_END = "jump to end"
+    
+    # So none of the radio buttons gets selected when editing
+    # when it's an unknown argument.
+    UNKNOWN = "unknown"
+    
+    
+@dataclass
+class CameraStopWhere:
+    # "jump to end" or "current spot"
+    arguments: str
+    
+    def __post_init__(self):
+        # Make sure the given argument is always lowercase,
+        # because they're keywords: "jump to end" or "current spot"
+        self.arguments = self.arguments.lower()
+    
 
 class ConditionDefinition(NamedTuple):
     value1: str

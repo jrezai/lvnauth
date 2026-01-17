@@ -29,10 +29,40 @@ novel instead of a relative path.
 """
 
 import os
+import sys
 from pathlib import Path
 
 
 class ContainerHandler:
+
+    @staticmethod
+    def get_absolute_path(relative_path) -> Path:
+        """
+        Get the absolute path of the given relative path.
+        
+        Purpose: if LVNAuth is running from PyInstaller, the current path will
+        be seen as where the executable file is (.exe), rather than where the
+        script files are located. This can be a problem if we try to load a .png
+        image from the same directory as the script while running from
+        PyInstaller. This method will return the 'normal' full path when
+        running from PyInstaller, not the path of the .exe file.
+        """
+        
+        # If _MEIPASS exists, it means LVNAuth is running from PyInstaller's
+        # bundled path.
+        if hasattr(sys, '_MEIPASS'):
+            # Running from PyInstaller.
+            
+            # Return the script's absolute path, not the path of the .exe file.
+            return Path(sys._MEIPASS) / relative_path
+
+        else:
+            # LVNAuth is not running from PyInstaller.
+            
+            # Return an absolute path of the current script's parent directory.
+            return Path(__file__).parent.absolute() / relative_path
+        
+    
     @staticmethod
     def is_in_snap_package() -> bool:
         """
@@ -155,7 +185,34 @@ class ContainerHandler:
                 full_path = Path(draft_directory) / "draft" / "draft.lvna"
                 
         else:
-            full_path = Path(__file__).parent / "draft" / "draft.lvna"
+            
+            # Running in Windows? Look for the 'APPDATA' environmental variable
+            # to find out.
+            appdata_dir = os.environ.get("APPDATA")
+            
+            if not appdata_dir:
+                # Running in Linux
+    
+                # Return the regular absolute path in the local directory.
+                full_path =\
+                    ContainerHandler.get_absolute_path("draft/draft.lvna")
+                
+            else:
+                # Running Windows.
+                
+                # Define the app data LVNAuth directory.
+                lvnauth_appdata_directory: Path
+                lvnauth_appdata_directory =\
+                    Path(appdata_dir) / "LVNAuth" / "draft"
+                
+                # Create the LVNAuth app data directory if it doesn't exist yet.
+                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
+                    
+                # Set the full path to the config file in app data
+                full_path = lvnauth_appdata_directory / "draft.lvna"
+            
+            # full_path = ContainerHandler.get_absolute_path("draft/draft.lvna")
+            #full_path = Path(__file__).parent / "draft" / "draft.lvna"
             
         # Do we have a full path to draft.lvna?
         if full_path:
@@ -198,7 +255,8 @@ class ContainerHandler:
             return full_path            
         else:
             # Not in a Snap package; return a regular path.
-            return Path(__file__).parent / "player" / "main.py"
+            absolute_path = ContainerHandler.get_absolute_path("player/main.py")
+            return absolute_path
 
     @staticmethod
     def get_lvnauth_editor_icon_path() -> Path | None:

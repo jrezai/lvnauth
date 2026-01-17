@@ -179,7 +179,10 @@ class CommandHelper:
         "or_case": cc.ConditionDefinition,
         "remote_get": cc.RemoteGet,
         "remote_save": cc.RemoteSave,
-        "remote_call": cc.RemoteCallNoArguments
+        "remote_call": cc.RemoteCallNoArguments,
+        "camera_start_shaking": cc.CameraShake,
+        "camera_start_moving": cc.CameraMovement,
+        "camera_stop_moving": cc.CameraStopWhere,
     }
     
     @staticmethod
@@ -382,6 +385,17 @@ class CommandHelper:
                         # A custom alias is not allowed when using 
                         # <load_background>
                         return
+                    
+                case "camera_stop_moving":
+                    
+                    arguments = arguments.lower()
+                    
+                    if arguments not in ("current spot", "jump to end"):
+                        command_object =\
+                            command_cls(cc.CameraStopChoice.UNKNOWN.value)
+                    else:
+                        command_object = command_cls(arguments)
+                    
                     
                 # <_stop_movement_condition> can have 2 or 3 arguments.
                 # If we have 2 arguments here, use the 2 argument version of the

@@ -44,12 +44,15 @@ import web_handler
 from re import search, findall
 from functools import partial
 from typing import Tuple
+from dataclasses import is_dataclass, fields
+from enum import Enum
 
 # from font_handler import ActiveFontHandler
 from typing import Dict
 from shared_components import Passer
 from animation_speed import AnimationSpeed
 from tint_handler import TintStatus
+from camera_handler import SmoothingStyle
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -1201,6 +1204,30 @@ class StoryReader:
             This is used when transitioning between scenes.
             """
             self._scene_with_fade(arguments=arguments)
+            
+        elif command_name == "camera_start_moving":
+            """
+            Start a camera zoom and/or panning animation.
+            """
+            self._camera_start_moving(arguments=arguments)
+            
+        elif command_name == "camera_start_shaking":
+            """
+            Start a camera zoom and/or panning animation.
+            """
+            self._camera_start_shaking(arguments=arguments)
+            
+        elif command_name == "camera_stop_shaking":
+            """
+            Stop the camera shake effect, if active.
+            """
+            self._camera_stop_shaking()
+            
+        elif command_name == "camera_stop_moving":
+            """
+            Stop the camera movement effect, if active.
+            """
+            self._camera_stop_moving(arguments=arguments)
 
         elif command_name == "variable_set":
             """
@@ -2360,6 +2387,93 @@ class StoryReader:
         # gets blitted over with the new rectangle.
         main_reader.story.dialog_rectangle.clear_text()
 
+    def _camera_start_moving(self, arguments: str):
+        """
+        Start a camera zoom and/or panning effect.
+        """
+        
+        # If there's an existing camera movement occurring, don't allow
+        # another one. It may complicate things if we allow it.
+        if self.story.camera.is_animating_zoom_pan:
+            return
+        
+        camera: cc.CameraMovement
+        camera = self._get_arguments(
+            class_namedtuple=cc.CameraMovement, given_arguments=arguments
+        )
+        
+        if not camera:
+            return
+        
+        smoothing_lookup =\
+            {"constant speed": SmoothingStyle.LINEAR_CONSTANT_SPEED,
+             "start slow speed up": SmoothingStyle.IN_START_SLOW_SPEED_UP,
+             "start fast slow down": SmoothingStyle.OUT_START_FAST_SLOW_DOWN,
+             "smooth": SmoothingStyle.SMOOTH_EASE_IN_OUT,}
+        
+        smoothing_type =\
+            smoothing_lookup.get(camera.smoothing_style,
+                                 SmoothingStyle.SMOOTH_EASE_IN_OUT)
+
+        # Start a camera movement animation (zoom and/or pan).
+        self.story.camera.start_move(target_x=camera.target_x,
+                                     target_y=camera.target_y,
+                                     target_zoom=camera.zoom,
+                                     duration=camera.duration_seconds,
+                                     mode=smoothing_type)
+        
+    def _camera_stop_shaking(self):
+        """
+        Stop the camera shaking effect, if active.
+        """
+        self.story.camera.stop_shake()
+        
+    def _camera_stop_moving(self, arguments: str):
+        """
+        Stop the camera zoom/pan effect, if active.
+        
+        It will either stop at the current spot, or it will jump to the end,
+        depending on the provided argument.
+        """
+        
+        camera_stop: cc.CameraStopWhere
+        camera_stop = self._get_arguments(
+            class_namedtuple=cc.CameraStopWhere, given_arguments=arguments
+        )
+        
+        
+        if not camera_stop:
+            return
+        
+        # Jump to end?
+        jump_to_end =\
+            camera_stop.arguments == cc.CameraStopChoice.JUMP_TO_END.value
+        
+        self.story.camera.stop_move(jump_to_end=jump_to_end)
+        
+    def _camera_start_shaking(self, arguments: str):
+        """
+        Start a shake effect.
+        """
+        
+        # If there's an existing camera shake effect occurring, don't allow
+        # another one. It may complicate things if we allow it.
+        if self.story.camera.is_animating_shake:
+            return
+        
+        camera: cc.CameraShake
+        camera = self._get_arguments(
+            class_namedtuple=cc.CameraShake, given_arguments=arguments
+        )
+        
+        if not camera:
+            return
+        elif not camera.duration_seconds or not camera.intensity:
+            return
+
+        # Start a camera shake animation.
+        self.story.camera.start_shake(camera.intensity, camera.duration_seconds)
+        
     def _variable_set(self, arguments: str):
         """
         Create a new variable if it doesn't exist
@@ -3929,7 +4043,8 @@ class StoryReader:
         
         Arguments:
 
-        - class_namedtuple: the class to use when returning an object in this method.
+        - class_namedtuple: the class to use when returning an object in
+        this method. It works with NamedTuple classes and Dataclasses.
         One example of a class is: MovementSpeed
         
         - given_arguments: string-based argument separated by commas.
@@ -3943,16 +4058,30 @@ class StoryReader:
         <remote_save: favpet=cat, favcolour=blue, ......>
         
         Return: an object based on the class provided in 'class_namedtuple'.
+        
+        - (January 13, 2026 - Jobin Rezai) - Added dataclass support for
+        commands that use a dataclass instead of a NamedTuple.
         """
 
         # Get a list of types that the type-hint has for the given fields of the class.
         # We'll use this to find out what type of variables each argument field 
         # needs to be.
-        expected_argument_types = list(class_namedtuple.__annotations__.values())
+        if is_dataclass(class_namedtuple):
+            # Dataclass
+            expected_argument_types =\
+                [field.type for field in fields(class_namedtuple)]
+            
+            # Get the number of fields in the given class.
+            # Each field is an argument.
+            field_count = len(fields(class_namedtuple))
+        else:
+            # Regular class
+            expected_argument_types =\
+                list(class_namedtuple.__annotations__.values())
 
-        # Get the number of fields in the given class.
-        # Each field is an argument.
-        field_count = len(class_namedtuple._fields)
+            # Get the number of fields in the given class.
+            # Each field is an argument.
+            field_count = len(class_namedtuple._fields)
 
         if unlimited_optional_arguments:
 
@@ -4005,15 +4134,35 @@ class StoryReader:
         # For example, with the <remote_save> command, which only takes an 
         # argument string. Treat that as one argument string.
         # For example: "favcolor=Blue, favpet=Cat" as one string.
-        if field_count == 1 and expected_argument_types[0] is str and \
-        tuple(class_namedtuple.__annotations__.keys())[0] == "arguments":
+        if field_count == 1:
             
-            # Record the arguments as one string as part of a namedtuple,
-            # for easier access by the caller.
-            generate_class = class_namedtuple(given_arguments)
-
-            return generate_class
+            if is_dataclass(class_namedtuple):
+                # Dataclass
+                
+                # Get the first argument name (ie: "arguments" or "alias", etc.)
+                first_argument_name =\
+                    cc.get_dataclass_field_names(class_namedtuple)[0]
+            else:
+                # Regular class
+                
+                # Get the first argument name (ie: "arguments" or "alias", etc.)
+                first_argument_name =\
+                    tuple(class_namedtuple.__annotations__.keys())[0]
             
+            # If it's a string or an Enum
+            if (expected_argument_types[0] is str \
+               or issubclass(expected_argument_types[0], Enum)) \
+               and first_argument_name == "arguments":
+                
+                # The single argument type is either a string
+                # or an Enum.
+            
+                # Record the arguments as one string as part of a namedtuple
+                # or dataclass, for easier access by the caller.
+                generate_class = class_namedtuple(given_arguments)
+    
+                return generate_class
+                
             
         # Combine the expected type (ie: class 'int') with each individual 
         # argument value (ie: '5')

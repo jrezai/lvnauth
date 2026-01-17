@@ -31,8 +31,9 @@ from launch_window import LaunchWindow
 from player_config_handler import PlayerConfigHandler
 from io import BytesIO
 from typing import Dict
-from pathlib import Path
 from pygame import scrap
+from pathlib import Path
+from camera_handler import Camera
 
   
 
@@ -226,9 +227,11 @@ class Main:
             app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path_small()
         else:
             # Not in a Snap package.
-            app_icon_path = Path(r"app_icon_small.png")
-            if not app_icon_path.exists():
-                app_icon_path = Path(r"./player/app_icon_small.png")
+
+            app_icon_path =\
+                ContainerHandler.get_absolute_path(r"./player/app_icon_small.png")
+            #if not app_icon_path.exists():
+                #app_icon_path = Path(r"./player/app_icon_small.png")
 
         pygame.display.set_icon(pygame.image.load(app_icon_path))
 
@@ -236,10 +239,27 @@ class Main:
         main_surface = pygame.display.set_mode(screen_size)
 
         main_surface.fill((0, 0, 0))
+        
+        # Create the Virtual Canvas
+        # This is the buffer the story will be draw onto. 
+        # It creates a blank surface the same size as the display surface.
+        virtual_surface = main_surface.copy().convert_alpha()
+        
+        
+        # Initialize the camera which will be used for zooming and panning.
+        camera = Camera(screen_size=screen_size)
+        
+        
+        # STARTING STATE: Zoomed in on a specific spot (e.g., a character's face)
+        # camera.zoom = 2.05
+        # camera.x = 512
+        # camera.y = 189    
 
         story = ActiveStory(screen_size=screen_size,
                             data_requester=data_requester,
+                            virtual_surface=virtual_surface,
                             main_surface=main_surface,
+                            camera=camera, 
                             draft_mode=draft_mode)
         Passer.active_story = story
         
@@ -260,10 +280,19 @@ class Main:
         # Used for converting milliseconds to seconds 
         # (for delta time in seconds)
         MS_PER_SECOND = 1000
+        
+        # AnimationSpeed.test = 0
 
         while story.story_running:
+            
+            # The number of seconds elapsed in this frame
+            delta_raw = clock.tick(FPS)
+            AnimationSpeed.delta = delta_raw / MS_PER_SECOND            
 
             main_surface.fill((0, 0, 0))
+            virtual_surface.fill((0, 0, 0))
+        
+            camera.update(dt=AnimationSpeed.delta)
 
             # Handle pygame events
             for event in pygame.event.get():
@@ -283,6 +312,8 @@ class Main:
                 else:
                     story.on_event(event)
                     
+            
+                    
             # Check for <remote> finished requests.
             self.check_queue()
 
@@ -291,13 +322,38 @@ class Main:
 
             # Handle drawing
             story.on_render()
+            
+            #if not AnimationSpeed.test:
+                ## camera.start_move(target_zoom=1.5,duration=5)
+                #camera.start_move(target_x=670, target_y=220, target_zoom=3.5,duration=0)
+                ## camera.start_shake(intensity=10, duration=15.0)
+                
+                #AnimationSpeed.test = 99
+                
+
+            # Shake
+            # camera.start_shake(intensity=20, duration=1.0)                
+
+            
+            camera.apply(virtual_surface=virtual_surface,
+                         main_surface=main_surface)
+            
+            story.on_render_dialog_rectangle(main_surface)
+            
+            #############################
+            
+            story.cover_screen_handler.draw()
+    
+            # Draft rectangle (to show x/y coordinates of the mouse pointer)
+            if story.draft_mode:
+                story.draw_draft_rectangle()
+            #############################            
+        
 
             # Update the screen
             pygame.display.flip()
             
-            # The number of seconds elapsed in this frame
-            delta_raw = clock.tick(FPS)
-            AnimationSpeed.delta = delta_raw / MS_PER_SECOND
+
             
     def check_queue(self):
         """
@@ -422,7 +478,14 @@ if __name__ == "__main__":
             args.file = str(draft_path)
         else:
             # Not inside a Snap or Flatpak
-            args.file = r"../draft/draft.lvna"
+            
+            # Get the full path to draft.lvna
+            draft_lvna_full_path =\
+                ContainerHandler.get_absolute_path(r"draft/draft.lvna")
+            
+            # args.file = r"../draft/draft.lvna"
+            args.file = draft_lvna_full_path
+            
         args.show_launch = "True"
 
     if not args.file:
