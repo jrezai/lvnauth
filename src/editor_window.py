@@ -1380,10 +1380,14 @@ class EditorMainApp:
             
             # Yes, running from PyInstaller.
             
-            # Both .exe files sit in the same folder.
-            # sys.executable is startup.exe
-            # player.exe is in the same parent directory.
-            player_bin = Path(sys.executable).parent / "player.exe"
+            # Check if we are on Linux or Windows.
+            # Windows returns 'win32', Linux returns 'linux'
+            extension = ".exe" if sys.platform == "win32" else ""            
+            
+            # Both executable files sit in the same folder.
+            # sys.executable is 'startup' or 'startup.exe'
+            # 'player' or 'player.exe' is in the same parent directory.
+            player_bin = Path(sys.executable).parent / f"player{extension}"
             
             cmd = [
                 str(player_bin),
