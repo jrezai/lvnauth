@@ -68,6 +68,9 @@ class StartupWindow:
         self.btn_play_file.configure(command=self.on_play_button_clicked,
                                   image=self.btn_play_file.image)
         
+        self.lbl_version = builder.get_object("lbl_version")
+        self.lbl_version.configure(text=f"Version {ProjectSnapshot.EXACT_EDITOR_VERSION} ({ProjectSnapshot.RELEASE_DATE})")
+        
         builder.connect_callbacks(self)
 
     def on_new_project_menu_clicked(self):
