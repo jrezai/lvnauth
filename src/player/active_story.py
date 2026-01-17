@@ -276,19 +276,19 @@ class ActiveStory:
             # Advance the story if a mouse button was clicked.
             if event.type == pygame.MOUSEBUTTONDOWN:
 
-                if self.camera.is_animating_zoom_pan \
-                   and self.camera.is_animating_shake:
-                    self.camera.stop_move(jump_to_end=True)
-                    self.camera.stop_shake()
+                #if self.camera.is_animating_zoom_pan \
+                   #and self.camera.is_animating_shake:
+                    #self.camera.stop_move(jump_to_end=True)
+                    #self.camera.stop_shake()
                     
-                    return
+                    #return
                 
-                elif self.camera.is_animating_zoom_pan:
-                    self.camera.stop_move(jump_to_end=True)
-                    return
+                #elif self.camera.is_animating_zoom_pan:
+                    #self.camera.stop_move(jump_to_end=True)
+                    #return
                 
-                elif self.camera.is_animating_shake:
-                    self.camera.stop_shake()
+                #elif self.camera.is_animating_shake:
+                    #self.camera.stop_shake()
                 
                 # If dialog text is currently being animated/shown
                 # (ie: gradual text or fading in), then speed it up.

@@ -31,7 +31,6 @@ class SmoothingStyle(Enum):
     SMOOTH_EASE_IN_OUT = auto()
 
 
-
 class Camera:
     def __init__(self, screen_size):
         

@@ -25,6 +25,7 @@ Change logs
 
 from typing import NamedTuple, List
 from dataclasses import dataclass, fields
+from enum import Enum, auto
 
 
 def get_dataclass_field_names(class_blueprint) -> List:
@@ -152,7 +153,32 @@ class CameraMovement:
 class CameraShake(NamedTuple):
     intensity: float
     duration_seconds: float
-
+    
+    
+class CameraStopChoice(Enum):
+    
+    # We don't use 'auto' here because when editing the command via 
+    # the context menu, we instantiate the CameraStopWhere class using 
+    # one of the strings below, so the enum values below need to accept
+    # those string values.
+    AT_CURRENT_SPOT = "current spot"
+    JUMP_TO_END = "jump to end"
+    
+    # So none of the radio buttons gets selected when editing
+    # when it's an unknown argument.
+    UNKNOWN = "unknown"
+    
+    
+@dataclass
+class CameraStopWhere:
+    # "jump to end" or "current spot"
+    arguments: str
+    
+    def __post_init__(self):
+        # Make sure the given argument is always lowercase,
+        # because they're keywords: "jump to end" or "current spot"
+        self.arguments = self.arguments.lower()
+    
 
 class ConditionDefinition(NamedTuple):
     value1: str

@@ -45,6 +45,7 @@ from re import search, findall
 from functools import partial
 from typing import Tuple
 from dataclasses import is_dataclass, fields
+from enum import Enum
 
 # from font_handler import ActiveFontHandler
 from typing import Dict
@@ -1221,6 +1222,12 @@ class StoryReader:
             Stop the camera shake effect, if active.
             """
             self._camera_stop_shaking()
+            
+        elif command_name == "camera_stop_moving":
+            """
+            Stop the camera movement effect, if active.
+            """
+            self._camera_stop_moving(arguments=arguments)
 
         elif command_name == "variable_set":
             """
@@ -2420,6 +2427,29 @@ class StoryReader:
         Stop the camera shaking effect, if active.
         """
         self.story.camera.stop_shake()
+        
+    def _camera_stop_moving(self, arguments: str):
+        """
+        Stop the camera zoom/pan effect, if active.
+        
+        It will either stop at the current spot, or it will jump to the end,
+        depending on the provided argument.
+        """
+        
+        camera_stop: cc.CameraStopWhere
+        camera_stop = self._get_arguments(
+            class_namedtuple=cc.CameraStopWhere, given_arguments=arguments
+        )
+        
+        
+        if not camera_stop:
+            return
+        
+        # Jump to end?
+        jump_to_end =\
+            camera_stop.arguments == cc.CameraStopChoice.JUMP_TO_END.value
+        
+        self.story.camera.stop_move(jump_to_end=jump_to_end)
         
     def _camera_start_shaking(self, arguments: str):
         """
@@ -4013,7 +4043,8 @@ class StoryReader:
         
         Arguments:
 
-        - class_namedtuple: the class to use when returning an object in this method.
+        - class_namedtuple: the class to use when returning an object in
+        this method. It works with NamedTuple classes and Dataclasses.
         One example of a class is: MovementSpeed
         
         - given_arguments: string-based argument separated by commas.
@@ -4118,11 +4149,16 @@ class StoryReader:
                 first_argument_name =\
                     tuple(class_namedtuple.__annotations__.keys())[0]
             
-            if expected_argument_types[0] is str \
+            # If it's a string or an Enum
+            if (expected_argument_types[0] is str \
+               or issubclass(expected_argument_types[0], Enum)) \
                and first_argument_name == "arguments":
+                
+                # The single argument type is either a string
+                # or an Enum.
             
-                # Record the arguments as one string as part of a namedtuple,
-                # for easier access by the caller.
+                # Record the arguments as one string as part of a namedtuple
+                # or dataclass, for easier access by the caller.
                 generate_class = class_namedtuple(given_arguments)
     
                 return generate_class

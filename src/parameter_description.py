@@ -236,6 +236,8 @@ class ParameterDescription:
                      "remote_call": ("Custom action name", "*(optional) Key=value arguments", ),
                      
                      "camera_start_shaking": ("Intensity (0.01 to 100)", "Duration in seconds (0.01 to 100)"),
+                     "camera_start_moving": ("Target X", "Target Y", "Zoom (0 to 20)", "Duration in seconds (0 to 600)", "Smoothing style"),
+                     "camera_stop_moving": ("Stop result", ),
                      
                      }
     
