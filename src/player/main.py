@@ -488,6 +488,11 @@ if __name__ == "__main__":
             
         args.show_launch = "True"
         
+    # Make sure the file argument is a Path object 
+    # so we can run .is_file() on it.
+    if args.file and not isinstance(args.file, Path):
+        args.file = Path(args.file)
+        
     # No .lvna file specified? Or the .lvna file doesn't exist?
     if not args.file or not args.file.is_file():
         print("No file specified. Use --file to specify a path to a .lvna file.")
