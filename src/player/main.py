@@ -491,7 +491,7 @@ if __name__ == "__main__":
     # No .lvna file specified? Or the .lvna file doesn't exist?
     if not args.file or not args.file.is_file():
         print("No file specified. Use --file to specify a path to a .lvna file.")
-        quit()
+        sys.exit(0)
 
     # Should we show the launch window?
     show_launch = args.show_launch in ("true", "True")
