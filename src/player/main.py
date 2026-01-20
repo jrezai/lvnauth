@@ -475,7 +475,7 @@ if __name__ == "__main__":
         if ContainerHandler.is_in_snap_package() \
            or ContainerHandler.is_in_flatpak_package():
             draft_path = ContainerHandler.get_draft_path()
-            args.file = str(draft_path)
+            args.file = draft_path # str(draft_path)
         else:
             # Not inside a Snap or Flatpak
             
@@ -487,10 +487,16 @@ if __name__ == "__main__":
             args.file = draft_lvna_full_path
             
         args.show_launch = "True"
-
-    if not args.file:
+        
+    # Make sure the file argument is a Path object 
+    # so we can run .is_file() on it.
+    if args.file and not isinstance(args.file, Path):
+        args.file = Path(args.file)
+        
+    # No .lvna file specified? Or the .lvna file doesn't exist?
+    if not args.file or not args.file.is_file():
         print("No file specified. Use --file to specify a path to a .lvna file.")
-        quit()
+        sys.exit(0)
 
     # Should we show the launch window?
     show_launch = args.show_launch in ("true", "True")

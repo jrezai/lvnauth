@@ -41,11 +41,11 @@ class ContainerHandler:
         Get the absolute path of the given relative path.
         
         Purpose: if LVNAuth is running from PyInstaller, the current path will
-        be seen as where the executable file is (.exe), rather than where the
+        be seen as where the executable file is, rather than where the
         script files are located. This can be a problem if we try to load a .png
         image from the same directory as the script while running from
         PyInstaller. This method will return the 'normal' full path when
-        running from PyInstaller, not the path of the .exe file.
+        running from PyInstaller, not the path of the executable file.
         """
         
         # If _MEIPASS exists, it means LVNAuth is running from PyInstaller's
@@ -53,7 +53,8 @@ class ContainerHandler:
         if hasattr(sys, '_MEIPASS'):
             # Running from PyInstaller.
             
-            # Return the script's absolute path, not the path of the .exe file.
+            # Return the script's absolute path, 
+            # not the path of the executable file.
             return Path(sys._MEIPASS) / relative_path
 
         else:

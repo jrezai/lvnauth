@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings>
+      <setting id="name">Camera Movement Dialog</setting>
+      <setting id="description">Used for generating a command that will zoom and pan the current visual novel.</setting>
+      <setting id="module_name">camera_movement</setting>
+      <setting id="template">application</setting>
+      <setting id="main_widget">frame_camera_movement</setting>
+      <setting id="main_classname">CameraMovement</setting>
+      <setting id="main_menu" />
+      <setting id="output_dir" />
+      <setting id="output_dir2" />
+      <setting id="import_tkvariables">False</setting>
+      <setting id="use_ttk_styledefinition_file">False</setting>
+      <setting id="use_i18n">False</setting>
+      <setting id="all_ids_attributes">False</setting>
+      <setting id="generate_code_onsave">False</setting>
+      <setting id="use_window_centering_code">False</setting>
+      <setting id="ttk_style_definition_file" />
+    </settings>
+    <customwidgets />
+  </project>
+  <object class="ttk.Frame" id="frame_camera_movement" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame_target_x" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_target_x" named="True">
+            <property name="text" translatable="yes">Target X:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_target_x" named="True">
+            <property name="from_">0</property>
+            <property name="increment">1</property>
+            <property name="textvariable">int:v_target_x</property>
+            <property name="to">9999</property>
+            <property name="width">8</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_target_y" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">1</property>
+          <property name="padx">15</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_target_y" named="True">
+            <property name="text" translatable="yes">Target Y:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_target_y" named="True">
+            <property name="from_">0</property>
+            <property name="increment">1</property>
+            <property name="textvariable">int:v_target_y</property>
+            <property name="to">9999</property>
+            <property name="width">8</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_zoom" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="columnspan">2</property>
+          <property name="pady">15</property>
+          <property name="row">1</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_zoom" named="True">
+            <property name="text" translatable="yes">Zoom (0 to 20):</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_zoom" named="True">
+            <property name="from_">0</property>
+            <property name="increment">0.01</property>
+            <property name="textvariable">double:v_zoom</property>
+            <property name="to">20</property>
+            <property name="width">8</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label2">
+            <property name="text" translatable="yes">1 = no zoom change</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">5 0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_duration" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="columnspan">2</property>
+          <property name="row">2</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="1" name="weight">1</property>
+          <property type="row" id="1" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Label" id="lbl_duration" named="True">
+            <property name="text" translatable="yes">Duration in seconds (0 to 600):</property>
+            <property name="textvariable">string:v_duration_title</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">2</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_duration_seconds" named="True">
+            <property name="from_">0</property>
+            <property name="increment">0.01</property>
+            <property name="textvariable">double:v_duration_seconds</property>
+            <property name="to">600</property>
+            <property name="width">8</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label1">
+            <property name="text" translatable="yes">0 = instant</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">5 0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_smoothing" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="columnspan">2</property>
+          <property name="pady">15</property>
+          <property name="row">3</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_smoothing_style" named="True">
+            <property name="text" translatable="yes">Smoothing style:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="cb_smoothing_style" named="True">
+            <property name="state">readonly</property>
+            <property name="textvariable">string:v_smoothing_style</property>
+            <property name="values">"constant speed" "start slow speed up" "start fast slow down" "smooth"</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
