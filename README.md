@@ -3,7 +3,7 @@ Visual novel creator and player
 
 ### Description
 
-LVNAuth is a desktop application that lets you create and play visual novels. Currently, it is only available for Linux.
+LVNAuth is a desktop application that lets you create and play visual novels. It is available for Linux and Windows.
 
 ### Main features:
 
@@ -19,6 +19,8 @@ LVNAuth is a desktop application that lets you create and play visual novels. Cu
 
 - **Create non-linear visual novels**: Branch your stories off based on the viewer's choices. Linear visual novels can also be created.
 
+- **Camera controls**: Use zooming and panning to direct the viewer's focus, build tension, and make your scenes more interesting.
+
 
 ### Other features:
 
@@ -32,5 +34,5 @@ LVNAuth is a desktop application that lets you create and play visual novels. Cu
 
 ### Worth noting:
 
-- It's possible to ask the viewer questions and save the answers in the current visual novel session. Once the visual novel is closed, those answers are lost.
+- It's possible to ask the viewer questions and save the answers in the current visual novel session. Once the visual novel is closed, those answers are not saved.
 *A feature is planned to save the viewer's answers for future sessions.*
