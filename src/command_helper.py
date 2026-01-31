@@ -557,7 +557,7 @@ class CommandHelper:
                             command_cls = cc.WaitForAnimation
                     else:
                         # Use the 1-argument version of the class
-                        command_cls = cc.WaitForAnimationFadeScreen
+                        command_cls = cc.WaitForAnimationEntireScreen
                     
                 case "case":
                     # <case> can have 3 arguments or 4 arguments.

@@ -5224,17 +5224,34 @@ class StoryReader:
         if "," not in arguments:
             # There are no commas, which means it is probably:
             # <wait_for_animation: fade screen>
+            # or
+            # <wait_for_animation: camera shake>
+            # or
+            # <wait_for_animation: camera movement>
 
-            wait_for_fade_screen: cc.WaitForAnimationFadeScreen
-            wait_for_fade_screen = self._get_arguments(
-                class_namedtuple=cc.WaitForAnimationFadeScreen,
+            entire_screen_animation: cc.WaitForAnimationEntireScreen
+            entire_screen_animation = self._get_arguments(
+                class_namedtuple=cc.WaitForAnimationEntireScreen,
                 given_arguments=arguments,
             )
 
-            if not wait_for_fade_screen:
+            if not entire_screen_animation:
                 return
+            else:
+                value_text =\
+                    entire_screen_animation.screen_animation_type.lower()
+            
 
-            if wait_for_fade_screen.fade_screen.lower() != "fade screen":
+            if value_text == "fade screen":
+                wait_type = "cover"
+                
+            elif value_text == "camera shake":
+                wait_type = "shake"
+                
+            elif value_text == "camera movement":
+                wait_type = "camera_movement"
+            
+            else:
                 return
 
             # Get the story reader that's not a reusable script reader,
@@ -5242,7 +5259,7 @@ class StoryReader:
             main_reader = self.get_main_story_reader()
 
             main_reader.wait_for_animation_handler.enable_wait_for(
-                sprite_type="cover", general_alias=None, animation_type=None
+                sprite_type=wait_type, general_alias=None, animation_type=None
             )
 
         else:
@@ -5879,6 +5896,13 @@ class WaitForAnimationHandler:
         # or
         # "cover" (single string) which means screen cover (screen fade-in/fade-out)
         self.wait_list = []
+        
+        # The keywords used for identifying which animation types to wait for
+        # when the animation involves the entire screen. This tuple is used
+        # to know what the supported animation types that apply to the whole
+        # screen.
+        self.entire_screen_animation_types =\
+            ("cover", "shake", "camera_movement")
 
     def enable_wait_for(
         self,
@@ -5890,14 +5914,18 @@ class WaitForAnimationHandler:
         Reusable scripts are not affected.
         """
 
-        # Should we wait for a screen cover animation? (ie: <scene_with_fade>
-        if sprite_type == "cover":
+        # Should we wait for an animation that affects the whole screen?
+        # (ie: <scene_with_fade>
+        if sprite_type in self.entire_screen_animation_types:
+
+            # Yes, we need to wait for an animation that affects the whole
+            # screen, such as a screen fade, camera shake, or camera movement.
 
             # Already in the wait_list? return.
-            if "cover" in self.wait_list:
+            if sprite_type in self.wait_list:
                 return
 
-            self.wait_list.append("cover")
+            self.wait_list.append(sprite_type)
         else:
 
             if not all([sprite_type, general_alias, animation_type]):
@@ -5958,6 +5986,16 @@ class WaitForAnimationHandler:
                 # (even if the screen is fully faded-in, it's still considered 
                 # to be animating)
                 if Passer.active_story.cover_screen_handler.is_cover_animating:
+                    wait = True
+                    
+            elif isinstance(wait_info, str) and wait_info == "shake":
+                # Wait for a camera shake effect to finish.
+                if Passer.active_story.camera.is_animating_shake:
+                    wait = True
+                    
+            elif isinstance(wait_info, str) and wait_info == "camera_movement":
+                # Wait for a camera movement (zoom/pan) effect to finish.
+                if Passer.active_story.camera.is_animating_zoom_pan:
                     wait = True
 
             else:

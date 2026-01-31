@@ -9423,7 +9423,8 @@ class WaitForAnimationFrame:
         # select the appropriate radio button only if the argument has
         # a valid sprite-type value that's defined here.
         self.valid_sprite_types =\
-            ("character", "object", "dialog_sprite", "cover")
+            ("character", "object", "dialog_sprite", "cover",
+             "shake", "camera_movement")
 
         # Default to the radio button, 'Character'
         self.v_sprite_type.set("character")
@@ -9440,14 +9441,16 @@ class WaitForAnimationFrame:
     def on_sprite_type_changed(self, *args):
         """
         Disable the sprite alias and animation type widgets
-        if the wait is for 'Screen fade'. Otherwise, enable all the widgets.
+        if the wait is for 'Screen fade', 'Camera shake', 'Camera movement'.
+        
+        Otherwise, enable all the widgets.
 
-        Purpose: when 'Screen fade' is selected, there is no general alias
-        or animation type - it's just one type of wait.
+        Purpose: when an effect that affects the entire screen is selected,
+        there is no general alias or animation type - it's just one type of wait.
         """
         sprite_type = self.v_sprite_type.get()
 
-        if sprite_type == "cover":
+        if sprite_type in ("cover", "shake", "camera_movement"):
             set_state = "disabled"
         else:
             set_state = "!disabled"
@@ -9481,12 +9484,21 @@ class WaitForAnimation(WizardListing):
         if not command_class_object:
             return
         
-        # Waiting for a fade screen animation?
-        if hasattr(command_class_object, "fade_screen"):
-            fade_screen = command_class_object.fade_screen
+        # Waiting for a entire screen animation such as screen fade?
+        if hasattr(command_class_object, "screen_animation_type"):
+            entire_screen_animation = command_class_object.screen_animation_type
             
-            if fade_screen == "fade screen":
-                self.wait_frame.v_sprite_type.set("cover")
+            if entire_screen_animation == "fade screen":
+                sprite_type = "cover"
+            elif entire_screen_animation == "camera shake":
+                sprite_type = "shake"
+            elif entire_screen_animation == "camera movement":
+                sprite_type = "camera_movement"
+            else:
+                return
+                
+            self.wait_frame.v_sprite_type.set(sprite_type)
+                
             
         else:
             # Waiting for a specific type of animation on a specific
@@ -9582,10 +9594,18 @@ class WaitForAnimation(WizardListing):
         # <wait_for_animation: sprite type, sprite alias, animation type>
         # or
         # <wait_for_animation: screen fade>
+        
+        entire_screen_animations = {"cover": "fade screen",
+                                    "shake": "camera shake",
+                                    "camera_movement": "camera movement",}
+        
 
         # For <wait_for_animation: screen fade>
-        if self.wait_frame.v_sprite_type.get() == "cover":
-            command_line = f"<{self.command_name}: fade screen>"
+        # <wait_for_animation: camera shake>
+        # <wait_for_animation: camera movement>
+        entire_screen_type = self.wait_frame.v_sprite_type.get()
+        if entire_screen_type in entire_screen_animations:
+            command_line = f"<{self.command_name}: {entire_screen_animations.get(entire_screen_type)}>"
             return command_line
 
         # For # <wait_for_animation: sprite type, sprite alias, animation type>

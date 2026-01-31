@@ -112,8 +112,8 @@ class WaitForAnimation(NamedTuple):
     animation_type: str
 
 
-class WaitForAnimationFadeScreen(NamedTuple):
-    fade_screen: str
+class WaitForAnimationEntireScreen(NamedTuple):
+    screen_animation_type: str
 
 
 class SceneWithFade(NamedTuple):
