@@ -31,6 +31,7 @@ import active_story
 import file_reader
 import dialog_rectangle
 import font_handler
+import sequence_handler
 import logging
 
 import sprite_definition
@@ -360,6 +361,9 @@ class StoryReader:
             # We use this flag to check whether the dialog rect is animating
             # and if its, don't progress the main script yet.
             self.animating_dialog_rectangle = False
+            
+            # Used for handling sprite animations.
+            self.sequence_handler = sequence_handler.SequenceHandler()
 
             # Key (str): reusable script name (background reader name)
             # Value: StoryReader object (background reader)
@@ -1154,6 +1158,25 @@ class StoryReader:
             Pause the main story reader until a specific animation has finished.
             """
             self._wait_for_animation(arguments=arguments)
+            
+        elif command_name == "sequence_create":
+            """
+            Prepare a sequence of images to be displayed in sequence
+            with some delay between each frame iteration.
+            """
+            self._sequence_create(arguments=arguments)
+            
+        elif command_name == "sequence_play":
+            """
+            Play a sequence that is already configured.
+            """
+            self._sequence_play(arguments=arguments)
+            
+        elif command_name == "sequence_stop":
+            """
+            Stop the sequence animation, if it's playing.
+            """
+            self._sequence_stop()
 
         elif command_name == "halt_and_pause_main_script":
             """
@@ -5209,6 +5232,87 @@ class StoryReader:
 
         elif "_mouse_click" in command_name:
             existing_sprite.on_mouse_click_run_script = mouse_run_script
+
+    def _sequence_play(self, arguments: str):
+        """
+        Play a sequence that has already been configured with <sequence_create>.
+        
+        It takes one argument: the number of times to play the sequence
+        or the keyword 'repeat', which is used to loop the sequence.
+        """
+        
+        if not arguments:
+            return
+        
+        # Make sure the animation sequence has already been configured
+        # using <sequence_create>. If it has already been configured, 
+        # sprite_type will have a value. Otherwise, it will be None.
+        elif not self.sequence_handler.sprite_type:
+            return
+        
+        # -1 will be used to mean 'repeat'
+        if arguments.lower().strip() == "repeat":
+            arguments = -1
+        
+        # At this point, arguments must be an integer.
+        # If not, it's not a valid value.
+        try:
+            arguments = int(arguments)
+        except ValueError:
+            return
+        
+        # Ensure the argument is not zero (because you can't play a sequence
+        # zero times), is either -1 (which means repeat) or is greater 
+        # than zero.
+        sequence_play = cc.SequencePlay(number_of_times=arguments)
+        if not sequence_play:
+            return
+        
+        # Play the sequence animation.
+        self.sequence_handler.\
+            play(play_num_of_times=sequence_play.number_of_times)
+        
+    def _sequence_stop(self):
+        """
+        Stop the sequence animation, if it's playing.
+        """
+        self.sequence_handler.stop()
+
+    def _sequence_create(self, arguments: str):
+        """
+        Prepare multiple images to be displayed in sequence to create
+        an animation, with some delay between each image iteration.
+        
+        Example:
+        <sequence_create: character, 0.1, theo_1, theo_2, theo_3>
+        """
+        # self.sequence_handler.configure
+        
+        sequence: cc.Sequence
+        sequence = self._get_arguments(class_namedtuple=cc.Sequence,
+                                       given_arguments=arguments,
+                                       unlimited_optional_arguments=True,
+                                       num_of_fixed_groups=2)
+
+        if not sequence:
+            return
+        else:
+            
+            # At this point, sequence.arguments will be a comma separated
+            # value of sprite names, such as: theo1, theo2, theo normal
+            # Convert this comma separated values into a list, while
+            # also removing excess spacing.
+            sprite_names =\
+                [item.strip() for item in sequence.arguments.split(",")]
+            
+            # There has to be 2 or more sprites for an animation to work.
+            if not sprite_names or len(sprite_names) <= 1:
+                return
+            
+            self.sequence_handler.\
+                configure_sequence(sprite_type=sequence.sprite_type,
+                                   image_names=sprite_names,
+                                   default_delay=sequence.delay)
 
     def _wait_for_animation(self, arguments: str):
         """

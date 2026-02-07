@@ -24,8 +24,8 @@ Change logs
 """
 
 from typing import NamedTuple, List
-from dataclasses import dataclass, fields
-from enum import Enum, auto
+from dataclasses import dataclass, fields, field, InitVar
+from enum import Enum
 
 
 def get_dataclass_field_names(class_blueprint) -> List:
@@ -124,6 +124,74 @@ class SceneWithFade(NamedTuple):
     chapter_name: str
     scene_name: str
     
+    
+@dataclass
+class SequencePlay:
+    """
+    Used by <sequence_play>
+    Example:
+    <sequence_play: 3>
+    <sequence_play: forever>
+    """
+    
+    number_of_times: InitVar[int]
+    
+    # -1 means loop forever
+    _number_of_times: int = field(init=False)
+    
+    # Accept 'number_of_times' as an init value when instantiating
+    # this class.
+    def __post_init__(self, number_of_times):
+        self.number_of_times = number_of_times
+    
+    @property
+    def number_of_times(self) -> int:
+        return self._number_of_times
+    
+    @number_of_times.setter
+    def number_of_times(self, value):
+        """
+        Allow -1 (which means loop forever) and allow int values higher than 0.
+        
+        But not zero itself.
+        """
+        if value == -1 or value > 0:
+            self._number_of_times = value
+        else:
+            self._number_of_times = None
+    
+    
+@dataclass
+class Sequence:
+    """
+    Used by <sequence_create> and <sequence_delay>
+    Example uses:
+    <sequence_create: character, 0.1, theo_1, theo_2, theo_3>
+    <sequence_delay: character, 0.5, theo_1, theo_2>
+    """
+    _sprite_type: str
+    delay: float
+    arguments: str
+    
+    @property
+    def sprite_type(self) -> str:
+        return self._sprite_type
+    
+    @sprite_type.setter
+    def sprite_type(self, value: str):
+        """
+        Only specific sprite type values are allowed.
+        """
+        # Store the value in lowercase so it'll work with dictionary lookups.
+        if value:
+            value = value.lower()
+            
+        if value not in ("character", "object", "dialog sprite"):
+            self._sprite_type = None
+        else:
+            self._sprite_type = value
+            
+            
     
 @dataclass
 class CameraMovement:

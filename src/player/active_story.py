@@ -317,6 +317,8 @@ class ActiveStory:
         Handle movements
         """
         self.reader.read_all_scripts()
+        
+        self.reader.sequence_handler.update()
 
         sd.Groups.background_group.update()
         sd.Groups.object_group.update()
