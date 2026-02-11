@@ -16,11 +16,13 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
+import sprite_definition as sd
 from animation_speed import AnimationSpeed
-from typing import List
+from typing import List, Set, Tuple
 from sprite_definition import Groups, SpriteGroup
 from shared_components import Passer
 from file_reader import ContentType
+
 
 
 class SequenceHandler:
@@ -105,6 +107,8 @@ class SequenceHandler:
         
         - play_number_of_times: the number of times to play the sequence.
         Use -1 to play forever.
+        
+        Return: True if the sequence was created successfully.
         """
         
         dict_source = {"character": Groups.character_group,
@@ -294,3 +298,277 @@ class SequenceHandler:
                 
                 main_reader._sprite_show(arguments=new_image_name,
                                          sprite_type=self.sprite_type)            
+
+
+class SequenceGroup:
+    def __init__(self):
+        
+        # Key: sequence name
+        # Value: SequenceHandler object.
+        self.sequences = {}
+        
+    def update(self):
+        """
+        Run the update method in all sequences.
+        Sequences that are not active will return None in their update methods.
+        """
+        for sequence in self.sequences.values():
+            sequence.update()
+            
+    def _get_aliases_in_sequence(self, sequence_name: str) -> Set:
+        """
+        Return a set of unique aliases that are associated with the sprite
+        names in the given sequence name.
+        
+        Purpose: this method is used in the process of making sure a sequence
+        that *wants to* be played, doesn't have sprite aliases that are already
+        being played in a different sequence. Having multiple sequences playing
+        the same aliases would not be straight-forward for the visual novel
+        author when writing a visual novel.
+        """
+        
+        # Get the sequence object that we need to check, by name.
+        sequence: SequenceHandler
+        sequence = self.sequences.get(sequence_name)
+        if not sequence:
+            return
+        
+        # A sequence is tied to a sprite type.
+        # Use this mapping to find the sprite group for us to search aliases in.
+        sprite_group_mapping = {"character": sd.Groups.character_group,
+                        "object": sd.Groups.object_group,
+                        "dialog sprite": sd.Groups.dialog_group,}
+        
+        # Get the sprite group depending on the sprite type.
+        sprite_group: SpriteGroup
+        sprite_group = sprite_group_mapping.get(sequence.sprite_type)
+        if not sprite_group:
+            return
+        
+        # We're interested in the sprites that are in the given sequence.
+        unique_sprite_names = set(sequence.frame_image_names)
+        
+        # We're going to append general aliases to this set.
+        # As we append aliases to this set, duplicates are not added.
+        unique_aliases = set()
+
+        # Enumerate through all the sprites in the given sprite group
+        # and keep track of aliases for sprites that are in the given sequence.
+        sprite_object: sd.SpriteObject
+        for sprite_name, sprite_object in sprite_group.sprites.items():
+            
+            # Is the current sprite name one of the sprites in the sequence?
+            if sprite_name in unique_sprite_names:
+                
+                # Yes, this is one of the sprite names in the given sequence.
+                
+                # Add the alias to the set.
+                # Duplicates are not added because it's a set, not a list.
+                unique_aliases.add(sprite_object.general_alias)
+                
+        return unique_aliases
+    
+    def _aliases_exist_in_other_playing_sequences(self,
+                                          unique_aliases: Set,
+                                          sprite_type: str, 
+                                          exclude_sequence_name: str) -> Tuple(Set, str):
+        """
+        Determine if any of the aliases in the set, unique_aliases, exist
+        in any other sequences that are currently playing.
+        
+        Arguments:
+        
+        - unique_aliases: a set of unique alias names.
+        
+        - sprite_type: so we can search the right sprite dictionary.
+        
+        - exclude_sequence_name: the sequence name to not check because
+        this is the sequence name that wants to be played from another method,
+        and it's the reason we're doing this check.
+        
+        Return: a tuple, considering of a set of the aliases that exist in
+        any *other* sequences that are currently playing (if any), and the
+        sequence name where the aliases are currently being used.
+        """
+        
+        # Holds aliases that are in sequences, as we enumerate through other
+        # sequences down below.
+        other_aliases = set()
+        
+        # If the given unique aliases (unique_aliases) has items that exist in
+        # one of the other sequences of the same sprite type, the shared
+        # aliases will be populated in this set.
+        sets_share_aliases = set()
+
+        # Enumerate through all other sequences that match the type (character,
+        # object, or dialog sprite) of the given sequence in the argument. 
+        other_sequence: SequenceHandler
+        other_seq_name: str = None
+        for other_seq_name, other_sequence in self.sequences.items():
+            
+            # Make sure we're enumerating on a different sequence than the 
+            # given sequence name in the argument, so that we're sure it's a 
+            # different sequence altogether.            
+            if other_seq_name == exclude_sequence_name:
+                continue
+            
+            # The sprite type of the given sequence has to match the other
+            # sequence that we're checking against. For example, character 
+            # sequences must be compared to other character sequences, not 
+            # objects or dialog sprites.            
+            elif other_sequence.sprite_type != sprite_type:
+                continue
+            
+            # We're only interested in comparing against other actively
+            # *playing* sequences. If the other sequence is not being played,
+            # there is no need to check the other sequence.
+            elif not other_sequence.is_playing:
+                continue
+            
+            # Get the unique aliases of the sprites in the other sequence.
+            other_aliases =\
+                self._get_aliases_in_sequence(sequence_name=other_seq_name)
+                        
+            # Make sure we have a value here, which should always be the case.
+            if not other_aliases:
+                continue
+                        
+            # Does the given unique aliases (in the argument) have aliases
+            # that match with aliases in the other sequence that we're
+            # enumeratong on? If so, populate this variable with the shared 
+            # aliases, if any.
+            sets_share_aliases = unique_aliases & other_aliases
+            
+            if sets_share_aliases:
+                # One or more aliases are being used in the other sequence that
+                # we're currently enumerating on. There is no point in checking
+                # more sequences, so break here.
+                break
+            
+        # Return the shared alias(es), if any, along with the sequence
+        # name where the alias(es) are being used, if at all.
+        return (sets_share_aliases, other_seq_name)
+
+    def play(self, sequence_name: str, play_number_of_times: int):
+        """
+        Play a specific sequence. If the given sequence name is already
+        playing, the request will be ignored.
+        
+        Arguments:
+        
+        - sequence_name: case-sensitive sequence name.
+        
+        - play_number_of_times: the number of times to play the sequence
+        animation. -1 means repeat.
+        """
+        
+        """
+        We need to ensure that no other playing sequences are set up to show
+        a sprite alias in the sequence name that wants to be played
+        in this method. The reason is: two different sequences trying to
+        animate sprites with overlapping aliases will not make sense.
+        """
+
+        # The sequence that wants to be played must already be configured.
+        # Try to find it.
+        sequence: SequenceHandler
+        sequence = self.sequences.get(sequence_name)
+        
+        if sequence:
+            # The sequence exists.
+            
+            # Is the sequence already playing? return.
+            if sequence.is_playing:
+                return
+            
+            # Get all unique aliases in the sequence we want to play.
+            aliases_this_sequence =\
+                self._get_aliases_in_sequence(sequence_name=sequence_name)
+            
+            # Check if any of the sprites in the given sequence 
+            # (in the argument) are already being animated in a different 
+            # sequence.
+            aliases_already_in_use, other_sequence_name = \
+                self._aliases_exist_in_other_playing_sequences(
+                unique_aliases=aliases_this_sequence,
+                sprite_type=sequence.sprite_type,
+                exclude_sequence_name=sequence_name)            
+            
+            # Show the actively animating aliases, if any, so the visual novel
+            # author is aware that two sequences can't play simultaneously, if
+            # both sequences want to show the same aliases for the same 
+            # sprite type (character, object, dialog sprite).
+            if aliases_already_in_use:
+                raise ValueError(f"Error: An attempt was made to play the sequence, '{sequence_name}'. However, a different sequence that is currently playing ('{other_sequence_name}') is already using the following aliases: {aliases_already_in_use}.")
+            else:
+                # There are no actively animating aliases that are in the
+                # sequence that wants to be played.
+                # Go ahead and play the sequence.
+                sequence.play(play_num_of_times=play_number_of_times)
+            
+    def stop(self, sequence_name: str):
+        """
+        Stop a specific sequence from playing.
+        
+        This will also cause the sequence to show the 'final frame',
+        if a final frame has been defined for the sequence.
+        """
+        sequence: SequenceHandler
+        sequence = self.sequences.get(sequence_name)
+        if sequence:
+            sequence.stop()
+
+    def create_sequence(self,
+                        sequence_name:str,
+                        sprite_type: str,
+                        image_names: List,
+                        default_delay: float,
+                        play_number_of_times=1) -> bool | None:
+        """
+        Create a sequence name if it doesn't already exist and initialize it.
+        
+        Arguments:
+        
+        - sequence name: a unique (case-sensitive) name to represent this new
+        sequence animation. This name will be used to interact with the
+        sequence after it's been created.
+        
+        - sprite_type (str): either 'character', 'object', or 'dialog sprite',
+        so this method knows which image dictionary to check.
+        
+        - image_names: a list of image sprite names to load sequentially
+        to make an animation. The order of the image file names is the sequence
+        in which the images will be displayed.
+        
+        - default_delay: the global delay to apply to each image in the
+        animation. Each sprite can have its own sequence delay, but that's
+        set in a different method.
+        
+        - play_number_of_times: the number of times to play the sequence.
+        Use -1 to play forever.
+        """
+        
+        # Make sure a sequence name has been specified.
+        if not sequence_name:
+            return
+        
+        # Make sure the sequence name doesn't already exist.
+        if sequence_name in self.sequences:
+            return
+        
+        # Instantiate a new single sequence handler.
+        sequence = SequenceHandler()
+        created_successfully =\
+            sequence.configure_sequence(
+                sprite_type=sprite_type,
+                image_names=image_names,
+                default_delay=default_delay,
+                play_number_of_times=play_number_of_times)
+
+        # Was the sequence created successfully with the arguments we
+        # provided it above?
+        if created_successfully:
+            
+            # Add the newly created sequence to the queue list.
+            self.sequences[sequence_name] = sequence
+

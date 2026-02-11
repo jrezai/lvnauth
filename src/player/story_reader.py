@@ -363,7 +363,7 @@ class StoryReader:
             self.animating_dialog_rectangle = False
             
             # Used for handling sprite animations.
-            self.sequence_handler = sequence_handler.SequenceHandler()
+            self.sequence_groups = sequence_handler.SequenceGroup()
 
             # Key (str): reusable script name (background reader name)
             # Value: StoryReader object (background reader)
@@ -4117,6 +4117,10 @@ class StoryReader:
             # First two groups fixed, the rest variable?
             elif num_of_fixed_groups == 2:
                 pattern = r"^([^,]+),\s*([^,]+),\s*(.*)$"
+                
+            # First three groups fixed, the rest variable?
+            elif num_of_fixed_groups == 3:
+                pattern = r"^([^,]+),\s*([^,]+),\s*([^,]+),\s*(.*)$"
 
             # Make sure the minimum number of arguments is satisfied.
             if field_count > given_arguments.count(",") + 1:
@@ -5244,39 +5248,32 @@ class StoryReader:
         if not arguments:
             return
         
-        # Make sure the animation sequence has already been configured
-        # using <sequence_create>. If it has already been configured, 
-        # sprite_type will have a value. Otherwise, it will be None.
-        elif not self.sequence_handler.sprite_type:
-            return
-        
-        # -1 will be used to mean 'repeat'
-        if arguments.lower().strip() == "repeat":
-            arguments = -1
-        
-        # At this point, arguments must be an integer.
-        # If not, it's not a valid value.
-        try:
-            arguments = int(arguments)
-        except ValueError:
-            return
-        
-        # Ensure the argument is not zero (because you can't play a sequence
-        # zero times), is either -1 (which means repeat) or is greater 
-        # than zero.
-        sequence_play = cc.SequencePlay(number_of_times=arguments)
-        if not sequence_play:
-            return
+        sequence: cc.SequencePlay
+        sequence = self._get_arguments(
+            class_namedtuple=cc.SequencePlay, given_arguments=arguments
+        )
+
+        if not sequence:
+            return        
         
         # Play the sequence animation.
-        self.sequence_handler.\
-            play(play_num_of_times=sequence_play.number_of_times)
+        self.sequence_groups.play(sequence_name=sequence.sequence_name,
+                                  play_number_of_times=sequence.number_of_times)
         
-    def _sequence_stop(self):
+    def _sequence_stop(self, arguments: str):
         """
         Stop the sequence animation, if it's playing.
         """
-        self.sequence_handler.stop()
+        
+        sequence: cc.SequenceStop
+        sequence = self._get_arguments(
+            class_namedtuple=cc.SequenceStop, given_arguments=arguments
+        )
+        
+        if not sequence:
+            return
+        
+        self.sequence_groups.stop()
 
     def _sequence_create(self, arguments: str):
         """
@@ -5288,11 +5285,11 @@ class StoryReader:
         """
         # self.sequence_handler.configure
         
-        sequence: cc.Sequence
-        sequence = self._get_arguments(class_namedtuple=cc.Sequence,
+        sequence: cc.SequenceCreate
+        sequence = self._get_arguments(class_namedtuple=cc.SequenceCreate,
                                        given_arguments=arguments,
                                        unlimited_optional_arguments=True,
-                                       num_of_fixed_groups=2)
+                                       num_of_fixed_groups=3)
 
         if not sequence:
             return
@@ -5309,10 +5306,11 @@ class StoryReader:
             if not sprite_names or len(sprite_names) <= 1:
                 return
             
-            self.sequence_handler.\
-                configure_sequence(sprite_type=sequence.sprite_type,
-                                   image_names=sprite_names,
-                                   default_delay=sequence.delay)
+            self.sequence_groups.\
+                create_sequence(sequence_name=sequence.sequence_name, 
+                sprite_type=sequence.sprite_type,
+                image_names=sprite_names,
+                default_delay=sequence.delay)
 
     def _wait_for_animation(self, arguments: str):
         """

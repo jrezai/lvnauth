@@ -131,18 +131,12 @@ class SequencePlay:
     Used by <sequence_play>
     Example:
     <sequence_play: 3>
-    <sequence_play: forever>
+    <sequence_play: repeat>
     """
-    
-    number_of_times: InitVar[int]
+    sequence_name: str
     
     # -1 means loop forever
-    _number_of_times: int = field(init=False)
-    
-    # Accept 'number_of_times' as an init value when instantiating
-    # this class.
-    def __post_init__(self, number_of_times):
-        self.number_of_times = number_of_times
+    _number_of_times: int
     
     @property
     def number_of_times(self) -> int:
@@ -160,15 +154,17 @@ class SequencePlay:
         else:
             self._number_of_times = None
     
-    
+
+
 @dataclass
-class Sequence:
+class SequenceCreate:
     """
     Used by <sequence_create> and <sequence_delay>
     Example uses:
-    <sequence_create: character, 0.1, theo_1, theo_2, theo_3>
-    <sequence_delay: character, 0.5, theo_1, theo_2>
+    <sequence_create: sequence name, character, 0.1, theo_1, theo_2, theo_3>
+    <sequence_delay: sequence name, character, 0.5, theo_1, theo_2>
     """
+    sequence_name: str
     _sprite_type: str
     delay: float
     arguments: str
@@ -191,7 +187,11 @@ class Sequence:
         else:
             self._sprite_type = value
             
-            
+
+@dataclass
+class SequenceStop:
+    sequence_name: str
+    
     
 @dataclass
 class CameraMovement:

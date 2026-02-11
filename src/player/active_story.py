@@ -318,7 +318,7 @@ class ActiveStory:
         """
         self.reader.read_all_scripts()
         
-        self.reader.sequence_handler.update()
+        self.reader.sequence_groups.update()
 
         sd.Groups.background_group.update()
         sd.Groups.object_group.update()
