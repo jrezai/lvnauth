@@ -5254,11 +5254,26 @@ class StoryReader:
         )
 
         if not sequence:
-            return        
+            return
         
+        if sequence.number_of_times.lower() == "repeat":
+            number_of_times = -1
+        else:
+            try:
+                number_of_times = int(sequence.number_of_times)
+            except ValueError:
+                return
+            else:
+                # Success
+                
+                # However, ensure the value is not zero or less than -1
+                if number_of_times == 0 or number_of_times < -1:
+                    return
+            
+            
         # Play the sequence animation.
         self.sequence_groups.play(sequence_name=sequence.sequence_name,
-                                  play_number_of_times=sequence.number_of_times)
+                                  play_number_of_times=number_of_times)
         
     def _sequence_stop(self, arguments: str):
         """

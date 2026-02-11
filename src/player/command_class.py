@@ -125,6 +125,7 @@ class SceneWithFade(NamedTuple):
     scene_name: str
     
     
+    
 @dataclass
 class SequencePlay:
     """
@@ -135,26 +136,10 @@ class SequencePlay:
     """
     sequence_name: str
     
-    # -1 means loop forever
-    _number_of_times: int
+    # We have this as a string instead of an int because we need to
+    # read the word 'repeat'
+    number_of_times: str
     
-    @property
-    def number_of_times(self) -> int:
-        return self._number_of_times
-    
-    @number_of_times.setter
-    def number_of_times(self, value):
-        """
-        Allow -1 (which means loop forever) and allow int values higher than 0.
-        
-        But not zero itself.
-        """
-        if value == -1 or value > 0:
-            self._number_of_times = value
-        else:
-            self._number_of_times = None
-    
-
 
 @dataclass
 class SequenceCreate:

@@ -139,6 +139,10 @@ class SequenceHandler:
             if image_name in sprite_group.sprites:
                 self.frame_image_names.append(image_name)
                 self.frame_delays.append(self.global_delay)
+                
+        # There has to be 2 or more frames to create an animation.
+        if len(self.frame_image_names) <= 1:
+            return                
 
         # Did we successfully at image names to the list?
         if self.frame_image_names:
@@ -335,9 +339,9 @@ class SequenceGroup:
         
         # A sequence is tied to a sprite type.
         # Use this mapping to find the sprite group for us to search aliases in.
-        sprite_group_mapping = {"character": sd.Groups.character_group,
-                        "object": sd.Groups.object_group,
-                        "dialog sprite": sd.Groups.dialog_group,}
+        sprite_group_mapping = {ContentType.CHARACTER: sd.Groups.character_group,
+                        ContentType.OBJECT: sd.Groups.object_group,
+                        ContentType.DIALOG_SPRITE: sd.Groups.dialog_group,}
         
         # Get the sprite group depending on the sprite type.
         sprite_group: SpriteGroup
@@ -370,8 +374,8 @@ class SequenceGroup:
     
     def _aliases_exist_in_other_playing_sequences(self,
                                           unique_aliases: Set,
-                                          sprite_type: str, 
-                                          exclude_sequence_name: str) -> Tuple(Set, str):
+                                          sprite_type: ContentType, 
+                                          exclude_sequence_name: str) -> Tuple[Set, str]:
         """
         Determine if any of the aliases in the set, unique_aliases, exist
         in any other sequences that are currently playing.
