@@ -125,6 +125,15 @@ class SceneWithFade(NamedTuple):
     scene_name: str
     
     
+@dataclass
+class SequenceFinalFrame:
+    """
+    Used by <sequence_final_frame>
+    Example: <sequence_final_frame: some sequence name, theo_smile>
+    """
+    sequence_name: str
+    sprite_name: str
+
     
 @dataclass
 class SequencePlay:
@@ -144,10 +153,9 @@ class SequencePlay:
 @dataclass
 class SequenceCreate:
     """
-    Used by <sequence_create> and <sequence_delay>
-    Example uses:
+    Used by <sequence_create>
+    Example use:
     <sequence_create: sequence name, character, 0.1, theo_1, theo_2, theo_3>
-    <sequence_delay: sequence name, character, 0.5, theo_1, theo_2>
     """
     sequence_name: str
     _sprite_type: str
@@ -171,6 +179,18 @@ class SequenceCreate:
             self._sprite_type = None
         else:
             self._sprite_type = value
+            
+            
+@dataclass
+class SequenceChangeDelay:
+    """
+    Used by <sequence_change_delay>
+    Example use:
+    <sequence_change_delay: sequence name, 0.5, theo_1, theo_2>
+    """
+    sequence_name: str
+    delay: float
+    arguments: str
             
 
 @dataclass

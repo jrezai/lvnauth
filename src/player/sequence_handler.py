@@ -64,6 +64,10 @@ class SequenceHandler:
         # To know when to show the next image.
         self.current_target_time = 0.0
         
+        # The sprite name to show after the sequence has stopped.
+        # This is optional.
+        self.sprite_name_after_stop:str = None
+        
     @property
     def sprite_type(self) -> ContentType:
         return self._sprite_type
@@ -159,7 +163,22 @@ class SequenceHandler:
         
         # Reset the counter that holds the number of times 
         # the sequence was played.
-        self.played_number_of_times_so_far = 0        
+        self.played_number_of_times_so_far = 0
+        
+        # Now that the sequence has stopped, is there a final frame that
+        # we should settle on? This is optional.
+        if self.sprite_name_after_stop:
+            
+            # Yes, there is a specific sprite name we should show.
+            
+            # Get the main story reader
+            main_reader =\
+                Passer.active_story.reader.get_main_story_reader()
+            
+            # Show the sprite that needs to be shown now that the 
+            # sequence has stopped.
+            main_reader._sprite_show(arguments=self.sprite_name_after_stop,
+                                     sprite_type=self.sprite_type)             
         
     def play(self, play_num_of_times: int):
         """
@@ -520,7 +539,21 @@ class SequenceGroup:
         sequence: SequenceHandler
         sequence = self.sequences.get(sequence_name)
         if sequence:
-            sequence.stop()
+            if sequence.is_playing:
+                sequence.stop()
+            
+    def stop_all(self):
+        """
+        Stop all sequences that are currently playing.
+        
+        This will also cause the sequences to show the 'final frame',
+        if a final frame has been defined for the sequences.
+        """
+        
+        sequence: SequenceHandler
+        for sequence in self.sequences.values():
+            if sequence.is_playing:
+                sequence.stop()
 
     def create_sequence(self,
                         sequence_name:str,

@@ -1166,6 +1166,22 @@ class StoryReader:
             """
             self._sequence_create(arguments=arguments)
             
+        elif command_name == "sequence_change_delay":
+            """
+            Change the seconds delay for one or multiple images in an existing
+            sequence.
+            """
+            self._sequence_change_delay(arguments=arguments)
+            
+        elif command_name == "sequence_final_frame":
+            """
+            Set the sprite image to show after the sequence animation
+            has finished.
+            
+            This is optional in a sequence.
+            """
+            self._sequence_final_frame(arguments=arguments)
+            
         elif command_name == "sequence_play":
             """
             Play a sequence that is already configured.
@@ -1176,7 +1192,13 @@ class StoryReader:
             """
             Stop the sequence animation, if it's playing.
             """
-            self._sequence_stop()
+            self._sequence_stop(arguments=arguments)
+            
+        elif command_name == "sequence_stop_all":
+            """
+            Stop all sequences that are currently playing.
+            """
+            self._sequence_stop_all()
 
         elif command_name == "halt_and_pause_main_script":
             """
@@ -5288,7 +5310,13 @@ class StoryReader:
         if not sequence:
             return
         
-        self.sequence_groups.stop()
+        self.sequence_groups.stop(sequence_name=sequence.sequence_name)
+        
+    def _sequence_stop_all(self):
+        """
+        Stop all sequences that are currently playing.
+        """
+        self.sequence_groups.stop_all()
 
     def _sequence_create(self, arguments: str):
         """
@@ -5298,8 +5326,7 @@ class StoryReader:
         Example:
         <sequence_create: character, 0.1, theo_1, theo_2, theo_3>
         """
-        # self.sequence_handler.configure
-        
+       
         sequence: cc.SequenceCreate
         sequence = self._get_arguments(class_namedtuple=cc.SequenceCreate,
                                        given_arguments=arguments,
@@ -5326,6 +5353,97 @@ class StoryReader:
                 sprite_type=sequence.sprite_type,
                 image_names=sprite_names,
                 default_delay=sequence.delay)
+            
+    def _sequence_change_delay(self, arguments: str):
+        """
+        Change the seconds delay for one or more images in
+        an existing sequence.
+        
+        Example:
+        <sequence_change_delay: sequence name, 0.5, theo_1, theo_2>
+        """
+        # self.sequence_handler.configure
+        
+        sequence_change: cc.SequenceChangeDelay
+        sequence_change =\
+            self._get_arguments(class_namedtuple=cc.SequenceChangeDelay,
+                                given_arguments=arguments,
+                                unlimited_optional_arguments=True,
+                                num_of_fixed_groups=2)
+
+        if not sequence_change:
+            return
+        
+        # Make sure the sequence actually exists.
+        sequence: sequence_handler.SequenceHandler
+        sequence =\
+            self.sequence_groups.sequences.get(sequence_change.sequence_name)
+
+        # The sequence doesn't exist? return
+        if not sequence:
+            return
+        
+        # At this point, sequence.arguments will be a comma separated
+        # value of sprite names, such as: theo1, theo2, theo normal
+        # Convert this comma separated values into a list, while
+        # also removing excess spacing.
+        sprite_names =\
+            [item.strip() for item in sequence_change.arguments.split(",")]
+        
+        # There has to be 1 or more sprite names for us to change
+        # the delay of.
+        if not sprite_names:
+            return
+        
+        # Make sure the delay is not zero seconds or a negative value.
+        new_delay = sequence_change.delay
+        if not new_delay or new_delay < 0:
+            return
+        
+        # Enumerate through the sprite names given in by the command:
+        # <sequence_change_delay>
+        for sprite_name in sprite_names:
+            
+            try:
+                # Find the sprite name in the sequence frames dictionary.
+                index = sequence.frame_image_names.index(sprite_name)
+                
+                # The delay list matches the index of the sprite frames list,
+                # so we can update the delay using the index we found above.
+                # The list is modified directly, in-place. It's a reference.
+                sequence.frame_delays[index] = new_delay
+                
+            except ValueError:
+                # The sprite name was not found.
+                return
+            
+    def _sequence_final_frame(self, arguments: str):
+        """
+        Set the sprite image to show after the sequence animation has finished.
+        This is optional in a sequence.
+
+        Example:
+        <sequence_final_frame: some sequence name, theo_smile>
+        """
+        
+        sequence_final: cc.SequenceFinalFrame
+        sequence_final =\
+            self._get_arguments(class_namedtuple=cc.SequenceFinalFrame,
+                                given_arguments=arguments)
+
+        if not sequence_final:
+            return
+        
+        # Make sure the sequence actually exists.
+        sequence: sequence_handler.SequenceHandler
+        sequence =\
+            self.sequence_groups.sequences.get(sequence_final.sequence_name)
+
+        # The sequence doesn't exist? return
+        if not sequence:
+            return
+        
+        sequence.sprite_name_after_stop = sequence_final.sprite_name
 
     def _wait_for_animation(self, arguments: str):
         """
