@@ -2633,6 +2633,17 @@ class WizardWindow:
                         purpose_line="Create a sequence animation.\n"
                         "This command is required before playing a sequence.", 
                         group_name=GroupName.SEQUENCE)
+        
+        page_sequence_change_delay = \
+            SequenceChangeDelayFrameWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_change_delay",
+                        command_name="sequence_change_delay",
+                        purpose_line="Change the delay for sprites in an existing sequence animation.", 
+                        group_name=GroupName.SEQUENCE)
 
         self.pages["Home"] = default_page
 
@@ -2869,6 +2880,7 @@ class WizardWindow:
         Sequence
         """
         self.pages["sequence_create"] = page_sequence_create
+        self.pages["sequence_change_delay"] = page_sequence_change_delay
         
 
         self.active_page = default_page
@@ -8446,7 +8458,6 @@ class SceneWithFade(WizardListing):
 
 
 
-
 class SequenceCreateFrame:
     def __init__(self, master=None):
         self.builder = builder = pygubu.Builder()
@@ -8505,7 +8516,6 @@ class SequenceCreateFrameWizard(WizardListing):
 
         match command_class_object:
             
-            # Do we have a specific side to check?
             case cc.SequenceCreate(sequence_name, sprite_type, delay_seconds,
                                    sprite_names):
                 
@@ -8521,6 +8531,18 @@ class SequenceCreateFrameWizard(WizardListing):
                 # Sprite names, comma separated.
                 self.frame_sequence_create.v_sprite_names.set(sprite_names)
                 
+            case cc.SequenceChangeDelay(sequence_name, delay_seconds,
+                                        sprite_names):
+                
+                # Sequence name
+                self.frame_sequence_create.v_sequence_name.set(sequence_name)
+
+                # Delay in seconds
+                self.frame_sequence_create.v_delay.set(delay_seconds)
+                
+                # Sprite names, comma separated.
+                self.frame_sequence_create.v_sprite_names.set(sprite_names)
+                
     def check_inputs(self) -> Dict | None:
         """
         Check whether the user has inputted sufficient information
@@ -8529,6 +8551,10 @@ class SequenceCreateFrameWizard(WizardListing):
         Return: a dict with the chosen parameters
         or None if insufficient information was provided by the user.
         """
+        
+        # <sequence_create> has sprite_type,
+        # but <sequence_change_delay> doesn't have sprite_type
+        use_sprite_type = self.command_name == "sequence_create"
 
         user_input = {}
         
@@ -8578,17 +8604,26 @@ class SequenceCreateFrameWizard(WizardListing):
                                  message="Enter a sequence name.")
             return
         
-        elif not sprite_type:
+        
+        if use_sprite_type and not sprite_type:
             messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
                                  title="Sprite type missing",
                                  message="Choose a sprite type.")
             return            
         
-        
-        user_input = {"SequenceName": sequence_name,
-                      "SpriteType": sprite_type,
-                      "Delay": delay,
-                      "SpriteNames": sprite_names,}
+        if use_sprite_type:
+            # Uses a sprite type
+            # for <sequence_create>
+            user_input = {"SequenceName": sequence_name,
+                          "SpriteType": sprite_type,
+                          "Delay": delay,
+                          "SpriteNames": sprite_names,}
+        else:
+            # No sprite type
+            # For <sequence_change_delay>
+            user_input = {"SequenceName": sequence_name,
+                          "Delay": delay,
+                          "SpriteNames": sprite_names,}
 
         return user_input
 
@@ -8603,14 +8638,47 @@ class SequenceCreateFrameWizard(WizardListing):
             return
 
         sequence_name = user_inputs.get("SequenceName")
-        sprite_type = user_inputs.get("SpriteType")
         delay = user_inputs.get("Delay")
         sprite_names = user_inputs.get("SpriteNames")
     
-        command_line = f"<{self.command_name}: {sequence_name}, {sprite_type}, {delay}, {sprite_names}>"
+        # <sequence_create> has a sprite type
+        # but <sequence_change_delay> doesn't have a sprite type.    
+        if self.command_name == "sequence_create":
+            sprite_type = user_inputs.get("SpriteType")
+            
+            # <sequence_create>
+            command_line = f"<{self.command_name}: {sequence_name}, {sprite_type}, {delay}, {sprite_names}>"
+        else:
+            # <sequence_change_delay>
+            command_line = f"<{self.command_name}: {sequence_name}, {delay}, {sprite_names}>"
+            
             
         return command_line
 
+       
+class SequenceChangeDelayFrameWizard(SequenceCreateFrameWizard):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+        
+
+        """
+        <sequence_create> and <sequence_change_delay> use the same
+        frame, except <sequence_change_delay> doesn't have sprite type
+        and <sequence_create> does.
+        """
+
+        frame_sprite_type:ttk.Frame
+        frame_sprite_type =\
+            self.frame_sequence_create.builder.get_object("frame_sprite_type")
+
+        # Since we're using <sequence_change_delay>, 
+        # hide the sprite type frame.
+        frame_sprite_type.grid_forget()        
 
 
 class CameraMovementFrame:

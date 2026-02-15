@@ -184,6 +184,7 @@ class CommandHelper:
         "camera_start_moving": cc.CameraMovement,
         "camera_stop_moving": cc.CameraStopWhere,
         "sequence_create": cc.SequenceCreate,
+        "sequence_change_delay": cc.SequenceChangeDelay,
     }
     
     @staticmethod
@@ -492,7 +493,14 @@ class CommandHelper:
                     # The 4th argument will have two or more comma separated
                     # values (comma-separated sprite names).
                     arguments =\
-                        CommandHelper._get_optional_arguments(arguments, 3)                
+                        CommandHelper._get_optional_arguments(arguments, 3)
+                    
+                case "sequence_change_delay":                  
+
+                    # The 3rd argument will have two or more comma separated
+                    # values (comma-separated sprite names).
+                    arguments =\
+                        CommandHelper._get_optional_arguments(arguments, 2)                
                 
                 case "character_start_tinting" | "object_start_tinting" | "dialog_sprite_start_tinting":
                     

@@ -36,6 +36,7 @@
         <property name="width">200</property>
         <layout manager="grid">
           <property name="column">0</property>
+          <property name="pady">0 15</property>
           <property name="row">0</property>
           <property name="sticky">w</property>
         </layout>
@@ -67,7 +68,7 @@
         <property name="width">200</property>
         <layout manager="grid">
           <property name="column">0</property>
-          <property name="pady">15</property>
+          <property name="pady">0 15</property>
           <property name="row">1</property>
           <property name="sticky">w</property>
         </layout>
@@ -142,7 +143,10 @@
         </child>
         <child>
           <object class="ttk.Spinbox" id="sb_delay" named="True">
+            <property name="from_">0.01</property>
+            <property name="increment">0.01</property>
             <property name="textvariable">double:v_delay</property>
+            <property name="to">500</property>
             <property name="width">8</property>
             <layout manager="grid">
               <property name="column">0</property>
