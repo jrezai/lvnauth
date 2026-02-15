@@ -63,6 +63,7 @@ FADE_START_UI = PROJECT_PATH / "ui" / "fade_dialog.ui"
 SCALE_START_UI = PROJECT_PATH / "ui" / "scale_dialog.ui"
 CAMERA_SHAKE_UI = PROJECT_PATH / "ui" / "camera_shake_dialog.ui"
 CAMERA_MOVEMENT_UI = PROJECT_PATH / "ui" / "camera_movement_dialog.ui"
+SEQUENCE_CREATE_UI = PROJECT_PATH / "ui" / "sequence_create_dialog.ui"
 
 
 class Purpose(Enum):
@@ -98,6 +99,7 @@ class GroupName(Enum):
     TINT = auto()
     SHAKE = auto()
     ZOOM_PAN = auto()
+    SEQUENCE = auto()
 
     # Font
     SPEED = auto()
@@ -2620,6 +2622,17 @@ class WizardWindow:
                                      purpose_line="Stops an active zoom and/or pan camera effect.",
                                      group_name=GroupName.ZOOM_PAN)
 
+        page_sequence_create = \
+            SequenceCreateFrameWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_create",
+                        command_name="sequence_create",
+                        purpose_line="Create a sequence animation.\n"
+                        "This command is required before playing a sequence.", 
+                        group_name=GroupName.SEQUENCE)
 
         self.pages["Home"] = default_page
 
@@ -2851,6 +2864,11 @@ class WizardWindow:
         
         self.pages["camera_start_moving"] = page_camera_move_start
         self.pages["camera_stop_moving"] = page_camera_move_stop
+        
+        """
+        Sequence
+        """
+        self.pages["sequence_create"] = page_sequence_create
         
 
         self.active_page = default_page
@@ -8425,6 +8443,174 @@ class SceneWithFade(WizardListing):
         hold_seconds = user_inputs.get("HoldSeconds")
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
+
+
+
+
+class SequenceCreateFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SEQUENCE_CREATE_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_sequence_create", master)
+        self.master = master
+        builder.connect_callbacks(self)
+        
+        self.entry_sequence_name = builder.get_object("entry_sequence_name")
+        self.entry_sequence_name.configure(max_length=100)
+        
+        self.entry_sprite_names = builder.get_object("entry_sprite_names")
+        self.entry_sprite_names.configure(max_length=5000)
+
+        self.v_sequence_name:tk.StringVar
+        self.v_sequence_name = builder.get_variable("v_sequence_name")
+
+        self.v_sprite_type:tk.StringVar
+        self.v_sprite_type = builder.get_variable("v_sprite_type")
+        
+        self.v_delay:tk.DoubleVar
+        self.v_delay = builder.get_variable("v_delay")
+        
+        self.v_sprite_names:tk.StringVar
+        self.v_sprite_names = builder.get_variable("v_sprite_names")
+
+        # Set default values
+        self.v_sprite_type.set("character")
+        self.v_delay.set(0.5)
+
+
+class SequenceCreateFrameWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.frame_sequence_create = SequenceCreateFrame(self.frame_content)        
+        
+        self.frame_sequence_create.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.SequenceCreate):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            # Do we have a specific side to check?
+            case cc.SequenceCreate(sequence_name, sprite_type, delay_seconds,
+                                   sprite_names):
+                
+                # Sequence name
+                self.frame_sequence_create.v_sequence_name.set(sequence_name)
+                
+                # Sprite type
+                self.frame_sequence_create.v_sprite_type.set(sprite_type)
+                
+                # Delay in seconds
+                self.frame_sequence_create.v_delay.set(delay_seconds)
+                
+                # Sprite names, comma separated.
+                self.frame_sequence_create.v_sprite_names.set(sprite_names)
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+        
+        sequence_name = self.frame_sequence_create.v_sequence_name.get().strip()
+        sprite_type = self.frame_sequence_create.v_sprite_type.get()
+        
+        try:
+            delay = self.frame_sequence_create.v_delay.get()
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Delay",
+                                 message="The delay is expected to be a number.")
+            return
+        else:
+            # No errors so far.
+            
+            # Is the delay an integer? Convert it to an integer (from a float)
+            # to prevent a number like 1, showing up as 1.0
+            if delay.is_integer():
+                delay = int(delay)
+                
+        # Get a comma separate string of sprite names.        
+        sprite_names = self.frame_sequence_create.v_sprite_names.get().strip()
+        
+        # Make sure there is a sprite name value.
+        if not sprite_names:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Missing sprite names",
+                                 message="Enter two or more sprite names, comma separated.")
+            return
+        
+        list_sprite_names = sprite_names.split(",")
+        if len(list_sprite_names) == 1:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Need more sprites",
+                                 message="One sprite name is not enough. An animation needs two or more sprites.")
+            return
+        else:
+            # Remove excess spacing from each sprite name.
+            # Example: theo 1,     theo 2, theo 3 becomes theo 1, theo 2, theo3
+            list_sprite_names = [item.strip() for item in list_sprite_names]
+            sprite_names = ", ".join(list_sprite_names)
+        
+        if not sequence_name:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sequence name missing",
+                                 message="Enter a sequence name.")
+            return
+        
+        elif not sprite_type:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Sprite type missing",
+                                 message="Choose a sprite type.")
+            return            
+        
+        
+        user_input = {"SequenceName": sequence_name,
+                      "SpriteType": sprite_type,
+                      "Delay": delay,
+                      "SpriteNames": sprite_names,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sequence_name = user_inputs.get("SequenceName")
+        sprite_type = user_inputs.get("SpriteType")
+        delay = user_inputs.get("Delay")
+        sprite_names = user_inputs.get("SpriteNames")
+    
+        command_line = f"<{self.command_name}: {sequence_name}, {sprite_type}, {delay}, {sprite_names}>"
+            
+        return command_line
+
 
 
 class CameraMovementFrame:
