@@ -64,6 +64,8 @@ SCALE_START_UI = PROJECT_PATH / "ui" / "scale_dialog.ui"
 CAMERA_SHAKE_UI = PROJECT_PATH / "ui" / "camera_shake_dialog.ui"
 CAMERA_MOVEMENT_UI = PROJECT_PATH / "ui" / "camera_movement_dialog.ui"
 SEQUENCE_CREATE_UI = PROJECT_PATH / "ui" / "sequence_create_dialog.ui"
+SEQUENCE_FINAL_FRAME_UI = PROJECT_PATH / "ui" / "sequence_final_frame_dialog.ui"
+
 
 
 class Purpose(Enum):
@@ -2644,6 +2646,19 @@ class WizardWindow:
                         command_name="sequence_change_delay",
                         purpose_line="Change the delay for sprites in an existing sequence animation.", 
                         group_name=GroupName.SEQUENCE)
+        
+        page_sequence_final_frame = \
+            SequenceFinalFrameWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_final_frame",
+                        command_name="sequence_final_frame",
+                        purpose_line="Specify the sprite to show when the sequence has stopped playing.\n\n"
+                        "This applies either when the given sequence is stopped manually\nor when the sequence finishes on its own.\n\n"
+                        "This is an optional command for sequence animations.", 
+                        group_name=GroupName.SEQUENCE)
 
         self.pages["Home"] = default_page
 
@@ -2881,6 +2896,7 @@ class WizardWindow:
         """
         self.pages["sequence_create"] = page_sequence_create
         self.pages["sequence_change_delay"] = page_sequence_change_delay
+        self.pages["sequence_final_frame"] = page_sequence_final_frame
         
 
         self.active_page = default_page
@@ -8456,6 +8472,119 @@ class SceneWithFade(WizardListing):
 
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
 
+
+class SequenceFinalFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SEQUENCE_FINAL_FRAME_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_sequence_final_frame", master)
+        self.master = master
+        builder.connect_callbacks(self)
+        
+        self.entry_sequence_name = builder.get_object("entry_sequence_name")
+        self.entry_sequence_name.configure(max_length=100)
+        
+        self.entry_sprite_names = builder.get_object("entry_sprite_name")
+        self.entry_sprite_names.configure(max_length=100)
+
+        self.v_sequence_name:tk.StringVar
+        self.v_sequence_name = builder.get_variable("v_sequence_name")
+
+        self.v_sprite_name:tk.StringVar
+        self.v_sprite_name = builder.get_variable("v_sprite_name")
+        
+        
+class SequenceFinalFrameWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.frame_sequence_final_frame = SequenceFinalFrame(self.frame_content)        
+        
+        self.frame_sequence_final_frame.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.SequenceCreate):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            case cc.SequenceFinalFrame(sequence_name, sprite_name):
+                
+                # Sequence name
+                self.frame_sequence_final_frame.\
+                    v_sequence_name.set(sequence_name)
+                
+                # Sprite name
+                self.frame_sequence_final_frame.v_sprite_name.set(sprite_name)
+                
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+        
+        sequence_name = self.frame_sequence_final_frame.\
+            v_sequence_name.get().strip()
+            
+        sprite_name =\
+            self.frame_sequence_final_frame.v_sprite_name.get().strip()
+
+        if not sequence_name:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Missing sequence name",
+                                 message="Enter a sequence name.")
+            return
+        
+        # Make sure there is a sprite name value.
+        if not sprite_name:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Missing sprite name",
+                                 message="Enter a sprite name.")
+            return
+    
+        # No sprite type
+        # For <sequence_change_delay>
+        user_input = {"SequenceName": sequence_name,
+                      "SpriteName": sprite_name,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        sequence_name = user_inputs.get("SequenceName")
+        sprite_name = user_inputs.get("SpriteName")
+    
+        # <sequence_final_frame>
+        command_line = f"<{self.command_name}: {sequence_name}, {sprite_name}>"
+           
+        return command_line
 
 
 class SequenceCreateFrame:

@@ -185,6 +185,7 @@ class CommandHelper:
         "camera_stop_moving": cc.CameraStopWhere,
         "sequence_create": cc.SequenceCreate,
         "sequence_change_delay": cc.SequenceChangeDelay,
+        "sequence_final_frame": cc.SequenceFinalFrame,
     }
     
     @staticmethod
