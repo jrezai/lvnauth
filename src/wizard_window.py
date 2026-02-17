@@ -2698,6 +2698,32 @@ class WizardWindow:
                         command_name="sequence_stop_all",
                         purpose_line="Stops all sequences that are playing.",
                         group_name=GroupName.STOP)
+        
+        page_wait_for_sequence = \
+            SequencePlayStopWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="wait_for_sequence",
+                        command_name="wait_for_sequence",
+                        purpose_line="Pauses the main script until a specific sequence has stopped.\n\n"
+                        "This command will only pause the main script, but can\n"
+                        "be called from anywhere (chapters/scenes/reusable scripts).",
+                        group_name=GroupName.PAUSE)
+        
+        page_wait_for_all_sequences = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="wait_for_all_sequences",
+                        command_name="wait_for_all_sequences",
+                        purpose_line="Pauses the main script until all sequences have stopped.\n\n"
+                        "This command will only pause the main script, but can\n"
+                        "be called from anywhere (chapters/scenes/reusable scripts).",
+                        group_name=GroupName.PAUSE)
 
         self.pages["Home"] = default_page
 
@@ -2939,6 +2965,8 @@ class WizardWindow:
         self.pages["sequence_play"] = page_sequence_play
         self.pages["sequence_stop"] = page_sequence_stop
         self.pages["sequence_stop_all"] = page_sequence_stop_all
+        self.pages["wait_for_sequence"] = page_wait_for_sequence
+        self.pages["wait_for_all_sequences"] = page_wait_for_all_sequences
         
 
         self.active_page = default_page
@@ -8584,7 +8612,7 @@ class SequencePlayStopWizard(WizardListing):
         self.frame_sequence_play.mainframe.pack()
         
     def _edit_populate(self,
-                       command_class_object: cc.SequencePlay|cc.SequenceStop):
+                       command_class_object: cc.SequencePlay|cc.SequenceNameOnly):
         """
         Populate the widgets with the arguments for editing.
         """
@@ -8609,7 +8637,9 @@ class SequencePlayStopWizard(WizardListing):
                         v_number_of_times.set(number_of_times)
                 
                 
-            case cc.SequenceStop(sequence_name):
+            case cc.SequenceNameOnly(sequence_name):
+                # For commands, such as <sequence_stop> 
+                # and <wait_for_sequence>
                 
                 # Sequence name
                 self.frame_sequence_play.v_sequence_name.set(sequence_name)

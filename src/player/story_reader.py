@@ -417,6 +417,7 @@ class StoryReader:
                 main_reader.halt_main_script,
                 main_reader.rest_handler.pause_required(),
                 main_reader.wait_for_animation_handler.check_wait(),
+                main_reader.sequence_groups.check_wait(), 
                 main_reader.pause_main_script,
                 web_handler.WebWorker.active_count > 0,
             )
@@ -1187,6 +1188,18 @@ class StoryReader:
             Play a sequence that is already configured.
             """
             self._sequence_play(arguments=arguments)
+            
+        elif command_name == "wait_for_sequence":
+            """
+            Wait for a specific sequence to finish playing.
+            """
+            self._sequence_wait_specific(arguments=arguments)
+            
+        elif command_name == "wait_for_all_sequences":
+            """
+            Wait for all sequences to finish playing.
+            """
+            self.sequence_groups.add_wait_for_all_sequences()
             
         elif command_name == "sequence_stop":
             """
@@ -5302,9 +5315,9 @@ class StoryReader:
         Stop the sequence animation, if it's playing.
         """
         
-        sequence: cc.SequenceStop
+        sequence: cc.SequenceNameOnly
         sequence = self._get_arguments(
-            class_namedtuple=cc.SequenceStop, given_arguments=arguments
+            class_namedtuple=cc.SequenceNameOnly, given_arguments=arguments
         )
         
         if not sequence:
@@ -5317,6 +5330,22 @@ class StoryReader:
         Stop all sequences that are currently playing.
         """
         self.sequence_groups.stop_all()
+        
+    def _sequence_wait_specific(self, arguments: str):
+        """
+        Wait for a specific sequence name to finish playing.
+        """
+        
+        sequence: cc.SequenceNameOnly
+        sequence = self._get_arguments(
+            class_namedtuple=cc.SequenceNameOnly, given_arguments=arguments
+        )
+        
+        if not sequence:
+            return
+        
+        self.sequence_groups.\
+            add_wait_for_sequence_name(sequence_name=sequence.sequence_name)
 
     def _sequence_create(self, arguments: str):
         """
@@ -6139,11 +6168,8 @@ class WaitForAnimationHandler:
         self.entire_screen_animation_types =\
             ("cover", "shake", "camera_movement")
 
-    def enable_wait_for(
-        self,
-        sprite_type: str,
-        general_alias: str = None,
-        animation_type: str = None):
+    def enable_wait_for(self, sprite_type: str, general_alias: str = None,
+                        animation_type: str = None):
         """
         Record a new reason to pause the main story reader.
         Reusable scripts are not affected.

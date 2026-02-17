@@ -330,6 +330,88 @@ class SequenceGroup:
         # Value: SequenceHandler object.
         self.sequences = {}
         
+        # Used by <wait_for_sequence>
+        # and <wait_for_all_sequences>
+        self.wait_sequence_names = []
+        self.wait_all_sequences = False
+        
+    def add_wait_for_sequence_name(self, sequence_name: str):
+        """
+        Add the sequence name to a list of sequence names so the list
+        can be checked later to ensure it's finished animating.
+        
+        Arguments:
+        
+        - sequence_name: the sequence that should be awaited.
+        """
+        if sequence_name not in self.wait_sequence_names:
+            self.wait_sequence_names.append(sequence_name)
+        
+    def add_wait_for_all_sequences(self):
+        """
+        Set a flag to wait for all sequences to finish playing.
+        
+        Remove any existing sequences that are being awaited, because now
+        we're going to wait for *all* sequences to stop, not just specific
+        sequences.
+        """
+        
+        # Already waiting for all sequences? return.
+        if self.wait_all_sequences:
+            return
+        
+        # We're going to wait for *all* sequences to stop, not just specific
+        # sequences, so clear the list below so we don't wait for specific
+        # sequences.
+        self.wait_sequence_names.clear()
+        
+        # Set flag to indicate that the main story reader should wait
+        # for all sequences to finish being played before continuing
+        # the main script.
+        self.wait_all_sequences = True
+        
+    def check_wait(self) -> bool:
+        """
+        Check if any specific playing sequences need to be awaited
+        or if *all* playing sequences need to be awaited or neither.
+        
+        Return: True if any sequences need to be awaited (until they stop)
+        or False if no sequences need to be awaited.
+        """
+        wait = False
+        
+        sequences_not_playing = []
+        
+        if self.wait_sequence_names:
+            # We need to wait for specific playing sequences
+            for sequence_name in self.wait_sequence_names:
+                sequence: SequenceHandler
+                sequence = self.sequences.get(sequence_name)
+                
+                if sequence:
+                    if sequence.is_playing:
+                        wait = True
+                    else:
+                        sequences_not_playing.append(sequence_name)
+                        
+        
+        elif self.wait_all_sequences:
+            
+            # We need to wait for *all* playing sequences.
+            sequence_name: str
+            sequence: SequenceHandler
+            for sequence_name, sequence in self.sequences.items():
+ 
+                if sequence.is_playing:
+                    wait = True
+        
+        # Clean-up
+        # Any sequences not playing should be removed from the wait list
+        for sequence_name in sequences_not_playing:
+            del self.sequences[sequence_name]
+        
+        return wait
+        
     def update(self):
         """
         Run the update method in all sequences.
