@@ -42,7 +42,7 @@ class SequenceHandler:
         # Used for images that have specific non-global delays.
         self.individual_delay = {}
         
-        # To know where the images come from (characters, dialog sprites, etc.)
+        # To know where the images come from (characters, dialogue sprites, etc.)
         self._sprite_type:ContentType
         self._sprite_type = None
         
@@ -81,7 +81,7 @@ class SequenceHandler:
         
         lookup = {"character": ContentType.CHARACTER,
                   "object": ContentType.OBJECT,
-                  "dialog sprite": ContentType.DIALOG_SPRITE,}
+                  "dialogue sprite": ContentType.DIALOGUE_SPRITE,}
         
         set_value = lookup.get(value)
         self._sprite_type = set_value
@@ -98,7 +98,7 @@ class SequenceHandler:
         
         Arguments:
         
-        - sprite_type (str): either 'character', 'object', or 'dialog sprite',
+        - sprite_type (str): either 'character', 'object', or 'dialogue sprite',
         so this method knows which image dictionary to check.
         
         - image_names: a list of image sprite names to load sequentially
@@ -117,7 +117,7 @@ class SequenceHandler:
         
         dict_source = {"character": Groups.character_group,
                        "object": Groups.object_group,
-                       "dialog sprite": Groups.dialog_group,}
+                       "dialogue sprite": Groups.dialog_group,}
         
         # Find the sprite group dictionary to get the images from.
         # At this point, we just need to ensure to get the images
@@ -360,7 +360,7 @@ class SequenceGroup:
         # Use this mapping to find the sprite group for us to search aliases in.
         sprite_group_mapping = {ContentType.CHARACTER: sd.Groups.character_group,
                         ContentType.OBJECT: sd.Groups.object_group,
-                        ContentType.DIALOG_SPRITE: sd.Groups.dialog_group,}
+                        ContentType.DIALOGUE_SPRITE: sd.Groups.dialog_group,}
         
         # Get the sprite group depending on the sprite type.
         sprite_group: SpriteGroup
@@ -424,7 +424,7 @@ class SequenceGroup:
         sets_share_aliases = set()
 
         # Enumerate through all other sequences that match the type (character,
-        # object, or dialog sprite) of the given sequence in the argument. 
+        # object, or dialogue sprite) of the given sequence in the argument. 
         other_sequence: SequenceHandler
         other_seq_name: str = None
         for other_seq_name, other_sequence in self.sequences.items():
@@ -438,7 +438,7 @@ class SequenceGroup:
             # The sprite type of the given sequence has to match the other
             # sequence that we're checking against. For example, character 
             # sequences must be compared to other character sequences, not 
-            # objects or dialog sprites.            
+            # objects or dialogue sprites.            
             elif other_sequence.sprite_type != sprite_type:
                 continue
             
@@ -520,7 +520,7 @@ class SequenceGroup:
             # Show the actively animating aliases, if any, so the visual novel
             # author is aware that two sequences can't play simultaneously, if
             # both sequences want to show the same aliases for the same 
-            # sprite type (character, object, dialog sprite).
+            # sprite type (character, object, dialogue sprite).
             if aliases_already_in_use:
                 raise ValueError(f"Error: An attempt was made to play the sequence, '{sequence_name}'. However, a different sequence that is currently playing ('{other_sequence_name}') is already using the following aliases: {aliases_already_in_use}.")
             else:
@@ -570,7 +570,7 @@ class SequenceGroup:
         sequence animation. This name will be used to interact with the
         sequence after it's been created.
         
-        - sprite_type (str): either 'character', 'object', or 'dialog sprite',
+        - sprite_type (str): either 'character', 'object', or 'dialogue sprite',
         so this method knows which image dictionary to check.
         
         - image_names: a list of image sprite names to load sequentially

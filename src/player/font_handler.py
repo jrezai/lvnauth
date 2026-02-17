@@ -1350,7 +1350,7 @@ class ActiveFontHandler:
     def __init__(self, story, sprite_object: SpriteObject = None):
 
         # A value in sprite_object means we will draw text on the
-        # given sprite object, which is either an object, dialog sprite, 
+        # given sprite object, which is either an object, dialogue sprite, 
         # or character - not on a dialog rectangle.
         self.sprite_object = sprite_object
 
@@ -1702,7 +1702,7 @@ class ActiveFontHandler:
         """
 
         # At this point, we're not reading a command, because the method,
-        # read_story(), called our method here (read_dialog_text()), since
+        # read_story(), called our method here (read_dialogue_text()), since
         # there are no commands (so far) to parse.
 
         # Loop through each individual letter

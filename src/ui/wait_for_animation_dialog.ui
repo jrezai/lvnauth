@@ -61,8 +61,8 @@
         </child>
         <child>
           <object class="ttk.Radiobutton" id="radiobutton3">
-            <property name="text" translatable="yes">Dialog sprite</property>
-            <property name="value">dialog_sprite</property>
+            <property name="text" translatable="yes">Dialogue sprite</property>
+            <property name="value">dialogue_sprite</property>
             <property name="variable">string:v_sprite_type</property>
             <layout manager="grid">
               <property name="column">2</property>

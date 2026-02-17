@@ -59,7 +59,7 @@ class ItemSection(Enum):
     OBJECT_IMAGE = auto()
     BACKGROUND_IMAGE = auto()
     FONT_SPRITE_SHEET = auto()
-    DIALOG_SPRITE = auto()
+    DIALOGUE_SPRITE = auto()
     AUDIO = auto()
     MUSIC = auto()
 
@@ -565,9 +565,9 @@ class StoryCompiler:
                                           font_sprite_sheet_path,
                                           ItemSection.FONT_SPRITE_SHEET),
 
-                     "load_dialog_sprite": (ProjectSnapshot.dialog_images,
+                     "load_dialogue_sprite": (ProjectSnapshot.dialog_images,
                                             dialog_path,
-                                            ItemSection.DIALOG_SPRITE),
+                                            ItemSection.DIALOGUE_SPRITE),
 
                      "load_audio": (ProjectSnapshot.sounds,
                                     audio_path,
@@ -640,7 +640,7 @@ class StoryCompiler:
                                 if item_name not in included_files_font_sprite_sheet_images:
                                     included_files_font_sprite_sheet_images[item_name] = full_item_path_string
                                     
-                            elif item_section == ItemSection.DIALOG_SPRITE:
+                            elif item_section == ItemSection.DIALOGUE_SPRITE:
                                 if item_name not in included_files_dialog_images:
                                     included_files_dialog_images[item_name] = full_item_path_string
 

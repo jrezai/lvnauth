@@ -24,7 +24,7 @@ Nov 13, 2023 (Jobin Rezai) - The scenes combo box now only show scenes
 in the selected chapter.
 
 Nov 16, 2023 (Jobin Rezai) - Add these commands to the wizard:
-<dialog_sprite_center_x_with>, <object_center_x_with>, <character_center_x_with>
+<dialogue_sprite_center_x_with>, <object_center_x_with>, <character_center_x_with>
 
 Nov 23, 2023 (Jobin Rezai) - Added <Escape> binding to close window.
 """
@@ -436,234 +436,6 @@ class WizardWindow:
                                    command_name="Wizard Command Window",
                                    purpose_line="This wizard will make it easier to use commands in your story.")
 
-
-        page_audio_load =\
-            AudioLoad(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="load_audio",
-                         command_name="load_audio",
-                         purpose_line="Prepare an audio file to be played.",
-                         group_name=GroupName.LOAD)
-
-        page_music_load =\
-            AudioLoad(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="load_music",
-                         command_name="load_music",
-                         purpose_line="Prepare a music file to be played.",
-                         group_name=GroupName.LOAD)
-
-        page_audio_play_music =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_music",
-                         command_name="play_music",
-                         purpose_line="Play audio in the music channel.",
-                         group_name=GroupName.PLAY)
-        
-        page_audio_play_sound =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_sound",
-                         command_name="play_sound",
-                         purpose_line="Play a sound effect in the sound channel.",
-                         group_name=GroupName.PLAY)
-
-        page_audio_play_voice =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_voice",
-                         command_name="play_voice",
-                         purpose_line="Play audio in the voice channel.",
-                         group_name=GroupName.PLAY)
-
-        page_audio_stop_fx = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_fx",
-                        command_name="stop_fx",
-                        purpose_line="Stops the audio in the FX channel.",
-                        when_to_use="When you want to stop playing an audio effect.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_all_audio = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_all_audio",
-                        command_name="stop_all_audio",
-                        purpose_line="Stops playing the audio for: effects, voices, music.",
-                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
-                                    "No error will occur if no audio is playing.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_music = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_music",
-                        command_name="stop_music",
-                        purpose_line="Stops the audio in the music channel.",
-                        when_to_use="When you want to stop playing music.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_voice = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_voice",
-                        command_name="stop_voice",
-                        purpose_line="Stops the audio in the voice channel.",
-                        when_to_use="When you want to stop playing audio in the voice channel.",
-                        group_name=GroupName.STOP)
-
-
-        page_audio_volume_fx =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_fx",
-                         command_name="volume_fx",
-                         purpose_line="Sets the sound effects volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_music =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_music",
-                         command_name="volume_music",
-                         purpose_line="Sets the music volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_text =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_text",
-                         command_name="volume_text",
-                         purpose_line="Sets the gradual letter-by-letter volume.\n\n"
-                         "The audio gets chosen using <dialog_text_sound>",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_voice =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_voice",
-                         command_name="volume_voice",
-                         purpose_line="Sets the voice channel volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_dialog_text_sound =\
-            DialogTextSound(parent_frame=self.frame_contents_outer,
-                            header_label=self.lbl_header,
-                            purpose_label=self.lbl_purpose,
-                            treeview_commands=self.treeview_commands,
-                            parent_display_text="Audio",
-                            sub_display_text="dialog_text_sound",
-                            command_name="dialog_text_sound",
-                            purpose_line="Set audio to play for each gradually shown letter.\n"
-                            "Only works for gradually-shown text (non-fading).",
-                            group_name=GroupName.TEXT_SOUND)
-
-        page_audio_dialog_text_sound_clear = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="dialog_text_sound_clear",
-                        command_name="dialog_text_sound_clear",
-                        purpose_line="Set no audio to play for each gradually shown letter.",
-                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.",
-                        group_name=GroupName.TEXT_SOUND)
-
-
-        page_load_background =\
-            Background_LoadBackground(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Background",
-                                      sub_display_text="load_background",
-                                      command_name="load_background",
-                                      purpose_line="Load a background sprite into memory.",
-                                      group_name=GroupName.LOAD)
-
-        page_show_background =\
-            BackgroundShow(parent_frame=self.frame_contents_outer,
-                           header_label=self.lbl_header,
-                           purpose_label=self.lbl_purpose,
-                           treeview_commands=self.treeview_commands,
-                           parent_display_text="Background",
-                           sub_display_text="background_show",
-                           command_name="background_show",
-                           purpose_line="Show a specific a background sprite in the story.",
-                           group_name=GroupName.SHOW)
-
-        page_hide_background =\
-            BackgroundHide(parent_frame=self.frame_contents_outer,
-                           header_label=self.lbl_header,
-                           purpose_label=self.lbl_purpose,
-                           treeview_commands=self.treeview_commands,
-                           parent_display_text="Background",
-                           sub_display_text="background_hide",
-                           command_name="background_hide",
-                           purpose_line="Hide a specific a background sprite in the story.",
-                           group_name=GroupName.HIDE)
 
         page_load_character =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -1085,7 +857,238 @@ class WizardWindow:
                                         command_name="character_on_mouse_leave",
                                         purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
                                         "Note: the character sprite must already be visible.",
-                                        group_name=GroupName.MOUSE)             
+                                        group_name=GroupName.MOUSE)     
+
+
+        page_audio_load =\
+            AudioLoad(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="load_audio",
+                         command_name="load_audio",
+                         purpose_line="Prepare an audio file to be played.",
+                         group_name=GroupName.LOAD)
+
+        page_music_load =\
+            AudioLoad(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="load_music",
+                         command_name="load_music",
+                         purpose_line="Prepare a music file to be played.",
+                         group_name=GroupName.LOAD)
+
+        page_audio_play_music =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_music",
+                         command_name="play_music",
+                         purpose_line="Play audio in the music channel.",
+                         group_name=GroupName.PLAY)
+        
+        page_audio_play_sound =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_sound",
+                         command_name="play_sound",
+                         purpose_line="Play a sound effect in the sound channel.",
+                         group_name=GroupName.PLAY)
+
+        page_audio_play_voice =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_voice",
+                         command_name="play_voice",
+                         purpose_line="Play audio in the voice channel.",
+                         group_name=GroupName.PLAY)
+
+        page_audio_stop_fx = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_fx",
+                        command_name="stop_fx",
+                        purpose_line="Stops the audio in the FX channel.",
+                        when_to_use="When you want to stop playing an audio effect.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_all_audio = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_all_audio",
+                        command_name="stop_all_audio",
+                        purpose_line="Stops playing the audio for: effects, voices, music.",
+                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
+                                    "No error will occur if no audio is playing.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_music = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_music",
+                        command_name="stop_music",
+                        purpose_line="Stops the audio in the music channel.",
+                        when_to_use="When you want to stop playing music.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_voice = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_voice",
+                        command_name="stop_voice",
+                        purpose_line="Stops the audio in the voice channel.",
+                        when_to_use="When you want to stop playing audio in the voice channel.",
+                        group_name=GroupName.STOP)
+
+
+        page_audio_volume_fx =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_fx",
+                         command_name="volume_fx",
+                         purpose_line="Sets the sound effects volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_music =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_music",
+                         command_name="volume_music",
+                         purpose_line="Sets the music volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_text =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_text",
+                         command_name="volume_text",
+                         purpose_line="Sets the gradual letter-by-letter volume.\n\n"
+                         "The audio gets chosen using <dialogue_text_sound>",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_voice =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_voice",
+                         command_name="volume_voice",
+                         purpose_line="Sets the voice channel volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_dialogue_text_sound =\
+            DialogTextSound(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Audio",
+                            sub_display_text="dialogue_text_sound",
+                            command_name="dialogue_text_sound",
+                            purpose_line="Set audio to play for each gradually shown letter.\n"
+                            "Only works for gradually-shown text (non-fading).",
+                            group_name=GroupName.TEXT_SOUND)
+
+        page_audio_dialogue_text_sound_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="dialogue_text_sound_clear",
+                        command_name="dialogue_text_sound_clear",
+                        purpose_line="Set no audio to play for each gradually shown letter.",
+                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.",
+                        group_name=GroupName.TEXT_SOUND)
+
+
+        page_load_background =\
+            Background_LoadBackground(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Background",
+                                      sub_display_text="load_background",
+                                      command_name="load_background",
+                                      purpose_line="Load a background sprite into memory.",
+                                      group_name=GroupName.LOAD)
+
+        page_show_background =\
+            BackgroundShow(parent_frame=self.frame_contents_outer,
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Background",
+                           sub_display_text="background_show",
+                           command_name="background_show",
+                           purpose_line="Show a specific a background sprite in the story.",
+                           group_name=GroupName.SHOW)
+
+        page_hide_background =\
+            BackgroundHide(parent_frame=self.frame_contents_outer,
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Background",
+                           sub_display_text="background_hide",
+                           command_name="background_hide",
+                           purpose_line="Hide a specific a background sprite in the story.",
+                           group_name=GroupName.HIDE)
+
+        
 
 
         """
@@ -1098,10 +1101,10 @@ class WizardWindow:
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="text_dialog_define",
-                                 command_name="text_dialog_define",
-                                 purpose_line="Create a dialog rectangle for character text to appear in.",
+                                 parent_display_text="Dialogue",
+                                 sub_display_text="text_dialogue_define",
+                                 command_name="text_dialogue_define",
+                                 purpose_line="Create a dialogue rectangle for character text to appear in.",
                                  group_name=GroupName.CREATE_DIALOGUE_AREA)
 
         page_dialog_show = \
@@ -1109,10 +1112,10 @@ class WizardWindow:
                         header_label=self.lbl_header,
                         purpose_label=self.lbl_purpose,
                         treeview_commands=self.treeview_commands,
-                        parent_display_text="Dialog",
-                        sub_display_text="text_dialog_show",
-                        command_name="text_dialog_show",
-                        purpose_line="Show a dialog rectangle that has already been defined using <text_dialog_define>.",
+                        parent_display_text="Dialogue",
+                        sub_display_text="text_dialogue_show",
+                        command_name="text_dialogue_show",
+                        purpose_line="Show a dialogue rectangle that has already been defined using <text_dialogue_define>.",
                         when_to_use="When a character wants to speak or for narration text.",
                         group_name=GroupName.SHOW)
 
@@ -1121,10 +1124,10 @@ class WizardWindow:
                         header_label=self.lbl_header,
                         purpose_label=self.lbl_purpose,
                         treeview_commands=self.treeview_commands,
-                        parent_display_text="Dialog",
-                        sub_display_text="text_dialog_close",
-                        command_name="text_dialog_close",
-                        purpose_line="Close the dialog by initiating its outro animation.",
+                        parent_display_text="Dialogue",
+                        sub_display_text="text_dialogue_close",
+                        command_name="text_dialogue_close",
+                        purpose_line="Close the dialogue rectangle by initiating its outro animation.",
                         when_to_use="When all the characters finish speaking.",
                         group_name=GroupName.HIDE)
 
@@ -1133,7 +1136,7 @@ class WizardWindow:
                         header_label=self.lbl_header,
                         purpose_label=self.lbl_purpose,
                         treeview_commands=self.treeview_commands,
-                        parent_display_text="Dialog",
+                        parent_display_text="Dialogue",
                         sub_display_text="halt",
                         command_name="halt",
                         purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
@@ -1145,7 +1148,7 @@ class WizardWindow:
                            header_label=self.lbl_header,
                            purpose_label=self.lbl_purpose,
                            treeview_commands=self.treeview_commands,
-                           parent_display_text="Dialog",
+                           parent_display_text="Dialogue",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
                            purpose_line="Pause the dialog text for a specific number of seconds.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of seconds have\nelapsed (specified below).",
@@ -1161,7 +1164,7 @@ class WizardWindow:
                             header_label=self.lbl_header,
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
-                            parent_display_text="Dialog",
+                            parent_display_text="Dialogue",
                             sub_display_text="halt_and_pause_main_script",
                             command_name="halt_and_pause_main_script",
                             purpose_line="Pause the main script until the <unpause_main_script>\ncommand is used to unpause the visual novel manually.",
@@ -1173,7 +1176,7 @@ class WizardWindow:
                             header_label=self.lbl_header,
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
-                            parent_display_text="Dialog",
+                            parent_display_text="Dialogue",
                             sub_display_text="unpause_main_script",
                             command_name="unpause_main_script",
                             purpose_line="Unpause the main script that was previously paused with\nthe <halt_and_pause_main_script> command.",
@@ -1185,7 +1188,7 @@ class WizardWindow:
                         header_label=self.lbl_header,
                         purpose_label=self.lbl_purpose,
                         treeview_commands=self.treeview_commands,
-                        parent_display_text="Dialog",
+                        parent_display_text="Dialogue",
                         sub_display_text="no_clear",
                         command_name="no_clear",
                         purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.",
@@ -1196,7 +1199,7 @@ class WizardWindow:
                            header_label=self.lbl_header,
                            purpose_label=self.lbl_purpose,
                            treeview_commands=self.treeview_commands,
-                           parent_display_text="Dialog",
+                           parent_display_text="Dialogue",
                            sub_display_text="continue",
                            command_name="continue",
                            purpose_line="Stay on the same line as the previous text.",
@@ -1207,10 +1210,10 @@ class WizardWindow:
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="load_dialog_sprite",
-                                        command_name="load_dialog_sprite",
-                                        purpose_line="Load an dialog sprite into memory.",
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="load_dialogue_sprite",
+                                        command_name="load_dialogue_sprite",
+                                        purpose_line="Load an dialogue sprite into memory.",
                                         group_name=GroupName.LOAD)
     
         page_show_dialog =\
@@ -1218,9 +1221,9 @@ class WizardWindow:
                               header_label=self.lbl_header,
                               purpose_label=self.lbl_purpose,
                               treeview_commands=self.treeview_commands,
-                              parent_display_text="Dialog",
-                              sub_display_text="dialog_sprite_show",
-                              command_name="dialog_sprite_show",
+                              parent_display_text="Dialogue",
+                              sub_display_text="dialogue_sprite_show",
+                              command_name="dialogue_sprite_show",
                               purpose_line="Shows the given sprite and it hides the currently visible\n"
                                            "sprite with the same general alias as the one we’re about to show.",
                               group_name=GroupName.SHOW)
@@ -1230,9 +1233,9 @@ class WizardWindow:
                               header_label=self.lbl_header,
                               purpose_label=self.lbl_purpose,
                               treeview_commands=self.treeview_commands,
-                              parent_display_text="Dialog",
-                              sub_display_text="dialog_sprite_hide",
-                              command_name="dialog_sprite_hide",
+                              parent_display_text="Dialogue",
+                              sub_display_text="dialogue_sprite_hide",
+                              command_name="dialogue_sprite_hide",
                               purpose_line="Hides the given sprite.",
                               group_name=GroupName.HIDE)
 
@@ -1241,10 +1244,10 @@ class WizardWindow:
                         header_label=self.lbl_header,
                         purpose_label=self.lbl_purpose,
                         treeview_commands=self.treeview_commands,
-                        parent_display_text="Dialog",
-                        sub_display_text="dialog_sprite_hide_all",
-                        command_name="dialog_sprite_hide_all",
-                        purpose_line="Hides all dialog sprites.",
+                        parent_display_text="Dialogue",
+                        sub_display_text="dialogue_sprite_hide_all",
+                        command_name="dialogue_sprite_hide_all",
+                        purpose_line="Hides all dialogue sprites.",
                         group_name=GroupName.HIDE)
 
         page_dialog_flip_both =\
@@ -1252,9 +1255,9 @@ class WizardWindow:
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
-                          parent_display_text="Dialog",
-                          sub_display_text="dialog_sprite_flip_both",
-                          command_name="dialog_sprite_flip_both",
+                          parent_display_text="Dialogue",
+                          sub_display_text="dialogue_sprite_flip_both",
+                          command_name="dialogue_sprite_flip_both",
                           purpose_line="Flips the given sprite both horizontally and vertically.",
                           group_name=GroupName.FLIP)
 
@@ -1264,9 +1267,9 @@ class WizardWindow:
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
-                          parent_display_text="Dialog",
-                          sub_display_text="dialog_sprite_flip_horizontal",
-                          command_name="dialog_sprite_flip_horizontal",
+                          parent_display_text="Dialogue",
+                          sub_display_text="dialogue_sprite_flip_horizontal",
+                          command_name="dialogue_sprite_flip_horizontal",
                           purpose_line="Flips the given sprite horizontally.",
                           group_name=GroupName.FLIP)
 
@@ -1276,9 +1279,9 @@ class WizardWindow:
                           header_label=self.lbl_header,
                           purpose_label=self.lbl_purpose,
                           treeview_commands=self.treeview_commands,
-                          parent_display_text="Dialog",
-                          sub_display_text="dialog_sprite_flip_vertical",
-                          command_name="dialog_sprite_flip_vertical",
+                          parent_display_text="Dialogue",
+                          sub_display_text="dialogue_sprite_flip_vertical",
+                          command_name="dialogue_sprite_flip_vertical",
                           purpose_line="Flips the given sprite vertically.",
                           group_name=GroupName.FLIP)
 
@@ -1287,11 +1290,11 @@ class WizardWindow:
                             header_label=self.lbl_header,
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
-                            parent_display_text="Dialog",
-                            sub_display_text="dialog_sprite_start_tinting",
-                            command_name="dialog_sprite_start_tinting",
+                            parent_display_text="Dialogue",
+                            sub_display_text="dialogue_sprite_start_tinting",
+                            command_name="dialogue_sprite_start_tinting",
                             purpose_line="Darkens or brightens a given sprite.\n\n"
-                            "Note: the dialog sprite must already be visible.",
+                            "Note: the dialogue sprite must already be visible.",
                             group_name=GroupName.TINT)
     
         page_dialog_focus =\
@@ -1299,11 +1302,11 @@ class WizardWindow:
                  header_label=self.lbl_header,
                  purpose_label=self.lbl_purpose,
                  treeview_commands=self.treeview_commands,
-                 parent_display_text="Dialog",
-                 sub_display_text="dialog_sprite_focus",
-                 command_name="dialog_sprite_focus",
-                 purpose_line="Tints all visible dialog sprites except the given sprite.\n\n"
-                 "Note: the dialog sprite must already be visible.", 
+                 parent_display_text="Dialogue",
+                 sub_display_text="dialogue_sprite_focus",
+                 command_name="dialogue_sprite_focus",
+                 purpose_line="Tints all visible dialogue sprites except the given sprite.\n\n"
+                 "Note: the dialogue sprite must already be visible.", 
                  group_name=GroupName.TINT) 
     
         page_dialog_after_fading_stop =\
@@ -1311,10 +1314,10 @@ class WizardWindow:
                                          header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="dialog_sprite_after_fading_stop",
-                                        command_name="dialog_sprite_after_fading_stop",
-                                        purpose_line="Run a reusable script after a specific dialog sprite stops fading.",
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="dialogue_sprite_after_fading_stop",
+                                        command_name="dialogue_sprite_after_fading_stop",
+                                        purpose_line="Run a reusable script after a specific dialogue sprite stops fading.",
                                         group_name=GroupName.FADE)
     
         page_dialog_fade_current_value =\
@@ -1322,11 +1325,11 @@ class WizardWindow:
                                           header_label=self.lbl_header,
                                           purpose_label=self.lbl_purpose,
                                           treeview_commands=self.treeview_commands,
-                                          parent_display_text="Dialog",
-                                          sub_display_text="dialog_sprite_fade_current_value",
-                                          command_name="dialog_sprite_fade_current_value",
+                                          parent_display_text="Dialogue",
+                                          sub_display_text="dialogue_sprite_fade_current_value",
+                                          command_name="dialogue_sprite_fade_current_value",
                                           purpose_line="Set the opacity level of a specific dialog.\n"
-                                          "Note: the dialog sprite must already be visible.",
+                                          "Note: the dialogue sprite must already be visible.",
                                           from_value=0,
                                           to_value=255,
                                           amount_usage_info="Opacity level:\n"
@@ -1340,11 +1343,11 @@ class WizardWindow:
                                      header_label=self.lbl_header,
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_start_fading",
-                                     command_name="dialog_sprite_start_fading",
-                                     purpose_line="Starts an dialog sprite fading animation.\n"
-                                     "Note: the dialog sprite must already be visible.",
+                                     parent_display_text="Dialogue",
+                                     sub_display_text="dialogue_sprite_start_fading",
+                                     command_name="dialogue_sprite_start_fading",
+                                     purpose_line="Starts an dialogue sprite fading animation.\n"
+                                     "Note: the dialogue sprite must already be visible.",
                                      scale_speed_from=1,
                                      scale_speed_to=15000,
                                      scale_speed_default=1000,                                     
@@ -1355,11 +1358,11 @@ class WizardWindow:
                                     header_label=self.lbl_header,
                                     purpose_label=self.lbl_purpose,
                                     treeview_commands=self.treeview_commands,
-                                    parent_display_text="Dialog",
-                                    sub_display_text="dialog_sprite_stop_fading",
-                                    command_name="dialog_sprite_stop_fading",
-                                    purpose_line="Stops a dialog sprite fading animation.\n"
-                                    "Note: the dialog sprite must already be visible.",
+                                    parent_display_text="Dialogue",
+                                    sub_display_text="dialogue_sprite_stop_fading",
+                                    command_name="dialogue_sprite_stop_fading",
+                                    purpose_line="Stops a dialogue sprite fading animation.\n"
+                                    "Note: the dialogue sprite must already be visible.",
                                     group_name=GroupName.FADE)
     
         page_dialog_after_rotating_stop =\
@@ -1367,11 +1370,11 @@ class WizardWindow:
                                            header_label=self.lbl_header,
                                            purpose_label=self.lbl_purpose,
                                            treeview_commands=self.treeview_commands,
-                                           parent_display_text="Dialog",
-                                           sub_display_text="dialog_sprite_after_rotating_stop",
-                                           command_name="dialog_sprite_after_rotating_stop",
+                                           parent_display_text="Dialogue",
+                                           sub_display_text="dialogue_sprite_after_rotating_stop",
+                                           command_name="dialogue_sprite_after_rotating_stop",
                                            purpose_line="When a specific sprite image stops rotating, run a reusable script.\n"
-                                           "Note: the dialog sprite must already be visible.",
+                                           "Note: the dialogue sprite must already be visible.",
                                            group_name=GroupName.ROTATE)
     
         page_dialog_rotate_current_value =\
@@ -1379,11 +1382,11 @@ class WizardWindow:
                                             header_label=self.lbl_header,
                                             purpose_label=self.lbl_purpose,
                                             treeview_commands=self.treeview_commands,
-                                            parent_display_text="Dialog",
-                                            sub_display_text="dialog_sprite_rotate_current_value",
-                                            command_name="dialog_sprite_rotate_current_value",
+                                            parent_display_text="Dialogue",
+                                            sub_display_text="dialogue_sprite_rotate_current_value",
+                                            command_name="dialogue_sprite_rotate_current_value",
                                             purpose_line="Immediately set a sprite's rotation value (no gradual animation).\n"
-                                            "Note: the dialog sprite must already be visible.",
+                                            "Note: the dialogue sprite must already be visible.",
                                             group_name=GroupName.ROTATE)
 
     
@@ -1392,11 +1395,11 @@ class WizardWindow:
                                        header_label=self.lbl_header,
                                        purpose_label=self.lbl_purpose,
                                        treeview_commands=self.treeview_commands,
-                                       parent_display_text="Dialog",
-                                       sub_display_text="dialog_sprite_start_rotating",
-                                       command_name="dialog_sprite_start_rotating",
-                                       purpose_line="Starts an dialog sprite rotation animation.\n"
-                                       "Note: the dialog sprite must already be visible.",
+                                       parent_display_text="Dialogue",
+                                       sub_display_text="dialogue_sprite_start_rotating",
+                                       command_name="dialogue_sprite_start_rotating",
+                                       purpose_line="Starts an dialogue sprite rotation animation.\n"
+                                       "Note: the dialogue sprite must already be visible.",
                                        scale_speed_from=1,
                                        scale_speed_to=220000,
                                        scale_speed_default=180,                                        
@@ -1407,11 +1410,11 @@ class WizardWindow:
                                       header_label=self.lbl_header,
                                       purpose_label=self.lbl_purpose,
                                       treeview_commands=self.treeview_commands,
-                                      parent_display_text="Dialog",
-                                      sub_display_text="dialog_sprite_stop_rotating",
-                                      command_name="dialog_sprite_stop_rotating",
-                                      purpose_line="Stops a dialog sprite rotation animation.\n"
-                                      "Note: the dialog sprite must already be visible.",
+                                      parent_display_text="Dialogue",
+                                      sub_display_text="dialogue_sprite_stop_rotating",
+                                      command_name="dialogue_sprite_stop_rotating",
+                                      purpose_line="Stops a dialogue sprite rotation animation.\n"
+                                      "Note: the dialogue sprite must already be visible.",
                                       group_name=GroupName.ROTATE)
     
         page_dialog_after_scaling_stop =\
@@ -1419,12 +1422,12 @@ class WizardWindow:
                                           header_label=self.lbl_header,
                                           purpose_label=self.lbl_purpose,
                                           treeview_commands=self.treeview_commands,
-                                          parent_display_text="Dialog",
-                                          sub_display_text="dialog_sprite_after_scaling_stop",
-                                          command_name="dialog_sprite_after_scaling_stop",
+                                          parent_display_text="Dialogue",
+                                          sub_display_text="dialogue_sprite_after_scaling_stop",
+                                          command_name="dialogue_sprite_after_scaling_stop",
                                           purpose_line="When a specific sprite image stops scaling using <dialog_scale_until>,\n"
                                           "run a specific reusable script.\n\n"
-                                          "Note: the dialog sprite must already be visible.", 
+                                          "Note: the dialogue sprite must already be visible.", 
                                           group_name=GroupName.SCALE)
     
         page_dialog_scale_current_value =\
@@ -1432,11 +1435,11 @@ class WizardWindow:
                                            header_label=self.lbl_header,
                                            purpose_label=self.lbl_purpose,
                                            treeview_commands=self.treeview_commands,
-                                           parent_display_text="Dialog",
-                                           sub_display_text="dialog_sprite_scale_current_value",
-                                           command_name="dialog_sprite_scale_current_value",
+                                           parent_display_text="Dialogue",
+                                           sub_display_text="dialogue_sprite_scale_current_value",
+                                           command_name="dialogue_sprite_scale_current_value",
                                            purpose_line="Immediately set a sprite's scale value (no gradual animation).\n"
-                                           "Note: the dialog sprite must already be visible.",
+                                           "Note: the dialogue sprite must already be visible.",
                                            from_value=0,
                                            to_value=100,
                                            amount_usage_info="Scale value:\n"
@@ -1450,11 +1453,11 @@ class WizardWindow:
                                       header_label=self.lbl_header,
                                       purpose_label=self.lbl_purpose,
                                       treeview_commands=self.treeview_commands,
-                                      parent_display_text="Dialog",
-                                      sub_display_text="dialog_sprite_start_scaling",
-                                      command_name="dialog_sprite_start_scaling",
-                                      purpose_line="Starts an dialog sprite scaling animation.\n\n"
-                                      "Note: the dialog sprite must already be visible.", 
+                                      parent_display_text="Dialogue",
+                                      sub_display_text="dialogue_sprite_start_scaling",
+                                      command_name="dialogue_sprite_start_scaling",
+                                      purpose_line="Starts an dialogue sprite scaling animation.\n\n"
+                                      "Note: the dialogue sprite must already be visible.", 
                                       scale_speed_from=1,
                                       scale_speed_to=100000,
                                       scale_speed_default=1000,                                        
@@ -1465,13 +1468,13 @@ class WizardWindow:
                                      header_label=self.lbl_header,
                                      purpose_label=self.lbl_purpose,
                                      treeview_commands=self.treeview_commands,
-                                     parent_display_text="Dialog",
-                                     sub_display_text="dialog_sprite_stop_scaling",
-                                     command_name="dialog_sprite_stop_scaling",
-                                     purpose_line="Stops a dialog sprite scaling animation.\n\n"
+                                     parent_display_text="Dialogue",
+                                     sub_display_text="dialogue_sprite_stop_scaling",
+                                     command_name="dialogue_sprite_stop_scaling",
+                                     purpose_line="Stops a dialogue sprite scaling animation.\n\n"
                                      "The scale value is not lost. If the scaling is started again,\n"
                                      "it will resume from where it stopped last.\n\n"
-                                     "Note: the dialog sprite must already be visible.",
+                                     "Note: the dialogue sprite must already be visible.",
                                      group_name=GroupName.SCALE)
     
         page_dialog_after_movement_stop =\
@@ -1479,10 +1482,10 @@ class WizardWindow:
                                            header_label=self.lbl_header,
                                            purpose_label=self.lbl_purpose,
                                            treeview_commands=self.treeview_commands,
-                                           parent_display_text="Dialog",
-                                           sub_display_text="dialog_sprite_after_movement_stop",
-                                           command_name="dialog_sprite_after_movement_stop",
-                                           purpose_line="Run a reusable script after a specific dialog sprite stops moving.",
+                                           parent_display_text="Dialogue",
+                                           sub_display_text="dialogue_sprite_after_movement_stop",
+                                           command_name="dialogue_sprite_after_movement_stop",
+                                           purpose_line="Run a reusable script after a specific dialogue sprite stops moving.",
                                            group_name=GroupName.MOVE)
     
         page_dialog_stop_movement_condition =\
@@ -1490,9 +1493,9 @@ class WizardWindow:
                                                header_label=self.lbl_header,
                                           purpose_label=self.lbl_purpose,
                                           treeview_commands=self.treeview_commands,
-                                          parent_display_text="Dialog",
-                                          sub_display_text="dialog_sprite_stop_movement_condition",
-                                          command_name="dialog_sprite_stop_movement_condition",
+                                          parent_display_text="Dialogue",
+                                          sub_display_text="dialogue_sprite_stop_movement_condition",
+                                          command_name="dialogue_sprite_stop_movement_condition",
                                           purpose_line="Add a condition that defines when to stop a moving sprite.\n\n"
                                           "Multiple stop conditions can be added for a single sprite by calling\n"
                                           "this command multiple times with different parameters.\n\n"
@@ -1505,10 +1508,10 @@ class WizardWindow:
                               header_label=self.lbl_header,
                               purpose_label=self.lbl_purpose,
                               treeview_commands=self.treeview_commands,
-                              parent_display_text="Dialog",
-                              sub_display_text="dialog_sprite_start_moving",
-                              command_name="dialog_sprite_start_moving",
-                              purpose_line="Starts a movement animation on a specific dialog sprite.",
+                              parent_display_text="Dialogue",
+                              sub_display_text="dialogue_sprite_start_moving",
+                              command_name="dialogue_sprite_start_moving",
+                              purpose_line="Starts a movement animation on a specific dialogue sprite.",
                               scale_default_value=5,
                               scale_from_value=0,
                               scale_to_value=1500,                                     
@@ -1519,10 +1522,10 @@ class WizardWindow:
                                  header_label=self.lbl_header,
                                  purpose_label=self.lbl_purpose,
                                  treeview_commands=self.treeview_commands,
-                                 parent_display_text="Dialog",
-                                 sub_display_text="dialog_sprite_stop_moving",
-                                 command_name="dialog_sprite_stop_moving",
-                                 purpose_line="Stops a movement animation on a specific dialog sprite.",
+                                 parent_display_text="Dialogue",
+                                 sub_display_text="dialogue_sprite_stop_moving",
+                                 command_name="dialogue_sprite_stop_moving",
+                                 purpose_line="Stops a movement animation on a specific dialogue sprite.",
                                  group_name=GroupName.MOVE)
 
         page_dialog_set_position_x =\
@@ -1530,12 +1533,12 @@ class WizardWindow:
                                       header_label=self.lbl_header,
                                       purpose_label=self.lbl_purpose,
                                       treeview_commands=self.treeview_commands,
-                                      parent_display_text="Dialog",
-                                      sub_display_text="dialog_sprite_set_position_x",
-                                      command_name="dialog_sprite_set_position_x",
+                                      parent_display_text="Dialogue",
+                                      sub_display_text="dialogue_sprite_set_position_x",
+                                      command_name="dialogue_sprite_set_position_x",
                                       purpose_line="Sets the horizontal position of a specific dialog relative to the top-left\n"
                                       "corner of the sprite.\n\n"
-                                      "Note: the dialog sprite must already be visible.",
+                                      "Note: the dialogue sprite must already be visible.",
                                       direction="horizontal",
                                       group_name=GroupName.POSITION)
     
@@ -1544,12 +1547,12 @@ class WizardWindow:
                                       header_label=self.lbl_header,
                                       purpose_label=self.lbl_purpose,
                                       treeview_commands=self.treeview_commands,
-                                      parent_display_text="Dialog",
-                                      sub_display_text="dialog_sprite_set_position_y",
-                                      command_name="dialog_sprite_set_position_y",
+                                      parent_display_text="Dialogue",
+                                      sub_display_text="dialogue_sprite_set_position_y",
+                                      command_name="dialogue_sprite_set_position_y",
                                       purpose_line="Sets the vertical position of a specific dialog relative to the top-left\n"
                                       "corner of the sprite.\n\n"
-                                      "Note: the dialog sprite must already be visible.",
+                                      "Note: the dialogue sprite must already be visible.",
                                       direction="vertical",
                                       group_name=GroupName.POSITION)
     
@@ -1558,11 +1561,11 @@ class WizardWindow:
                                    header_label=self.lbl_header,
                                    purpose_label=self.lbl_purpose,
                                    treeview_commands=self.treeview_commands,
-                                   parent_display_text="Dialog",
-                                   sub_display_text="dialog_sprite_set_center",
-                                   command_name="dialog_sprite_set_center",
+                                   parent_display_text="Dialogue",
+                                   sub_display_text="dialogue_sprite_set_center",
+                                   command_name="dialogue_sprite_set_center",
                                    purpose_line="Set the center point of the sprite.\n\n"
-                                   "Note: the dialog sprite must already be visible.",
+                                   "Note: the dialogue sprite must already be visible.",
                                    spinbox_1_instructions="Center of X (horizontal position):",
                                    spinbox_2_instructions="Center of Y (vertical position):",
                                    spinbox_1_subject="horizontal",
@@ -1573,52 +1576,52 @@ class WizardWindow:
                                    spinbox_to_value=9000,
                                    group_name=GroupName.POSITION)
 
-        page_dialog_sprite_center_x_with =\
+        page_dialogue_sprite_center_x_with =\
             SharedPages.CenterWithAlias(parent_frame=self.frame_contents_outer,
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="dialog_sprite_center_x_with",
-                                        command_name="dialog_sprite_center_x_with",
-                                        purpose_line="Center the X of a dialog sprite with the center X of another sprite.\n"
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="dialogue_sprite_center_x_with",
+                                        command_name="dialogue_sprite_center_x_with",
+                                        purpose_line="Center the X of a dialogue sprite with the center X of another sprite.\n"
                                         "Note: both sprites must already be visible.",
                                         group_name=GroupName.POSITION)     
 
-        page_dialog_sprite_on_mouse_click =\
+        page_dialogue_sprite_on_mouse_click =\
             SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="dialog_sprite_on_mouse_click",
-                                        command_name="dialog_sprite_on_mouse_click",
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="dialogue_sprite_on_mouse_click",
+                                        command_name="dialogue_sprite_on_mouse_click",
                                         purpose_line="Run a reusable script when a specific sprite is left-clicked with the mouse.\n\n"
-                                        "Note: the dialog sprite must already be visible.",
+                                        "Note: the dialogue sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
-        page_dialog_sprite_on_mouse_enter =\
+        page_dialogue_sprite_on_mouse_enter =\
             SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="dialog_sprite_on_mouse_enter",
-                                        command_name="dialog_sprite_on_mouse_enter",
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="dialogue_sprite_on_mouse_enter",
+                                        command_name="dialogue_sprite_on_mouse_enter",
                                         purpose_line="Run a reusable script when the mouse pointer hovers over a specific sprite.\n\n"
-                                        "Note: the dialog sprite must already be visible.",
+                                        "Note: the dialogue sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
-        page_dialog_sprite_on_mouse_leave =\
+        page_dialogue_sprite_on_mouse_leave =\
             SharedPages.SpriteMouseEvent(parent_frame=self.frame_contents_outer,
                                         header_label=self.lbl_header,
                                         purpose_label=self.lbl_purpose,
                                         treeview_commands=self.treeview_commands,
-                                        parent_display_text="Dialog",
-                                        sub_display_text="dialog_sprite_on_mouse_leave",
-                                        command_name="dialog_sprite_on_mouse_leave",
+                                        parent_display_text="Dialogue",
+                                        sub_display_text="dialogue_sprite_on_mouse_leave",
+                                        command_name="dialogue_sprite_on_mouse_leave",
                                         purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
-                                        "Note: the dialog sprite must already be visible.",
+                                        "Note: the dialogue sprite must already be visible.",
                                         group_name=GroupName.MOUSE)             
 
 
@@ -2079,7 +2082,7 @@ class WizardWindow:
                           sub_display_text="font_x",
                           command_name="font_x",
                           purpose_line="Sets the horizontal position of where the dialog text should start,\n"
-                          "relative to the text dialog.\nThe left-most edge of the dialog rectangle is 0 (zero).",
+                          "relative to the text dialog.\nThe left-most edge of the dialogue rectangle is 0 (zero).",
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the horizontal position (x):",
@@ -2096,7 +2099,7 @@ class WizardWindow:
                           sub_display_text="font_y",
                           command_name="font_y",
                           purpose_line="Sets the vertical position of where the dialog text should start,\n"
-                          "relative to the text dialog. The top of the dialog rectangle is 0 (zero).",
+                          "relative to the text dialog. The top of the dialogue rectangle is 0 (zero).",
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the vertical position (y):",
@@ -2715,8 +2718,8 @@ class WizardWindow:
         self.pages["volume_text"] = page_audio_volume_text
         self.pages["volume_voice"] = page_audio_volume_voice
 
-        self.pages["dialog_text_sound"] = page_audio_dialog_text_sound
-        self.pages["dialog_text_sound_clear"] = page_audio_dialog_text_sound_clear
+        self.pages["dialogue_text_sound"] = page_audio_dialogue_text_sound
+        self.pages["dialogue_text_sound_clear"] = page_audio_dialogue_text_sound_clear
 
         self.pages["load_background"] = page_load_background
         self.pages["background_show"] = page_show_background
@@ -2827,9 +2830,9 @@ class WizardWindow:
         """
         Dialog
         """
-        self.pages["text_dialog_define"] = page_dialog_define
-        self.pages["text_dialog_show"] = page_dialog_show
-        self.pages["text_dialog_close"] = page_dialog_close
+        self.pages["text_dialogue_define"] = page_dialog_define
+        self.pages["text_dialogue_show"] = page_dialog_show
+        self.pages["text_dialogue_close"] = page_dialog_close
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
         self.pages["halt_and_pause_main_script"] = page_dialog_halt_and_pause
@@ -2837,45 +2840,45 @@ class WizardWindow:
         self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
-        self.pages["load_dialog_sprite"] = page_load_dialog
-        self.pages["dialog_sprite_show"] = page_show_dialog
-        self.pages["dialog_sprite_hide"] = page_hide_dialog
-        self.pages["dialog_sprite_hide_all"] = page_hide_all_dialog
+        self.pages["load_dialogue_sprite"] = page_load_dialog
+        self.pages["dialogue_sprite_show"] = page_show_dialog
+        self.pages["dialogue_sprite_hide"] = page_hide_dialog
+        self.pages["dialogue_sprite_hide_all"] = page_hide_all_dialog
         
-        self.pages["dialog_sprite_flip_both"] = page_dialog_flip_both
-        self.pages["dialog_sprite_flip_horizontal"] = page_dialog_flip_horizontal
-        self.pages["dialog_sprite_flip_vertical"] = page_dialog_flip_vertical
+        self.pages["dialogue_sprite_flip_both"] = page_dialog_flip_both
+        self.pages["dialogue_sprite_flip_horizontal"] = page_dialog_flip_horizontal
+        self.pages["dialogue_sprite_flip_vertical"] = page_dialog_flip_vertical
         
-        self.pages["dialog_sprite_start_tinting"] = page_dialog_tint
-        self.pages["dialog_sprite_focus"] = page_dialog_focus
+        self.pages["dialogue_sprite_start_tinting"] = page_dialog_tint
+        self.pages["dialogue_sprite_focus"] = page_dialog_focus
         
-        self.pages["dialog_sprite_after_fading_stop"] = page_dialog_after_fading_stop
-        self.pages["dialog_sprite_fade_current_value"] = page_dialog_fade_current_value
-        self.pages["dialog_sprite_start_fading"] = page_dialog_start_fading
-        self.pages["dialog_sprite_stop_fading"] = page_dialog_stop_fading
+        self.pages["dialogue_sprite_after_fading_stop"] = page_dialog_after_fading_stop
+        self.pages["dialogue_sprite_fade_current_value"] = page_dialog_fade_current_value
+        self.pages["dialogue_sprite_start_fading"] = page_dialog_start_fading
+        self.pages["dialogue_sprite_stop_fading"] = page_dialog_stop_fading
         
-        self.pages["dialog_sprite_after_rotating_stop"] = page_dialog_after_rotating_stop
-        self.pages["dialog_sprite_rotate_current_value"] = page_dialog_rotate_current_value
-        self.pages["dialog_sprite_start_rotating"] = page_dialog_start_rotating
-        self.pages["dialog_sprite_stop_rotating"] = page_dialog_stop_rotating
+        self.pages["dialogue_sprite_after_rotating_stop"] = page_dialog_after_rotating_stop
+        self.pages["dialogue_sprite_rotate_current_value"] = page_dialog_rotate_current_value
+        self.pages["dialogue_sprite_start_rotating"] = page_dialog_start_rotating
+        self.pages["dialogue_sprite_stop_rotating"] = page_dialog_stop_rotating
 
-        self.pages["dialog_sprite_after_scaling_stop"] = page_dialog_after_scaling_stop
-        self.pages["dialog_sprite_scale_current_value"] = page_dialog_scale_current_value
-        self.pages["dialog_sprite_start_scaling"] = page_dialog_start_scaling
-        self.pages["dialog_sprite_stop_scaling"] = page_dialog_stop_scaling
+        self.pages["dialogue_sprite_after_scaling_stop"] = page_dialog_after_scaling_stop
+        self.pages["dialogue_sprite_scale_current_value"] = page_dialog_scale_current_value
+        self.pages["dialogue_sprite_start_scaling"] = page_dialog_start_scaling
+        self.pages["dialogue_sprite_stop_scaling"] = page_dialog_stop_scaling
 
-        self.pages["dialog_sprite_after_movement_stop"] = page_dialog_after_movement_stop
-        self.pages["dialog_sprite_stop_movement_condition"] = page_dialog_stop_movement_condition
-        self.pages["dialog_sprite_start_moving"] = page_dialog_start_moving
-        self.pages["dialog_sprite_stop_moving"] = page_dialog_stop_moving
-        self.pages["dialog_sprite_set_position_x"] = page_dialog_set_position_x
-        self.pages["dialog_sprite_set_position_y"] = page_dialog_set_position_y
-        self.pages["dialog_sprite_set_center"] = page_dialog_set_center
-        self.pages["dialog_sprite_center_x_with"] = page_dialog_sprite_center_x_with
+        self.pages["dialogue_sprite_after_movement_stop"] = page_dialog_after_movement_stop
+        self.pages["dialogue_sprite_stop_movement_condition"] = page_dialog_stop_movement_condition
+        self.pages["dialogue_sprite_start_moving"] = page_dialog_start_moving
+        self.pages["dialogue_sprite_stop_moving"] = page_dialog_stop_moving
+        self.pages["dialogue_sprite_set_position_x"] = page_dialog_set_position_x
+        self.pages["dialogue_sprite_set_position_y"] = page_dialog_set_position_y
+        self.pages["dialogue_sprite_set_center"] = page_dialog_set_center
+        self.pages["dialogue_sprite_center_x_with"] = page_dialogue_sprite_center_x_with
 
-        self.pages["dialog_sprite_on_mouse_click"] =  page_dialog_sprite_on_mouse_click
-        self.pages["dialog_sprite_on_mouse_enter"] =  page_dialog_sprite_on_mouse_enter
-        self.pages["dialog_sprite_on_mouse_leave"] =  page_dialog_sprite_on_mouse_leave
+        self.pages["dialogue_sprite_on_mouse_click"] =  page_dialogue_sprite_on_mouse_click
+        self.pages["dialogue_sprite_on_mouse_enter"] =  page_dialogue_sprite_on_mouse_enter
+        self.pages["dialogue_sprite_on_mouse_leave"] =  page_dialogue_sprite_on_mouse_leave
         
         """
         Font
@@ -3154,7 +3157,7 @@ class WizardListing:
         elif "music" in command_name:
             self.purpose_type = Purpose.MUSIC            
 
-        elif "dialog" in command_name:
+        elif "dialogue" in command_name:
             self.purpose_type = Purpose.DIALOG
             
         elif "variable" in command_name or "case" in command_name:
@@ -3279,7 +3282,7 @@ class WizardListing:
         name_mapping = {Purpose.BACKGROUND: ("background", "backgrounds"),
                         Purpose.CHARACTER: ("character", "characters"),
                         Purpose.OBJECT: ("object", "objects"),
-                        Purpose.DIALOG: ("dialog sprite", "dialog sprites"),
+                        Purpose.DIALOG: ("dialogue sprite", "dialogue sprites"),
                         Purpose.FONT_SPRITE: ("font sprite", "font sprites"),
                         Purpose.AUDIO: ("sound", "sounds"),
                         Purpose.MUSIC: ("music file", "music"),
@@ -3592,7 +3595,7 @@ class SharedPages:
                                              text="Sprite type:",
                                              anchor=tk.W)
             self.cb_sprite_type = ttk.Combobox(self.frame_sprite,
-                                               values=("character", "object", "dialog_sprite"),
+                                               values=("character", "object", "dialogue_sprite"),
                                                state="readonly")
             
             
@@ -3746,7 +3749,7 @@ class SharedPages:
                                                  alias, animation_type):
                     
                
-                    # Sprite type (ie: character, object, dialog_sprite)
+                    # Sprite type (ie: character, object, dialogue_sprite)
                     self.set_sprite_type(sprite_type)
                     
                     # General alias
@@ -4536,8 +4539,8 @@ class SharedPages:
                 # this is being called for a character sprite or object sprite.
                 if "character" in self.command_name:
                     intention_command = "<character_stop_moving>"
-                elif "dialog" in self.command_name:
-                    intention_command = "<dialog_sprite_stop_moving>"
+                elif "dialogue" in self.command_name:
+                    intention_command = "<dialogue_sprite_stop_moving>"
                 else:
                     intention_command = "<object_stop_moving>"
 
@@ -5057,7 +5060,7 @@ class SharedPages:
         """
         <character_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
         <object_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
-        <dialog_sprite_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
+        <dialogue_sprite_center_x_with: alias_to_move, sprite_type_to_center_with (character, dialog, object), center_with_alias>
         """
         def __init__(self, parent_frame, header_label, purpose_label,
                     treeview_commands, parent_display_text, sub_display_text,
@@ -5117,8 +5120,8 @@ class SharedPages:
             
             if "character" in command_name:
                 return "character"
-            elif "dialog" in command_name:
-                return "dialog_sprite"
+            elif "dialogue" in command_name:
+                return "dialogue_sprite"
             elif "object" in command_name:
                 return "object"
                 
@@ -5159,7 +5162,7 @@ class SharedPages:
             cb_sprite_type =\
                 ttk.Combobox(frame_sprite_type,
                              state="readonly",
-                             values=("Character", "Dialog sprite", "Object"),
+                             values=("Character", "Dialogue sprite", "Object"),
                              width=20,
                              textvariable=self.v_sprite_type_center_with)
             
@@ -5212,7 +5215,7 @@ class SharedPages:
                 
                 # A sprite type can only be these 3 values, nothing else.
                 if sprite_type_to_center_with not in ("Character",
-                                                      "Dialog sprite",
+                                                      "Dialogue sprite",
                                                       "Object"):
                     sprite_type_to_center_with = ""
             
@@ -6672,14 +6675,14 @@ class SharedPages:
             
     class SpriteMouseEvent(AfterStop):
         """
-        <dialog_sprite_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
+        <dialogue_sprite_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
         <object_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
         <character_on_mouse_enter: alias, reusable script name, (optional values to send to the reusable script)>
         
         Also, same arguments for:
-        <dialog_sprite_on_mouse_leave>
-        <dialog_sprite_on_mouse_click>
-        <dialog_sprite_on_mouse_enter>
+        <dialogue_sprite_on_mouse_leave>
+        <dialogue_sprite_on_mouse_click>
+        <dialogue_sprite_on_mouse_enter>
         
         <object_on_mouse_leave>
         <object_on_mouse_click>
@@ -6901,7 +6904,7 @@ class SharedPages:
             
             if "variable" in purpose:
                 message = "Variable name to create or update:"
-            elif "dialog" in purpose:
+            elif "dialogue" in purpose:
                 message = f"Which {purpose} would you like to load into memory?"
             else:
                 message = f"Which {purpose} sprite would you like to load into memory?"
@@ -6912,9 +6915,9 @@ class SharedPages:
             
             if "variable" in purpose:
                 message = "Variable value:"
-            elif "dialog" in purpose:
-                message = "Enter an alias for this dialog sprite below:\n" + \
-                "(This alias can later be used to reference this dialog sprite\n" + \
+            elif "dialogue" in purpose:
+                message = "Enter an alias for this dialogue sprite below:\n" + \
+                "(This alias can later be used to reference this dialogue sprite\n" + \
                 "regardless of the image that's being shown for this sprite.)"
             else:
                 message = f"Enter an alias for this {self.get_purpose_name()} below:\n" + \
@@ -7107,7 +7110,7 @@ class SharedPages:
             
             # This page is used for multiple purposes.
             # 1) Either for <variable_set> or
-            # 2) for loading a sprite, such as with <load_dialog_sprite>
+            # 2) for loading a sprite, such as with <load_dialogue_sprite>
             if self.purpose_type == Purpose.VARIABLE_SET:
                 variable_name = user_inputs.get("VariableName")
                 variable_value = user_inputs.get("VariableValue")
@@ -7218,8 +7221,8 @@ class SharedPages:
 
     class CommandNoParameters(WizardListing):
         """
-        <text_dialog_show>
-        <text_dialog_hide>
+        <text_dialogue_show>
+        <text_dialogue_hide>
         <halt>
         .....
         """
@@ -10037,7 +10040,7 @@ class WaitForAnimationFrame:
         # select the appropriate radio button only if the argument has
         # a valid sprite-type value that's defined here.
         self.valid_sprite_types =\
-            ("character", "object", "dialog_sprite", "cover",
+            ("character", "object", "dialogue_sprite", "cover",
              "shake", "camera_movement")
 
         # Default to the radio button, 'Character'
@@ -10239,7 +10242,7 @@ class WaitForAnimation(WizardListing):
 
 class DialogTextSound(SharedPages.LoadSpriteNoAlias):
     """
-    <dialog_text_sound: audio name>
+    <dialogue_text_sound: audio name>
     Sets the audio to play for letter-by-letter text displays (non fading).
     """
 
@@ -10418,7 +10421,7 @@ class DialogContinue(WizardListing):
         
 class TextDialogDefine(WizardListing):
     """
-    <text_dialog_define: width, height, animation_speed, intro_animation,
+    <text_dialogue_define: width, height, animation_speed, intro_animation,
          outro_animation, anchor, bg_red, bg_green, bg_blue, padding_x, padding_y, opacity,
          rounded_corners, reusable_intro_starting, reusable_intro_finished,
          reusable_outro_starting, reusable_outro_finished, border_red,
@@ -10548,7 +10551,7 @@ class TextDialogDefine(WizardListing):
             self.set_combobox_text(self.text_define.cb_outro_animation,
                                    outro_animation)
             
-        # Anchor (dialog rectangle position)
+        # Anchor (dialogue rectangle position)
         
         # Valid values for anchor.
         anchor_possible_values =\
@@ -10686,7 +10689,7 @@ class TextDialogDefine(WizardListing):
         except tk.TclError:
             messagebox.showerror(parent=self.parent_frame.winfo_toplevel(), 
                                  title="Dialog Dimensions",
-                                 message="Numbers are expected for the width and height of the dialog rectangle.")
+                                 message="Numbers are expected for the width and height of the dialogue rectangle.")
             return
         
         # Get the label's background color in hex format.
@@ -10796,7 +10799,7 @@ class TextDialogDefine(WizardListing):
         Return the command based on the user's configuration/selection.
         """
         
-        # <text_dialog_define>
+        # <text_dialogue_define>
 
         user_inputs = self.check_inputs()
         

@@ -34,7 +34,7 @@ class ContentType(Enum):
     OBJECT = "StoryObject_ImageLocations"
     BACKGROUND = "StoryBackground_ImageLocations"
     FONT_SPRITE_SHEET = "StoryFontSprite_ImageLocations"
-    DIALOG_SPRITE = "StoryDialog_ImageLocations"
+    DIALOGUE_SPRITE = "StoryDialog_ImageLocations"
     AUDIO = "StoryAudio_Locations"
     MUSIC = "StoryMusic_Locations"
 
@@ -250,7 +250,7 @@ class FileReader:
                     sprite_group = sd.Groups.object_group
                     create_sprite_method = sd.SpriteObject
 
-                elif content_type == ContentType.DIALOG_SPRITE:
+                elif content_type == ContentType.DIALOGUE_SPRITE:
 
                     sprite_group = sd.Groups.dialog_group
                     create_sprite_method = sd.DialogSprite

@@ -189,7 +189,7 @@ class SequenceCreate:
         if value:
             value = value.lower()
             
-        if value not in ("character", "object", "dialog sprite"):
+        if value not in ("character", "object", "dialogue sprite"):
             self._sprite_type = None
         else:
             self._sprite_type = value
@@ -466,7 +466,7 @@ class MoveStart(NamedTuple):
 # Used for multiple commands, such as:
 # character_after_fading_stop
 # object_after_scaling_stop
-# dialog_sprite_after_rotating_stop
+# dialogue_sprite_after_rotating_stop
 # character_after_movement_stop
 # character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptNoArguments(NamedTuple):
@@ -477,7 +477,7 @@ class SpriteStopRunScriptNoArguments(NamedTuple):
 # Used for multiple commands, such as:
 # character_after_fading_stop
 # object_after_scaling_stop
-# dialog_sprite_after_rotating_stop
+# dialogue_sprite_after_rotating_stop
 # character_after_movement_stop
 # character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptWithArguments(NamedTuple):

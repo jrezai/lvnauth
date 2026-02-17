@@ -84,8 +84,8 @@ class EditColorsWindow:
         lbl_current_row_bg = builder.get_object("lbl_current_row_bg")
         lbl_current_row_bg.label_name = "lbl_current_row_bg"
         
-        self.v_no_background_dialog_text: tk.BooleanVar
-        self.v_no_background_dialog_text = builder.get_variable("v_no_background_dialog_text")
+        self.v_no_background_dialogue_text: tk.BooleanVar
+        self.v_no_background_dialogue_text = builder.get_variable("v_no_background_dialog_text")
         
         # So we can disable the checkbox when the 'Default' 
         # preset is selected (because changing the Default preset is not allowed).
@@ -111,7 +111,7 @@ class EditColorsWindow:
              "editor.highlight.row.background": lbl_current_row_bg}
         
         self.checkbox_options = {"editor.dialog.text.backcolor.disable": 
-                                 self.v_no_background_dialog_text}        
+                                 self.v_no_background_dialogue_text}        
         
         # Bind labels to mouse left-click
         label_widget: ttk.Label

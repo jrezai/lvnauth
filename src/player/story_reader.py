@@ -354,7 +354,7 @@ class StoryReader:
             # Deals with showing/hiding dialog text
             self.active_font_handler = font_handler.ActiveFontHandler(story=self.story)
 
-            # When <text_dialog_show> is used, it might show an animation.
+            # When <text_dialogue_show> is used, it might show an animation.
             # While the dialog rectangle is animating, we don't want to proceed
             # with the main script until the dialog rect's animation is done.
 
@@ -773,7 +773,7 @@ class StoryReader:
 
                     # Did we run just a command that should cause this loop
                     # to stop? Then break the loop.
-                    # Example: <text_dialog_define: ...>
+                    # Example: <text_dialogue_define: ...>
                     if self.main_script_should_pause():
 
                         # If we're in the main reader
@@ -792,9 +792,9 @@ class StoryReader:
                 command_line = False
 
                 # Not a command, probably dialog text.
-                self.read_dialog_text(line_text=line)
+                self.read_dialogue_text(line_text=line)
 
-    def read_dialog_text(self, line_text):
+    def read_dialogue_text(self, line_text):
         """
         Read the letters on this line by cropping the letters from
         the full font spritesheet, letter by letter.
@@ -849,7 +849,7 @@ class StoryReader:
         ######Uncomment line 918 below after experiment - Sept 25, 2023
         ## Don't wait until the next frame to read a possible
         ## other line of text. Run read_story() so it can check if there's
-        ## another line of text, and if there is, this method (read_dialog_text)
+        ## another line of text, and if there is, this method (read_dialogue_text)
         ## will run again.
         self.read_story()
 
@@ -890,7 +890,7 @@ class StoryReader:
         Return: None
 
         Changes:
-        Oct 13, 2023 - Process text_dialog_show only if the dialog isn't
+        Oct 13, 2023 - Process text_dialogue_show only if the dialog isn't
         already visible (Jobin Rezai)
         """
         if command_name in StoryReader.COMMANDS_REQUIRE_ARGUMENTS and not arguments:
@@ -914,9 +914,9 @@ class StoryReader:
                 arguments=arguments, sprite_type=file_reader.ContentType.OBJECT
             )
 
-        elif command_name == "load_dialog_sprite":
+        elif command_name == "load_dialogue_sprite":
             self._sprite_load(
-                arguments=arguments, sprite_type=file_reader.ContentType.DIALOG_SPRITE
+                arguments=arguments, sprite_type=file_reader.ContentType.DIALOGUE_SPRITE
             )
 
         elif command_name == "load_font_sprite":
@@ -1070,11 +1070,11 @@ class StoryReader:
         elif command_name == "continue":
             self._continue(arguments=arguments)
 
-        elif command_name == "text_dialog_define":
+        elif command_name == "text_dialogue_define":
 
-            self._text_dialog_define(arguments=arguments)
+            self._text_dialogue_define(arguments=arguments)
 
-        elif command_name == "text_dialog_show":
+        elif command_name == "text_dialogue_show":
 
             self.story: StoryReader
             if self.story.dialog_rectangle:
@@ -1090,11 +1090,11 @@ class StoryReader:
 
                     self.story.dialog_rectangle.start_show()
 
-        elif command_name == "text_dialog_close":
+        elif command_name == "text_dialogue_close":
             """
             Start the outro animation of the dialog rectangle if it's visible.
             """
-            self._text_dialog_close()
+            self._text_dialogue_close()
 
         elif command_name in (
             "character_flip_both",
@@ -1103,21 +1103,21 @@ class StoryReader:
             "object_flip_both",
             "object_flip_horizontal",
             "object_flip_vertical",
-            "dialog_sprite_flip_both",
-            "dialog_sprite_flip_horizontal",
-            "dialog_sprite_flip_vertical",
+            "dialogue_sprite_flip_both",
+            "dialogue_sprite_flip_horizontal",
+            "dialogue_sprite_flip_vertical",
         ):
 
             self._flip(command_name=command_name, arguments=arguments)
 
         elif command_name in (
-            "dialog_sprite_on_mouse_enter",
+            "dialogue_sprite_on_mouse_enter",
             "object_on_mouse_enter",
             "character_on_mouse_enter",
-            "dialog_sprite_on_mouse_leave",
+            "dialogue_sprite_on_mouse_leave",
             "object_on_mouse_leave",
             "character_on_mouse_leave",
-            "dialog_sprite_on_mouse_click",
+            "dialogue_sprite_on_mouse_click",
             "object_on_mouse_click",
             "character_on_mouse_click",
         ):
@@ -1288,12 +1288,12 @@ class StoryReader:
                 arguments=arguments, sprite_type=file_reader.ContentType.CHARACTER
             )
 
-        elif command_name == "dialog_sprite_show":
+        elif command_name == "dialogue_sprite_show":
             """
-            Show a dialog sprite by setting its visibility flag to True.
+            Show a dialogue sprite by setting its visibility flag to True.
             """
             self._sprite_show(
-                arguments=arguments, sprite_type=file_reader.ContentType.DIALOG_SPRITE
+                arguments=arguments, sprite_type=file_reader.ContentType.DIALOGUE_SPRITE
             )
 
         elif command_name == "object_show":
@@ -1312,18 +1312,18 @@ class StoryReader:
                 arguments=arguments, sprite_type=file_reader.ContentType.OBJECT
             )
 
-        elif command_name == "dialog_sprite_hide":
+        elif command_name == "dialogue_sprite_hide":
             """
-            Hide an dialog sprite by setting its visibility flag to False.
+            Hide an dialogue sprite by setting its visibility flag to False.
             """
             self._sprite_hide(
-                arguments=arguments, sprite_type=file_reader.ContentType.DIALOG_SPRITE
+                arguments=arguments, sprite_type=file_reader.ContentType.DIALOGUE_SPRITE
             )
 
         elif command_name in (
             "character_hide_all",
             "object_hide_all",
-            "dialog_sprite_hide_all",
+            "dialogue_sprite_hide_all",
         ):
             """
             Hide all the sprites in a specific sprite group,
@@ -1331,19 +1331,19 @@ class StoryReader:
             """
             self._sprite_hide_all(command_name=command_name)
 
-        elif command_name == "dialog_text_sound":
+        elif command_name == "dialogue_text_sound":
             """
             Specify the sound to play for letter-by-letter non-gradual
             animations in the dialog rectangle.
             """
-            self._dialog_text_sound(arguments=arguments)
+            self._dialogue_text_sound(arguments=arguments)
 
-        elif command_name == "dialog_text_sound_clear":
+        elif command_name == "dialogue_text_sound_clear":
             """
             Specify no audio to play for letter-by-letter non-gradual
             text that is shown.
             """
-            self._dialog_text_sound_clear()
+            self._dialogue_text_sound_clear()
 
         elif command_name in (
             "volume_fx",
@@ -1408,18 +1408,18 @@ class StoryReader:
             )
 
         elif command_name in (
-            "dialog_sprite_set_position_x",
-            "dialog_sprite_set_position_y",
+            "dialogue_sprite_set_position_x",
+            "dialogue_sprite_set_position_y",
         ):
 
             self._sprite_set_position(
                 command_name=command_name,
                 arguments=arguments,
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
             )
 
         elif command_name in (
-            "dialog_sprite_center_x_with",
+            "dialogue_sprite_center_x_with",
             "object_center_x_with",
             "character_center_x_with",
         ):
@@ -1435,9 +1435,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_set_center":
+        elif command_name == "dialogue_sprite_set_center":
             self._sprite_set_center(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_stop_movement_condition":
@@ -1454,9 +1454,9 @@ class StoryReader:
                 arguments=arguments,
             )
 
-        elif command_name == "dialog_sprite_stop_movement_condition":
+        elif command_name == "dialogue_sprite_stop_movement_condition":
             self._add_stop_movement_condition(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 command_name=command_name,
                 arguments=arguments,
             )
@@ -1471,9 +1471,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_after_movement_stop":
+        elif command_name == "dialogue_sprite_after_movement_stop":
             self._sprite_after_movement_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_start_moving":
@@ -1490,9 +1490,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.START,
             )
 
-        elif command_name == "dialog_sprite_start_moving":
+        elif command_name == "dialogue_sprite_start_moving":
             self._sprite_start_or_stop_moving(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
@@ -1511,9 +1511,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "dialog_sprite_stop_moving":
+        elif command_name == "dialogue_sprite_stop_moving":
             self._sprite_start_or_stop_moving(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.STOP,
             )
@@ -1557,13 +1557,13 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT,
                 arguments=arguments)
             
-        elif command_name == "dialog_sprite_start_tinting":
-            self._tint_sprite(sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+        elif command_name == "dialogue_sprite_start_tinting":
+            self._tint_sprite(sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                               arguments=arguments)
             
-        elif command_name == "dialog_sprite_focus":
+        elif command_name == "dialogue_sprite_focus":
             self._tint_sprite_solo(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments)
 
         elif command_name == "scene":
@@ -1588,9 +1588,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_fade_current_value":
+        elif command_name == "dialogue_sprite_fade_current_value":
             self._sprite_current_fade_value(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_after_fading_stop":
@@ -1603,9 +1603,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_after_fading_stop":
+        elif command_name == "dialogue_sprite_after_fading_stop":
             self._sprite_after_fading_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_start_fading":
@@ -1615,9 +1615,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.START,
             )
 
-        elif command_name == "dialog_sprite_start_fading":
+        elif command_name == "dialogue_sprite_start_fading":
             self._sprite_start_or_stop_fading(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
@@ -1643,9 +1643,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "dialog_sprite_stop_fading":
+        elif command_name == "dialogue_sprite_stop_fading":
             self._sprite_start_or_stop_fading(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.STOP,
             )
@@ -1660,9 +1660,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_scale_current_value":
+        elif command_name == "dialogue_sprite_scale_current_value":
             self._sprite_scale_current_value(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_after_scaling_stop":
@@ -1675,9 +1675,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_after_scaling_stop":
+        elif command_name == "dialogue_sprite_after_scaling_stop":
             self._sprite_after_scaling_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_start_scaling":
@@ -1694,9 +1694,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.START,
             )
 
-        elif command_name == "dialog_sprite_start_scaling":
+        elif command_name == "dialogue_sprite_start_scaling":
             self._sprite_start_or_stop_scaling(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
@@ -1715,9 +1715,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "dialog_sprite_stop_scaling":
+        elif command_name == "dialogue_sprite_stop_scaling":
             self._sprite_start_or_stop_scaling(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.STOP,
             )
@@ -1732,9 +1732,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_rotate_current_value":
+        elif command_name == "dialogue_sprite_rotate_current_value":
             self._sprite_rotate_current_value(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_after_rotating_stop":
@@ -1747,9 +1747,9 @@ class StoryReader:
                 sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
             )
 
-        elif command_name == "dialog_sprite_after_rotating_stop":
+        elif command_name == "dialogue_sprite_after_rotating_stop":
             self._sprite_after_rotating_stop(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE, arguments=arguments
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
             )
 
         elif command_name == "character_start_rotating":
@@ -1766,9 +1766,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.START,
             )
 
-        elif command_name == "dialog_sprite_start_rotating":
+        elif command_name == "dialogue_sprite_start_rotating":
             self._sprite_start_or_stop_rotating(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
@@ -1787,9 +1787,9 @@ class StoryReader:
                 start_or_stop=sd.StartOrStop.STOP,
             )
 
-        elif command_name == "dialog_sprite_stop_rotating":
+        elif command_name == "dialogue_sprite_stop_rotating":
             self._sprite_start_or_stop_rotating(
-                sprite_type=file_reader.ContentType.DIALOG_SPRITE,
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.STOP,
             )
@@ -1990,7 +1990,7 @@ class StoryReader:
         # Stop the audio on a specific audio channel.
         self.story.audio_player.stop_audio(audio_channel=audio_channel)
 
-    def _dialog_text_sound(self, arguments: str):
+    def _dialogue_text_sound(self, arguments: str):
         """
         Set the dialog rectangle to play a specific audio
         for letter-by-letter non-gradual text displays.
@@ -2009,14 +2009,14 @@ class StoryReader:
         if not self.story.dialog_rectangle:
             raise ValueError(
                 "Cannot set the dialog text sound because the dialog has not been defined yet."
-                " Use <text_dialog_define> first."
+                " Use <text_dialogue_define> first."
             )
 
         # Set the audio name to use for each letter.
         # Only applies to: gradual-letter-by-letter (not fade)
         self.story.dialog_rectangle.text_sound_name = dialog_sound.audio_name
 
-    def _dialog_text_sound_clear(self):
+    def _dialogue_text_sound_clear(self):
         """
         Set the dialog rectangle to play no audio when showing
         letters one by one (non-fading).
@@ -2135,8 +2135,8 @@ class StoryReader:
         <command: alias to move, type of sprite to align with, alias to center x with>
 
         Example:
-        <character_center_x_with: theo, dialog sprite, some name here>
-        <dialog_sprite_center_x_with: some dialog sprite name, character, theo>
+        <character_center_x_with: theo, dialogue sprite, some name here>
+        <dialogue_sprite_center_x_with: some dialogue sprite name, character, theo>
         <object_center_x_with: my object name, character, theo>
         """
 
@@ -2152,8 +2152,8 @@ class StoryReader:
         if "character" in command_name:
             sprite_type_to_move = file_reader.ContentType.CHARACTER
 
-        elif "dialog" in command_name:
-            sprite_type_to_move = file_reader.ContentType.DIALOG_SPRITE
+        elif "dialogue" in command_name:
+            sprite_type_to_move = file_reader.ContentType.DIALOGUE_SPRITE
 
         elif "object" in command_name:
             sprite_type_to_move = file_reader.ContentType.OBJECT
@@ -2164,8 +2164,8 @@ class StoryReader:
         if "character" in name.sprite_type_to_center_with:
             sprite_type_center_with = file_reader.ContentType.CHARACTER
 
-        elif "dialog" in name.sprite_type_to_center_with:
-            sprite_type_center_with = file_reader.ContentType.DIALOG_SPRITE
+        elif "dialogue" in name.sprite_type_to_center_with:
+            sprite_type_center_with = file_reader.ContentType.DIALOGUE_SPRITE
 
         elif "object" in name.sprite_type_to_center_with:
             sprite_type_center_with = file_reader.ContentType.OBJECT
@@ -2611,7 +2611,7 @@ class StoryReader:
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
-        or dialog sprite. If it's None, then it's being applied to a dialog
+        or dialogue sprite. If it's None, then it's being applied to a dialog
         rectangle.
         """
         animation_type: cc.FontIntroAnimation
@@ -2628,7 +2628,7 @@ class StoryReader:
         if sprite_object:
             # Applying font intro to a sprite object.
 
-            # Sprite font handler (character, object, dialog sprite)
+            # Sprite font handler (character, object, dialogue sprite)
             subject_font_handler = sprite_object.active_font_handler
         else:
             # Applying font intro to the dialog rectangle.
@@ -3349,7 +3349,7 @@ class StoryReader:
         elif sprite_type == file_reader.ContentType.BACKGROUND:
             sprite_group = sd.Groups.background_group
 
-        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+        elif sprite_type == file_reader.ContentType.DIALOGUE_SPRITE:
             sprite_group = sd.Groups.dialog_group
 
         else:
@@ -3887,7 +3887,7 @@ class StoryReader:
         elif sprite_type == file_reader.ContentType.OBJECT:
             sprite_group_to_check = sd.Groups.object_group
             
-        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+        elif sprite_type == file_reader.ContentType.DIALOGUE_SPRITE:
             sprite_group_to_check = sd.Groups.dialog_group
         else:
             return
@@ -4256,7 +4256,7 @@ class StoryReader:
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
-        or dialog sprite. If it's None, then it's being applied to a dialog
+        or dialogue sprite. If it's None, then it's being applied to a dialog
         rectangle.
         """
 
@@ -4277,7 +4277,7 @@ class StoryReader:
         subject_font_handler: font_handler.ActiveFontHandler
 
         if sprite_object:
-            # Sprite font handler (character, object, dialog sprite)
+            # Sprite font handler (character, object, dialogue sprite)
             subject_font_handler = sprite_object.active_font_handler
         else:
             # Dialog rectangle font handler
@@ -4298,7 +4298,7 @@ class StoryReader:
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
-        or dialog sprite. If it's None, then it's being applied to a dialog
+        or dialogue sprite. If it's None, then it's being applied to a dialog
         rectangle.
         """
 
@@ -4316,7 +4316,7 @@ class StoryReader:
         elif delay_seconds < 0:
             delay_seconds = 0
 
-        # Get the font handler of either the sprite object (dialog sprite, 
+        # Get the font handler of either the sprite object (dialogue sprite, 
         # object, character) or the dialog rectangle.
         if sprite_object:
             # Sprite object font handler
@@ -4366,7 +4366,7 @@ class StoryReader:
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
-        or dialog sprite. If it's None, then it's being applied to a dialog
+        or dialogue sprite. If it's None, then it's being applied to a dialog
         rectangle.
 
         Changes:
@@ -4394,7 +4394,7 @@ class StoryReader:
         subject_font_handler: font_handler.ActiveFontHandler
 
         if sprite_object:
-            # Get the given sprite's font handler (object, dialog sprite, or character)
+            # Get the given sprite's font handler (object, dialogue sprite, or character)
             subject_font_handler = sprite_object.active_font_handler
         else:
             # The active font handler is only available in the main reader, not in reusable scripts.
@@ -4427,7 +4427,7 @@ class StoryReader:
 
         - sprite_object: this will be a SpriteObject instance if the font text
         option is being applied to a sprite object such as a character, object
-        or dialog sprite. If it's None, then it's being applied to a dialog
+        or dialogue sprite. If it's None, then it's being applied to a dialog
         rectangle.
         """
 
@@ -4443,7 +4443,7 @@ class StoryReader:
         subject_font_handler: font_handler.ActiveFontHandler
 
         if sprite_object:
-            # Sprite font handler (character, object, or dialog sprite)
+            # Sprite font handler (character, object, or dialogue sprite)
             subject_font_handler = sprite_object.active_font_handler
         else:
             # Dialog rectangle font handler
@@ -4471,7 +4471,7 @@ class StoryReader:
         if not sprite_text:
             return
 
-        # Get the type of sprite (ie: object, dialog sprite, character)
+        # Get the type of sprite (ie: object, dialogue sprite, character)
         sprite_type: file_reader.ContentType
         sprite_type = dialog_rectangle.to_enum(
             cls=file_reader.ContentType, string_representation=sprite_text.sprite_type
@@ -4495,7 +4495,7 @@ class StoryReader:
     def _sprite_text_start_position(self, x: bool, arguments: str):
         """
         Set the X or Y starting position of the active font, relative
-        to the object itself (character, object, or dialog sprite).
+        to the object itself (character, object, or dialogue sprite).
         The default is 0.
 
         Arguments:
@@ -4526,7 +4526,7 @@ class StoryReader:
 
     def _sprite_text_font(self, arguments: str):
         """
-        Specify a font to use for a sprite (object, dialog sprite, object)
+        Specify a font to use for a sprite (object, dialogue sprite, object)
         <sprite_text_font: character, rave, Some Font Name Here>
         """
 
@@ -4549,7 +4549,7 @@ class StoryReader:
     def _sprite_text_font_intro(self, arguments: str):
         """
         Set the intro type of a sprite font's animation
-        (object, dialog sprite, object)
+        (object, dialogue sprite, object)
         <sprite_text_font_intro: character, rave, animation type here>
 
         Possible values for animation types:
@@ -4713,7 +4713,7 @@ class StoryReader:
 
     def _sprite_text(self, arguments: str):
         """
-        Add font sprite sheet text to a sprite (object, dialog sprite, object)
+        Add font sprite sheet text to a sprite (object, dialogue sprite, object)
         <sprite_text: character, rave, Some Text Here>
 
         Purpose: to allow the visual novel author to create buttons.
@@ -5207,8 +5207,8 @@ class StoryReader:
             return file_reader.ContentType.CHARACTER
         elif "object" in command_name:
             return file_reader.ContentType.OBJECT
-        elif "dialog" in command_name:
-            return file_reader.ContentType.DIALOG_SPRITE
+        elif "dialogue" in command_name:
+            return file_reader.ContentType.DIALOGUE_SPRITE
 
     def _mouse_event_reusable_script(self, command_name, arguments: str):
         """
@@ -5593,7 +5593,7 @@ class StoryReader:
         if sprite_type in (
             file_reader.ContentType.CHARACTER,
             file_reader.ContentType.OBJECT,
-            file_reader.ContentType.DIALOG_SPRITE,
+            file_reader.ContentType.DIALOGUE_SPRITE,
         ):
 
             # Get the visible sprite based on the general alias
@@ -5609,7 +5609,7 @@ class StoryReader:
 
     def _sprite_hide_all(self, command_name: str):
         """
-        Hide all sprites in the given sprite group (such as character, object, dialog sprite)
+        Hide all sprites in the given sprite group (such as character, object, dialogue sprite)
         by setting its visibility to False.
         """
 
@@ -5622,7 +5622,7 @@ class StoryReader:
         elif command_name == "object_hide_all":
             sprite_group = sd.Groups.object_group
 
-        elif command_name == "dialog_sprite_hide_all":
+        elif command_name == "dialogue_sprite_hide_all":
             sprite_group = sd.Groups.dialog_group
 
         else:
@@ -5637,7 +5637,7 @@ class StoryReader:
 
     def _sprite_show(self, arguments: str, sprite_type: file_reader.ContentType):
         """
-        Show a sprite (any sprite, such as character, object, dialog sprite)
+        Show a sprite (any sprite, such as character, object, dialogue sprite)
         by setting its visibility to True.
 
         Changes:
@@ -5662,7 +5662,7 @@ class StoryReader:
         if sprite_type not in (
             file_reader.ContentType.CHARACTER,
             file_reader.ContentType.OBJECT,
-            file_reader.ContentType.DIALOG_SPRITE,
+            file_reader.ContentType.DIALOGUE_SPRITE,
             file_reader.ContentType.BACKGROUND,
         ):
             return
@@ -5673,7 +5673,7 @@ class StoryReader:
         elif sprite_type == file_reader.ContentType.OBJECT:
             sprite_group = sd.Groups.object_group
 
-        elif sprite_type == file_reader.ContentType.DIALOG_SPRITE:
+        elif sprite_type == file_reader.ContentType.DIALOGUE_SPRITE:
             sprite_group = sd.Groups.dialog_group
 
         elif sprite_type == file_reader.ContentType.BACKGROUND:
@@ -5902,7 +5902,7 @@ class StoryReader:
             ## Update the newly set-visible sprite in the sprites dictionary
             # sprite_group.sprites[loaded_sprite.name] = loaded_sprite
 
-    def _text_dialog_close(self):
+    def _text_dialogue_close(self):
         """
         Start the outro animation of the dialog rectangle if it's visible.
         """
@@ -5912,13 +5912,13 @@ class StoryReader:
 
             self.story.dialog_rectangle.start_hide()
 
-    def _text_dialog_define(self, arguments: str):
+    def _text_dialogue_define(self, arguments: str):
         """
         Handle reading and storing a new definition for a dialog
         rectangle.
 
         For example:
-        <text_dialog_define: 400, 400, 7.5, scale up width and height,
+        <text_dialogue_define: 400, 400, 7.5, scale up width and height,
         go left, mid bottom, bg color hex, 5, 5, 255, yes,
         reusable intro start, reusable intro finished, reusable outro start,
         reusable outro finished, border color hex, border opacity, border width>
@@ -6065,7 +6065,7 @@ class StoryReader:
         if command_name in (
             "character_stop_movement_condition",
             "object_stop_movement_condition",
-            "dialog_sprite_stop_movement_condition",
+            "dialogue_sprite_stop_movement_condition",
         ):
 
             if arguments.count(",") == 2:
@@ -6170,7 +6170,7 @@ class WaitForAnimationHandler:
                 sprite_group_to_check = sd.Groups.character_group
             elif sprite_type == "object":
                 sprite_group_to_check = sd.Groups.object_group
-            elif sprite_type == "dialog sprite":
+            elif sprite_type == "dialogue sprite":
                 sprite_group_to_check = sd.Groups.dialog_group
             else:
                 return

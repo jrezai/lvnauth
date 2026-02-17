@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="tk.Toplevel" id="colors_window" named="True">
     <property name="height">200</property>
     <property name="resizable">none</property>
@@ -146,7 +150,7 @@
                 </child>
                 <child>
                   <object class="ttk.Label" id="label4">
-                    <property name="text" translatable="yes">Non-dialog forecolor</property>
+                    <property name="text" translatable="yes">Non-dialogue forecolor</property>
                     <layout manager="grid">
                       <property name="column">3</property>
                       <property name="padx">10</property>
@@ -368,7 +372,7 @@
                 </child>
                 <child>
                   <object class="ttk.Label" id="label16">
-                    <property name="text" translatable="yes">Character dialog text forecolor</property>
+                    <property name="text" translatable="yes">Character dialogue text forecolor</property>
                     <layout manager="grid">
                       <property name="column">3</property>
                       <property name="padx">10</property>
@@ -406,7 +410,7 @@
                 </child>
                 <child>
                   <object class="ttk.Label" id="label18">
-                    <property name="text" translatable="yes">Character dialog text backcolor</property>
+                    <property name="text" translatable="yes">Character dialogue text backcolor</property>
                     <layout manager="grid">
                       <property name="column">3</property>
                       <property name="padx">10</property>

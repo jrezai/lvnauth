@@ -406,7 +406,7 @@ class Main:
             # The words to use in the commands.
             group_words = {0: "character",
                            1: "object",
-                           2: "dialog_sprite"}
+                           2: "dialogue_sprite"}
 
             # Loop through all visible sprites in 3 sprite groups
             # and generate the X/Y commands for them.
@@ -414,7 +414,7 @@ class Main:
                                                 sd.Groups.object_group,
                                                 sd.Groups.dialog_group)):
 
-                # Get the word to use in the commands (ie: character, object, dialog_sprite).
+                # Get the word to use in the commands (ie: character, object, dialogue_sprite).
                 group_word = group_words.get(idx)
 
                 # Loop through the visible sprites in the current group we're looping on.
