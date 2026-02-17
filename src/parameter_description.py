@@ -239,6 +239,12 @@ class ParameterDescription:
                      "camera_start_moving": ("Target X", "Target Y", "Zoom (0 to 20)", "Duration in seconds (0 to 600)", "Smoothing style"),
                      "camera_stop_moving": ("Stop result", ),
                      
+                     "sequence_create": ("Sequence name", "Sprite type", "Delay in seconds", "*Sprite names (comma separated)"),
+                     "sequence_change_delay": ("Sequence name", "Delay in seconds", "*Sprite names (comma separated)"),
+                     "sequence_final_frame": ("Sequence name", "Sprite name (not alias)"),
+                     "sequence_play": ("Sequence name", "Number of times to play"),
+                     "sequence_stop": ("Sequence name",),
+                     "wait_for_sequence": ("Sequence name",),
                      }
     
     def get_parameter_description(self,
