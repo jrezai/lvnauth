@@ -208,7 +208,7 @@ class SequenceChangeDelay:
             
 
 @dataclass
-class SequenceStop:
+class SequenceNameOnly:
     sequence_name: str
     
     
