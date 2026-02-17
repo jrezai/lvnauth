@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings>
+      <setting id="name">Sequence Final Frame Dialog</setting>
+      <setting id="description">Sequence Final Frame Dialog - for use in the Wizard window</setting>
+      <setting id="module_name">sequence_final_frame</setting>
+      <setting id="template">application</setting>
+      <setting id="main_widget">frame_sequence_final_frame</setting>
+      <setting id="main_classname">SequenceFinalFrame</setting>
+      <setting id="main_menu" />
+      <setting id="output_dir" />
+      <setting id="output_dir2" />
+      <setting id="import_tkvariables">False</setting>
+      <setting id="use_ttk_styledefinition_file">False</setting>
+      <setting id="use_i18n">False</setting>
+      <setting id="all_ids_attributes">False</setting>
+      <setting id="generate_code_onsave">False</setting>
+      <setting id="use_window_centering_code">False</setting>
+      <setting id="ttk_style_definition_file" />
+    </settings>
+    <customwidgets>
+      <customwidget path="../custom_pygubu_widgets.py" />
+    </customwidgets>
+  </project>
+  <object class="ttk.Frame" id="frame_sequence_play" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame_sequence_name" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_sequence_name" named="True">
+            <property name="text" translatable="yes">Sequence name:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="lvnauthwidgets.entrylimitwidget" id="entry_sequence_name" named="True">
+            <property name="textvariable">string:v_sequence_name</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_number_of_times" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="pady">15 0</property>
+          <property name="row">1</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_number_of_times" named="True">
+            <property name="text" translatable="yes">Play number of times:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">2</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_number_of_times" named="True">
+            <property name="from_">1</property>
+            <property name="increment">1</property>
+            <property name="textvariable">int:v_number_of_times</property>
+            <property name="to">5000</property>
+            <property name="width">4</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Checkbutton" id="cb_repeat" named="True">
+            <property name="text" translatable="yes">Repeat</property>
+            <property name="variable">boolean:v_repeat</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">5 0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
