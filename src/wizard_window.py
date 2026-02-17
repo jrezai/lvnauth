@@ -65,6 +65,7 @@ CAMERA_SHAKE_UI = PROJECT_PATH / "ui" / "camera_shake_dialog.ui"
 CAMERA_MOVEMENT_UI = PROJECT_PATH / "ui" / "camera_movement_dialog.ui"
 SEQUENCE_CREATE_UI = PROJECT_PATH / "ui" / "sequence_create_dialog.ui"
 SEQUENCE_FINAL_FRAME_UI = PROJECT_PATH / "ui" / "sequence_final_frame_dialog.ui"
+SEQUENCE_PLAY_OR_STOP_UI = PROJECT_PATH / "ui" / "sequence_play_dialog.ui"
 
 
 
@@ -101,7 +102,8 @@ class GroupName(Enum):
     TINT = auto()
     SHAKE = auto()
     ZOOM_PAN = auto()
-    SEQUENCE = auto()
+    DELAY = auto()
+    CREATE = auto()
 
     # Font
     SPEED = auto()
@@ -2634,7 +2636,7 @@ class WizardWindow:
                         command_name="sequence_create",
                         purpose_line="Create a sequence animation.\n"
                         "This command is required before playing a sequence.", 
-                        group_name=GroupName.SEQUENCE)
+                        group_name=GroupName.CREATE)
         
         page_sequence_change_delay = \
             SequenceChangeDelayFrameWizard(parent_frame=self.frame_contents_outer,
@@ -2645,7 +2647,7 @@ class WizardWindow:
                         sub_display_text="sequence_change_delay",
                         command_name="sequence_change_delay",
                         purpose_line="Change the delay for sprites in an existing sequence animation.", 
-                        group_name=GroupName.SEQUENCE)
+                        group_name=GroupName.DELAY)
         
         page_sequence_final_frame = \
             SequenceFinalFrameWizard(parent_frame=self.frame_contents_outer,
@@ -2658,7 +2660,41 @@ class WizardWindow:
                         purpose_line="Specify the sprite to show when the sequence has stopped playing.\n\n"
                         "This applies either when the given sequence is stopped manually\nor when the sequence finishes on its own.\n\n"
                         "This is an optional command for sequence animations.", 
-                        group_name=GroupName.SEQUENCE)
+                        group_name=GroupName.STOP)
+        
+        page_sequence_play = \
+            SequencePlayStopWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_play",
+                        command_name="sequence_play",
+                        purpose_line="Starts playing a sequence animation.\n\n"
+                        "The sequence must have already been created with <sequence_create>", 
+                        group_name=GroupName.PLAY)
+        
+        page_sequence_stop = \
+            SequencePlayStopWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_stop",
+                        command_name="sequence_stop",
+                        purpose_line="Stops playing a specific sequence.", 
+                        group_name=GroupName.STOP)
+        
+        page_sequence_stop_all = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Sequence",
+                        sub_display_text="sequence_stop_all",
+                        command_name="sequence_stop_all",
+                        purpose_line="Stops all sequences that are playing.",
+                        group_name=GroupName.STOP)
 
         self.pages["Home"] = default_page
 
@@ -2897,6 +2933,9 @@ class WizardWindow:
         self.pages["sequence_create"] = page_sequence_create
         self.pages["sequence_change_delay"] = page_sequence_change_delay
         self.pages["sequence_final_frame"] = page_sequence_final_frame
+        self.pages["sequence_play"] = page_sequence_play
+        self.pages["sequence_stop"] = page_sequence_stop
+        self.pages["sequence_stop_all"] = page_sequence_stop_all
         
 
         self.active_page = default_page
@@ -8473,6 +8512,198 @@ class SceneWithFade(WizardListing):
         return f"<{self.command_name}: {fade_color}, {fade_in_speed}, {fade_out_speed}, {hold_seconds}, {chapter_name}, {scene_name}>"
 
 
+class SequencePlayFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(SEQUENCE_PLAY_OR_STOP_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_sequence_play", master)
+        self.master = master
+        builder.connect_callbacks(self)
+        
+        self.entry_sequence_name = builder.get_object("entry_sequence_name")
+        self.entry_sequence_name.configure(max_length=100)
+
+        self.v_sequence_name:tk.StringVar
+        self.v_sequence_name = builder.get_variable("v_sequence_name")
+      
+        self.frame_number_of_times:ttk.Frame
+        self.frame_number_of_times = builder.get_object("frame_number_of_times")
+
+        self.sb_number_of_times:ttk.Spinbox
+        self.sb_number_of_times = builder.get_object("sb_number_of_times")
+        
+        self.v_number_of_times:tk.IntVar
+        self.v_number_of_times = builder.get_variable("v_number_of_times")
+        
+        # Default to 1 time
+        self.v_number_of_times.set(1)
+        
+        self.v_repeat:tk.BooleanVar
+        self.v_repeat = builder.get_variable("v_repeat")
+        self.v_repeat.trace("w", self.on_repeat_check_button_changed)
+        
+        
+    def on_repeat_check_button_changed(self, *args):
+        """
+        The repeat check button has been either checked or unchecked.
+        
+        If checked, disable the 'number of times' spinbox and label.
+        """
+        if self.v_repeat.get():
+            state = ["disabled"]
+        else:
+            state = ["!disabled"]
+        
+        self.sb_number_of_times.state(state)
+            
+
+class SequencePlayStopWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.frame_sequence_play = SequencePlayFrame(self.frame_content)
+        
+        # <sequence_play> has an additional frame to specify the number
+        # of times to play a sequence. But <sequence_stop> doesn't have this.
+        if self.command_name != "sequence_play":
+            
+            # It's not <sequence_play>, so hide this frame.
+            self.frame_sequence_play.frame_number_of_times.grid_forget()
+        
+        self.frame_sequence_play.mainframe.pack()
+        
+    def _edit_populate(self,
+                       command_class_object: cc.SequencePlay|cc.SequenceStop):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            case cc.SequencePlay(sequence_name, number_of_times):
+                
+                # Sequence name
+                self.frame_sequence_play.v_sequence_name.set(sequence_name)
+                
+                if number_of_times == "repeat":
+                    self.frame_sequence_play.v_repeat.set(True)
+                else:
+                    self.frame_sequence_play.v_repeat.set(False)
+                    
+                    self.frame_sequence_play.\
+                        v_number_of_times.set(number_of_times)
+                
+                
+            case cc.SequenceStop(sequence_name):
+                
+                # Sequence name
+                self.frame_sequence_play.v_sequence_name.set(sequence_name)
+                
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+        
+        # This class is shared with both <sequence_play> and <sequence_stop>
+        # However, only <sequence_play> has a 'number of times' option.
+        has_num_of_times_option = self.command_name == "sequence_play"
+
+        user_input = {}
+        
+        sequence_name = self.frame_sequence_play.v_sequence_name.get().strip()
+            
+        if not sequence_name:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Missing sequence name",
+                                 message="Enter a sequence name.")
+            return
+        
+        if has_num_of_times_option:
+            repeat = self.frame_sequence_play.v_repeat.get()
+            
+            
+            if repeat:
+                number_of_times = "repeat"
+            else:
+                # Make sure the number of times value is an integer.
+                
+                try:
+                    number_of_times =\
+                        self.frame_sequence_play.v_number_of_times.get()
+                    
+                except tk.TclError:
+                    messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                         title="Number expected",
+                                         message="The number of times is expected to be a number.")
+                    return
+                else:
+                    # No error, but make sure the number of times is not
+                    # zero or below.
+                    if number_of_times <= 0:
+                        messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                             title="Number too low",
+                                             message="The number of times needs to be 1 or more.")
+                        return                        
+        
+            # Has a repeat and number of times option
+            # For <sequence_play>
+            user_input = {"SequenceName": sequence_name,
+                          "NumberOfTimes": number_of_times,}
+            
+        else:
+            
+            # No repeat option
+            # For <sequence_stop>
+            user_input = {"SequenceName": sequence_name,}            
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+        
+        # This class is shared with both <sequence_play> and <sequence_stop>
+        # However, only <sequence_play> has a number of times option.
+        has_num_of_times_option = self.command_name == "sequence_play"        
+
+        sequence_name = user_inputs.get("SequenceName")
+        number_of_times = user_inputs.get("NumberOfTimes")
+
+        
+        # <sequence_play>
+        if has_num_of_times_option:
+            command_line = f"<{self.command_name}: {sequence_name}, {number_of_times}>"
+        
+        else:
+            # <sequence_stop>
+            command_line = f"<{self.command_name}: {sequence_name}>"
+
+        return command_line
+
+
 class SequenceFinalFrame:
     def __init__(self, master=None):
         self.builder = builder = pygubu.Builder()
@@ -8510,7 +8741,7 @@ class SequenceFinalFrameWizard(WizardListing):
         
         self.frame_sequence_final_frame.mainframe.pack()
         
-    def _edit_populate(self, command_class_object: cc.SequenceCreate):
+    def _edit_populate(self, command_class_object: cc.SequenceFinalFrame):
         """
         Populate the widgets with the arguments for editing.
         """

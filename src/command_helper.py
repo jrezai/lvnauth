@@ -186,6 +186,8 @@ class CommandHelper:
         "sequence_create": cc.SequenceCreate,
         "sequence_change_delay": cc.SequenceChangeDelay,
         "sequence_final_frame": cc.SequenceFinalFrame,
+        "sequence_play": cc.SequencePlay,
+        "sequence_stop": cc.SequenceStop,
     }
     
     @staticmethod

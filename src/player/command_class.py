@@ -147,7 +147,21 @@ class SequencePlay:
     
     # We have this as a string instead of an int because we need to
     # read the word 'repeat'
-    number_of_times: str
+    _number_of_times: str
+    
+    @property
+    def number_of_times(self) -> str:
+        return self._number_of_times
+    
+    @number_of_times.setter
+    def number_of_times(self, value: str):
+        """
+        The number of times can be the word "repeat", so make sure
+        it's lowercase for easier comparison in other code.
+        """
+        # Store the value in lowercase for easier comparison.
+        if value:
+            value = value.lower()
     
 
 @dataclass
