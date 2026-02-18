@@ -24,8 +24,8 @@ Change logs
 """
 
 from typing import NamedTuple, List
-from dataclasses import dataclass, fields
-from enum import Enum, auto
+from dataclasses import dataclass, fields, field, InitVar
+from enum import Enum
 
 
 def get_dataclass_field_names(class_blueprint) -> List:
@@ -112,8 +112,8 @@ class WaitForAnimation(NamedTuple):
     animation_type: str
 
 
-class WaitForAnimationFadeScreen(NamedTuple):
-    fade_screen: str
+class WaitForAnimationEntireScreen(NamedTuple):
+    screen_animation_type: str
 
 
 class SceneWithFade(NamedTuple):
@@ -123,6 +123,93 @@ class SceneWithFade(NamedTuple):
     fade_hold_seconds: int
     chapter_name: str
     scene_name: str
+    
+    
+@dataclass
+class SequenceFinalFrame:
+    """
+    Used by <sequence_final_frame>
+    Example: <sequence_final_frame: some sequence name, theo_smile>
+    """
+    sequence_name: str
+    sprite_name: str
+
+    
+@dataclass
+class SequencePlay:
+    """
+    Used by <sequence_play>
+    Example:
+    <sequence_play: 3>
+    <sequence_play: repeat>
+    """
+    sequence_name: str
+    
+    # We have this as a string instead of an int because we need to
+    # read the word 'repeat'
+    _number_of_times: str
+    
+    @property
+    def number_of_times(self) -> str:
+        return self._number_of_times
+    
+    @number_of_times.setter
+    def number_of_times(self, value: str):
+        """
+        The number of times can be the word "repeat", so make sure
+        it's lowercase for easier comparison in other code.
+        """
+        # Store the value in lowercase for easier comparison.
+        if value:
+            value = value.lower()
+    
+
+@dataclass
+class SequenceCreate:
+    """
+    Used by <sequence_create>
+    Example use:
+    <sequence_create: sequence name, character, 0.1, theo_1, theo_2, theo_3>
+    """
+    sequence_name: str
+    _sprite_type: str
+    delay: float
+    arguments: str
+    
+    @property
+    def sprite_type(self) -> str:
+        return self._sprite_type
+    
+    @sprite_type.setter
+    def sprite_type(self, value: str):
+        """
+        Only specific sprite type values are allowed.
+        """
+        # Store the value in lowercase so it'll work with dictionary lookups.
+        if value:
+            value = value.lower()
+            
+        if value not in ("character", "object", "dialogue sprite"):
+            self._sprite_type = None
+        else:
+            self._sprite_type = value
+            
+            
+@dataclass
+class SequenceChangeDelay:
+    """
+    Used by <sequence_change_delay>
+    Example use:
+    <sequence_change_delay: sequence name, 0.5, theo_1, theo_2>
+    """
+    sequence_name: str
+    delay: float
+    arguments: str
+            
+
+@dataclass
+class SequenceNameOnly:
+    sequence_name: str
     
     
 @dataclass
@@ -379,7 +466,7 @@ class MoveStart(NamedTuple):
 # Used for multiple commands, such as:
 # character_after_fading_stop
 # object_after_scaling_stop
-# dialog_sprite_after_rotating_stop
+# dialogue_sprite_after_rotating_stop
 # character_after_movement_stop
 # character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptNoArguments(NamedTuple):
@@ -390,7 +477,7 @@ class SpriteStopRunScriptNoArguments(NamedTuple):
 # Used for multiple commands, such as:
 # character_after_fading_stop
 # object_after_scaling_stop
-# dialog_sprite_after_rotating_stop
+# dialogue_sprite_after_rotating_stop
 # character_after_movement_stop
 # character_on_mouse_enter, mouse_leave, mouse_click
 class SpriteStopRunScriptWithArguments(NamedTuple):

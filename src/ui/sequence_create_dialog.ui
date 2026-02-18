@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings>
+      <setting id="name">Sequence Create Wizard Dialog</setting>
+      <setting id="description">Used for creating a sequence via the Wizard window.</setting>
+      <setting id="module_name">sequence_create</setting>
+      <setting id="template">application</setting>
+      <setting id="main_widget">frame_sequence_create</setting>
+      <setting id="main_classname">SequenceCreateFrame</setting>
+      <setting id="main_menu" />
+      <setting id="output_dir" />
+      <setting id="output_dir2" />
+      <setting id="import_tkvariables">False</setting>
+      <setting id="use_ttk_styledefinition_file">False</setting>
+      <setting id="use_i18n">False</setting>
+      <setting id="all_ids_attributes">False</setting>
+      <setting id="generate_code_onsave">False</setting>
+      <setting id="use_window_centering_code">False</setting>
+      <setting id="ttk_style_definition_file" />
+    </settings>
+    <customwidgets>
+      <customwidget path="../custom_pygubu_widgets.py" />
+    </customwidgets>
+  </project>
+  <object class="ttk.Frame" id="frame_sequence_create" named="True">
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="frame_sequence_name" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="pady">0 15</property>
+          <property name="row">0</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_sequence_name" named="True">
+            <property name="text" translatable="yes">Sequence name:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="lvnauthwidgets.entrylimitwidget" id="entry_sequence_name" named="True">
+            <property name="textvariable">string:v_sequence_name</property>
+            <property name="width">20</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_sprite_type" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="pady">0 15</property>
+          <property name="row">1</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_sprite_type" named="True">
+            <property name="text" translatable="yes">Sprite type:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">nw</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="rb_character" named="True">
+            <property name="text" translatable="yes">Character</property>
+            <property name="value">character</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="padx">15 0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="rb_object" named="True">
+            <property name="text" translatable="yes">Object</property>
+            <property name="value">object</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">15 0</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="rb_dialogue_sprite" named="True">
+            <property name="text" translatable="yes">Dialogue sprite</property>
+            <property name="value">dialogue_sprite</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">15 0</property>
+              <property name="row">3</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_delay" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="row">2</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_delay" named="True">
+            <property name="text" translatable="yes">Delay in seconds:
+(decimals can be used)</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="sb_delay" named="True">
+            <property name="from_">0.01</property>
+            <property name="increment">0.01</property>
+            <property name="textvariable">double:v_delay</property>
+            <property name="to">500</property>
+            <property name="width">8</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame_sprite_names" named="True">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="pady">15 0</property>
+          <property name="row">3</property>
+          <property name="sticky">w</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="lbl_sprite_names" named="True">
+            <property name="text" translatable="yes">Sprite names, comma separated:
+(not aliases)</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="lvnauthwidgets.entrylimitwidget" id="entry_sprite_names" named="True">
+            <property name="textvariable">string:v_sprite_names</property>
+            <property name="width">35</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -40,7 +40,9 @@
             <property name="variable">string:v_sprite_type</property>
             <layout manager="grid">
               <property name="column">0</property>
+              <property name="padx">10 0</property>
               <property name="row">1</property>
+              <property name="sticky">w</property>
             </layout>
           </object>
         </child>
@@ -53,18 +55,20 @@
               <property name="column">1</property>
               <property name="padx">10 0</property>
               <property name="row">1</property>
+              <property name="sticky">w</property>
             </layout>
           </object>
         </child>
         <child>
           <object class="ttk.Radiobutton" id="radiobutton3">
-            <property name="text" translatable="yes">Dialog sprite</property>
-            <property name="value">dialog_sprite</property>
+            <property name="text" translatable="yes">Dialogue sprite</property>
+            <property name="value">dialogue_sprite</property>
             <property name="variable">string:v_sprite_type</property>
             <layout manager="grid">
               <property name="column">2</property>
               <property name="padx">10 0</property>
               <property name="row">1</property>
+              <property name="sticky">w</property>
             </layout>
           </object>
         </child>
@@ -74,9 +78,34 @@
             <property name="value">cover</property>
             <property name="variable">string:v_sprite_type</property>
             <layout manager="grid">
-              <property name="column">3</property>
+              <property name="column">0</property>
               <property name="padx">10 0</property>
-              <property name="row">1</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton5">
+            <property name="text" translatable="yes">Camera shake</property>
+            <property name="value">shake</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">10 0</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="radiobutton6">
+            <property name="text" translatable="yes">Camera movement</property>
+            <property name="value">camera_movement</property>
+            <property name="variable">string:v_sprite_type</property>
+            <layout manager="grid">
+              <property name="column">2</property>
+              <property name="padx">10 0</property>
+              <property name="row">2</property>
             </layout>
           </object>
         </child>

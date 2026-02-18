@@ -2329,7 +2329,7 @@ class DialogSprite(SpriteObject):
 
     def get_screen_coordinates(self, inner_sprite_rect: pygame.Rect) -> Tuple:
         """
-        Return the X and Y coordinates of the given dialog sprite,
+        Return the X and Y coordinates of the given dialogue sprite,
         relative to the size of the main surface.
         """
         if not all([Passer.active_story.dialog_rectangle_rect, inner_sprite_rect]):

@@ -33,7 +33,7 @@ class LVNAuthEditorWidget(tk.Text):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.tags = ["command_tag", "after_command", "comment_tag", "dialog_text"]
+        self.tags = ["command_tag", "after_command", "comment_tag", "dialogue_text"]
 
         self.bind("<KeyRelease>", self.on_key_release)
         self.bind("<<Paste>>", self._on_pasted_text)
@@ -86,21 +86,21 @@ class LVNAuthEditorWidget(tk.Text):
         editor_comments = config.get(selected_preset_section,
                                      "editor.comments")
         
-        dialog_text = config.get(selected_preset_section,
+        dialogue_text = config.get(selected_preset_section,
                                  "editor.dialog.text.forecolor")
         
-        dialog_text_bg = config.get(selected_preset_section,
+        dialogue_text_bg = config.get(selected_preset_section,
                                     "editor.dialog.text.backcolor")
         
         # Checkbox value, so read it as a boolean.
-        dialog_text_bg_disable =\
+        dialogue_text_bg_disable =\
             config.getboolean(selected_preset_section,
                               "editor.dialog.text.backcolor.disable")
         
         # Disable the dialog text background color?
-        if dialog_text_bg_disable:
+        if dialogue_text_bg_disable:
             # Yes, disable the dialog text background color.
-            dialog_text_bg = ""
+            dialogue_text_bg = ""
         
         highlight_row_bg = config.get(selected_preset_section,
                                       "editor.highlight.row.background")          
@@ -120,9 +120,9 @@ class LVNAuthEditorWidget(tk.Text):
             tagName="comment_tag", foreground=editor_comments)
         
         self.tag_configure(\
-            tagName="dialog_text",
-            foreground=dialog_text,
-            background=dialog_text_bg)
+            tagName="dialogue_text",
+            foreground=dialogue_text,
+            background=dialogue_text_bg)
 
         self.tag_configure(\
             tagName="highlight_row",
@@ -279,7 +279,7 @@ class LVNAuthEditorWidget(tk.Text):
 
         else:
             # Regular dialog text
-            self.tag_add("dialog_text", start, end)
+            self.tag_add("dialogue_text", start, end)
 
     def on_key_release(self, *args):
         """

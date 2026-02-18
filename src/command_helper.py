@@ -48,7 +48,7 @@ class CommandHelper:
         "volume_music": cc.Volume,
         "volume_text": cc.Volume,
         "volume_voice": cc.Volume,
-        "dialog_text_sound": cc.DialogTextSound,
+        "dialogue_text_sound": cc.DialogTextSound,
         "load_background": cc.SpriteLoad,
         "background_show": cc.SpriteShowHide,
         "background_hide": cc.SpriteShowHide,
@@ -83,40 +83,40 @@ class CommandHelper:
         "character_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
         "character_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
         "character_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
-        "text_dialog_define": cc.DialogRectangleDefinition,
+        "text_dialogue_define": cc.DialogRectangleDefinition,
         "halt_auto": cc.HaltAuto,
         "continue": cc.Continue,
-        "load_dialog_sprite": cc.SpriteLoad,
-        "dialog_sprite_show": cc.SpriteShowHide,
-        "dialog_sprite_hide": cc.SpriteShowHide,
-        "dialog_sprite_flip_both": cc.SpriteShowHide,
-        "dialog_sprite_flip_horizontal": cc.SpriteShowHide,
-        "dialog_sprite_flip_vertical": cc.SpriteShowHide,
-        "dialog_sprite_start_tinting": cc.SpriteTintBright,
-        "dialog_sprite_focus": cc.SpriteTintSolo,
-        "dialog_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_fade_current_value": cc.FadeCurrentValue,
-        "dialog_sprite_start_fading": cc.FadeStart,
-        "dialog_sprite_stop_fading": cc.SpriteShowHide,
-        "dialog_sprite_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_rotate_current_value": cc.RotateCurrentValue,
-        "dialog_sprite_start_rotating": cc.RotateStart,
-        "dialog_sprite_stop_rotating": cc.SpriteShowHide,
-        "dialog_sprite_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_scale_current_value": cc.ScaleCurrentValue,
-        "dialog_sprite_start_scaling": cc.ScaleStart,
-        "dialog_sprite_stop_scaling": cc.SpriteShowHide,
-        "dialog_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_stop_movement_condition": cc.MovementStopCondition,
-        "dialog_sprite_start_moving": cc.MoveStart,
-        "dialog_sprite_stop_moving": cc.SpriteShowHide,
-        "dialog_sprite_set_position_x": cc.SpritePosition,
-        "dialog_sprite_set_position_y": cc.SpritePosition,
-        "dialog_sprite_set_center": cc.SpriteCenter,
-        "dialog_sprite_center_x_with": cc.SpriteCenterWith,
-        "dialog_sprite_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
-        "dialog_sprite_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
+        "load_dialogue_sprite": cc.SpriteLoad,
+        "dialogue_sprite_show": cc.SpriteShowHide,
+        "dialogue_sprite_hide": cc.SpriteShowHide,
+        "dialogue_sprite_flip_both": cc.SpriteShowHide,
+        "dialogue_sprite_flip_horizontal": cc.SpriteShowHide,
+        "dialogue_sprite_flip_vertical": cc.SpriteShowHide,
+        "dialogue_sprite_start_tinting": cc.SpriteTintBright,
+        "dialogue_sprite_focus": cc.SpriteTintSolo,
+        "dialogue_sprite_after_fading_stop": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_fade_current_value": cc.FadeCurrentValue,
+        "dialogue_sprite_start_fading": cc.FadeStart,
+        "dialogue_sprite_stop_fading": cc.SpriteShowHide,
+        "dialogue_sprite_after_rotating_stop": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_rotate_current_value": cc.RotateCurrentValue,
+        "dialogue_sprite_start_rotating": cc.RotateStart,
+        "dialogue_sprite_stop_rotating": cc.SpriteShowHide,
+        "dialogue_sprite_after_scaling_stop": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_scale_current_value": cc.ScaleCurrentValue,
+        "dialogue_sprite_start_scaling": cc.ScaleStart,
+        "dialogue_sprite_stop_scaling": cc.SpriteShowHide,
+        "dialogue_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_stop_movement_condition": cc.MovementStopCondition,
+        "dialogue_sprite_start_moving": cc.MoveStart,
+        "dialogue_sprite_stop_moving": cc.SpriteShowHide,
+        "dialogue_sprite_set_position_x": cc.SpritePosition,
+        "dialogue_sprite_set_position_y": cc.SpritePosition,
+        "dialogue_sprite_set_center": cc.SpriteCenter,
+        "dialogue_sprite_center_x_with": cc.SpriteCenterWith,
+        "dialogue_sprite_on_mouse_click": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_on_mouse_enter": cc.SpriteStopRunScriptWithArguments,
+        "dialogue_sprite_on_mouse_leave": cc.SpriteStopRunScriptWithArguments,
         "load_object": cc.SpriteLoad,
         "object_show": cc.SpriteShowHide,
         "object_hide": cc.SpriteShowHide,
@@ -183,6 +183,12 @@ class CommandHelper:
         "camera_start_shaking": cc.CameraShake,
         "camera_start_moving": cc.CameraMovement,
         "camera_stop_moving": cc.CameraStopWhere,
+        "sequence_create": cc.SequenceCreate,
+        "sequence_change_delay": cc.SequenceChangeDelay,
+        "sequence_final_frame": cc.SequenceFinalFrame,
+        "sequence_play": cc.SequencePlay,
+        "sequence_stop": cc.SequenceNameOnly,
+        "wait_for_sequence": cc.SequenceNameOnly,
     }
     
     @staticmethod
@@ -401,7 +407,7 @@ class CommandHelper:
                 # If we have 2 arguments here, use the 2 argument version of the
                 # class instead of the 3 argument class.
                 case "character_stop_movement_condition" | \
-                    "dialog_sprite_stop_movement_condition" | \
+                    "dialogue_sprite_stop_movement_condition" | \
                     "object_stop_movement_condition":
                     
                     if isinstance(arguments, list) and len(arguments) == 2:
@@ -484,9 +490,23 @@ class CommandHelper:
                             # 3-argument version of the class, where the 3rd
                             # argument is for multiple optional arguments.
                             arguments =\
-                                CommandHelper._get_optional_arguments(arguments, 2)                
+                                CommandHelper._get_optional_arguments(arguments, 2)
+                            
+                case "sequence_create":                  
+
+                    # The 4th argument will have two or more comma separated
+                    # values (comma-separated sprite names).
+                    arguments =\
+                        CommandHelper._get_optional_arguments(arguments, 3)
+                    
+                case "sequence_change_delay":                  
+
+                    # The 3rd argument will have two or more comma separated
+                    # values (comma-separated sprite names).
+                    arguments =\
+                        CommandHelper._get_optional_arguments(arguments, 2)                
                 
-                case "character_start_tinting" | "object_start_tinting" | "dialog_sprite_start_tinting":
+                case "character_start_tinting" | "object_start_tinting" | "dialogue_sprite_start_tinting":
                     
                     if isinstance(arguments, list) and len(arguments) == 3:
                         # Use the 3-argument version of the class.
@@ -501,10 +521,10 @@ class CommandHelper:
                     "character_after_rotating_stop" | \
                     "character_after_scaling_stop" | \
                     "character_after_movement_stop" | \
-                    "dialog_sprite_after_fading_stop" | \
-                    "dialog_sprite_after_rotating_stop" | \
-                    "dialog_sprite_after_scaling_stop" | \
-                    "dialog_sprite_after_movement_stop" | \
+                    "dialogue_sprite_after_fading_stop" | \
+                    "dialogue_sprite_after_rotating_stop" | \
+                    "dialogue_sprite_after_scaling_stop" | \
+                    "dialogue_sprite_after_movement_stop" | \
                     "object_after_fading_stop" | \
                     "object_after_rotating_stop" | \
                     "object_after_scaling_stop" | \
@@ -524,13 +544,13 @@ class CommandHelper:
                 # Mouse related commands such as <character_on_mouse_click> 
                 # can have 2 or 3 arguments. If we have 2 arguments here, use the 
                 # 2 argument class version.
-                case "dialog_sprite_on_mouse_enter" | \
+                case "dialogue_sprite_on_mouse_enter" | \
                     "object_on_mouse_enter" | \
                     "character_on_mouse_enter" | \
-                    "dialog_sprite_on_mouse_leave" | \
+                    "dialogue_sprite_on_mouse_leave" | \
                     "object_on_mouse_leave" | \
                     "character_on_mouse_leave" | \
-                    "dialog_sprite_on_mouse_click" | \
+                    "dialogue_sprite_on_mouse_click" | \
                     "object_on_mouse_click" | \
                     "character_on_mouse_click":
                     
@@ -549,7 +569,7 @@ class CommandHelper:
                     
                     # Examples:
                     # <wait_for_animation: fade screen>
-                    # <wait_for_animation: dialog_sprite, some rect, all>
+                    # <wait_for_animation: dialogue_sprite, some rect, all>
                     if isinstance(arguments, list):
                         
                         if len(arguments) == 3:
@@ -557,7 +577,7 @@ class CommandHelper:
                             command_cls = cc.WaitForAnimation
                     else:
                         # Use the 1-argument version of the class
-                        command_cls = cc.WaitForAnimationFadeScreen
+                        command_cls = cc.WaitForAnimationEntireScreen
                     
                 case "case":
                     # <case> can have 3 arguments or 4 arguments.
@@ -572,7 +592,7 @@ class CommandHelper:
                         # argument is the conditon name.
                         command_cls = cc.ConditionDefinition
                 
-
+                
             # If we haven't instantiated the command class from 
             # <load_background> above, then continue instantiating here.
             if not command_object:

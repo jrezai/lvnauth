@@ -186,7 +186,7 @@ class ActiveStory:
         elif content_type == ContentType.OBJECT:
             group_to_check = sd.Groups.object_group
             
-        elif content_type == ContentType.DIALOG_SPRITE:
+        elif content_type == ContentType.DIALOGUE_SPRITE:
             group_to_check = sd.Groups.dialog_group
 
         else:
@@ -194,7 +194,7 @@ class ActiveStory:
         
         # Make sure we have a general alias or name, depending
         # on the sprite's content type.
-        if content_type in (ContentType.CHARACTER, ContentType.OBJECT, ContentType.DIALOG_SPRITE):
+        if content_type in (ContentType.CHARACTER, ContentType.OBJECT, ContentType.DIALOGUE_SPRITE):
             if not general_alias:
                 raise ValueError(f"No general alias provided {ContentType.name}.")
 
@@ -317,6 +317,8 @@ class ActiveStory:
         Handle movements
         """
         self.reader.read_all_scripts()
+        
+        self.reader.sequence_groups.update()
 
         sd.Groups.background_group.update()
         sd.Groups.object_group.update()
@@ -325,7 +327,7 @@ class ActiveStory:
         if self.dialog_rectangle and self.dialog_rectangle.visible:
             self.dialog_rectangle.update()
 
-            # Dialog sprites should only animate if the dialog is visible.
+            # Dialogue sprites should only animate if the dialog is visible.
             sd.Groups.dialog_group.update()
             
         # Elapse the seconds counter if the cover screen is animating.
@@ -350,7 +352,7 @@ class ActiveStory:
             self.dialog_rectangle.draw()
 
             # Note: again, the sequence is important here.
-            # We need to draw any dialog sprites *before* drawing the dialog box.
+            # We need to draw any dialogue sprites *before* drawing the dialog box.
             # Groups.dialog_group.draw(self.dialog_rectangle.surface)
             sd.Groups.dialog_group.draw(surface)
 
@@ -390,7 +392,7 @@ class ActiveStory:
             #self.dialog_rectangle.draw()
 
             ## Note: again, the sequence is important here.
-            ## We need to draw any dialog sprites *before* drawing the dialog box.
+            ## We need to draw any dialogue sprites *before* drawing the dialog box.
             ## Groups.dialog_group.draw(self.dialog_rectangle.surface)
             #sd.Groups.dialog_group.draw(self.main_surface)
 
