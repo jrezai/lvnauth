@@ -408,6 +408,11 @@ class WizardWindow:
         self.treeview_commands.tag_configure("row_color_2",
                                              background="lightgray")
         
+        # Row background color for the most common commands
+        # such as <character_>, <background_>, <dialogue_sprite_>, <object_>
+        self.treeview_commands.tag_configure("common_row_color",
+                                             background="#7be5ff")
+        
         # Connect treeview horizontal scrollbar
         self.sb_vertical.configure(command=self.treeview_commands.yview)
         self.treeview_commands.configure(yscrollcommand=self.sb_vertical.set)
@@ -436,6 +441,48 @@ class WizardWindow:
                                    command_name="Wizard Command Window",
                                    purpose_line="This wizard will make it easier to use commands in your story.")
 
+
+        # ----------Items start here--------------
+
+        """
+        Background
+        """
+        page_load_background =\
+            Background_LoadBackground(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Background",
+                                      sub_display_text="load_background",
+                                      command_name="load_background",
+                                      purpose_line="Load a background sprite into memory.",
+                                      group_name=GroupName.LOAD)
+
+        page_show_background =\
+            BackgroundShow(parent_frame=self.frame_contents_outer,
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Background",
+                           sub_display_text="background_show",
+                           command_name="background_show",
+                           purpose_line="Show a specific a background sprite in the story.",
+                           group_name=GroupName.SHOW)
+
+        page_hide_background =\
+            BackgroundHide(parent_frame=self.frame_contents_outer,
+                           header_label=self.lbl_header,
+                           purpose_label=self.lbl_purpose,
+                           treeview_commands=self.treeview_commands,
+                           parent_display_text="Background",
+                           sub_display_text="background_hide",
+                           command_name="background_hide",
+                           purpose_line="Hide a specific a background sprite in the story.",
+                           group_name=GroupName.HIDE)
+        
+        """
+        Character
+        """
 
         page_load_character =\
             Character_LoadCharacter(parent_frame=self.frame_contents_outer,
@@ -858,237 +905,6 @@ class WizardWindow:
                                         purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
                                         "Note: the character sprite must already be visible.",
                                         group_name=GroupName.MOUSE)     
-
-
-        page_audio_load =\
-            AudioLoad(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="load_audio",
-                         command_name="load_audio",
-                         purpose_line="Prepare an audio file to be played.",
-                         group_name=GroupName.LOAD)
-
-        page_music_load =\
-            AudioLoad(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="load_music",
-                         command_name="load_music",
-                         purpose_line="Prepare a music file to be played.",
-                         group_name=GroupName.LOAD)
-
-        page_audio_play_music =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_music",
-                         command_name="play_music",
-                         purpose_line="Play audio in the music channel.",
-                         group_name=GroupName.PLAY)
-        
-        page_audio_play_sound =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_sound",
-                         command_name="play_sound",
-                         purpose_line="Play a sound effect in the sound channel.",
-                         group_name=GroupName.PLAY)
-
-        page_audio_play_voice =\
-            AudioPlay(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="play_voice",
-                         command_name="play_voice",
-                         purpose_line="Play audio in the voice channel.",
-                         group_name=GroupName.PLAY)
-
-        page_audio_stop_fx = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_fx",
-                        command_name="stop_fx",
-                        purpose_line="Stops the audio in the FX channel.",
-                        when_to_use="When you want to stop playing an audio effect.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_all_audio = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_all_audio",
-                        command_name="stop_all_audio",
-                        purpose_line="Stops playing the audio for: effects, voices, music.",
-                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
-                                    "No error will occur if no audio is playing.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_music = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_music",
-                        command_name="stop_music",
-                        purpose_line="Stops the audio in the music channel.",
-                        when_to_use="When you want to stop playing music.",
-                        group_name=GroupName.STOP)
-
-        page_audio_stop_voice = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="stop_voice",
-                        command_name="stop_voice",
-                        purpose_line="Stops the audio in the voice channel.",
-                        when_to_use="When you want to stop playing audio in the voice channel.",
-                        group_name=GroupName.STOP)
-
-
-        page_audio_volume_fx =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_fx",
-                         command_name="volume_fx",
-                         purpose_line="Sets the sound effects volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_music =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_music",
-                         command_name="volume_music",
-                         purpose_line="Sets the music volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_text =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_text",
-                         command_name="volume_text",
-                         purpose_line="Sets the gradual letter-by-letter volume.\n\n"
-                         "The audio gets chosen using <dialogue_text_sound>",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_volume_voice =\
-            Audio_Volume(parent_frame=self.frame_contents_outer,
-                         header_label=self.lbl_header,
-                         purpose_label=self.lbl_purpose,
-                         treeview_commands=self.treeview_commands,
-                         parent_display_text="Audio",
-                         sub_display_text="volume_voice",
-                         command_name="volume_voice",
-                         purpose_line="Sets the voice channel volume.",
-                         scale_from_value=0,
-                         scale_to_value=100,
-                         scale_instructions="Volume (0-100):\n"
-                         "0 = muted  100 = max volume",
-                         scale_default_value=100,
-                         group_name=GroupName.VOLUME)
-
-        page_audio_dialogue_text_sound =\
-            DialogTextSound(parent_frame=self.frame_contents_outer,
-                            header_label=self.lbl_header,
-                            purpose_label=self.lbl_purpose,
-                            treeview_commands=self.treeview_commands,
-                            parent_display_text="Audio",
-                            sub_display_text="dialogue_text_sound",
-                            command_name="dialogue_text_sound",
-                            purpose_line="Set audio to play for each gradually shown letter.\n"
-                            "Only works for gradually-shown text (non-fading).",
-                            group_name=GroupName.TEXT_SOUND)
-
-        page_audio_dialogue_text_sound_clear = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Audio",
-                        sub_display_text="dialogue_text_sound_clear",
-                        command_name="dialogue_text_sound_clear",
-                        purpose_line="Set no audio to play for each gradually shown letter.",
-                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.",
-                        group_name=GroupName.TEXT_SOUND)
-
-
-        page_load_background =\
-            Background_LoadBackground(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Background",
-                                      sub_display_text="load_background",
-                                      command_name="load_background",
-                                      purpose_line="Load a background sprite into memory.",
-                                      group_name=GroupName.LOAD)
-
-        page_show_background =\
-            BackgroundShow(parent_frame=self.frame_contents_outer,
-                           header_label=self.lbl_header,
-                           purpose_label=self.lbl_purpose,
-                           treeview_commands=self.treeview_commands,
-                           parent_display_text="Background",
-                           sub_display_text="background_show",
-                           command_name="background_show",
-                           purpose_line="Show a specific a background sprite in the story.",
-                           group_name=GroupName.SHOW)
-
-        page_hide_background =\
-            BackgroundHide(parent_frame=self.frame_contents_outer,
-                           header_label=self.lbl_header,
-                           purpose_label=self.lbl_purpose,
-                           treeview_commands=self.treeview_commands,
-                           parent_display_text="Background",
-                           sub_display_text="background_hide",
-                           command_name="background_hide",
-                           purpose_line="Hide a specific a background sprite in the story.",
-                           group_name=GroupName.HIDE)
-
-        
 
 
         """
@@ -1622,7 +1438,7 @@ class WizardWindow:
                                         command_name="dialogue_sprite_on_mouse_leave",
                                         purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
                                         "Note: the dialogue sprite must already be visible.",
-                                        group_name=GroupName.MOUSE)             
+                                        group_name=GroupName.MOUSE)      
 
 
         """
@@ -2045,7 +1861,309 @@ class WizardWindow:
                                         command_name="object_on_mouse_leave",
                                         purpose_line="Run a reusable script when the mouse pointer is no longer hovering\nover a specific sprite.\n\n"
                                         "Note: the object sprite must already be visible.",
-                                        group_name=GroupName.MOUSE)             
+                                        group_name=GroupName.MOUSE)       
+
+
+        """
+        Audio
+        """
+
+        page_audio_load =\
+            AudioLoad(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="load_audio",
+                         command_name="load_audio",
+                         purpose_line="Prepare an audio file to be played.",
+                         group_name=GroupName.LOAD)
+
+        page_music_load =\
+            AudioLoad(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="load_music",
+                         command_name="load_music",
+                         purpose_line="Prepare a music file to be played.",
+                         group_name=GroupName.LOAD)
+
+        page_audio_play_music =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_music",
+                         command_name="play_music",
+                         purpose_line="Play audio in the music channel.",
+                         group_name=GroupName.PLAY)
+        
+        page_audio_play_sound =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_sound",
+                         command_name="play_sound",
+                         purpose_line="Play a sound effect in the sound channel.",
+                         group_name=GroupName.PLAY)
+
+        page_audio_play_voice =\
+            AudioPlay(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="play_voice",
+                         command_name="play_voice",
+                         purpose_line="Play audio in the voice channel.",
+                         group_name=GroupName.PLAY)
+
+        page_audio_stop_fx = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_fx",
+                        command_name="stop_fx",
+                        purpose_line="Stops the audio in the FX channel.",
+                        when_to_use="When you want to stop playing an audio effect.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_all_audio = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_all_audio",
+                        command_name="stop_all_audio",
+                        purpose_line="Stops playing the audio for: effects, voices, music.",
+                        when_to_use="When you want to stop playing audio effects, voices, and music.\n"
+                                    "No error will occur if no audio is playing.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_music = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_music",
+                        command_name="stop_music",
+                        purpose_line="Stops the audio in the music channel.",
+                        when_to_use="When you want to stop playing music.",
+                        group_name=GroupName.STOP)
+
+        page_audio_stop_voice = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="stop_voice",
+                        command_name="stop_voice",
+                        purpose_line="Stops the audio in the voice channel.",
+                        when_to_use="When you want to stop playing audio in the voice channel.",
+                        group_name=GroupName.STOP)
+
+
+        page_audio_volume_fx =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_fx",
+                         command_name="volume_fx",
+                         purpose_line="Sets the sound effects volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_music =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_music",
+                         command_name="volume_music",
+                         purpose_line="Sets the music volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_text =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_text",
+                         command_name="volume_text",
+                         purpose_line="Sets the gradual letter-by-letter volume.\n\n"
+                         "The audio gets chosen using <dialogue_text_sound>",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_volume_voice =\
+            Audio_Volume(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Audio",
+                         sub_display_text="volume_voice",
+                         command_name="volume_voice",
+                         purpose_line="Sets the voice channel volume.",
+                         scale_from_value=0,
+                         scale_to_value=100,
+                         scale_instructions="Volume (0-100):\n"
+                         "0 = muted  100 = max volume",
+                         scale_default_value=100,
+                         group_name=GroupName.VOLUME)
+
+        page_audio_dialogue_text_sound =\
+            DialogTextSound(parent_frame=self.frame_contents_outer,
+                            header_label=self.lbl_header,
+                            purpose_label=self.lbl_purpose,
+                            treeview_commands=self.treeview_commands,
+                            parent_display_text="Audio",
+                            sub_display_text="dialogue_text_sound",
+                            command_name="dialogue_text_sound",
+                            purpose_line="Set audio to play for each gradually shown letter.\n"
+                            "Only works for gradually-shown text (non-fading).",
+                            group_name=GroupName.TEXT_SOUND)
+
+        page_audio_dialogue_text_sound_clear = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Audio",
+                        sub_display_text="dialogue_text_sound_clear",
+                        command_name="dialogue_text_sound_clear",
+                        purpose_line="Set no audio to play for each gradually shown letter.",
+                        when_to_use="When you no longer want to have any audio play\nfor each letter that is shown one by one.",
+                        group_name=GroupName.TEXT_SOUND)
+    
+
+        """
+        Camera
+        """
+        
+        page_camera_shake_start = \
+            CameraShakeWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_start_shaking",
+                        command_name="camera_start_shaking",
+                        purpose_line="Starts a camera shake effect.\n"
+                        "The intensity will gradually get weaker until the shaking stops.\n\n"
+                        "If you start with a weak intensity, the effect may stop before\n"
+                        "the seconds duration has been reached.\n\n"
+                        "To have the shaking effect reach the duration (seconds), start with\n"
+                        "a stronger intensity, such as 10.\n\n"
+                        "To prevent the borders from showing during a shake, zoom in a little\n"
+                        "using <camera_start_moving>, prior to starting the shake effect.",
+                        group_name=GroupName.SHAKE)
+
+        page_stop_camera_shaking = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_stop_shaking",
+                        command_name="camera_stop_shaking",
+                        purpose_line="Stops an active camera shaking effect.",
+                        group_name=GroupName.SHAKE)
+        
+        
+        page_camera_move_start = \
+            CameraMovementFrameWizard(parent_frame=self.frame_contents_outer,
+                                      header_label=self.lbl_header,
+                                      purpose_label=self.lbl_purpose,
+                                      treeview_commands=self.treeview_commands,
+                                      parent_display_text="Camera",
+                                      sub_display_text="camera_start_moving",
+                                      command_name="camera_start_moving",
+                                      purpose_line="Starts a zoom and/or pan camera effect.",
+                                      group_name=GroupName.ZOOM_PAN)
+        
+        page_camera_move_stop = \
+            CameraStopMovementWizard(parent_frame=self.frame_contents_outer,
+                                     header_label=self.lbl_header,
+                                     purpose_label=self.lbl_purpose,
+                                     treeview_commands=self.treeview_commands,
+                                     parent_display_text="Camera",
+                                     sub_display_text="camera_stop_moving",
+                                     command_name="camera_stop_moving",
+                                     purpose_line="Stops an active zoom and/or pan camera effect.",
+                                     group_name=GroupName.ZOOM_PAN)
+
+
+        """
+        Condition
+        """
+        
+        page_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Condition",
+                          sub_display_text="case",
+                          command_name="case",
+                          purpose_line="Create a new condition.")
+        
+        page_or_case_condition =\
+            CaseCondition(parent_frame=self.frame_contents_outer,
+                          header_label=self.lbl_header,
+                          purpose_label=self.lbl_purpose,
+                          treeview_commands=self.treeview_commands,
+                          parent_display_text="Condition",
+                          sub_display_text="or_case",
+                          command_name="or_case",
+                          purpose_line="Create a new 'or' condition.")
+        
+        page_case_else = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_else",
+                        command_name="case_else",
+                        purpose_line="Fall through if <case>, <or_case> are not satisfied.",
+                        when_to_use="When the commands <case> <or_case> do not go through.")
+        
+        page_case_end = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Condition",
+                        sub_display_text="case_end",
+                        command_name="case_end",
+                        purpose_line="Ends a case command block.")
 
 
         """
@@ -2490,144 +2608,10 @@ class WizardWindow:
                         "The script that uses <exit> will be the script that will be stopped.",
                         group_name=GroupName.STOP)
         
+        
         """
-        Variable
+        Sequence
         """
-        page_variable_set =\
-            VariableSet(parent_frame=self.frame_contents_outer,
-                                    header_label=self.lbl_header,
-                                    purpose_label=self.lbl_purpose,
-                                    treeview_commands=self.treeview_commands,
-                                    parent_display_text="Variable",
-                                    sub_display_text="variable_set",
-                                    command_name="variable_set",
-                                    purpose_line="Create a new variable or update an existing one.\n\n"
-                                    "Variable names are case-sensitive",
-                                    hide_load_as_widgets=True)
-        
-        page_case_condition =\
-            CaseCondition(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Condition",
-                          sub_display_text="case",
-                          command_name="case",
-                          purpose_line="Create a new condition.")
-        
-        page_or_case_condition =\
-            CaseCondition(parent_frame=self.frame_contents_outer,
-                          header_label=self.lbl_header,
-                          purpose_label=self.lbl_purpose,
-                          treeview_commands=self.treeview_commands,
-                          parent_display_text="Condition",
-                          sub_display_text="or_case",
-                          command_name="or_case",
-                          purpose_line="Create a new 'or' condition.")
-        
-        page_case_else = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Condition",
-                        sub_display_text="case_else",
-                        command_name="case_else",
-                        purpose_line="Fall through if <case>, <or_case> are not satisfied.",
-                        when_to_use="When the commands <case> <or_case> do not go through.")
-        
-        page_case_end = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Condition",
-                        sub_display_text="case_end",
-                        command_name="case_end",
-                        purpose_line="Ends a case command block.")
-
-
-        page_remote_get = \
-            RemoteGet(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Web",
-                        sub_display_text="remote_get",
-                        command_name="remote_get",
-                        purpose_line="Gets a previously saved value from the server's database.")
-
-        page_remote_save = \
-            RemoteSave(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Web",
-                        sub_display_text="remote_save",
-                        command_name="remote_save",
-                        purpose_line="Saves one or more values to the server's database.")
-
-        page_remote_call = \
-            RemoteCall(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Web",
-                        sub_display_text="remote_call",
-                        command_name="remote_call",
-                        purpose_line="Runs a custom script on the server.")
-        
-        page_camera_shake_start = \
-            CameraShakeWizard(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Camera",
-                        sub_display_text="camera_start_shaking",
-                        command_name="camera_start_shaking",
-                        purpose_line="Starts a camera shake effect.\n"
-                        "The intensity will gradually get weaker until the shaking stops.\n\n"
-                        "If you start with a weak intensity, the effect may stop before\n"
-                        "the seconds duration has been reached.\n\n"
-                        "To have the shaking effect reach the duration (seconds), start with\n"
-                        "a stronger intensity, such as 10.\n\n"
-                        "To prevent the borders from showing during a shake, zoom in a little\n"
-                        "using <camera_start_moving>, prior to starting the shake effect.",
-                        group_name=GroupName.SHAKE)
-
-        page_stop_camera_shaking = \
-            CommandOnly(parent_frame=self.frame_contents_outer,
-                        header_label=self.lbl_header,
-                        purpose_label=self.lbl_purpose,
-                        treeview_commands=self.treeview_commands,
-                        parent_display_text="Camera",
-                        sub_display_text="camera_stop_shaking",
-                        command_name="camera_stop_shaking",
-                        purpose_line="Stops an active camera shaking effect.",
-                        group_name=GroupName.SHAKE)
-        
-        
-        page_camera_move_start = \
-            CameraMovementFrameWizard(parent_frame=self.frame_contents_outer,
-                                      header_label=self.lbl_header,
-                                      purpose_label=self.lbl_purpose,
-                                      treeview_commands=self.treeview_commands,
-                                      parent_display_text="Camera",
-                                      sub_display_text="camera_start_moving",
-                                      command_name="camera_start_moving",
-                                      purpose_line="Starts a zoom and/or pan camera effect.",
-                                      group_name=GroupName.ZOOM_PAN)
-        
-        page_camera_move_stop = \
-            CameraStopMovementWizard(parent_frame=self.frame_contents_outer,
-                                     header_label=self.lbl_header,
-                                     purpose_label=self.lbl_purpose,
-                                     treeview_commands=self.treeview_commands,
-                                     parent_display_text="Camera",
-                                     sub_display_text="camera_stop_moving",
-                                     command_name="camera_stop_moving",
-                                     purpose_line="Stops an active zoom and/or pan camera effect.",
-                                     group_name=GroupName.ZOOM_PAN)
 
         page_sequence_create = \
             SequenceCreateFrameWizard(parent_frame=self.frame_contents_outer,
@@ -2723,7 +2707,60 @@ class WizardWindow:
                         purpose_line="Pauses the main script until all sequences have stopped.\n\n"
                         "This command will only pause the main script, but can\n"
                         "be called from anywhere (chapters/scenes/reusable scripts).",
-                        group_name=GroupName.PAUSE)
+                        group_name=GroupName.PAUSE)        
+        
+        
+        """
+        Variable
+        """
+        page_variable_set =\
+            VariableSet(parent_frame=self.frame_contents_outer,
+                                    header_label=self.lbl_header,
+                                    purpose_label=self.lbl_purpose,
+                                    treeview_commands=self.treeview_commands,
+                                    parent_display_text="Variable",
+                                    sub_display_text="variable_set",
+                                    command_name="variable_set",
+                                    purpose_line="Create a new variable or update an existing one.\n\n"
+                                    "Variable names are case-sensitive",
+                                    hide_load_as_widgets=True)
+        
+
+        """
+        Web
+        """
+
+        page_remote_get = \
+            RemoteGet(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_get",
+                        command_name="remote_get",
+                        purpose_line="Gets a previously saved value from the server's database.")
+
+        page_remote_save = \
+            RemoteSave(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_save",
+                        command_name="remote_save",
+                        purpose_line="Saves one or more values to the server's database.")
+
+        page_remote_call = \
+            RemoteCall(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Web",
+                        sub_display_text="remote_call",
+                        command_name="remote_call",
+                        purpose_line="Runs a custom script on the server.")
+        
+
 
         self.pages["Home"] = default_page
 
@@ -3108,6 +3145,10 @@ class WizardListing:
     # row background color.
     row_switcher = GroupRowColorSwitch()
     
+    # Used for showing a different row background color for commonly used
+    # command categories, listed below.
+    COMMON_CATEGORIES = ("Background", "Character", "Dialogue", "Object")
+    
     def __init__(self,
                  parent_frame: ttk.Frame,
                  header_label: ttk.Label,
@@ -3229,9 +3270,16 @@ class WizardListing:
         else:
             # The root/category for this command doesn't exist in
             # the treeview widget, so add it now.
+            
+            if parent_display_text in WizardListing.COMMON_CATEGORIES:
+                tag = "common_row_color"
+            else:
+                tag = ""
+                
             parent_iid = self.treeview_commands.insert(parent=parent_iid,
                                                        index="end",
-                                                       text=parent_display_text)
+                                                       text=parent_display_text,
+                                                       tag=tag)
             
         """
         If available, use the group name for this listing to determine
