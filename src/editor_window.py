@@ -237,7 +237,7 @@ class EditorMainApp:
         self.text_script = builder.get_object("text_script")
         self.text_script.bind("<<Modified>>", self._on_script_modified)
         self.text_script.bind("<KP_Enter>", self._on_num_pad_enter_key_pressed)
-        self.text_script.configure(font=("DejaVu Sans Mono", 18, "normal"),
+        self.text_script.configure(font=("FreeMono", 18, "normal"),
                                    wrap=tk.NONE)
         
         self.text_parameters = builder.get_object("text_parameters")
