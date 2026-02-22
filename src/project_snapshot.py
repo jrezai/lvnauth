@@ -29,10 +29,10 @@ class ProjectSnapshot:
     EDITOR_VERSION = 1
     
     # Used in the About dialog
-    EXACT_EDITOR_VERSION = "1.3"
+    EXACT_EDITOR_VERSION = "1.31"
     
     # Used in the Startup window.
-    RELEASE_DATE = "Feb 21, 2026"
+    RELEASE_DATE = "Feb 22, 2026"
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
