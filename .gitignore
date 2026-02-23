@@ -19,3 +19,6 @@ venv/
 .venv/
 env/
 .env/
+flatpak/build-dir/
+flatpak/.flatpak-builder/
+.venv/
