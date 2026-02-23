@@ -1,7 +1,7 @@
 {
     "app-id": "org.lvnauth.LVNAuth",
-    "runtime": "org.freedesktop.Sdk",
-    "runtime-version": "23.08",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "25.08",
     "sdk": "org.freedesktop.Sdk",
     "command": "startup.sh",
     "finish-args": [
@@ -12,6 +12,8 @@
 	    "--filesystem=home",
 	    "--device=dri"
      ],
+
+
     "modules": [
 	"dependencies.json",
         {
@@ -27,13 +29,14 @@
                             "install -D flatpak/lvnauth_64x64.png /app/share/icons/hicolor/64x64/apps/${FLATPAK_ID}.png",
                             "install -D flatpak/lvnauth_128x128.png /app/share/icons/hicolor/128x128/apps/${FLATPAK_ID}.png",
                             "install -D flatpak/lvnauth_256x256.png /app/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png"
+
 	    ],
 	    "buildsystem": "simple",
             "sources": [
                 {
                     "type": "git",
                     "url": "https://github.com/jrezai/lvnauth.git",
-                    "commit": "9a64d4760157f955876d6b4ff530b4ba989049bf"
+                    "commit": "3d0ccb90441467b0dae5085b02446a38f6903169"
                 }
             ]
         }

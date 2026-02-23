@@ -2,6 +2,10 @@
     "name": "dependencies",
     "modules":
 	    [
+
+
+
+
 		{
 		    "name": "python3-charset-normalizer",
 		    "buildsystem": "simple",
@@ -81,20 +85,38 @@
 		},
 
 
-		{
-		    "name": "python3-qh3",
-		    "buildsystem": "simple",
-		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"qh3==1.4.2\" --no-build-isolation"
-		    ],
-		    "sources": [
-			{
-			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/7b/3e/fab4c8d55fe5978d96a5fe15c62cbdf30e055d906cbf88f8305da20550d5/qh3-1.4.2.tar.gz",
-			    "sha256": "d5ac3e8e3f66ff88819205dbc67e6f771cbb80529325ca9f3bc03fa00c5c83aa"
-			}
-		    ]
-		},
+{
+    "name": "python3-maturin",
+    "buildsystem": "simple",
+    "build-commands": [
+        "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"maturin==1.12.4\""
+    ],
+    "sources": [
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/e3/9a/a6e358a18815ab090ef55187da0066df01a955c7c44a61fb83b127055f23/maturin-1.12.4-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl",
+            "sha256": "88e09e6c386b08974fab0c7e4c07d7c7c50a0ba63095d31e930d80568488e1be"
+        }
+    ]
+},
+
+
+
+
+{
+            "name": "python3-qh3",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"qh3==1.5.6\""
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/01/b8/41e849d7164b6ba1a61f66c6687008d750ee8b605a194a444197a7151d85/qh3-1.5.6-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+                    "sha256": "692722cd545bcc6c8d6de3ac58ea875f7f43e2cb014be64e267511e8d16bafcd"
+                }
+            ]
+        },
 
 
 		{
@@ -129,34 +151,37 @@
 		},
 
 
-		{
-		    "name": "python3-Pillow",
-		    "buildsystem": "simple",
-		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"Pillow==11.1.0\" --no-build-isolation"
-		    ],
-		    "sources": [
-			{
-			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/f3/af/c097e544e7bd278333db77933e535098c259609c4eb3b85381109602fb5b/pillow-11.1.0.tar.gz",
-			    "sha256": "368da70808b36d73b4b390a8ffac11069f8a5c85f29eff1f1b01bcf3ef5b2a20"
-			}
-		    ]
-		},
-		{
-		    "name": "python3-pygame-ce",
-		    "buildsystem": "simple",
-		    "build-commands": [
-			"pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygame-ce==2.5.3\" --no-build-isolation"
-		    ],
-		    "sources": [
-			{
-			    "type": "file",
-			    "url": "https://files.pythonhosted.org/packages/17/dc/fd9f264e54c7920f91a34956ae67fb888617f05c512d696bcc2b3c492587/pygame_ce-2.5.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-			    "sha256": "d2cca1789ab4f3709c3b624743469a00753c5886f6cbd19d3f2f6c98571ad5a5"
-			}
-		    ]
-		},
+{
+            "name": "python3-Pillow",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"Pillow==12.1.1\" --no-build-isolation"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/95/f4/86f51b8745070daf21fd2e5b1fe0eb35d4db9ca26e6d58366562fb56a743/pillow-12.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+                    "sha256": "fc44ef1f3de4f45b50ccf9136999d71abb99dca7706bc75d222ed350b9fd2289"
+                }
+            ]
+        },
+
+{
+            "name": "python3-pygame-ce",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pygame-ce==2.5.6\" --no-build-isolation"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/61/28/b13cc306693e917b9a4b746ccad2615fa43d8f4f2373e28104edc33f6f8f/pygame_ce-2.5.6-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+                    "sha256": "d811bba090fbb10d6a1c4d6917350da5a6a585630605833fa91499480b72bfcf"
+                }
+            ]
+        },
+
+
 		{
 		    "name": "python3-niquests",
 		    "buildsystem": "simple",
