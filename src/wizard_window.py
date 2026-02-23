@@ -8621,7 +8621,7 @@ class SequencePlayFrame:
         
         self.v_repeat:tk.BooleanVar
         self.v_repeat = builder.get_variable("v_repeat")
-        self.v_repeat.trace("w", self.on_repeat_check_button_changed)
+        self.v_repeat.trace_add("write", self.on_repeat_check_button_changed)
         
         
     def on_repeat_check_button_changed(self, *args):
