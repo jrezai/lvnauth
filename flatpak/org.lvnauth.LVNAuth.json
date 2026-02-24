@@ -5,10 +5,6 @@
     "sdk": "org.freedesktop.Sdk",
     "command": "startup.sh",
 
-    "architectures": [
-        "x86_64"
-      ],
-
     "finish-args": [
 	    "--socket=x11",
 	    "--share=network",
@@ -41,7 +37,7 @@
                 {
                     "type": "git",
                     "url": "https://github.com/jrezai/lvnauth.git",
-                    "commit": "880d163a1b8360ea671b217811276d2687b187c6"
+                    "commit": "465bb981546bd0473c0d5e2a1e22888c8bf5fcdd"
                 }
             ]
         }
