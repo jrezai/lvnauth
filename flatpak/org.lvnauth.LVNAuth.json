@@ -4,6 +4,11 @@
     "runtime-version": "25.08",
     "sdk": "org.freedesktop.Sdk",
     "command": "startup.sh",
+
+    "architectures": [
+        "x86_64"
+      ],
+
     "finish-args": [
 	    "--socket=x11",
 	    "--share=network",
