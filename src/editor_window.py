@@ -24,6 +24,7 @@ Changes:
 Nov 23, 2023 (Jobin Rezai) - Added 'Colors' toolbar button. 
 """
 
+import shutil
 import tkinter as tk
 from tkinter import ttk
 import pathlib
@@ -52,7 +53,7 @@ from wizard_window import WizardWindow
 from play_error_window import PlayErrorWindow
 from fixed_font_converter_window import TraceToolApp
 from about_window import AboutWindow
-from container_handler import ContainerHandler
+from container_handler import ContainerHandler, OS
 from custom_pygubu_widgets import LVNAuthEditorWidget
 from edit_colors_window import EditColorsWindow
 from variable_editor_window import VariableEditorWindow
@@ -1497,21 +1498,123 @@ class EditorMainApp:
         
     def save_final_lvna(self):
         
-        file_types = [("Visual Novel", ".lvna")]
+        file_types = [("Visual Novel", ".lvna"),
+                      ("Tarball Archive (Linux)", ".tar.gz"),
+                      ("Zip Archive (Windows)", ".zip")]
+        
         save_full_path = filedialog.asksaveasfilename(parent=self.mainwindow,
                                                       filetypes=file_types,
                                                       title="Compile to File")
-        
+
         if not save_full_path:
             return
+        else:
+            
+            # The extension '.tar.gz' is not added automatically by the
+            # tkinter file dialog, so we add it here.
+            if not save_full_path.endswith(".tar.gz") \
+               and not save_full_path.endswith(".lvna") \
+               and not save_full_path.endswith(".zip"):
+                save_full_path += ".tar.gz"
+            
+            # Convert to a Path object.
+            save_full_path = Path(save_full_path)
         
-        compile_result = self.compile(lvna_full_path=save_full_path,
+        extension = save_full_path.suffix
+        
+        if extension in (".gz", ".zip"):
+            
+            # .tar.gz is for Linux, whereas .zip is for Windows.
+            # This will determine which OS-specific binaries are copied.
+            operating_system = OS.LINUX if extension == ".gz" else OS.WINDOWS
+            
+            # Populate the release path with the pyinstaller binary data.
+            ContainerHandler.\
+                prepare_release_path(operating_system=operating_system)            
+            
+            # Example: /home/../release/release.lvna
+            full_release_path = ContainerHandler.get_release_path()
+            
+            # Get the release path without the file name.
+            # Example: /release
+            # We need this to know which path to archive later.
+            release_path_only = full_release_path.parent
+            
+            # Example: release.lvna
+            lvna_file_name_only =\
+                full_release_path.stem + full_release_path.suffix
+            
+            # Get the path for making a visual novel archive (tar.gz).
+            # This path will include the file name (release.lvna)
+            lvna_save_path =\
+                release_path_only / "_internal" / lvna_file_name_only
+                     
+            
+        elif extension == ".lvna":
+            lvna_save_path = save_full_path
+        
+        # Compile the .lvna file
+        compile_result = self.compile(lvna_full_path=lvna_save_path,
                                       draft_mode=False)  
         
         if compile_result:
-            messagebox.showinfo(parent=self.mainwindow, 
-                                title="Finished",
-                                message="Your visual novel has been compiled successfully.")
+            if extension in (".gz", ".zip"):
+                
+                os_name = "Linux" if operating_system == OS.LINUX \
+                    else "Windows"                
+                
+                # The extension will get added by .make_archive() automatically
+                # so we shouldn't specify the extension of the archive.
+                if extension == ".gz":
+                    file_no_extension =\
+                        save_full_path.stem.removesuffix(".tar.gz")
+                    
+                    # shutils will need this to know what kind of archive
+                    # to create.
+                    archive_format = "gztar"
+
+                else:
+                    # zip file
+                    file_no_extension = save_full_path.removesuffix(extension)
+                    
+                    # shutils will need this to know what kind of archive
+                    # to create.                    
+                    archive_format = "zip"
+
+
+                # Get the path to the archive we want to create, 
+                # but with no extension.
+                path_only = save_full_path.parent
+                path_with_file_no_extension = path_only / file_no_extension
+                
+                try:
+                    result_path = \
+                        shutil.make_archive(
+                            base_name=path_with_file_no_extension,
+                            format=archive_format,
+                            root_dir=release_path_only)
+                    
+                    messagebox.showinfo(parent=self.mainwindow,
+                                        title="Finished",
+                                        message=f"An archived file has been created successfully.\n\nThis file includes the visual novel engine and your visual novel.\n\nInstructions for your viewers on {os_name}: extract and run 'player'")
+                
+                except PermissionError:
+                    messagebox.showerror("Error", "Permission Denied. Try saving to a different folder.")
+                    
+                except FileNotFoundError:
+                    messagebox.showerror("Error", "The release folder could not be found.")
+                    
+                except Exception as e:
+                    # Catch-all for unexpected errors (Disk full, etc.)
+                    messagebox.showerror("Error", f"An unexpected error occurred: {e}")
+                    
+                finally:
+                    ContainerHandler.cleanup_release_path()
+                    
+            elif extension == ".lvna":
+                messagebox.showinfo(parent=self.mainwindow, 
+                                    title="Finished",
+                                    message="Your visual novel has been compiled successfully.")
         else:
             messagebox.showerror(parent=self.mainwindow, 
                                  title="Error",
