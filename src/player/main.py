@@ -483,9 +483,22 @@ if __name__ == "__main__":
             draft_lvna_full_path =\
                 ContainerHandler.get_absolute_path(r"draft/draft.lvna")
             
-            # args.file = r"../draft/draft.lvna"
-            args.file = draft_lvna_full_path
+            if draft_lvna_full_path.exists():
+                # args.file = r"../draft/draft.lvna"
+                args.file = draft_lvna_full_path
+            else:
             
+                # No draft file, but is there a release file?
+                
+                # Check if a file named 'release.lvna' exists in the current
+                # path. If it exists, read that .lvna file.
+                release_lvna_full_path =\
+                    ContainerHandler.get_absolute_path(r"release.lvna")
+                
+                if release_lvna_full_path:
+                    args.file = release_lvna_full_path
+            
+
         args.show_launch = "True"
         
     # Make sure the file argument is a Path object 
