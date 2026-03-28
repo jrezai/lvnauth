@@ -24,7 +24,6 @@ Changes:
 Nov 23, 2023 (Jobin Rezai) - Added 'Colors' toolbar button. 
 """
 
-import shutil
 import tkinter as tk
 from tkinter import ttk
 import pathlib
@@ -35,6 +34,7 @@ import subprocess
 import sys
 import webbrowser
 import command_helper as ch
+import archive_handler
 # from shared_components import Story
 from story_details_window import StoryDetailsWindow
 from font_sprite_properties_window import FontSpriteWindow
@@ -120,6 +120,7 @@ class Passer:
 
 
 class EditorMainApp:
+    
     def __init__(self, master=None):
         
         """
@@ -143,6 +144,11 @@ class EditorMainApp:
         builder.connect_callbacks(self)
         
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
+        
+        # Used for reading process responses when creating an archive
+        # (.tar.gz or .zip)
+        self.archive_handler = archive_handler.ArchiveHandler(self.mainwindow)
+
 
         # Maximize the editor window
         try:
@@ -1498,9 +1504,15 @@ class EditorMainApp:
         
     def save_final_lvna(self):
         
-        file_types = [("Visual Novel", ".lvna"),
-                      ("Tarball Archive (Linux)", ".tar.gz"),
-                      ("Zip Archive (Windows)", ".zip")]
+        file_types = [("Visual Novel", ".lvna"),]
+        
+        # Is there .tar.gz support on this machine?
+        if archive_handler.ArchiveHandler.has_gz_tar_support():
+            file_types.append(("Visual Novel + Player (Linux)", ".tar.gz"))
+        
+        # Is ther e.zip support on this machine?
+        if archive_handler.ArchiveHandler.has_zip_support():
+            file_types.append(("Visual Novel + Player (Windows)", ".zip"))
         
         save_full_path = filedialog.asksaveasfilename(parent=self.mainwindow,
                                                       filetypes=file_types,
@@ -1560,6 +1572,8 @@ class EditorMainApp:
         if compile_result:
             if extension in (".gz", ".zip"):
                 
+                # Set the operating system name so the extract + run
+                # instructions can be shown to the user.
                 os_name = "Linux" if operating_system == OS.LINUX \
                     else "Windows"                
                 
@@ -1567,7 +1581,7 @@ class EditorMainApp:
                 # so we shouldn't specify the extension of the archive.
                 if extension == ".gz":
                     file_no_extension =\
-                        save_full_path.stem.removesuffix(".tar.gz")
+                        save_full_path.stem.rstrip(".tar.gz")
                     
                     # shutils will need this to know what kind of archive
                     # to create.
@@ -1575,41 +1589,24 @@ class EditorMainApp:
 
                 else:
                     # zip file
-                    file_no_extension = save_full_path.removesuffix(extension)
+                    file_no_extension = save_full_path.stem
                     
                     # shutils will need this to know what kind of archive
                     # to create.                    
                     archive_format = "zip"
-
 
                 # Get the path to the archive we want to create, 
                 # but with no extension.
                 path_only = save_full_path.parent
                 path_with_file_no_extension = path_only / file_no_extension
                 
-                try:
-                    result_path = \
-                        shutil.make_archive(
-                            base_name=path_with_file_no_extension,
-                            format=archive_format,
-                            root_dir=release_path_only)
-                    
-                    messagebox.showinfo(parent=self.mainwindow,
-                                        title="Finished",
-                                        message=f"An archived file has been created successfully.\n\nThis file includes the visual novel engine and your visual novel.\n\nInstructions for your viewers on {os_name}: extract and run 'player'")
-                
-                except PermissionError:
-                    messagebox.showerror("Error", "Permission Denied. Try saving to a different folder.")
-                    
-                except FileNotFoundError:
-                    messagebox.showerror("Error", "The release folder could not be found.")
-                    
-                except Exception as e:
-                    # Catch-all for unexpected errors (Disk full, etc.)
-                    messagebox.showerror("Error", f"An unexpected error occurred: {e}")
-                    
-                finally:
-                    ContainerHandler.cleanup_release_path()
+                # Create an archive in a separate process so that
+                # the user can cancel it if requested.
+                self.archive_handler.start_create_archive(
+                    save_full_path_no_extension=path_with_file_no_extension,
+                    archive_format=archive_format,
+                    archive_directory=release_path_only,
+                    os_name=os_name)
                     
             elif extension == ".lvna":
                 messagebox.showinfo(parent=self.mainwindow, 
@@ -2650,6 +2647,7 @@ class StatusBar:
 
     def show_text(self, text: str):
         self.lbl_status.configure(text=text)
+        
 
 
 class Toolbar:
