@@ -259,6 +259,15 @@ class ContainerHandler:
         
         Return: True if the folder was successfully deleted or False
         if the release folder doesn't exist.
+        
+        Purpose: the release folder is a temporary folder used for creating
+        release archives for a visual novel.
+        
+        This method deletes the 'release' folder and all the files in it,
+        in these situations:
+        1) When a new archive is about to be created
+        2) When creating a new archive is finished being created
+        3) When creating a new archive fails or is cancelled by the user.
         """
         release_path: Path
         release_path = ContainerHandler.get_release_path().parent
