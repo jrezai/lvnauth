@@ -84,7 +84,7 @@ parts:
 
   player-templates:
     plugin: dump
-    source: https://lvnauth.org/downloads/player-template-v1.4.tar.gz
+    source: https://lvnauth.org/download/player-template-v1.4.tar.gz
     # Use 'organize' to place them into a folder your Python code expects
     organize:
       '*': src/templates/
