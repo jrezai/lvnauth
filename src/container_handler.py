@@ -28,9 +28,18 @@ to begin Flatpak recognition.
 novel instead of a relative path.
 """
 
+import shutil
+import platform
 import os
 import sys
 from pathlib import Path
+from enum import Enum, auto
+
+
+class OS(Enum):
+    LINUX = auto()
+    WINDOWS = auto()
+    UNKNOWN = auto()
 
 
 class ContainerHandler:
@@ -175,6 +184,7 @@ class ContainerHandler:
         """
         full_path = None
         
+        
         if ContainerHandler.is_in_snap_package():
             snap_common = ContainerHandler.get_snap_user_common_folder()
             if snap_common:
@@ -221,6 +231,156 @@ class ContainerHandler:
             # Make sure the draft folder exists.
             draft_folder = full_path.parents[0]
             draft_folder.mkdir(parents=True, exist_ok=True)
+            
+            # Return a full path to draft.lvna
+            return full_path
+        
+    @staticmethod
+    def get_os() -> OS:
+        """
+        Get the operating system that LVNAuth is running on.
+        """
+        # Returns 'Windows', 'Linux', or 'Darwin' (for macOS)
+        system = platform.system()
+        
+        if system == "Linux":
+            return OS.LINUX
+        
+        elif system == "Windows":
+            return OS.WINDOWS
+        
+        else:
+            return OS.UNKNOWN
+        
+    @staticmethod
+    def cleanup_release_path() -> bool:
+        """
+        Delete the release folder and all the files inside it.
+        
+        Return: True if the folder was successfully deleted or False
+        if the release folder doesn't exist.
+        
+        Purpose: the release folder is a temporary folder used for creating
+        release archives for a visual novel.
+        
+        This method deletes the 'release' folder and all the files in it,
+        in these situations:
+        1) When a new archive is about to be created
+        2) When creating a new archive is finished being created
+        3) When creating a new archive fails or is cancelled by the user.
+        """
+        release_path: Path
+        release_path = ContainerHandler.get_release_path().parent
+        
+        if release_path.is_dir() and release_path.exists():
+            shutil.rmtree(release_path)
+            return True
+        else:
+            return False        
+        
+    @staticmethod
+    def prepare_release_path(operating_system: OS) -> bool:
+        """
+        Make sure the release path has no files in it.
+        This method is used before making a new VN archive and also
+        after an archive has been created.
+        
+        Arguments:
+        
+        - operating_system: the OS that the archive will be prepared for.
+        It's not which operating system LVNAuth is running in.
+        """
+        
+        # Delete the release folder if it exists.
+        ContainerHandler.cleanup_release_path()
+        
+        # Create the release folder
+        release_path: Path
+        release_path = ContainerHandler.get_release_path().parent
+        
+        # Make sure the release folder was created successfully.
+        if not release_path.is_dir() or not release_path.exists():
+            return False
+        
+        # Get the templates (binary) path
+        templates_path = ContainerHandler.get_lvnauth_templates_path()
+        
+        if operating_system == OS.LINUX:
+            
+            # Get the path to the linux binaries
+            binary_linux_path = templates_path / "linux"
+        
+            # Populate the release folder with the LVNAuth Linux binaries.
+            shutil.copytree(binary_linux_path, release_path, dirs_exist_ok=True)
+            
+        elif operating_system == OS.WINDOWS:
+            
+            # Get the path to the windows binaries
+            binary_windows_path = templates_path / "windows"
+        
+            # Populate the release folder with the LVNAuth Windows binaries.
+            shutil.copytree(binary_windows_path, release_path, dirs_exist_ok=True)
+            
+        return True
+        
+    @staticmethod
+    def get_release_path() -> Path:
+        """
+        Get the path for making a visual novel archive (tar.gz or zip).
+        The path will include the file name (/release/release.lvna)
+        
+        The 'release' folder is a temporary folder used when copying the
+        pyinstaller binary data and the final .lvna file into this staging
+        area, known as the release path.
+        """
+        full_path = None
+        
+        if ContainerHandler.is_in_snap_package():
+            snap_common = ContainerHandler.get_snap_user_common_folder()
+            if snap_common:
+                full_path = snap_common / "release" / "release.lvna"
+                
+        elif ContainerHandler.is_in_flatpak_package():
+            release_directory = os.environ.get("XDG_CACHE_HOME")
+            if release_directory:
+                full_path = Path(release_directory) / "release" / "release.lvna"
+                
+        else:
+            
+            # Running in Windows? Look for the 'APPDATA' environmental variable
+            # to find out.
+            appdata_dir = os.environ.get("APPDATA")
+            
+            if not appdata_dir:
+                # Running in Linux
+    
+                # Return the regular absolute path in the local directory.
+                full_path =\
+                    ContainerHandler.get_absolute_path("release/release.lvna")
+                
+            else:
+                # Running Windows.
+                
+                # Define the app data LVNAuth directory.
+                lvnauth_appdata_directory: Path
+                lvnauth_appdata_directory =\
+                    Path(appdata_dir) / "LVNAuth" / "release"
+                
+                # Create the LVNAuth app data directory if it doesn't exist yet.
+                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
+                    
+                # Set the full path to the config file in app data
+                full_path = lvnauth_appdata_directory / "release.lvna"
+            
+            # full_path = ContainerHandler.get_absolute_path("draft/draft.lvna")
+            #full_path = Path(__file__).parent / "draft" / "draft.lvna"
+            
+        # Do we have a full path to draft.lvna?
+        if full_path:
+            
+            # Make sure the release folder exists.
+            release_folder = full_path.parents[0]
+            release_folder.mkdir(parents=True, exist_ok=True)
             
             # Return a full path to draft.lvna
             return full_path
@@ -291,7 +451,71 @@ class ContainerHandler:
             full_path: Path
             full_path = flatpak_directory / "app_icon.png"
 
-            return full_path            
+            return full_path
+        
+    @staticmethod
+    def get_lvnauth_templates_path() -> Path | None:
+        """
+        Return a snap path or flatpak path to the 'templates' folder,
+        where the template binary files are (used for creating archives).
+
+        Example for snap: /snap/lvnauth/x1/lvnauth/templates
+        Example for flatpak: /app/bin/src/templates
+        """
+
+        if ContainerHandler.is_in_snap_package():
+            # /snap/lvnauth/x1
+            snap_directory = os.environ.get("SNAP")
+
+            if not snap_directory:
+                return
+
+            snap_directory = Path(snap_directory)
+
+            full_path: Path
+            full_path = snap_directory / "src" / "templates"
+
+            return full_path
+        
+        elif ContainerHandler.is_in_flatpak_package():
+            # /app/bin/
+            flatpak_directory = ContainerHandler.get_flatpak_app_directory()
+            if not flatpak_directory:
+                return
+            
+            full_path: Path
+            full_path = flatpak_directory / "templates"
+
+            return full_path
+
+        else:
+        
+            # Running in Windows? Look for the 'APPDATA' environmental variable
+            # to find out.
+            appdata_dir = os.environ.get("APPDATA")
+            
+            if not appdata_dir:
+                # Running in Linux
+    
+                # Return the regular absolute path in the local directory.
+                full_path =\
+                    ContainerHandler.get_absolute_path("templates")
+                
+            else:
+                # Running Windows.
+                
+                # Define the app data LVNAuth directory.
+                lvnauth_appdata_directory: Path
+                lvnauth_appdata_directory =\
+                    Path(appdata_dir) / "LVNAuth"
+                
+                # Create the LVNAuth app data directory if it doesn't exist yet.
+                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
+                    
+                # Set the full path to the templates folder in app data
+                full_path = lvnauth_appdata_directory / "templates"
+                
+            return full_path
 
     @staticmethod
     def get_lvnauth_editor_icon_path_small() -> Path | None:

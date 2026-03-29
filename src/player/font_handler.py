@@ -779,7 +779,8 @@ class FontAnimation:
         from where the user clicked, causing unnecessary audio from playing for
         letters that are already visible.
         """
-        self.gradual_letter_cursor_position = len(self.letters)
+        if self.letters:
+            self.gradual_letter_cursor_position = len(self.letters)
                 
     def animate(self) -> bool | None:
         """

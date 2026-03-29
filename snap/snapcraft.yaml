@@ -5,7 +5,7 @@ description: |
      LVNAuth lets you create and play visual novels.
      It includes a built-in editor for creating chapters, scenes,
      and for managing sprite images and simple animations.
-version: '1.31'
+version: '1.4'
 base: core24
 grade: stable
 confinement: strict
@@ -82,3 +82,12 @@ parts:
     stage-snaps:
     - tcltk-launch
 
+  player-templates:
+    plugin: dump
+    source: https://lvnauth.org/downloads/player-template-v1.4.tar.gz
+    # Use 'organize' to place them into a folder your Python code expects
+    organize:
+      '*': src/templates/
+    # This ensures the templates are downloaded before the snap is finalized
+    prime:
+      - src/templates/*
