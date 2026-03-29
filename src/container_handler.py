@@ -284,6 +284,11 @@ class ContainerHandler:
         Make sure the release path has no files in it.
         This method is used before making a new VN archive and also
         after an archive has been created.
+        
+        Arguments:
+        
+        - operating_system: the OS that the archive will be prepared for.
+        It's not which operating system LVNAuth is running in.
         """
         
         # Delete the release folder if it exists.
@@ -297,10 +302,13 @@ class ContainerHandler:
         if not release_path.is_dir() or not release_path.exists():
             return False
         
+        # Get the templates (binary) path
+        templates_path = ContainerHandler.get_lvnauth_templates_path()
+        
         if operating_system == OS.LINUX:
             
             # Get the path to the linux binaries
-            binary_linux_path = release_path.parent.parent / "binary" / "linux"
+            binary_linux_path = templates_path / "linux"
         
             # Populate the release folder with the LVNAuth Linux binaries.
             shutil.copytree(binary_linux_path, release_path, dirs_exist_ok=True)
@@ -308,7 +316,7 @@ class ContainerHandler:
         elif operating_system == OS.WINDOWS:
             
             # Get the path to the windows binaries
-            binary_windows_path = release_path.parent.parent / "binary" / "windows"
+            binary_windows_path = templates_path / "windows"
         
             # Populate the release folder with the LVNAuth Windows binaries.
             shutil.copytree(binary_windows_path, release_path, dirs_exist_ok=True)
@@ -443,7 +451,71 @@ class ContainerHandler:
             full_path: Path
             full_path = flatpak_directory / "app_icon.png"
 
-            return full_path            
+            return full_path
+        
+    @staticmethod
+    def get_lvnauth_templates_path() -> Path | None:
+        """
+        Return a snap path or flatpak path to the 'templates' folder,
+        where the template binary files are (used for creating archives).
+
+        Example for snap: /snap/lvnauth/x1/lvnauth/templates
+        Example for flatpak: /app/bin/src/templates
+        """
+
+        if ContainerHandler.is_in_snap_package():
+            # /snap/lvnauth/x1
+            snap_directory = os.environ.get("SNAP")
+
+            if not snap_directory:
+                return
+
+            snap_directory = Path(snap_directory)
+
+            full_path: Path
+            full_path = snap_directory / "src" / "templates"
+
+            return full_path
+        
+        elif ContainerHandler.is_in_flatpak_package():
+            # /app/bin/
+            flatpak_directory = ContainerHandler.get_flatpak_app_directory()
+            if not flatpak_directory:
+                return
+            
+            full_path: Path
+            full_path = flatpak_directory / "templates"
+
+            return full_path
+
+        else:
+        
+            # Running in Windows? Look for the 'APPDATA' environmental variable
+            # to find out.
+            appdata_dir = os.environ.get("APPDATA")
+            
+            if not appdata_dir:
+                # Running in Linux
+    
+                # Return the regular absolute path in the local directory.
+                full_path =\
+                    ContainerHandler.get_absolute_path("templates")
+                
+            else:
+                # Running Windows.
+                
+                # Define the app data LVNAuth directory.
+                lvnauth_appdata_directory: Path
+                lvnauth_appdata_directory =\
+                    Path(appdata_dir) / "LVNAuth"
+                
+                # Create the LVNAuth app data directory if it doesn't exist yet.
+                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
+                    
+                # Set the full path to the templates folder in app data
+                full_path = lvnauth_appdata_directory / "templates"
+                
+            return full_path
 
     @staticmethod
     def get_lvnauth_editor_icon_path_small() -> Path | None:
