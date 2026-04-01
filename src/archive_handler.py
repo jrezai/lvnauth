@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import multiprocessing
+import threading
 import queue
 import shutil
 import tkinter as tk
@@ -62,6 +62,14 @@ class ArchiveLoadingWindowUI:
         # The argument for .start() is the speed/interval in milliseconds.
         # Lower will make the animation faster.
         self.progressbar1.start(35)
+        
+        # So we can change the label to 'Cancelling...'
+        self.lbl_creating_archive =\
+            self.builder.get_object("lbl_creating_archive")
+        
+        # So we can disable the 'Cancel' button when the cancel
+        # button has been clicked.
+        self.btn_cancel = self.builder.get_object("btn_cancel")
         
         # The method to run if the Cancel button is clicked
         self.cancel_method = cancel_method
@@ -123,6 +131,14 @@ class MakeArchiveReceipt:
 
 
 class ArchiveHandler:
+    """
+    Used for creating archives that contain the visual novel
+    and the VN player engine. It is multi-threaded to keep the GUI
+    responsive and it shows a 'Loading...' window.
+    """
+    
+    # For sending messages to the GUI thread.
+    the_queue = queue.Queue()    
     
     def __init__(self, editor_window):
         
@@ -132,46 +148,40 @@ class ArchiveHandler:
         # So the messagebox has a parent
         self.editor_window = editor_window
         
-        # For sending messages to the GUI process.
-        self.the_queue = multiprocessing.Queue()
+        # So we can call <<CheckQueue>> if the user cancels
+        self.event_generate_method = editor_window.event_generate
         
-        # This will contain the second process
+        # Thread-safe flag to set if the user cancels
+        self.cancel_flag = threading.Event()
+        
+        # This will contain the second thread
         # for when the archive is being created.
-        self.process_create_archive: multiprocessing.Process
-        self.process_create_archive = None
-        
-        # Used for checking the queue every few milliseconds.
-        self.poll_job = None
-        
+        self.thread_create_archive: threading.Thread
+        self.thread_create_archive = None
+
         # Track the final file path for cleanup if the user cancels
         # the make archive process.
         self.target_archive_path: Path = None        
         
-    def poll_queue(self):
+    def check_queue(self, event):
         """
-        Check for results from a second process.
+        Check the result from a secondary thread.
         
-        This runs on the main GUI process.
+        This runs on the main GUI thread.
         """
         try:
-            # Check if there is anything in the queue (non-blocking)
-            msg = self.the_queue.get_nowait()
+            # Check if there is anything in the queue.
+            msg = ArchiveHandler.the_queue.get()
             
-            # If we got a message, the process is done. Process it.
+            # If we got a message, the thread is done. Process it.
             if msg:
                 
                 # Show the result to the user.
-                self.on_make_archived_finished(msg)
-                
-                # Stop polling
-                return
+                self.on_make_archive_message_received(msg)
                 
         except queue.Empty:
             # Nothing in the queue yet. 
             pass
-            
-        # Check again in 100 milliseconds
-        self.poll_job = self.editor_window.after(100, self.poll_queue)
        
     @staticmethod
     def has_gz_tar_support() -> bool:
@@ -204,36 +214,32 @@ class ArchiveHandler:
     def cancel_archive(self):
         """
         Cancel the archive creation process.
+        
+        This runs on the secondary thread.
         """
-        # 1. Kill the background process
-        if self.process_create_archive and self.process_create_archive.is_alive():
-            self.process_create_archive.terminate()
-            
-            # Wait until the process terminates
-            self.process_create_archive.join()
-    
-        # Stop the polling loop so it doesn't keep running
-        if self.poll_job:
-            self.editor_window.after_cancel(self.poll_job)
-            self.poll_job = None
-    
-        # Delete the partially created archive file
-        if self.target_archive_path \
-           and self.target_archive_path.exists()\
-           and self.target_archive_path.is_file():
-            self.target_archive_path.unlink()
-    
-        # Close the 'loading' window
-        if self.loading_window and self.loading_window.mainwindow:
-            self.loading_window.mainwindow.destroy()
-    
-        # Delete up the release folder, including the files in it
-        ContainerHandler.cleanup_release_path()
-    
-        # Notify the user
-        messagebox.showwarning(parent=self.editor_window,
-                               title="Cancelled",
-                               message="Archive creation was aborted.")        
+        
+        # Is the cancel flag already set? return.
+        # This might happen when the user clicks 'X' multiple times to close
+        # the window. Each time 'X' is clicked, it runs the this method,
+        # so we should notify the GUI thread only once, when the cancel
+        if self.cancel_flag.is_set():
+            return
+        
+        # Set the cancel flag so that the GUI thread can show 'Cancelling...'
+        # on the loading window, and so we know to delete the archive after 
+        # it's created. We can't technically cancel a thread, we have to wait 
+        # for it to finish and then delete the archive.
+        self.cancel_flag.set()
+        
+        # Create a receipt to send to the GUI thread.
+        receipt = MakeArchiveReceipt()
+        receipt.response_text = "Cancelled"
+        
+        # Send the receipt to the queue so the main GUI thread can read it.
+        ArchiveHandler.the_queue.put(receipt)
+        
+        # To let the main GUI thread know there's a new message to read.
+        self.event_generate_method("<<CheckQueue>>")  
        
     def start_create_archive(self,
                              save_full_path_no_extension: Path,
@@ -241,7 +247,7 @@ class ArchiveHandler:
                              archive_directory: Path,
                              os_name: str):
         """
-        Spawn a process that creates an archive.
+        Spawn a thread that creates an archive.
         
         Arguments: see the docstring of the create_archive() method.
         """
@@ -255,31 +261,29 @@ class ArchiveHandler:
             ArchiveLoadingWindowUI(master=self.editor_window,
                                    cancel_method=self.cancel_archive)
 
-        # Spawn a new process.
-        self.process_create_archive =\
-            multiprocessing.Process(target=self.create_archive,
-                                    args=(save_full_path_no_extension,
-                                          archive_format,
-                                          archive_directory,
-                                          os_name, 
-                                          self.the_queue))
+        # Spawn a new thread.
+        self.thread_create_archive =\
+            threading.Thread(target=self.create_archive,
+                             args=(save_full_path_no_extension,
+                                   archive_format,
+                                   archive_directory,
+                                   os_name,
+                                   self.event_generate_method))
         
-        self.process_create_archive.start()
-        
-        # 3. Start polling the queue from the main GUI thread
-        self.poll_queue()        
+        self.thread_create_archive.daemon = True
+        self.thread_create_archive.start()     
         
     @staticmethod
     def create_archive(save_full_path_no_extension: Path,
                        archive_format: str,
                        archive_directory: Path,
-                       os_name: str, 
-                       mp_queue: multiprocessing.Queue):
+                       os_name: str,
+                       event_generate_method):
         
         """
         Create a .tar.gz or .zip archive.
         
-        This method runs in a separate process.
+        This method runs in a separate thread.
         
         Arguments:
         
@@ -294,15 +298,9 @@ class ArchiveHandler:
         being saved.
         
         - archive_directory: a Path to the directory that needs to be archived.
-        
-        - mp_queue: a multiprocessing queue. We populate this queue which will
-        get read by the main GUI process, to let the user know the result
-        of the archive creation process. We don't use event_generate because
-        event_generate doesn't appear to work for multiprocessing, just for
-        multithreading.
         """
         
-        # We use this receipt to send a response to the main GUI process.
+        # We use this receipt to send a response to the main GUI thread.
         archive_result = MakeArchiveReceipt()
         
         try:
@@ -337,30 +335,76 @@ class ArchiveHandler:
             archive_result.response_text_detail = f"An unexpected error occurred: {e}"
             
         # Put the result in the queue.
-        mp_queue.put(archive_result)
+        ArchiveHandler.the_queue.put(archive_result)
+        
+        # Let the GUI thread know the result so the user can be notified.
+        event_generate_method("<<CheckQueue>>")
             
-    def on_make_archived_finished(self, receipt: MakeArchiveReceipt):
+    def on_make_archive_message_received(self, receipt: MakeArchiveReceipt):
         """
         Read the response that was sent to us from the archive creation
-        process.
+        thread.
         
         This is a callback method that is run when an archive creation
-        (.tar.gz or .zip) has finished either successfully or with an error.
+        (.tar.gz or .zip) has finished either successfully or with an error,
+        or if it's been cancelled by the user.
         
-        This method runs on the GUI process.
+        This method runs on the GUI thread.
         """
 
         # So the messagebox has a parent.
         parent_window = self.editor_window
         
-        # Close the 'loading' window.
-        self.loading_window.mainwindow.destroy()
+        # Initial 'cancel' message?
+        if self.cancel_flag.is_set() and receipt.response_text == "Cancelled":
+            # The user has just cancelled the archiving process.
+            
+            # Disable the Cancel button and change the label's text.
+            self.loading_window.btn_cancel.state(["disabled"])
+            self.loading_window.\
+                lbl_creating_archive.configure(text="Cancelling...")
+            
+            # The next time this method runs is when the archive is finished
+            # being created.
+            
+            return
         
+        elif self.cancel_flag.is_set():
+            
+            # The archive creation process has finished (either successfully
+            # or with an error), but it doesn't matter because we need to now
+            # delete the newly created archive, since the user had already
+            # requested to cancel it.
+            
+            # We can't cancel a thread, unlike a secondary process, so now
+            # that we've waited for the thread to finish, we need to delete
+            # the newly created archive.
+            
+            # Delete the archive file
+            if self.target_archive_path \
+               and self.target_archive_path.exists()\
+               and self.target_archive_path.is_file():
+                self.target_archive_path.unlink()        
+
         # Delete the release folder now that no archive is currently
         # being created.
-        ContainerHandler.cleanup_release_path()        
+        ContainerHandler.cleanup_release_path()
+        
+        # Close the 'loading' window
+        if self.loading_window and self.loading_window.mainwindow:
+            self.loading_window.mainwindow.destroy()
+    
+        # Notify the user
+        
+        if self.cancel_flag.is_set():
+            # Reset the cancel flag.
+            self.cancel_flag.clear()
+            
+            messagebox.showwarning(parent=self.editor_window,
+                                   title="Cancelled",
+                                   message="Archive creation was aborted.")              
 
-        if receipt.response_text == "ok":
+        elif receipt.response_text == "ok":
             messagebox.showinfo(parent=parent_window,
                                 title="Finished",
                                 message=receipt.response_text_detail)

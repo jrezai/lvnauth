@@ -145,10 +145,12 @@ class EditorMainApp:
         
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
         
-        # Used for reading process responses when creating an archive
+        # Used for reading thread responses when creating an archive
         # (.tar.gz or .zip)
         self.archive_handler = archive_handler.ArchiveHandler(self.mainwindow)
-
+        # Used for event_generate() from a secondary thread.
+        self.mainwindow.bind("<<CheckQueue>>",
+                             self.archive_handler.check_queue)
 
         # Maximize the editor window
         try:
@@ -1510,7 +1512,7 @@ class EditorMainApp:
         if archive_handler.ArchiveHandler.has_gz_tar_support():
             file_types.append(("Visual Novel + Player (Linux)", ".tar.gz"))
         
-        # Is ther e.zip support on this machine?
+        # Is there .zip support on this machine?
         if archive_handler.ArchiveHandler.has_zip_support():
             file_types.append(("Visual Novel + Player (Windows)", ".zip"))
         
