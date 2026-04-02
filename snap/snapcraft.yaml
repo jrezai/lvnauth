@@ -82,12 +82,12 @@ parts:
     stage-snaps:
     - tcltk-launch
 
-  player-templates:
+  player-template-linux:
     plugin: dump
     source: https://lvnauth.org/download/player-template-v1.4.tar.gz
     # Use 'organize' to place them into a folder your Python code expects
     organize:
-      '*': src/templates/
+      '*': src/templates/linux/
     # This ensures the templates are downloaded before the snap is finalized
     prime:
-      - src/templates/*
+      - src/templates/linux/*
