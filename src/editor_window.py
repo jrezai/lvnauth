@@ -1524,27 +1524,43 @@ class EditorMainApp:
             return
         else:
             
-            # The extension '.tar.gz' is not added automatically by the
-            # tkinter file dialog, so we add it here.
-            if not save_full_path.endswith(".tar.gz") \
-               and not save_full_path.endswith(".lvna") \
-               and not save_full_path.endswith(".zip"):
-                save_full_path += ".tar.gz"
+            # Get the extensino, including the dot.
+            extension = Path(save_full_path).suffix.lower()
+            
+            # The OS we're currently running in, so we can find out
+            # how the file dialog behaves. In Linux, no file extension means
+            # a tar.gz file was likely specified. In Windows, no file extension
+            # is common. The extension is not added automatically, so
+            # the user has to type it.
+            running_os = ContainerHandler.get_os()
+            
+            if not extension or extension not in (".gz", ".lvna", ".zip"):
+                # No extension in Linux means the extension '.tar.gz' 
+                # is not added automatically by the tkinter file dialog, 
+                # so we add it here.
+                if running_os == OS.LINUX:
+                    extension = ".gz"
+                    save_full_path += ".tar.gz"
+                else:
+                    # Running Windows; there has to be an extension manually
+                    # specified by the user. The extension does not
+                    # automatically get added to the file name by the dialog.
+                    messagebox.showerror(title="Specify the file type",
+                                         message="Specify a supported file extension at the end of the file name.")
+                    return
             
             # Convert to a Path object.
             save_full_path = Path(save_full_path)
-        
-        extension = save_full_path.suffix
         
         if extension in (".gz", ".zip"):
             
             # .tar.gz is for Linux, whereas .zip is for Windows.
             # This will determine which OS-specific binaries are copied.
-            operating_system = OS.LINUX if extension == ".gz" else OS.WINDOWS
+            compile_for_os = OS.LINUX if extension == ".gz" else OS.WINDOWS
             
             # Populate the release path with the pyinstaller binary data.
             ContainerHandler.\
-                prepare_release_path(operating_system=operating_system)            
+                prepare_release_path(operating_system=compile_for_os)            
             
             # Example: /home/../release/release.lvna
             full_release_path = ContainerHandler.get_release_path()
@@ -1576,7 +1592,7 @@ class EditorMainApp:
                 
                 # Set the operating system name so the extract + run
                 # instructions can be shown to the user.
-                os_name = "Linux" if operating_system == OS.LINUX \
+                os_name = "Linux" if compile_for_os == OS.LINUX \
                     else "Windows"                
                 
                 # The extension will get added by .make_archive() automatically

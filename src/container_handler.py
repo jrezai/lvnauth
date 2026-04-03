@@ -489,33 +489,14 @@ class ContainerHandler:
             return full_path
 
         else:
-        
-            # Running in Windows? Look for the 'APPDATA' environmental variable
-            # to find out.
-            appdata_dir = os.environ.get("APPDATA")
+
+            # Running stand-alone in Linux or Windows
+
+            # Return the regular absolute path in the local directory.
+            full_path =\
+                ContainerHandler.get_absolute_path("templates")
             
-            if not appdata_dir:
-                # Running in Linux
-    
-                # Return the regular absolute path in the local directory.
-                full_path =\
-                    ContainerHandler.get_absolute_path("templates")
-                
-            else:
-                # Running Windows.
-                
-                # Define the app data LVNAuth directory.
-                lvnauth_appdata_directory: Path
-                lvnauth_appdata_directory =\
-                    Path(appdata_dir) / "LVNAuth"
-                
-                # Create the LVNAuth app data directory if it doesn't exist yet.
-                lvnauth_appdata_directory.mkdir(parents=True, exist_ok=True)
-                    
-                # Set the full path to the templates folder in app data
-                full_path = lvnauth_appdata_directory / "templates"
-                
-            return full_path
+        return full_path
 
     @staticmethod
     def get_lvnauth_editor_icon_path_small() -> Path | None:
