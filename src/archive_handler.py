@@ -296,23 +296,16 @@ class ArchiveHandler:
         # Unix timestamp (floating point value)
         current_time = time.time()
         
-        # Enumerate through all the files in the given path.
-        for filepath in archive_directory.rglob("*"):
-            
-            if filepath.is_file():
-                try:
-                    # Get the file's details
-                    stat = filepath.stat()
+        # Enumerate through all the files and folders in the given path.
+        for entry in archive_directory.rglob("*"):
+            try:
+                # If the date/time of the file or folder is before 1970, 
+                # set it to the current date/time.
+                if entry.stat().st_mtime < safe_epoch:
+                    os.utime(entry, (current_time, current_time))
                     
-                    # Is the file older than 1981?
-                    if stat.st_mtime < safe_epoch:
-                        
-                        # Set it to the current date/time.
-                        os.utime(filepath, (current_time, current_time))
-                        
-                except PermissionError:
-                    # If a file is locked by the OS, we just skip it
-                    pass
+            except (PermissionError, FileNotFoundError):
+                pass
         
     @staticmethod
     def create_archive(save_full_path_no_extension: Path,
