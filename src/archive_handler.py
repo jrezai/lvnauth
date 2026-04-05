@@ -20,6 +20,8 @@ along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 import threading
 import queue
 import shutil
+import os
+import time
 import tkinter as tk
 import pygubu
 from container_handler import ContainerHandler
@@ -274,6 +276,38 @@ class ArchiveHandler:
         self.thread_create_archive.start()     
         
     @staticmethod
+    def sanitize_timestamps_for_zip(archive_directory: Path):
+        """
+        Look for files that have a timestamp older than 1981 and
+        set them to the current date/time.
+        
+        Flatpak apparently changes the timestamps of files to 1970.
+        However, the ZIP format does not support dates before 1980, so
+        we use this function to look for older-timestamped files
+        and we change them to the current date/time.
+        
+        Arguments:
+        
+        - archive_directory: the path to look for files in.
+        """
+        # 315532800 is Jan 1, 1980. We use 347155200 (1981) to be safe.
+        safe_epoch = 347155200
+        
+        # Unix timestamp (floating point value)
+        current_time = time.time()
+        
+        # Enumerate through all the files and folders in the given path.
+        for entry in archive_directory.rglob("*"):
+            try:
+                # If the date/time of the file or folder is before 1970, 
+                # set it to the current date/time.
+                if entry.stat().st_mtime < safe_epoch:
+                    os.utime(entry, (current_time, current_time))
+                    
+            except (PermissionError, FileNotFoundError):
+                pass
+        
+    @staticmethod
     def create_archive(save_full_path_no_extension: Path,
                        archive_format: str,
                        archive_directory: Path,
@@ -304,6 +338,12 @@ class ArchiveHandler:
         archive_result = MakeArchiveReceipt()
         
         try:
+            
+            # Look for files that have a timestamp older than 1981 and
+            # set them to the current date/time. The ZIP format does not
+            # support timestamps before 1980.
+            ArchiveHandler.\
+                sanitize_timestamps_for_zip(archive_directory=archive_directory)
             
             # Create an archive.
             result_path = \

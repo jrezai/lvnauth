@@ -341,9 +341,9 @@ class ContainerHandler:
                 full_path = snap_common / "release" / "release.lvna"
                 
         elif ContainerHandler.is_in_flatpak_package():
-            release_directory = os.environ.get("XDG_CACHE_HOME")
-            if release_directory:
-                full_path = Path(release_directory) / "release" / "release.lvna"
+            cache_directory = os.environ.get("XDG_CACHE_HOME")
+            if cache_directory:
+                full_path = Path(cache_directory) / "release" / "release.lvna"
                 
         else:
             
