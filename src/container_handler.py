@@ -376,7 +376,7 @@ class ContainerHandler:
             
             # Make sure the release folder exists.
             release_folder = full_path.parents[0]
-            print(f("{release_folder=}"))
+            print(f"{release_folder=}")
             release_folder.mkdir(parents=True, exist_ok=True)
             
             # Return a full path to release.lvna
