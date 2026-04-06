@@ -339,6 +339,8 @@ class ContainerHandler:
         elif ContainerHandler.is_in_flatpak_package():
             cache_directory = os.environ.get("XDG_CACHE_HOME")
             if cache_directory:
+                # Example path in a Flatpak:
+                # /home/name/.var/app/org.lvnauth.LVNAuth/cache/release/release.lvna
                 full_path = Path(cache_directory) / "release" / "release.lvna"
                 
         else:
@@ -376,7 +378,6 @@ class ContainerHandler:
             
             # Make sure the release folder exists.
             release_folder = full_path.parents[0]
-            print(f"{release_folder=}")
             release_folder.mkdir(parents=True, exist_ok=True)
             
             # Return a full path to release.lvna
