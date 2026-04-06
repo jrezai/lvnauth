@@ -94,11 +94,7 @@ class ContainerHandler:
         
         return: True if running inside a Flatpak or False if otherwise.
         """
-        container = os.environ.get("container")
-        if container and container == "flatpak":
-            return True
-        else:
-            return False
+        return Path('/.flatpak-info').exists()
         
     @staticmethod
     def get_flatpak_app_directory() -> Path | None:
@@ -380,9 +376,10 @@ class ContainerHandler:
             
             # Make sure the release folder exists.
             release_folder = full_path.parents[0]
+            print(f("{release_folder=}"))
             release_folder.mkdir(parents=True, exist_ok=True)
             
-            # Return a full path to draft.lvna
+            # Return a full path to release.lvna
             return full_path
         
     @staticmethod

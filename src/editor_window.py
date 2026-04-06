@@ -1573,15 +1573,11 @@ class EditorMainApp:
             # Example: release.lvna
             lvna_file_name_only =\
                 full_release_path.stem + full_release_path.suffix
-            
+
             # Get the path for making a visual novel archive (tar.gz).
             # This path will include the file name (release.lvna)
             lvna_save_path =\
-                release_path_only / lvna_file_name_only
-            ## Get the path for making a visual novel archive (tar.gz).
-            ## This path will include the file name (release.lvna)
-            #lvna_save_path =\
-                #release_path_only / "_internal" / lvna_file_name_only
+                release_path_only / "_internal" / lvna_file_name_only
                      
             
         elif extension == ".lvna":
