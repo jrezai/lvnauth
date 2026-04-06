@@ -94,11 +94,7 @@ class ContainerHandler:
         
         return: True if running inside a Flatpak or False if otherwise.
         """
-        container = os.environ.get("container")
-        if container and container == "flatpak":
-            return True
-        else:
-            return False
+        return Path('/.flatpak-info').exists()
         
     @staticmethod
     def get_flatpak_app_directory() -> Path | None:
@@ -343,6 +339,8 @@ class ContainerHandler:
         elif ContainerHandler.is_in_flatpak_package():
             cache_directory = os.environ.get("XDG_CACHE_HOME")
             if cache_directory:
+                # Example path in a Flatpak:
+                # /home/name/.var/app/org.lvnauth.LVNAuth/cache/release/release.lvna
                 full_path = Path(cache_directory) / "release" / "release.lvna"
                 
         else:
@@ -382,7 +380,7 @@ class ContainerHandler:
             release_folder = full_path.parents[0]
             release_folder.mkdir(parents=True, exist_ok=True)
             
-            # Return a full path to draft.lvna
+            # Return a full path to release.lvna
             return full_path
         
     @staticmethod
