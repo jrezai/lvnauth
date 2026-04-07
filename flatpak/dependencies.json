@@ -95,7 +95,14 @@
         {
             "type": "file",
             "url": "https://files.pythonhosted.org/packages/e3/9a/a6e358a18815ab090ef55187da0066df01a955c7c44a61fb83b127055f23/maturin-1.12.4-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl",
-            "sha256": "88e09e6c386b08974fab0c7e4c07d7c7c50a0ba63095d31e930d80568488e1be"
+            "sha256": "88e09e6c386b08974fab0c7e4c07d7c7c50a0ba63095d31e930d80568488e1be",
+	    "only-arches": ["x86_64"]
+        },
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/4a/c5/84dfcce1f3475237cba6e6201a1939980025afbb41c076aa5147b10ac202/maturin-1.12.4-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl",
+            "sha256": "5cc56481b0f360571587c35a1d960ce6d0a0258d49aebb6af98fff9db837c337",
+            "only-arches": ["aarch64"]
         }
     ]
 },
@@ -113,7 +120,14 @@
                 {
                     "type": "file",
                     "url": "https://files.pythonhosted.org/packages/01/b8/41e849d7164b6ba1a61f66c6687008d750ee8b605a194a444197a7151d85/qh3-1.5.6-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-                    "sha256": "692722cd545bcc6c8d6de3ac58ea875f7f43e2cb014be64e267511e8d16bafcd"
+                    "sha256": "692722cd545bcc6c8d6de3ac58ea875f7f43e2cb014be64e267511e8d16bafcd",
+                    "only-arches": ["x86_64"]
+                },
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/7a/bc/5942a9189f1452744eeacff89ade2d58a312f11c5a1dd57c183bbd86c9c7/qh3-1.5.6-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+                    "sha256": "1842aa5440b8c94a392202aa19e3593a597fe1e808950de00602bf7d46f6f8a3",
+                    "only-arches": ["aarch64"]
                 }
             ]
         },
@@ -161,7 +175,14 @@
                 {
                     "type": "file",
                     "url": "https://files.pythonhosted.org/packages/95/f4/86f51b8745070daf21fd2e5b1fe0eb35d4db9ca26e6d58366562fb56a743/pillow-12.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-                    "sha256": "fc44ef1f3de4f45b50ccf9136999d71abb99dca7706bc75d222ed350b9fd2289"
+                    "sha256": "fc44ef1f3de4f45b50ccf9136999d71abb99dca7706bc75d222ed350b9fd2289",
+                    "only-arches": ["x86_64"]
+                },
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/9e/1b/f1a4ea9a895b5732152789326202a82464d5254759fbacae4deea3069334/pillow-12.1.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+                    "sha256": "18e5bddd742a44b7e6b1e773ab5db102bd7a94c32555ba656e76d319d19c3850",
+                    "only-arches": ["aarch64"]
                 }
             ]
         },
@@ -176,7 +197,14 @@
                 {
                     "type": "file",
                     "url": "https://files.pythonhosted.org/packages/61/28/b13cc306693e917b9a4b746ccad2615fa43d8f4f2373e28104edc33f6f8f/pygame_ce-2.5.6-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-                    "sha256": "d811bba090fbb10d6a1c4d6917350da5a6a585630605833fa91499480b72bfcf"
+                    "sha256": "d811bba090fbb10d6a1c4d6917350da5a6a585630605833fa91499480b72bfcf",
+                    "only-arches": ["x86_64"]
+                },
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/2e/fd/255b8233c690a68d3b68d299868fd51b5f6f509ae67453b6c21c3e27330a/pygame_ce-2.5.6-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+                    "sha256": "92050fd16b62b20779b6ec2fb867bc8261e5499be967ed2aa7ff6a76b7735791",
+                    "only-arches": ["aarch64"]
                 }
             ]
         },
