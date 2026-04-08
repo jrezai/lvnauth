@@ -597,7 +597,7 @@ class StoryReader:
         # ['(@)', '(@character)', '(@last name)']
         for token in results:
             # Get the token without the starting (@ and ending )
-            parameter_name = token.strip().lstrip("(@").rstrip(")")
+            parameter_name = token.strip().removeprefix("(@").removesuffix(")")
             if not parameter_name:
                 continue
 

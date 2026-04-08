@@ -1599,7 +1599,7 @@ class EditorMainApp:
                 # so we shouldn't specify the extension of the archive.
                 if extension == ".gz":
                     file_no_extension =\
-                        save_full_path.stem.rstrip(".tar.gz")
+                        save_full_path.stem.removesuffix(".tar")
                     
                     # shutils will need this to know what kind of archive
                     # to create.
