@@ -280,14 +280,23 @@ class EditorMainApp:
         # a command.
         self.text_script.bind("<<UpdateParameterDescription>>",
                               self.param_desc.start_timer)
+        
+        # Scrollbar width style
+        self.style = ttk.Style()
+        self.style.configure("Wide.Vertical.TScrollbar", arrowsize=18)
+        self.style.configure("Wide.Horizontal.TScrollbar", arrowsize=18)        
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
-        sb_horizontal_text.configure(command=self.text_script.xview)
+        sb_horizontal_text.configure(command=self.text_script.xview,
+                                     style="Wide.Horizontal.TScrollbar")
+        
         self.text_script.configure(xscrollcommand=sb_horizontal_text.set)
         
         sb_vertical_text = builder.get_object("sb_vertical_text")
-        sb_vertical_text.configure(command=self.text_script.yview)
+        sb_vertical_text.configure(command=self.text_script.yview,
+                                   style="Wide.Vertical.TScrollbar")
+        
         self.text_script.configure(yscrollcommand=sb_vertical_text.set)        
 
         Passer.toolbar = Toolbar(self)
