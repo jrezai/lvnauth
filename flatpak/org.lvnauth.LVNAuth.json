@@ -37,7 +37,7 @@
                 {
                     "type": "git",
                     "url": "https://github.com/jrezai/lvnauth.git",
-                    "commit": "889064511f833b9492cb3dac2ac4652e9ad844e6"
+                    "commit": "7bed210368f939e48e62a92e5d0f4b9f81bd93b5"
                 },
 		{
                     "type": "archive",
