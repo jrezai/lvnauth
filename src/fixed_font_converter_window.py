@@ -50,12 +50,17 @@ class GenerateSpriteSheet:
     # user can optionally save it to disk.
     generated_image: Image = None
     
+    # The tk photo image reference is stored here so the canvas widget
+    # doesn't lose the generated image on the screen.
+    # The canvas widget expects a tk photo image, not a PIL image
+    generated_photo_image: tk.PhotoImage = None
+    
     def __init__(self,
                  rects: Dict,
                  source_letter_image: Image.Image,
                  x_offset: int,
                  y_offset: int,
-                 lbl_generated_image: ttk.Label,
+                 canvas_generated_image: tk.Canvas,
                  lbl_letter_dimensions: ttk.Label,
                  v_manual_height_increase):
 
@@ -73,7 +78,9 @@ class GenerateSpriteSheet:
         self.x_padding_generated = 0
         self.y_padding_generated = 0
         
-        self.lbl_generated_image = lbl_generated_image
+        self.canvas_generated_image: tk.Canvas
+        self.canvas_generated_image = canvas_generated_image
+        
         self.lbl_letter_dimensions = lbl_letter_dimensions
         self.v_manual_height_increase = v_manual_height_increase
 
@@ -313,6 +320,8 @@ class GenerateSpriteSheet:
         with fixed spacing.
         """
 
+        # If there's an existing canvas generated image, delete it.
+        self.canvas_generated_image.delete("all")
 
         # Get the left-to-right sorted rectangle coordinates.
         # Key: rectangle id
@@ -433,16 +442,26 @@ class GenerateSpriteSheet:
 
             current_x += new_letter_box.width + self.x_padding_generated
 
-        # So we can use it with a ttk label.
-        photo_image = ImageTk.PhotoImage(image=full_image)
+        # So we can use it with a tk canvas widget.
+        # The canvas widget expects a tk photo image, not a PIL image.
+        GenerateSpriteSheet.generated_photo_image =\
+            ImageTk.PhotoImage(image=full_image)
         
         # Save a reference to the image so the user can save it
         # to the hard disk if needed.
         GenerateSpriteSheet.generated_image = full_image
 
-        # Show the image so the user can see it.
-        self.lbl_generated_image.image = photo_image
-        self.lbl_generated_image.configure(image=photo_image)
+        # Show the generated image so the user can see it.
+        generated_image_iid =\
+            self.canvas_generated_image.create_image(
+                self.x_offset,
+                self.y_offset,
+                image=GenerateSpriteSheet.generated_photo_image,
+                anchor=tk.NW)
+        
+        # Refresh the scroll bar region for the generated canvas image.
+        self.canvas_generated_image.configure(
+            scrollregion=self.canvas_generated_image.bbox("all"))
         
         # Show the user the dimensions of each letter box.
         self.lbl_letter_dimensions.\
@@ -519,7 +538,7 @@ class TraceToolApp:
         
         self.main_notebook: ttk.Notebook
         self.main_notebook = builder.get_object("main_notebook")
-        self.lbl_generated_image = builder.get_object("lbl_generated_image")
+        self.canvas_generated = builder.get_object("canvas_generated")
         self.lbl_letter_dimensions = builder.get_object("lbl_letter_dimensions")
         self.v_manual_height_increase = builder.get_variable("v_manual_height_increase")
         self.v_dark_background = builder.get_variable("v_dark_background")
@@ -533,6 +552,42 @@ class TraceToolApp:
         self.canvas_main = builder.get_object("canvas_main")
 
         builder.connect_callbacks(self)
+        
+        
+        # Vertical scrollbar
+        self.sb_trace_vertical: ttk.Scrollbar
+        self.sb_trace_vertical = builder.get_object("sb_trace_vertical")
+        
+        self.sb_generated_vertical: ttk.Scrollbar
+        self.sb_generated_vertical = builder.get_object("sb_generated_vertical")
+        
+        # Horizontal scrollbar
+        self.sb_trace_horizontal: ttk.Scrollbar
+        self.sb_trace_horizontal = builder.get_object("sb_trace_horizontal")
+        
+        self.sb_generated_horizontal: ttk.Scrollbar
+        self.sb_generated_horizontal =\
+            builder.get_object("sb_generated_horizontal")        
+        
+        # Link trace canvas widget to two scroll bars.
+        self.canvas_main.configure(yscrollcommand=self.sb_trace_vertical.set,
+                                   xscrollcommand=self.sb_trace_horizontal.set)
+        
+        # Link scrollbars to the trace canvas
+        self.sb_trace_vertical.configure(command=self.canvas_main.yview)        
+        self.sb_trace_horizontal.configure(command=self.canvas_main.xview)
+        
+        # Link generated canvas widget to two scroll bars.
+        self.canvas_generated.configure(
+            yscrollcommand=self.sb_generated_vertical.set,
+            xscrollcommand=self.sb_generated_horizontal.set)
+        
+        # Link scrollbars to the generated canvas widget
+        self.sb_generated_vertical.configure(
+            command=self.canvas_generated.yview)
+        
+        self.sb_generated_horizontal.configure(
+            command=self.canvas_generated.xview)          
 
         self.mainwindow.bind("<Up>", self.on_move_up)
         self.mainwindow.bind("<Down>", self.on_move_down)
@@ -886,7 +941,19 @@ class TraceToolApp:
         if not self.img:
             return
         
-        self.draw_rectangle(event.x, event.y)
+        # Get the x and y coordinate of where it was clicked, relative
+        # to the scrollbars and scroll position.
+        # canvasx() and canvasy() deal with this.
+        real_x = self.canvas_main.canvasx(event.x)
+        real_y = self.canvas_main.canvasy(event.y)
+        
+        # The coordinates that the canvas gives us is float.
+        # Convert to an int because the rectangle operations that we'll
+        # go through will require an integer in the move_rect() method.
+        real_x = int(real_x)
+        real_y = int(real_y)
+        
+        self.draw_rectangle(real_x, real_y)
 
     def on_canvas_mouse_move(self, event):
         """
@@ -952,7 +1019,7 @@ class TraceToolApp:
                 source_letter_image=self.img,
                 x_offset=self.x_offset,
                 y_offset=self.y_offset,
-                lbl_generated_image=self.lbl_generated_image,
+                canvas_generated_image=self.canvas_generated,
                 lbl_letter_dimensions=self.lbl_letter_dimensions,
                 v_manual_height_increase=self.v_manual_height_increase)        
 
@@ -1158,8 +1225,13 @@ class TraceToolApp:
                                  title="No Transparency")
             return
 
-        pixel = self.img.getpixel((x, y))
-        if pixel[3] == 0:
+        try:
+            pixel = self.img.getpixel((x, y))
+            if pixel[3] == 0:
+                print("Nothing selected")
+                return
+        except IndexError:
+            # The user clicked outside of the image's coordinates.
             print("Nothing selected")
             return
 
@@ -1551,10 +1623,20 @@ class TraceToolApp:
         self.show_image(selected_file)
 
     def show_image(self, image_path: str):
-
+        """
+        Load the image from the given path and show it on the canvas widget.
+        This is the image that the user wants to trace.
+        
+        Arguments: a string path to the image that the user wants to trace.
+        """
 
         self.img = Image.open(image_path)
         self.photo_image = ImageTk.PhotoImage(self.img)
+        
+        # If there's an existing image already loaded on the canvas widget, 
+        # delete it first before creating another image.
+        if self.image_iid:
+            self.canvas_main.delete(self.image_iid)
 
         # Load and show the image, while keeping track of its canvas item iid.
         # We need the iid so we can exclude the image from rectangle checks,
@@ -1563,6 +1645,9 @@ class TraceToolApp:
             self.canvas_main.create_image(self.x_offset, self.y_offset,
                                           image=self.photo_image,
                                           anchor=tk.NW)
+        
+        self.canvas_main.configure(scrollregion=self.canvas_main.bbox("all"))
+
 
 if __name__ == "__main__":
     app = TraceToolApp()
