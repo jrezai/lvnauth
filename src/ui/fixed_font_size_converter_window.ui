@@ -139,7 +139,7 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="ttk.Spinbox" id="spinbox1">
+                                  <object class="ttk.Spinbox" id="sb_letter_height_increase" named="True">
                                     <property name="from_">0</property>
                                     <property name="textvariable">int:v_manual_height_increase</property>
                                     <property name="to">100</property>

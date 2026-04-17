@@ -62,6 +62,7 @@ class GenerateSpriteSheet:
                  y_offset: int,
                  canvas_generated_image: tk.Canvas,
                  lbl_letter_dimensions: ttk.Label,
+                 btn_save_as: ttk.Button, 
                  v_manual_height_increase):
 
         # Key: rectangle iid
@@ -82,6 +83,7 @@ class GenerateSpriteSheet:
         self.canvas_generated_image = canvas_generated_image
         
         self.lbl_letter_dimensions = lbl_letter_dimensions
+        self.btn_save_as = btn_save_as
         self.v_manual_height_increase = v_manual_height_increase
 
         self.generate_sprite_sheet()
@@ -322,6 +324,14 @@ class GenerateSpriteSheet:
 
         # If there's an existing canvas generated image, delete it.
         self.canvas_generated_image.delete("all")
+        
+        # Disable the Save Image button because there is currently
+        # no generated image to save.
+        self.btn_save_as.state(["disabled"])
+        
+        # Set the dimensions label to 0x0, because there is currently
+        # no generated image.
+        self.lbl_letter_dimensions.configure(text="0x0")
 
         # Get the left-to-right sorted rectangle coordinates.
         # Key: rectangle id
@@ -466,6 +476,10 @@ class GenerateSpriteSheet:
         # Show the user the dimensions of each letter box.
         self.lbl_letter_dimensions.\
             configure(text=f"{max_letter_width}x{max_letter_height}")
+        
+        # Enable the 'Save Image' button, because there is a
+        # generated image to save.
+        self.btn_save_as.state(["!disabled"])
 
     def _get_sorted_rectangles(self) -> Dict:
         """    
@@ -539,7 +553,13 @@ class TraceToolApp:
         self.main_notebook: ttk.Notebook
         self.main_notebook = builder.get_object("main_notebook")
         self.canvas_generated = builder.get_object("canvas_generated")
+        
         self.lbl_letter_dimensions = builder.get_object("lbl_letter_dimensions")
+        
+        # Default the 'Save As Image' button to disabled.
+        self.btn_save_as = builder.get_object("btn_save_as")
+        self.btn_save_as.state(["disabled"])
+        
         self.v_manual_height_increase = builder.get_variable("v_manual_height_increase")
         self.v_dark_background = builder.get_variable("v_dark_background")
         self.v_dark_background.trace_add("write", self.on_dark_background_checkbutton_clicked)
@@ -552,7 +572,6 @@ class TraceToolApp:
         self.canvas_main = builder.get_object("canvas_main")
 
         builder.connect_callbacks(self)
-        
         
         # Vertical scrollbar
         self.sb_trace_vertical: ttk.Scrollbar
@@ -936,7 +955,13 @@ class TraceToolApp:
         """
         The left mouse button has been held down on the canvas widget.
         """
-        
+
+        # Move the focus to the 'Save Image As' button, because
+        # if the focus is on a spinbox widget, pressing the arrow keys
+        # on the keyboard will move the caret on the spinbox widget.
+        # So we'll set the focus to a button so the spinbox caret doesn't move.
+        self.btn_save_as.focus()
+
         # No font image loaded yet? return
         if not self.img:
             return
@@ -1021,6 +1046,7 @@ class TraceToolApp:
                 y_offset=self.y_offset,
                 canvas_generated_image=self.canvas_generated,
                 lbl_letter_dimensions=self.lbl_letter_dimensions,
+                btn_save_as=self.btn_save_as, 
                 v_manual_height_increase=self.v_manual_height_increase)        
 
     def _create_space_letter_box(self):
@@ -1328,10 +1354,16 @@ class TraceToolApp:
         alpha 0 (transparency).
         """
 
+        # Move the focus to the 'Save Image As' button, because
+        # if the focus is on a spinbox widget, pressing the arrow keys
+        # on the keyboard will move the caret on the spinbox widget.
+        # So we'll set the focus to a button so the spinbox caret doesn't move.
+        self.btn_save_as.focus()
+
         # Make sure there is a rectangle selected.
         if not self.active_rect_iid:
             return
-
+        
         # Get the coordiantes of the selected rectangle.
         rect_object: RectObject = self.rects.get(self.active_rect_iid)
         x0, y0, x1, y1 = rect_object.coordinates
