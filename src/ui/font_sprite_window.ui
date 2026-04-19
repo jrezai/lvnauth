@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="ttk.Frame" id="frame_letter" named="True">
     <property name="height">200</property>
     <property name="width">200</property>
@@ -270,7 +274,7 @@
                     </child>
                     <child>
                       <object class="ttk.Checkbutton" id="chk_detect_letter_edges" named="True">
-                        <property name="text" translatable="yes">Automatically detect letter edges</property>
+                        <property name="text" translatable="yes">Trim whitespace</property>
                         <property name="variable">boolean:v_detect_letter_edges</property>
                         <layout manager="grid">
                           <property name="column">0</property>
