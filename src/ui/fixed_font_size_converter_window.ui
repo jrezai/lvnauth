@@ -203,7 +203,7 @@
                                     </containerlayout>
                                     <child>
                                       <object class="tk.Canvas" id="canvas_main" named="True">
-                                        <property name="background">#ccd9cc</property>
+                                        <property name="background">#e9e3e1</property>
                                         <bind sequence="&lt;B1-Motion&gt;" handler="on_canvas_mouse_move" add="" />
                                         <bind sequence="&lt;ButtonPress-1&gt;" handler="on_canvas_button_press" add="" />
                                         <bind sequence="&lt;ButtonRelease-1&gt;" handler="on_canvas_button_released" add="" />
@@ -311,6 +311,70 @@
                                             </layout>
                                           </object>
                                         </child>
+                                        <child>
+                                          <object class="ttk.Frame" id="frame6">
+                                            <property name="height">200</property>
+                                            <property name="width">200</property>
+                                            <layout manager="grid">
+                                              <property name="column">2</property>
+                                              <property name="padx">5</property>
+                                              <property name="row">0</property>
+                                            </layout>
+                                            <child>
+                                              <object class="ttk.Checkbutton" id="cb_show_guide_line" named="True">
+                                                <property name="text" translatable="yes">Show guide line</property>
+                                                <property name="variable">boolean:v_show_guide_line</property>
+                                                <layout manager="grid">
+                                                  <property name="column">0</property>
+                                                  <property name="row">0</property>
+                                                </layout>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="ttk.Frame" id="frame7">
+                                                <property name="height">200</property>
+                                                <property name="width">200</property>
+                                                <layout manager="grid">
+                                                  <property name="column">0</property>
+                                                  <property name="row">1</property>
+                                                </layout>
+                                                <child>
+                                                  <object class="ttk.Button" id="btn_up" named="True">
+                                                    <property name="compound">left</property>
+                                                    <property name="text" translatable="yes">(w)</property>
+                                                    <layout manager="grid">
+                                                      <property name="column">1</property>
+                                                      <property name="row">0</property>
+                                                      <property name="sticky">n</property>
+                                                    </layout>
+                                                  </object>
+                                                </child>
+                                                <child>
+                                                  <object class="ttk.Button" id="btn_down" named="True">
+                                                    <property name="compound">left</property>
+                                                    <property name="text" translatable="yes">(s)</property>
+                                                    <layout manager="grid">
+                                                      <property name="column">1</property>
+                                                      <property name="row">2</property>
+                                                      <property name="sticky">s</property>
+                                                    </layout>
+                                                  </object>
+                                                </child>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="ttk.Separator" id="separator3">
+                                        <property name="orient">horizontal</property>
+                                        <layout manager="grid">
+                                          <property name="column">0</property>
+                                          <property name="columnspan">2</property>
+                                          <property name="row">2</property>
+                                          <property name="sticky">ew</property>
+                                        </layout>
                                       </object>
                                     </child>
                                     <child>
@@ -321,7 +385,7 @@
                                           <property name="column">0</property>
                                           <property name="padx">10</property>
                                           <property name="pady">10</property>
-                                          <property name="row">2</property>
+                                          <property name="row">3</property>
                                           <property name="sticky">sw</property>
                                         </layout>
                                         <containerlayout manager="grid">
@@ -368,7 +432,7 @@
                                         <property name="width">200</property>
                                         <layout manager="grid">
                                           <property name="column">1</property>
-                                          <property name="row">2</property>
+                                          <property name="row">3</property>
                                           <property name="sticky">e</property>
                                         </layout>
                                         <child>
@@ -389,6 +453,56 @@
                                 </child>
                               </object>
                             </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Notebook.Tab" id="tab2">
+                    <property name="text" translatable="yes">Help</property>
+                    <child>
+                      <object class="ttk.Frame" id="frame8">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="row">0</property>
+                          <property name="sticky">nsew</property>
+                        </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="0" name="weight">1</property>
+                        </containerlayout>
+                        <child>
+                          <object class="tk.Text" id="text1">
+                            <property name="exportselection">false</property>
+                            <property name="height">10</property>
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Tracing Fonts
+---------------------------------------------
+
+1. Load a font sprite image (.png file)
+
+2. Click on the letters of the image to create square or rectangle trace around each letter.
+
+3. Click on the squares or rectangles and use the arrow keys on the keyboard to fully wrap 
+the shape around the letter of the trace.
+
+4. Double-click the squares or rectangles to fine-tune the final position of each letter.
+
+A preview of the traced font sprite sheet will be at the bottom. 
+Once you are satisfied with it, take note of the width and height of each letter (shown at the bottom).
+
+5. Save the image.</property>
+                            <property name="width">50</property>
+                            <property name="wrap">word</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                              <property name="sticky">nsew</property>
+                            </layout>
                           </object>
                         </child>
                       </object>

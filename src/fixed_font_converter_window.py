@@ -21,6 +21,7 @@ import pathlib
 import pygubu
 import tkinter as tk
 import json
+import editor_window
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "fixed_font_size_converter_window.ui"
 from tkinter import filedialog
@@ -33,6 +34,7 @@ from rect_object import RectObject
 from tkinter import messagebox
 from functools import partial
 from pathlib import Path
+
 
 
 
@@ -57,19 +59,28 @@ class GenerateSpriteSheet:
     
     def __init__(self,
                  rects: Dict,
-                 source_letter_image: Image.Image,
                  x_offset: int,
                  y_offset: int,
                  canvas_generated_image: tk.Canvas,
                  lbl_letter_dimensions: ttk.Label,
                  btn_save_as: ttk.Button, 
-                 v_manual_height_increase):
+                 v_manual_height_increase,
+                 v_show_guide_line: tk.BooleanVar,
+                 cb_show_guide_line: ttk.Checkbutton, 
+                 btn_up: ttk.Button,
+                 btn_down: ttk.Button):
 
         # Key: rectangle iid
         # Value: RectObject
+        self.rects:List[RectObject]
         self.rects = rects
 
-        self.source_letter_image = source_letter_image
+        # This will hold the image that contains all the letters
+        # that we're going to crop the letters from.
+        # It will be set in the generate_sprite_sheet() method.
+        self.source_letter_image: Image.Image
+        self.source_letter_image = None
+        
         self.x_offset = x_offset
         self.y_offset = y_offset
 
@@ -79,6 +90,16 @@ class GenerateSpriteSheet:
         self.x_padding_generated = 0
         self.y_padding_generated = 0
         
+        # Y position of the guide line
+        self.guide_line_y = 0
+        
+        # The iid of the guide line canvas window
+        # We use this to delete the line when needed.
+        self.guide_line_iid: str = None        
+
+        # So we can cancel the pressed after timer
+        self.guide_move_line_timer_iid = None
+        
         self.canvas_generated_image: tk.Canvas
         self.canvas_generated_image = canvas_generated_image
         
@@ -86,7 +107,240 @@ class GenerateSpriteSheet:
         self.btn_save_as = btn_save_as
         self.v_manual_height_increase = v_manual_height_increase
 
-        self.generate_sprite_sheet()
+        self.v_show_guide_line = v_show_guide_line
+        self.v_show_guide_line.trace_add("write",
+                                         self.\
+                                         on_show_guide_line_checkbutton_clicked)
+        
+        # The 'Up' arrow button, used for moving the line upwards.
+        # We use this reference to enable/disable the button.
+        self.btn_up = btn_up
+        
+        # The 'Down' arrow button, used for moving the line downwards.
+        # We use this reference to enable/disable the button.
+        self.btn_down = btn_down
+        
+        # So we can enable/disable the 'Show guide line' checkbutton
+        # as needed.
+        self.cb_show_guide_line = cb_show_guide_line
+        
+        # self.generate_sprite_sheet()
+
+    def on_down_button_pressed(self, *args, **kwargs):
+        """
+        Move the guide line down by 1 pixel and start a timer
+        that will keep moving the line down until the mouse button
+        has been released.
+        """
+        
+        # Move the line down by 1 pixel.
+        self.move_guide_line(move_down=True)
+        
+        skip_timer = kwargs.get("no_after_timer")
+        if skip_timer:
+            return        
+        
+        # Keep moving it down after 100 milliseconds, because
+        # the mouse is held down on the 'Down' button.
+        # Keep track of the after timer's iid, so we can cancel the movement
+        # when the mouse has been released.        
+        self.guide_move_line_timer_iid =\
+            self.btn_save_as.after(100, self.on_down_button_pressed)
+        
+    def on_up_button_pressed(self, *args, **kwargs):
+        """
+        Move the guide line up by 1 pixel and start a timer
+        that will keep moving the line up until the mouse button
+        has been released.
+        """
+        
+        # Move the line up by 1 pixel.
+        self.move_guide_line(move_down=False)
+        
+        skip_timer = kwargs.get("no_after_timer")
+        if skip_timer:
+            return            
+        
+        # Keep moving it down after 100 milliseconds, because
+        # the mouse is held down on the 'Down' button.
+        # Keep track of the after timer's iid, so we can cancel the movement
+        # when the mouse has been released.
+        self.guide_move_line_timer_iid =\
+            self.btn_save_as.after(100, self.on_up_button_pressed)
+        
+    def on_move_button_released(self, *args):
+        """
+        Cancel the down or up movement of the guide line.
+        
+        This gets invoked when the mouse has been released from the
+        down or up button.
+        """
+        
+        if self.guide_move_line_timer_iid:
+            self.btn_save_as.after_cancel(self.guide_move_line_timer_iid)
+
+    def move_guide_line(self, move_down: bool):
+        """
+        Move the line up or down by one pixel.
+        
+        This will delete the existing line and create a new line
+        at the new position.
+        
+        Arguments:
+        
+        - move_down: if True, the line will be moved down. Otherwise
+        the line will move up.
+        """
+        
+        # No generated image yet? return
+        if not self.generated_image:
+            return
+
+        # No line drawn on the canvas? return
+        elif not self.guide_line_iid:
+            return
+        
+        if move_down:
+            
+            # The maximum that the line should be allowed to move down
+            # is the height of the generated image plus 5 pixels more.
+            img_height = self.generated_image.height
+            
+            # self.guide_line_y already contains the y_offset value,
+            # so we don't need to account for it separately.
+            if self.guide_line_y >= img_height + 5:
+                # The line is already down as far as it should go, return.
+                return
+            
+            self.guide_line_y += 1
+        else:
+            
+            # The minimum that the line should be allowed to move up
+            # is minus 5
+            # self.guide_line_y already contains the y_offset value,
+            # so we don't need to account for it separately.            
+            if self.guide_line_y <= -5:
+                # The line is already high enough, it shouldn't be allowed
+                # to go higher, return.
+                return
+            
+            self.guide_line_y -= 1
+        
+        # Delete the existing line and draw a new one at the new position.
+        self.draw_line()
+        
+        # Refresh the scroll bar region for the generated canvas image
+        # so it takes the line's new position into consideration.
+        self.canvas_generated_image.\
+            event_generate("<<RefreshPreviewScrollRegion>>")      
+
+    def refresh_scrollregion(self, *args):
+        """
+        Refresh the generated canvas widget's scrollregion.
+        
+        This gets called when a new image is generated or when the
+        guide line is shown or hidden. It refreshes the scrollbars to
+        consider whether the scrollbars need to be enabled or not.
+        """
+
+        # Get a tuple of coordinates that encloses all windows
+        # in the preview canvas widget.
+        coordinates = self.canvas_generated_image.bbox("all")
+        
+        # If the .bbox() method returns None, then attempting to
+        # refresh the scrollregion will be ignored, because it will just
+        # see None. So if it's None, set the coordinates to (0,0,0,0) so that
+        # the scroll region will be reset and the scrollbars get disabled.
+        if not coordinates:
+            coordinates = (0, 0, 0, 0)
+        
+        # Refresh the scrollbar region of the preview canvas widget.
+        self.canvas_generated_image.configure(scrollregion=coordinates)           
+
+    def on_show_guide_line_checkbutton_clicked(self, *args):
+        """
+        The checkbutton, 'Show guide line', has either been checked
+        or unchecked.
+        
+        When checked:
+        - Create a line
+        - Enable the up/down buttons
+        
+        When unchecked
+        - Delete the line
+        - Disable the up/down buttons
+        """
+
+        if self.v_show_guide_line.get():
+            # Checked
+            
+            # Show a guide line
+            self.draw_line()
+            
+            # Enable the up/down buttons
+            self.btn_up.state(["!disabled"])
+            self.btn_down.state(["!disabled"])
+            
+            # Refresh the scroll bar region for the generated canvas image
+            # so it takes the guide line into consideration.    
+            self.canvas_generated_image.\
+                event_generate("<<RefreshPreviewScrollRegion>>")                 
+            
+        else:
+            # Unchecked
+            
+            # Delete the guide line if it's visible
+            self.delete_guide_line()
+            
+            # Disable the up/down buttons
+            self.btn_up.state(["disabled"])
+            self.btn_down.state(["disabled"])
+            
+            # Refresh the scroll bar region for the generated canvas image
+            # so it takes the absence of the guide line into consideration.    
+            self.canvas_generated_image.\
+                event_generate("<<RefreshPreviewScrollRegion>>")                 
+            
+    def delete_guide_line(self):
+        # If there's an existing line, delete it.
+        if self.guide_line_iid:
+            self.canvas_generated_image.delete(self.guide_line_iid)
+            self.guide_line_iid = None          
+            
+    def draw_line(self):
+        """
+        Delete the existing line (if any) and create a new line.
+        """
+    
+        # Not supposed to show a line? Return.
+        if not self.v_show_guide_line.get():
+            return
+        
+        # If there's an existing line, delete it.
+        self.delete_guide_line()
+        
+        # No generated image loaded? return
+        if not GenerateSpriteSheet.generated_image:
+            return
+        
+        # The width of the line needs to be the width of the generated
+        # image plus the width of a space letter width.
+        image_width = GenerateSpriteSheet.generated_image.width
+        space_letter_width = self.rects["space"].coordinates[1]
+        line_width = image_width + space_letter_width
+        
+        # The Y position of the line should be where the Y offset starts
+        # (which is the Y padding) plus where the guide line should be
+        # based on the up/down arrow movement.
+        line_y_position = self.y_offset + self.guide_line_y
+        
+        # Create a line
+        self.guide_line_iid =\
+            self.canvas_generated_image.create_line(
+                self.x_offset,
+                line_y_position,
+                line_width,
+                line_y_position)           
 
     def get_max_sprite_sheet_width_height(self,
                                           rects: Dict,
@@ -316,14 +570,26 @@ class GenerateSpriteSheet:
 
         return max_box_width, max_box_height
         
-    def generate_sprite_sheet(self):
+    def generate_sprite_sheet(self, source_img: Image.Image):
         """
         Crop the traced letters and paste them on a new image
         with fixed spacing.
+        
+        Arguments:
+        
+        - source_img: the image that we're going to crop letters from.
         """
+        
+        # The image we're going to crop letters from. This image
+        # contains all the letters that we need to divide equally.
+        self.source_letter_image = source_img
 
         # If there's an existing canvas generated image, delete it.
         self.canvas_generated_image.delete("all")
+        
+        # Delete the iid of the guide line, in case it's there
+        # because the line has now been deleted from the canvas widget.
+        self.guide_line_iid = None
         
         # Disable the Save Image button because there is currently
         # no generated image to save.
@@ -341,7 +607,19 @@ class GenerateSpriteSheet:
         
         # Get the biggest width/height of a letter, in pixels
         max_values = self.get_max_letter_width_height()
-        if not max_values or max_values == (0, 0):
+        if not max_values or max_values == (0, 0):            
+            # There is no generated image
+
+            # Uncheck the 'Show guide line' checkbutton and also disable it.
+            self.v_show_guide_line.set(False)
+            self.cb_show_guide_line.state(["disabled"])
+            
+            # Refresh the preview canvas' scroll bar region
+            # If scrollbars are enabled, running the virtual method below
+            # should disable them, now that there is no preview image.
+            self.canvas_generated_image.\
+                event_generate("<<RefreshPreviewScrollRegion>>")                
+            
             return
         else:
             max_letter_width, max_letter_height = max_values
@@ -469,10 +747,6 @@ class GenerateSpriteSheet:
                 image=GenerateSpriteSheet.generated_photo_image,
                 anchor=tk.NW)
         
-        # Refresh the scroll bar region for the generated canvas image.
-        self.canvas_generated_image.configure(
-            scrollregion=self.canvas_generated_image.bbox("all"))
-        
         # Show the user the dimensions of each letter box.
         self.lbl_letter_dimensions.\
             configure(text=f"{max_letter_width}x{max_letter_height}")
@@ -480,6 +754,17 @@ class GenerateSpriteSheet:
         # Enable the 'Save Image' button, because there is a
         # generated image to save.
         self.btn_save_as.state(["!disabled"])
+        
+        # Enable the 'Show guide line' checkbutton
+        # now that an image has been generated.
+        self.cb_show_guide_line.state(["!disabled"])      
+        
+        # Create a guide line if the option is enabled.
+        self.draw_line()
+        
+        # Refresh the scroll bar region for the generated canvas image.
+        self.canvas_generated_image.\
+            event_generate("<<RefreshPreviewScrollRegion>>")          
 
     def _get_sorted_rectangles(self) -> Dict:
         """    
@@ -550,6 +835,9 @@ class TraceToolApp:
         # Main widget
         self.mainwindow = builder.get_object("main_window", master)
         
+
+        builder.connect_callbacks(self)        
+        
         self.main_notebook: ttk.Notebook
         self.main_notebook = builder.get_object("main_notebook")
         self.canvas_generated = builder.get_object("canvas_generated")
@@ -563,7 +851,7 @@ class TraceToolApp:
         self.v_manual_height_increase = builder.get_variable("v_manual_height_increase")
         self.v_dark_background = builder.get_variable("v_dark_background")
         self.v_dark_background.trace_add("write", self.on_dark_background_checkbutton_clicked)
-
+        
         # Keep track of the image iid because we need to exclude it
         # when looking for overlapping rectangles.
         self.image_iid = None
@@ -571,7 +859,6 @@ class TraceToolApp:
         self.canvas_main: tk.Canvas
         self.canvas_main = builder.get_object("canvas_main")
 
-        builder.connect_callbacks(self)
         
         # Vertical scrollbar
         self.sb_trace_vertical: ttk.Scrollbar
@@ -642,7 +929,107 @@ class TraceToolApp:
         # Key: rect iid
         # Value: RectObject
         self.rects = {}
+        
+        self.v_show_guide_line: tk.BooleanVar
+        self.v_show_guide_line = builder.get_variable("v_show_guide_line")
+        
+        # Up button (for moving the line up).
+        self.btn_up = builder.get_object("btn_up")        
 
+        # Down button (for moving the line down).
+        self.btn_down = builder.get_object("btn_down")      
+        
+        # So we can enable/disable the 'Show guide line' checkbutton.
+        self.cb_show_guide_line: ttk.Checkbutton
+        self.cb_show_guide_line = builder.get_object("cb_show_guide_line")        
+        
+        # Used for generating the font sprite sheet
+        self.preview_sprite_sheet = \
+            GenerateSpriteSheet(
+                rects=self.rects,
+                x_offset=self.x_offset,
+                y_offset=self.y_offset,
+                canvas_generated_image=self.canvas_generated,
+                lbl_letter_dimensions=self.lbl_letter_dimensions,
+                btn_save_as=self.btn_save_as, 
+                v_manual_height_increase=self.v_manual_height_increase,
+                v_show_guide_line=self.v_show_guide_line,
+                cb_show_guide_line=self.cb_show_guide_line, 
+                btn_up=self.btn_up, 
+                btn_down=self.btn_down)
+        
+        # Called when the preview canvas widget's scrollregion needs
+        # to be re-evaluated (ie: when a new image is generated)
+        self.mainwindow.bind("<<RefreshPreviewScrollRegion>>",
+                             self.preview_sprite_sheet.refresh_scrollregion)
+
+        # Bind the arrow buttons for moving the guide line.
+        
+        
+        # Down button arrow image
+        self.btn_down.down_arrow_photo_image =\
+            tk.PhotoImage(data=editor_window.Icons.DOWN_ARROW_F.value)
+        self.btn_down.configure(image=self.btn_down.down_arrow_photo_image)
+        
+        # Mouse click bindings (press down, release)
+        # While pressing down, it does not repeatedly run the event.
+        # It just runs one-time, which is why we use an after timer
+        # in the methods that they call.
+        self.btn_down.bind("<ButtonPress>",
+                         self.preview_sprite_sheet.on_down_button_pressed)
+        self.btn_down.bind("<ButtonRelease>",
+                         self.preview_sprite_sheet.on_move_button_released)
+        
+        
+        # Up button arrow image
+        self.btn_up.up_arrow_photo_image =\
+            tk.PhotoImage(data=editor_window.Icons.UP_ARROW_16_F.value)
+        self.btn_up.configure(image=self.btn_up.up_arrow_photo_image)        
+        
+        self.btn_up.bind("<ButtonPress>",
+                         self.preview_sprite_sheet.on_up_button_pressed)
+        self.btn_up.bind("<ButtonRelease>",
+                         self.preview_sprite_sheet.on_move_button_released)
+        
+        
+        # Keyboard key bindings
+        
+        # A key press/hold on the keyboard will repeat the key for as long
+        # as the key is held down, so we don't need to use an 'after' timer
+        # unlike mouse-down on the up button.
+        self.on_up_button_pressed_no_timer = \
+            partial(self.preview_sprite_sheet.on_up_button_pressed,
+                    no_after_timer=True)
+        
+        # The 'w' key will be used to move the line up.
+        self.mainwindow.bind("<w>",
+                            self.on_up_button_pressed_no_timer)
+        
+        # A key press/hold on the keyboard will repeat the key for as long
+        # as the key is held down, so we don't need to use an 'after' timer
+        # unlike mouse-down on the down button.        
+        self.on_down_button_pressed_no_timer =\
+            partial(self.preview_sprite_sheet.on_down_button_pressed,
+                    no_after_timer=True)        
+        
+        # The 's' key will be used to move the line down.
+        self.mainwindow.bind("<s>",
+                            self.on_down_button_pressed_no_timer)
+        
+        # Releasing a key on the keyboard should stop the line movement,
+        # regardless of the direction the line is moving (up or down).
+        self.mainwindow.bind("<KeyRelease>",
+                            self.preview_sprite_sheet.on_move_button_released)
+
+        # Initialize the up and down arrow keys for the guide line
+        # to disabled.
+        self.btn_down.state(["disabled"])
+        self.btn_up.state(["disabled"])
+        
+        # Disable the 'Show guide line' checkbutton until a
+        # font sprite sheet has been generated.
+        self.cb_show_guide_line.state(["disabled"])
+        
         # Debug
         # self.show_image(debug_path)
 
@@ -662,7 +1049,7 @@ class TraceToolApp:
         if self.v_dark_background.get():
             self.canvas_main.configure(background="#111319")
         else:
-            self.canvas_main.configure(background="#ccd9cc")
+            self.canvas_main.configure(background="#e9e3e1")
             
 
     def on_load_trace_clicked(self):
@@ -777,6 +1164,7 @@ class TraceToolApp:
 
         self.v_manual_height_increase.set(loaded_manual_height_increase)
 
+
         """
         Now that we have a list of RectObject rects, draw the rectangles.
         """
@@ -794,6 +1182,9 @@ class TraceToolApp:
                     outline=self.get_deselect_outline_color())
 
             self.rects[iid] = rect_object
+            
+        # Generate a new sprite sheet
+        self.mainwindow.event_generate("<<GenerateSpritesheet>>")        
 
     def on_save_trace_clicked(self):
         """
@@ -1038,16 +1429,11 @@ class TraceToolApp:
         # Create the first empty square box (the space-character box)
         self._create_space_letter_box()
         
-        generated_sprite_sheet = \
-            GenerateSpriteSheet(
-                rects=self.rects,
-                source_letter_image=self.img,
-                x_offset=self.x_offset,
-                y_offset=self.y_offset,
-                canvas_generated_image=self.canvas_generated,
-                lbl_letter_dimensions=self.lbl_letter_dimensions,
-                btn_save_as=self.btn_save_as, 
-                v_manual_height_increase=self.v_manual_height_increase)        
+        # Generate a preview from the loaded source image.
+        # The source image is the image that we're going to crop letters from.
+        self.preview_sprite_sheet.generate_sprite_sheet(source_img=self.img)
+    
+     
 
     def _create_space_letter_box(self):
         """
@@ -1560,7 +1946,7 @@ class TraceToolApp:
                 # If so, that means the letter is touching the right of the image,
                 # so technically there likely is no transparent right.
                 # We can stop here since we're already at the right of the image.
-                print(self.img.width)
+                # print(self.img.width)
                 if x1 == self.img.width:
                     break            
             
@@ -1573,7 +1959,7 @@ class TraceToolApp:
                 elif direction in (Direction.LEFT, Direction.RIGHT):
                     pixel = self.img.getpixel((move_x, i))
 
-                print(pixel)
+                # print(pixel)
 
                 # Is the pixel non-transparent?
                 if pixel[3] > 0:
