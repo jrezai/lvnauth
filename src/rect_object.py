@@ -32,6 +32,7 @@ class RectObject:
     
     - line_number: the line number the rect is on. We use the line numbers
     to figure out what the longest (max height) of a letter box needs to be.
+    We'll default new rectangles to line 1.
     
     - use_manual_top: a bool variable used for knowing whether we need
     to set the top manually with a value that the user has set or whether
@@ -45,7 +46,7 @@ class RectObject:
     """
     def __init__(self,
                  coordinates: Tuple,
-                 line_number: int = 0,
+                 line_number: int = 1,
                  use_manual_top: bool = False,
                  fixed_position: str = "top",
                  top_value: int = 0):
