@@ -134,8 +134,16 @@ class FontSpriteWindow:
         
         self.main_canvas = builder.get_object("main_canvas")
         
-        self.treeview_trim: ttk.Treeview = builder.get_object("treeview_trim")
-        self.frame_cutoff_buttons: ttk.Frame = builder.get_object("frame_cutoff_buttons")
+        self.treeview_trim: ttk.Treeview =\
+            builder.get_object("treeview_trim")
+        
+        self.frame_cutoff_buttons: ttk.Frame =\
+            builder.get_object("frame_cutoff_buttons")
+        
+        # So we can disable option widgets if the user hasn't
+        # clicked on Split yet.
+        self.frame_options: ttk.Frame = \
+            builder.get_object("frame_options")
 
         self.sb_v: ttk.Scrollbar
         self.sb_h: ttk.Scrollbar
@@ -159,7 +167,16 @@ class FontSpriteWindow:
         self.main_canvas.configure(xscrollcommand=self.sb_h.set)
         self.sb_h.configure(command=self.main_canvas.xview)
 
+        # Set the Tk variables from the font sprite details
         self._set_variables()
+        
+        # The initial width/height when the window was first loaded.
+        # We use this to know whether the values have changed when the 'OK'
+        # button is clicked. Then we check whether a font sprite sheet
+        # has been split (loaded) or not, to let the user know that the new
+        # values won't be saved until a font sprite sheet is loaded (split).
+        self.width_initial = self.v_width.get()
+        self.height_initial = self.v_height.get()
 
         # When the individual sprite objects are added to the canvas widget
         # using .create_window(), a unique ID is returned & added to this list.
@@ -218,6 +235,11 @@ class FontSpriteWindow:
 
         # Disable or enable the buttons, 'Add, Edit, Remove'
         for w in self.frame_cutoff_buttons.winfo_children():
+            w.state(state_value)
+        
+        # Disable or enable option-related widgets, such as
+        # 'Trim whitespace' and padding spinboxes.
+        for w in self.frame_options.winfo_children():
             w.state(state_value)
         
     def _populate_treeview_trim_values(self):
@@ -786,7 +808,7 @@ class FontSpriteWindow:
         
         Then get the rect sizes of the images and the kerning values
         and save them to the font's properties.
-        """
+        """       
 
         try:
             width = self.v_width.get()
@@ -794,6 +816,23 @@ class FontSpriteWindow:
             padding_letters = self.v_padding_letters.get()
             padding_lines = self.v_padding_lines.get()
             detect_letter_edges = self.v_detect_letter_edges.get()
+            
+            # Has the width/height been changed by the user?
+            height_width_changed =\
+                self.width_initial != width or self.height_initial != height
+        
+            # Prompt user to click 'Split' if dimensions changed 
+            # but sprites haven't been generated in the canvas widget.
+            if height_width_changed:
+                
+                # No sprite letters showing? Let the user know.
+                if not self.canvas_window_ids:
+                    messagebox.showwarning(
+                        parent=self.window,
+                        title="No Letter Sprites.",
+                        message=f"There are no letter sprites loaded.\n\n" \
+                        "Click on the 'Split' button to generate letter sprites.")
+                    return                
 
         except tk.TclError:
             messagebox.showwarning(parent=self.window,
@@ -805,7 +844,8 @@ class FontSpriteWindow:
         
                 
 
-        font_properties = FontSprite(width=width, height=height,
+        font_properties = FontSprite(width=width,
+                                     height=height,
                                      padding_letters=padding_letters,
                                      padding_lines=padding_lines,
                                      detect_letter_edges=detect_letter_edges)
@@ -871,6 +911,18 @@ class FontSpriteWindow:
             final_letters.append(letter)
             final_rects.append(rect)
             final_kerning_rules.append(trim_values)
+            
+        # If none of the letter sprites have letters assigned to the sprites
+        # (final_rects) *and* the font sprite sheet has been split
+        # (canvas_window_ids), let the user know.
+        if not final_rects and self.canvas_window_ids:
+            messagebox.showwarning(
+                parent=self.window,
+                title="Empty Letter Sprites.",
+                message=f"None of the sprites have a key or letter assigned.\n\n" \
+                "Assign at least one key or letter to a sprite.")
+            return            
+            
 
         # Add the letters to the properties dictionary,
         # including the crop size and any kerning rules.
