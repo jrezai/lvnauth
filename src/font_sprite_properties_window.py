@@ -325,6 +325,48 @@ class FontSpriteWindow:
                                           str(left_trim),
                                           str(right_trim)))
 
+    def letter_assigned_to_sprite_in_canvas(self, letter: str) -> bool:
+        """
+        Return whether the given letter is associated with a sprite
+        in the canvas widget.
+        
+        Purpose: when a new kerning rule is added for a letter, that letter
+        has to be associated with a letter sprite in the canvas widget.
+        Otherwise, the kerning rule for that letter won't be saved.
+        We use this method to be able to notify the user if the letter
+        is not assigned to a letter sprite in the canvas widget.
+        
+        Return: True if the given letter is associated with a letter sprite
+        in the canvas widget. Otherwise, return False.
+        
+        Arguments:
+        
+        - letter: a single string character
+        """
+        
+        # Enumerate through the inputted letters in the canvas widget
+        # and look for the given letter.
+        for window_id in self.canvas_window_ids:
+
+            # Get the widget name (str)
+            individual_sprite: str =\
+                self.main_canvas.itemcget(window_id,
+                                          "window")
+
+            # Get the object from the name
+            individual_sprite: IndividualSprite
+            individual_sprite = \
+                self.main_canvas.nametowidget(individual_sprite)
+
+            # Does the entry widget in the canvas widget contain
+            # a letter that's the same letter that we're looking for?
+            canvas_letter = individual_sprite.get_text()
+            if canvas_letter == letter:
+                # Yes, the letter is assigned to a letter sprite.
+                return True
+            
+        return False
+
     def previous_letter_rule_exists(
             self,
             letter: str,
@@ -483,14 +525,16 @@ class FontSpriteWindow:
         check_previous_letter = False
         
         while keep_asking:
-            trim_window = InputTrimValuesWindow(master=self.window,
-                                                _from=-letter_width,
-                                                _to=letter_width,
-                                                prefill_previous_letters=previous_letters,
-                                                prefill_check_previous_letter=check_previous_letter,
-                                                prefill_left_value=left,
-                                                prefill_right_value=right,
-                                                prefill_letter_value=letter)
+            trim_window =\
+                InputTrimValuesWindow(master=self.window,
+                                      check_letter_assigned_to_sprite_method=self.letter_assigned_to_sprite_in_canvas, 
+                                      _from=-letter_width,
+                                      _to=letter_width,
+                                      prefill_previous_letters=previous_letters,
+                                      prefill_check_previous_letter=check_previous_letter,
+                                      prefill_left_value=left,
+                                      prefill_right_value=right,
+                                      prefill_letter_value=letter)
 
             letter = trim_window.user_input_letter
             left = trim_window.user_input_left
@@ -723,15 +767,18 @@ class FontSpriteWindow:
         keep_asking = True
 
         while keep_asking:
-            trim_window = InputTrimValuesWindow(master=self.window,
-                                                _from=-letter_width,
-                                                _to=letter_width,
-                                                prefill_left_value=left,
-                                                prefill_right_value=right,
-                                                prefill_letter_value=letter,
-                                                prefill_previous_letters=previous_letters,
-                                                prefill_check_previous_letter=check_previous_letters,
-                                                edit_mode=True)
+            trim_window =\
+                InputTrimValuesWindow(
+                    master=self.window,
+                    check_letter_assigned_to_sprite_method=self.letter_assigned_to_sprite_in_canvas, 
+                    _from=-letter_width,
+                    _to=letter_width,
+                    prefill_left_value=left,
+                    prefill_right_value=right,
+                    prefill_letter_value=letter,
+                    prefill_previous_letters=previous_letters,
+                    prefill_check_previous_letter=check_previous_letters,
+                    edit_mode=True)
 
             new_previous_letters = trim_window.user_input_previous_letters
             check_previous_letters = trim_window.user_input_check_previous_letter
@@ -842,7 +889,28 @@ class FontSpriteWindow:
                                    " make sure they are actual numbers.")
             return
         
+        # Enumerate through the kerning rule letters to make sure
+        # the letters are assigned to a sprite. If they're not assigned
+        # to a sprite, the kerning rules for that letter will not be saved,
+        # so the user needs to be warned before continuing.
+
+        # Enumerate over all parent (root) item iids.
+        for item_iid in self.treeview_trim.get_children():
+
+            # Get the text of the tree column (the first column)
+            item_text = self.treeview_trim.item(item_iid).get("text")
+            
+            if not self.letter_assigned_to_sprite_in_canvas(letter=item_text):
+                title = "Letter Sprite"
+                msg = f"Warning: the letter or key '{item_text}' has no sprite assigned to it.\n\n" \
+                    "The kerning rules for this letter or key will be deleted."
                 
+                result = messagebox.askokcancel(parent=self.window,
+                                          title=title,
+                                          message=msg)
+
+                if not result:
+                    return
 
         font_properties = FontSprite(width=width,
                                      height=height,

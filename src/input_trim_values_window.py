@@ -19,6 +19,8 @@ along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 
 import pathlib
 import pygubu
+from tkinter import messagebox
+
 
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "input_trim_values_window.ui"
@@ -26,7 +28,8 @@ PROJECT_UI = PROJECT_PATH / "ui" / "input_trim_values_window.ui"
 
 class InputTrimValuesWindow:
     def __init__(self,
-                 master=None,
+                 master,
+                 check_letter_assigned_to_sprite_method, 
                  _from=0,
                  _to=100,
                  title="Input",
@@ -47,6 +50,13 @@ class InputTrimValuesWindow:
         self.user_input_letter = None
         self.user_input_previous_letters = None
         self.user_input_check_previous_letter = None
+        
+        # A method that's used for checking if the letter in the trim window
+        # is assigned to a letter sprite in the canvas widget or not.
+        # Purpose: if the letter is not assigned to a sprite, the user
+        # needs to know, because the kerning rule for this letter won't save.
+        self.check_letter_assigned_to_sprite_method =\
+            check_letter_assigned_to_sprite_method
 
         self._from = _from
         self._to = _to
@@ -145,6 +155,20 @@ class InputTrimValuesWindow:
         self.user_input_letter = self.v_letter.get()
         self.user_input_previous_letters = self.v_previous_letters.get()
         self.user_input_check_previous_letter = self.v_check_previous_letter.get()
+        
+        # If the letter is not assigned to a sprite, warn the user
+        # because the kerning rule won't be saved.
+        if not self.check_letter_assigned_to_sprite_method(
+            self.user_input_letter):
+            
+            title = "Letter Sprite"
+            msg = "Warning: This letter is not assigned to a sprite.\n\n" \
+                "The kerning rules for this letter will not be saved unless it is assigned to a sprite."
+        
+            messagebox.showwarning(parent=self.mainwindow,
+                                   title=title,
+                                   message=msg)
+        
         self.mainwindow.destroy()
 
     def on_cancel_button_clicked(self, event=None):
