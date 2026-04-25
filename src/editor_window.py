@@ -59,6 +59,7 @@ from edit_colors_window import EditColorsWindow
 from variable_editor_window import VariableEditorWindow
 from functools import partial
 from parameter_description import ParameterDescription
+from scroll_history import ScrollHistory
 
 
 
@@ -307,7 +308,8 @@ class EditorMainApp:
         Passer.editor = self
         Passer.chapter_scenes = ChapterSceneManager(self.treeview_scripts,
                                                     self.treeview_reusables,
-                                                    self.blue_dot_image)
+                                                    self.blue_dot_image,
+                                                    self.text_script)
         Passer.file_manager = FileManager()
 
         self.treeview_reusables.bind("<<TreeviewSelect>>", Passer.chapter_scenes.on_reusables_treeview_item_selected)
@@ -1941,11 +1943,15 @@ class ChapterSceneManager:
     - blue_dot_image: image of a regular blue dot. We need this
     to restore the blue dot in the reusables treeview,
     after a reusable script is no longer being edited.
+    
+    - text_widget: the primary text widget. We need this reference to save
+    and restore the scroll positions.
     """
     def __init__(self,
                  treeview_widget,
                  treeview_reusables, 
-                 blue_dot_image):
+                 blue_dot_image,
+                 text_widget: tk.Text):
 
         # Main scripts treeview widget
         self.treeview_widget: ttk.Treeview = treeview_widget
@@ -1965,6 +1971,10 @@ class ChapterSceneManager:
         self.lbl_title = Passer.editor.builder.get_object("lbl_title")
         self.btn_save_script = Passer.editor.builder.get_object("btn_save_script")
         self.btn_cancel_script = Passer.editor.builder.get_object("btn_cancel_script")
+
+        # Used for saving and restoring the scrollbar positions, including
+        # the cursor position.
+        self.scroll_history = ScrollHistory(text_widget=text_widget)
 
         # This will hold the name of the active script.
         # It will be a tuple (chapter name, scene name)
@@ -2069,10 +2079,14 @@ class ChapterSceneManager:
         # Make sure the main text widget is enabled because
         # we have a script selected now.
         Passer.editor.text_script.configure(state="normal")
+        
+        # Save the scroll and cursor positions, before moving away
+        # from the current script.
+        self.save_scroll_cursor_positions(active_script_name=self.active_script)        
 
         # Show the script in the text widget.
         self.show_reusable_script(reusable_script_name=selected_item_text)
-
+        
         edit_icon = PhotoImage(data=Icons.EDIT_24_F.value)
 
         # The selected reusable script should have a pencil icon
@@ -2097,6 +2111,11 @@ class ChapterSceneManager:
         # just the reusable script name, if it's a reusable script.
         self.active_script = selected_item_text
         
+        # Restore the scroll and cursor positions of the newly populated
+        # script, in the text widget.
+        self.restore_scroll_cursor_positions(
+            active_script_name=self.active_script)
+        
         # Change the last-selected item's icon from a pencil/edit icon
         # to a blue dot, if the item being selected isn't the same as 
         # the last selected item (we could be forcably selecting the
@@ -2112,6 +2131,80 @@ class ChapterSceneManager:
         # Record the current selected item iid, so we can change the row's
         # icon to a blue dot once the user clicks away from it.
         self.treeview_reusables.last_selected_item_iid = selected_item
+
+    def restore_scroll_cursor_positions(self, active_script_name: str|tuple|None):
+        """
+        Restore the historical scroll and cursor positions of the given
+        script name, if available. This method should run *after* the
+        destination script has been populated in the main text widget.
+        
+        Arguments:
+        
+        - active_script_name: the name of the chapter or scene or reusable
+        script to get the scroll and cursor positions for. This is the
+        script that the user is moving *to*.
+        
+        If it's a chapter and/or scene, this variable will be a tuple.
+        The first index will be the chapter and the second index will be
+        the scene (if any). If it's a reusable script, this variable will
+        be a string.
+        """
+        # A reusable script is a string.
+        if isinstance(active_script_name, str):
+            
+            # Restore the reusable script scroll and cursor positions.
+            self.scroll_history.\
+                restore_scroll_data_reusable(
+                    reusable_script_name=active_script_name)
+
+        # A chapter and scene is a tuple
+        # Index 0 is the chapter, Index 1 is the scene
+        elif isinstance(active_script_name, tuple):
+            
+            # Restore the chapter or scene scroll and cursor positions.
+            self.scroll_history.restore_scroll_data_chapter_scene(
+                    dest_chapter_name=active_script_name[0],
+                    dest_scene_name=active_script_name[1])   
+
+    def save_scroll_cursor_positions(self, active_script_name: str|tuple|None):
+        """
+        Save the scroll and cursor positions, before they change
+        to the newly selected item.
+        
+        This method should be run *before* the active script is changed
+        to the destination script.
+        
+        Arguments:
+        
+        - active_script_name: the name of the chapter or scene or reusable
+        script to save the scroll and cursor positions for. This is the
+        script that the user is moving *away* from.
+        
+        If it's a chapter and/or scene, this variable will be a tuple.
+        The first index will be the chapter and the second index will be
+        the scene (if any). If it's a reusable script, this variable will
+        be a string.
+        """
+        
+        if active_script_name:
+            
+            # A reusable script is a string.
+            if isinstance(active_script_name, str):
+                
+                # Save Reusable script scroll and cursor positions.
+                self.scroll_history.\
+                    save_scroll_data_reusable(
+                        reusable_script_name=active_script_name)
+                
+            # A chapter and scene is a tuple
+            # Index 0 is the chapter, Index 1 is the scene
+            elif isinstance(active_script_name, tuple):
+                
+                # Save the chapter or scene scroll and cursor positions.
+                self.scroll_history.\
+                    save_scroll_data_chapter_scene(
+                        source_chapter_name=active_script_name[0],
+                        source_scene_name=active_script_name[1])         
 
     def enable_cancel_changes_button(self):
         """
@@ -2611,6 +2704,10 @@ class ChapterSceneManager:
         chapter_script = ProjectSnapshot.get_chapter_script(chapter_name)
 
         self.lbl_title.configure(text=f"{chapter_name} [Chapter]")
+        
+        # Save the current scroll position and cursor position *before*
+        # moving away from the current script.
+        self.save_scroll_cursor_positions(active_script_name=self.active_script)
 
         # Set the type of script that is currently active so we know.
         # None means there is no scene
@@ -2620,6 +2717,11 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", chapter_script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
+        
+        # Restore the scroll position and cursor position of the newly
+        # populated script.
+        self.restore_scroll_cursor_positions(
+            active_script_name=self.active_script)        
         
         # A chapter script has been clicked on, so hide the
         # parameter description frame, because the caret has moved.        
@@ -2648,6 +2750,10 @@ class ChapterSceneManager:
             scene_heading = "Scene"
 
         self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [{scene_heading}]")
+        
+        # Save the current scroll position and cursor position *before*
+        # moving away from the current script.
+        self.save_scroll_cursor_positions(active_script_name=self.active_script)        
 
         # Set the type of script that is currently active so we know.
         self.active_script = (chapter_name, scene_name)
@@ -2656,6 +2762,11 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", scene_script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
+        
+        # Restore the scroll position and cursor position of the newly
+        # populated script.
+        self.restore_scroll_cursor_positions(
+            active_script_name=self.active_script)
         
         # A scene script has been clicked on, so hide the
         # parameter description frame, because the caret has moved.        
