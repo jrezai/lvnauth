@@ -879,6 +879,10 @@ class EditorMainApp:
         
         if delete_chapter:
             del ProjectSnapshot.chapters_and_scenes[chapter_text]
+            
+            # Delete the scroll history for the chapter that was just deleted.
+            Passer.chapter_scenes.scroll_history.\
+                delete_chapter_scroll_history(chapter_name=chapter_text)      
         
         else:
             # Deleting a scene in a chapter
@@ -891,6 +895,11 @@ class EditorMainApp:
             
             # Delete the specific scene from the scenes dictionary
             del scenes_dict[scene_text]
+            
+            # Delete the scroll history for the scene that was just deleted.
+            Passer.chapter_scenes.scroll_history.\
+                delete_scene_scroll_history(chapter_name=chapter_text,
+                                            scene_name=scene_text)
             
             """
             ProjectSnapshot.chapters_and_scenes will get updated
@@ -1027,6 +1036,11 @@ class EditorMainApp:
             # Delete the reusable script from the reusables dictionary.
             if item_text in ProjectSnapshot.reusables:
                 del ProjectSnapshot.reusables[item_text]
+                
+                # Remove the scroll history for the reusable script, if any.
+                Passer.chapter_scenes.scroll_history.\
+                    delete_reusable_scroll_history(
+                        reusable_script_name=item_text)
 
         # Delete the selected item from the reusables dictionary.
         # If it's a folder, the sub-items will be removed from the treeview too.
@@ -2674,14 +2688,65 @@ class ChapterSceneManager:
                     edit_item_original_text]
                 del ProjectSnapshot.chapters_and_scenes[edit_item_original_text]
 
+                rename_scene = False
+                rename_chapter = True
+
+
+
             else:
+                
                 # Update scene dictionary
                 scenes_dict[input_window.user_input] = scenes_dict[edit_item_original_text]
                 del scenes_dict[edit_item_original_text]
+                
+                rename_scene = True
+                rename_chapter = False
 
             # Invoke the selection event of the currently selected treeview item
             # so the title gets ttk label gets updated with the new name.
             self.on_treeview_item_selected(None)
+            
+            if rename_chapter:
+                # Rename the old chapter name's scroll history, if there.
+                old_chapter_name = edit_item_original_text
+                new_chapter_name = input_window.user_input
+                self.scroll_history.\
+                    rename_chapter_name_scroll_data(
+                        old_chapter_name=old_chapter_name,
+                        new_chapter_new=new_chapter_name)
+                
+                # Now that the chapter has been renamed, the text widget
+                # has been reloaded, so restore the scroll position.
+                self.scroll_history.\
+                    restore_scroll_data_chapter_scene(
+                        dest_chapter_name=new_chapter_name,
+                        dest_scene_name=None)
+                
+            elif rename_scene:
+                
+                ## Delete the old scene name's scroll history, if there.
+                #chapter_name = self.active_script[0]
+                #old_scene_name = edit_item_original_text
+                #self.scroll_history.\
+                    #delete_scene_scroll_history(chapter_name=chapter_name,
+                                                #scene_name=old_scene_name)            
+
+                # Rename the old scene name's scroll history, if there.
+                chapter_name = self.active_script[0]
+                old_scene_name = edit_item_original_text
+                new_scene_name = input_window.user_input
+                self.scroll_history.\
+                    rename_scene_name_scroll_data(chapter_name=chapter_name,
+                                                  old_scene_name=old_scene_name,
+                                                  new_scene_name=new_scene_name)
+                
+                # Now that the scene has been renamed, the text widget
+                # has been reloaded, so restore the scroll position.
+                self.scroll_history.\
+                    restore_scroll_data_chapter_scene(
+                        dest_chapter_name=chapter_name,
+                        dest_scene_name=new_scene_name)
+
 
         # Update the status bar to show that the project needs to be saved.
         self.treeview_widget.event_generate("<<SaveNeeded>>")
@@ -3752,6 +3817,21 @@ class FileManager:
         # new name shows up at the top.
         Passer.chapter_scenes.on_reusables_treeview_item_selected()
         
+        if section == SectionChosen.REUSABLES:
+            
+            # Rename the old reusable script's scroll history.
+            old_reusable_name = original_text
+            new_reusable_name = user_input.user_input
+            Passer.chapter_scenes.scroll_history.\
+                rename_reusable_name_scroll_data(
+                    old_reusable_name=old_reusable_name,
+                    new_reusable_name=new_reusable_name)
+            
+            # The renamed reusable script has been reloaded in the text
+            # widget, so restore its scroll and cursor positions.
+            Passer.chapter_scenes.scroll_history.\
+                restore_scroll_data_reusable(
+                    reusable_script_name=new_reusable_name)
                 
     @staticmethod
     def validate_name(name: str) -> bool:

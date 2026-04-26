@@ -18,7 +18,7 @@ along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 import tkinter as tk
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 
 
@@ -34,7 +34,7 @@ class ScrollPosition:
 
 class ScrollHistory:
     """
-    Save and restore the scrollbar position in a text widget.
+    Save and restore the scrollbar and cursor positions in a text widget.
     
     The scrollbar position saving does not occur on the file system,
     it's just during runtime.
@@ -54,7 +54,170 @@ class ScrollHistory:
         # Scroll positions for reusable scripts
         # Key: reusuable script name (case-sensitive)
         # Value: ScrollPosition object
+        # { reusable script name: ScrollPosition object }
         self.scroll_positions_reusables = {}
+        
+    def rename_chapter_name_scroll_data(self,
+                                        old_chapter_name: str,
+                                        new_chapter_new: str):
+        """
+        Find the old chapter name in the scroll history and rename it.
+
+        This gets used when the user renames a chapter in the editor.
+        We need to also make sure the scroll history for that chapter
+        references the new chapter name.
+
+        Arguments:
+
+        - old_chapter_name: the previous name of the chapter, case-sensitive.
+
+        - new_chapter_new: the new name of the chapter, case-sensitive.
+
+        This is what the historical scroll data dictionary looks like:
+        { chapter_name: [scroll_data, {scene_name: scroll_data}] }
+        """
+
+        # Make sure the scroll history exists for the old name.
+        if old_chapter_name in self.scroll_positions:
+
+            # .pop() will return the value *and* delete the key.
+            # We're creating a new key (new chapter name) with the old value.
+            self.scroll_positions[new_chapter_new] =\
+                self.scroll_positions.pop(old_chapter_name)
+        
+    def rename_scene_name_scroll_data(self,
+                                      chapter_name: str,
+                                      old_scene_name: str,
+                                      new_scene_name: str):
+        """
+        Find the old scene name in the scroll history and rename it.
+
+        This gets used when the user renames a scene in the editor.
+        We need to also make sure the scroll history for that scene
+        references the new scene name.
+
+        Arguments:
+
+        - chapter_name: the chapter that the scene is in.
+
+        - old_scene_name: the previous name of the scene, case-sensitive
+
+        - new_scene_name: the new name of the scene, case-sensitive.
+
+        This is what the historical scroll data dictionary looks like:
+        { chapter_name: [scroll_data, {scene_name: scroll_data}] }
+        """
+
+        # Make sure scroll history exists for the given chapter.
+        value = self.scroll_positions.get(chapter_name)
+        if not value:
+            return
+
+        # Get the scroll history for the 
+        scene_scroll_history: Dict
+        scene_scroll_history = value[1]
+
+        # Find the old scene name in the scene scroll history
+        if old_scene_name in scene_scroll_history:
+
+            # .pop() will return the value *and* delete the key.
+            # We're creating a new key (new scene name) with the old value.            
+            scene_scroll_history[new_scene_name] =\
+                scene_scroll_history.pop(old_scene_name)
+        
+    def rename_reusable_name_scroll_data(self,
+                                         old_reusable_name: str,
+                                         new_reusable_name: str):
+        """
+        Find the old reusable name in the scroll history and rename it.
+
+        This gets used when the user renames a reusable script in the editor.
+        We need to also make sure the scroll history for that reusable script
+        references the new reusable script name.
+
+        Arguments:
+
+        - old_reusable_name: the previous name of the reusable script,
+        case-sensitive.
+
+        - new_reusable_name: the new name of the reusable script,
+        case-sensitive.
+
+        This is what the historical scroll data dictionary looks like:
+        # { reusable script name: ScrollPosition object }
+        """
+
+        # Make sure the scroll history exists for the old name.
+        if old_reusable_name in self.scroll_positions_reusables:
+
+            # .pop() will return the value *and* delete the key.
+            # We're creating a new key (new reusable script name) with 
+            # the old value.
+            self.scroll_positions_reusables[new_reusable_name] =\
+                self.scroll_positions_reusables.pop(old_reusable_name)
+        
+    def delete_chapter_scroll_history(self, chapter_name: str):
+        """
+        Delete the scroll history of a given chapter name.
+        
+        This is used when a chapter name is renamed or deleted.
+        
+        Arguments:
+        
+        - chapter_name: the chapter name that should have its scroll
+        history deleted. This is case-sensitive.
+        
+        If the chapter has no scroll history, no error will occur.
+        
+        This is what a scroll history dictionary looks like:
+        # { chapter_name: [scroll_data, {scene_name: scroll_data}] }
+        """
+        if chapter_name in self.scroll_positions:
+            del self.scroll_positions[chapter_name]
+            
+    def delete_scene_scroll_history(self, chapter_name: str, scene_name: str):
+        """
+        Delete the scroll history of a given scene name.
+        
+        This is used when a scene name is renamed or deleted.
+        
+        Arguments:
+        
+        - chapter_name: a scene is always part of a chapter. This is the
+        name of the chapter that the scene is in. Case-sensitive.
+        
+        - scene_name: the scene name to delete the scroll history for.
+        This is case-sensitive.
+        
+        If the scene has no scroll history, no error will occur.
+        
+        This is what a scroll history dictionary looks like:
+        { chapter_name: [scroll_data, {scene_name: scroll_data}] }
+        """
+        value = self.scroll_positions.get(chapter_name)
+        if value:
+            scenes_dict = value[1]
+            if scene_name in scenes_dict:
+                del scenes_dict[scene_name]
+        
+    def delete_reusable_scroll_history(self, reusable_script_name: str):
+        """
+        Delete the scroll history of a given reusable script.
+        
+        This is used when a reusable script is renamed or deleted.
+        
+        Arguments:
+        
+        - reusable_script_name: the name of the reusable script that should
+        should have its scroll history deleted. This is case-sensitive.
+        
+        If the reusable name has no scroll history, no error will occur.
+        
+        This is what a scroll history dictionary looks like:
+        { reusable script name: ScrollPosition object }
+        """
+        if reusable_script_name in self.scroll_positions_reusables:
+            del self.scroll_positions_reusables[reusable_script_name]
         
     def save_scroll_data_chapter_scene(self,
                                        source_chapter_name: str,
