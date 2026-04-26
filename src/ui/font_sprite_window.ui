@@ -138,8 +138,6 @@
                 </layout>
                 <containerlayout manager="grid">
                   <property type="col" id="0" name="weight">1</property>
-                  <property type="row" id="0" name="weight">1</property>
-                  <property type="row" id="1" name="weight">1</property>
                 </containerlayout>
                 <child>
                   <object class="ttk.Frame" id="frame_size" named="True">
@@ -210,12 +208,13 @@
                   </object>
                 </child>
                 <child>
-                  <object class="ttk.Frame" id="frame7" named="True">
+                  <object class="ttk.Frame" id="frame_options" named="True">
                     <property name="height">200</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
                       <property name="padx">10</property>
+                      <property name="pady">20</property>
                       <property name="row">1</property>
                       <property name="sticky">n</property>
                     </layout>
@@ -223,7 +222,7 @@
                       <property type="col" id="0" name="weight">1</property>
                     </containerlayout>
                     <child>
-                      <object class="ttk.Label" id="label6">
+                      <object class="ttk.Label" id="lbl_padding_letters_title" named="True">
                         <property name="text" translatable="yes">Padding between letters (pixels):</property>
                         <layout manager="grid">
                           <property name="column">0</property>
@@ -248,7 +247,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="ttk.Label" id="label7">
+                      <object class="ttk.Label" id="lbl_padding_lines_title" named="True">
                         <property name="text" translatable="yes">Padding between lines (pixels):</property>
                         <layout manager="grid">
                           <property name="column">0</property>
@@ -335,6 +334,7 @@
                     </containerlayout>
                     <child>
                       <object class="ttk.Treeview" id="treeview_trim" named="True">
+                        <property name="height">8</property>
                         <property name="selectmode">extended</property>
                         <layout manager="grid">
                           <property name="column">0</property>
