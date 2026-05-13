@@ -68,7 +68,8 @@ class GenerateSpriteSheet:
                  v_show_guide_line: tk.BooleanVar,
                  cb_show_guide_line: ttk.Checkbutton, 
                  btn_up: ttk.Button,
-                 btn_down: ttk.Button):
+                 btn_down: ttk.Button,
+                 v_dark_background: tk.BooleanVar):
 
         # Key: rectangle iid
         # Value: RectObject
@@ -106,6 +107,8 @@ class GenerateSpriteSheet:
         self.lbl_letter_dimensions = lbl_letter_dimensions
         self.btn_save_as = btn_save_as
         self.v_manual_height_increase = v_manual_height_increase
+        
+        self.v_dark_background = v_dark_background
 
         self.v_show_guide_line = v_show_guide_line
         self.v_show_guide_line.trace_add("write",
@@ -334,13 +337,17 @@ class GenerateSpriteSheet:
         # based on the up/down arrow movement.
         line_y_position = self.y_offset + self.guide_line_y
         
+        # The line color depends on the background of the canvas widget.
+        line_color = "green" if self.v_dark_background.get() else "black"        
+        
         # Create a line
         self.guide_line_iid =\
             self.canvas_generated_image.create_line(
                 self.x_offset,
                 line_y_position,
                 line_width,
-                line_y_position)           
+                line_y_position,
+                fill=line_color)           
 
     def get_max_sprite_sheet_width_height(self,
                                           rects: Dict,
@@ -956,7 +963,8 @@ class TraceToolApp:
                 v_show_guide_line=self.v_show_guide_line,
                 cb_show_guide_line=self.cb_show_guide_line, 
                 btn_up=self.btn_up, 
-                btn_down=self.btn_down)
+                btn_down=self.btn_down,
+                v_dark_background=self.v_dark_background)
         
         # Called when the preview canvas widget's scrollregion needs
         # to be re-evaluated (ie: when a new image is generated)
@@ -1048,8 +1056,10 @@ class TraceToolApp:
         """
         if self.v_dark_background.get():
             self.canvas_main.configure(background="#111319")
+            self.canvas_generated.configure(background="#111319")
         else:
             self.canvas_main.configure(background="#e9e3e1")
+            self.canvas_generated.configure(background="#e9e3e1")
             
 
     def on_load_trace_clicked(self):
