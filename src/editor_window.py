@@ -3116,6 +3116,10 @@ class OpenManager:
             # Get the story window size (width/height)
             ProjectSnapshot.story_window_size = tuple(self.dict_data["StoryWindowSize"])
             
+            # Start the visual novel full screen option
+            ProjectSnapshot.story_start_full_screen =\
+                self.dict_data.get("StoryStartFullScreen", False)
+            
             # Get the variable names and values of the visual novel.
             ProjectSnapshot.variables = self.dict_data.get("Variables")
             if ProjectSnapshot.variables is None:
@@ -3581,6 +3585,7 @@ class SaveManager:
 
         data = {"ProjectInfo": ProjectSnapshot.details,
                 "StoryWindowSize": ProjectSnapshot.story_window_size,
+                "StoryStartFullScreen": ProjectSnapshot.story_start_full_screen,
                 "LVNAuth-EditorVersion": ProjectSnapshot.EDITOR_VERSION,
                 "StartupScriptItemiid": Passer.editor.get_startup_scene_item_iid(),
                 "CharacterImages": character_images,

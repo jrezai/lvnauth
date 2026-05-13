@@ -309,6 +309,7 @@ class StoryCompiler:
 
             general_header["StoryInfo"] = ProjectSnapshot.details
             general_header["StoryWindowSize"] = ProjectSnapshot.story_window_size
+            general_header["StoryStartFullScreen"] = ProjectSnapshot.story_start_full_screen
             general_header["StoryEngineVersion"] = ProjectSnapshot.EDITOR_VERSION
             general_header["StoryCompileMode"] = compile_mode
 

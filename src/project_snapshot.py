@@ -36,6 +36,9 @@ class ProjectSnapshot:
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
+    
+    # Flag to indicate the visual novel should start full screen.
+    story_start_full_screen = False
 
     # Path to full save project file (.lvnap extension)
     save_full_path = None

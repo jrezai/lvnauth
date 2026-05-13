@@ -446,6 +446,30 @@
                             </layout>
                           </object>
                         </child>
+                        <child>
+                          <object class="ttk.Frame" id="frame12">
+                            <property name="height">200</property>
+                            <property name="width">200</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="columnspan">3</property>
+                              <property name="padx">4</property>
+                              <property name="pady">4</property>
+                              <property name="row">3</property>
+                              <property name="sticky">s</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.Checkbutton" id="cb_full_screen" named="True">
+                                <property name="text" translatable="yes">Start full screen (toggle with F11)</property>
+                                <property name="variable">boolean:v_full_screen</property>
+                                <layout manager="grid">
+                                  <property name="column">0</property>
+                                  <property name="row">0</property>
+                                </layout>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>

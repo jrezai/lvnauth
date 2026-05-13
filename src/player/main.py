@@ -195,6 +195,15 @@ class Main:
         # Get the story's requestes window size
         # in pixels (width, height)
         screen_size = tuple(data_requester.general_header.get("StoryWindowSize"))
+        
+        # Start full screen?
+        full_screen = data_requester.general_header.get("StoryStartFullScreen")
+        if full_screen:
+            # Full screen
+            pg_parameters = pygame.FULLSCREEN | pygame.SCALED | pygame.RESIZABLE
+        else:
+            # Window-mode
+            pg_parameters = pygame.SCALED | pygame.RESIZABLE
 
         # 'Draft' or 'Final'
         # To know whether to show the draft rectangle or not, and
@@ -236,7 +245,7 @@ class Main:
         pygame.display.set_icon(pygame.image.load(app_icon_path))
 
         # Create the main surface
-        main_surface = pygame.display.set_mode(screen_size)
+        main_surface = pygame.display.set_mode(screen_size, pg_parameters)
 
         main_surface.fill((0, 0, 0))
         
@@ -307,7 +316,7 @@ class Main:
                     return
     
                 elif event.type == pygame.KEYDOWN:
-                    self.on_key_down(event.key)
+                    self.on_key_down(event.key, event)
     
                 else:
                     story.on_event(event)
@@ -378,7 +387,7 @@ class Main:
         """
         msg.callback_method(msg)
 
-    def on_key_down(self, key_pressed):
+    def on_key_down(self, key_pressed, event: pygame.event):
         """
         Handle keyboard letter presses.
 
@@ -387,14 +396,33 @@ class Main:
         but only if the values have been changed.
         """
 
+
+        
+        # F11
+        if key_pressed == pygame.K_F11:
+            pygame.display.toggle_fullscreen()
+            
+        # ESC
+        elif key_pressed == pygame.K_ESCAPE:
+            if pygame.display.is_fullscreen():
+                pygame.display.toggle_fullscreen()
+                
+        # Alt + Enter
+        elif key_pressed == pygame.K_RETURN:
+            if event.mod & pygame.KMOD_ALT:
+                pygame.display.toggle_fullscreen()        
+
+
         # The following key presses only apply to draft-mode.
         if not Passer.active_story.draft_mode:
             return
 
+        # h key
         if key_pressed == pygame.K_h:
             # Toggle the visibility of the draft rectangle.
             Passer.active_story.draft_rectangle.toggle_visibility()
 
+        # c key
         elif key_pressed == pygame.K_c:
             """
             Copy the visible sprite locations, as commands, to the clipboard.

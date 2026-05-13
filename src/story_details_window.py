@@ -109,6 +109,11 @@ class StoryDetailsWindow:
 
         # Get the story project's current window size
         width, height = ProjectSnapshot.story_window_size
+        
+        # Start the visual novel full screen option
+        self.v_full_screen: tk.BooleanVar
+        self.v_full_screen = builder.get_variable("v_full_screen")
+        self.v_full_screen.set(ProjectSnapshot.story_start_full_screen)
 
         # Show the story's window size in the spinbox widgets.
         self.sb_width.delete(0, "end")
@@ -355,6 +360,9 @@ class StoryDetailsWindow:
 
             # The window size appears OK, save it.
             ProjectSnapshot.story_window_size = (width, height)
+            
+            # Start the visual novel full screen?
+            ProjectSnapshot.story_start_full_screen = self.v_full_screen.get()
 
         # Set the full save path for a poster image.
         destination_poster_path = ProjectSnapshot.project_path / SubPaths.POSTER_IMAGE_PATH.value
