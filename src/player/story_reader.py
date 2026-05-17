@@ -1538,9 +1538,27 @@ class StoryReader:
             else:
                 class_type = cc.CallWithNoArguments
                 
-            call_class = self._get_arguments(class_namedtuple=class_type,
-                                             given_arguments=arguments,
-                                             num_of_fixed_groups=1)
+            """
+            unlimited_optional_arguments means if the call method has
+            arguments, aside from the reusable script name (which is 
+            required), then allow an unlimited number of arguments.
+            
+            For example: an unlimited number of arguments should be allowed
+            for this type of script:
+            <call: test, name=Rave>
+            or
+            <call: test, name=Rave, position=4>
+            
+            But if this script is used without optional arguments, let the
+            _get_arguments() method know that there are no optional arguments
+            <call: test>
+            """
+
+            call_class = self._get_arguments(
+                class_namedtuple=class_type,
+                given_arguments=arguments,
+                unlimited_optional_arguments=arguments.count(",") >= 1, 
+                num_of_fixed_groups=1)
             
             if class_type == cc.CallWithArguments:
                 arguments = call_class.arguments
@@ -6105,7 +6123,7 @@ class WaitForAnimationHandler:
             elif animation_type == "tint":
                 animation_type_to_check = sd.SpriteAnimationType.TINT
             elif animation_type == "all":
-                animation_type_to_check = ("all",)
+                animation_type_to_check = "all"
             elif animation_type == "any":
                 animation_type_to_check = "any"
             else:
