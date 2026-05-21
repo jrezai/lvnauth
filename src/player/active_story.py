@@ -188,6 +188,9 @@ class ActiveStory:
             
         elif content_type == ContentType.DIALOGUE_SPRITE:
             group_to_check = sd.Groups.dialog_group
+            
+        elif content_type == ContentType.BACKGROUND:
+            group_to_check = sd.Groups.background_group
 
         else:
             return

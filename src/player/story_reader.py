@@ -5534,12 +5534,25 @@ class StoryReader:
             file_reader.ContentType.CHARACTER,
             file_reader.ContentType.OBJECT,
             file_reader.ContentType.DIALOGUE_SPRITE,
+            file_reader.ContentType.BACKGROUND
         ):
+
+            # Backgrounds don't have aliases, just regular names.
+            if sprite_type == file_reader.ContentType.BACKGROUND:
+                alias = None
+                sprite_name = name.sprite_name
+            else:
+                # Not a background, so there is an alias. Use the alias
+                # instead of the sprite name when there is an alias.
+                alias = name.sprite_name
+                sprite_name = None
 
             # Get the visible sprite based on the general alias
             # Used for hiding characters and objects.
             existing_sprite = self.story.get_visible_sprite(
-                content_type=sprite_type, general_alias=name.sprite_name
+                content_type=sprite_type,
+                general_alias=alias,
+                sprite_name=sprite_name
             )
 
             if not existing_sprite:
