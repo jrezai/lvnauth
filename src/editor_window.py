@@ -60,6 +60,7 @@ from variable_editor_window import VariableEditorWindow
 from functools import partial
 from parameter_description import ParameterDescription
 from scroll_history import ScrollHistory
+from temp_handler import TempHandler, TempContentType
 
 
 
@@ -1759,6 +1760,10 @@ class EditorMainApp:
             if file_path.exists():
                 if file_path.is_file():
                     file_path.unlink()
+
+        # Clean-up any LVNAuth temp files that might be in the temporary 
+        # directory.
+        TempHandler.cleanup_temp_files(TempContentType.ALL)          
 
         # Close the editor window
         self.mainwindow.destroy()

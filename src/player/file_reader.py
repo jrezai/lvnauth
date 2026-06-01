@@ -21,7 +21,7 @@ from enum import Enum
 from io import BytesIO
 from pathlib import Path
 from re import search
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 #from font_handler import FontSprite
 import font_handler
 import json
@@ -152,9 +152,15 @@ class FileReader:
 
     def get_audio(self,
                   content_type: ContentType,
-                  item_name: str):
+                  item_name: str) -> Tuple[bytes, str]:
         """
-        Return the bytes of a specific audio, based on a given name.
+        Return the bytes of a specific audio, based on a given name,
+        along with the extension of the audio.
+        
+        Example: (bytes data.., ".ogg")
+        
+        The caller of this method needs the extension so that we can let
+        pygame know the hint of the extension.
         """
 
         # Audio names and byte ranges
@@ -178,7 +184,7 @@ class FileReader:
                 bytes_audio =\
                     self.view[data_range.from_bytes:data_range.to_bytes].tobytes()
 
-                return bytes_audio
+                return (bytes_audio, file_extension)
 
     def get_sprite(self,
                    content_type: ContentType,

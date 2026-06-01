@@ -451,13 +451,18 @@ class StoryReader:
             return
 
         # {chapter name: [chapter script, {scene name: scene script}] }
-        chapter_script = self.chapters_and_scenes.get(startup_chapter_name)
+        chapter_script = self.chapters_and_scenes.get(startup_chapter_name, "")
         if chapter_script:
             # Get just the chapter's script
             chapter_script = chapter_script[0]
         else:
             # Chapter not found
-            return
+            # We used a fallback value of an empty string "" so even if
+            # the chapter is not found, it won't return None because the caller
+            # of this method can't deal with None.
+            
+            # For logging
+            print("Startup chapter not found.")
 
         return chapter_script
 
@@ -474,9 +479,13 @@ class StoryReader:
             return
 
         # {chapter name: [chapter script, {scene name: scene script}] }
-        scene_script = self.chapters_and_scenes.get(startup_chapter_name)[1].get(
-            startup_scene_name
-        )
+        scene_script = self.chapters_and_scenes.get(startup_chapter_name, "")
+        if scene_script:
+            scene_script = scene_script[1].get(startup_scene_name, "")
+
+        # For logging.
+        if not scene_script:
+            print("Startup scene not found.")
 
         return scene_script
 
@@ -5036,11 +5045,14 @@ class StoryReader:
                 return
 
             audio_name = play_audio.audio_name
-
-        # Play the music or audio.
-        self.story.audio_player.play_audio(
-            audio_name=audio_name, audio_channel=audio_channel, loop_music=loop_music
-        )
+            
+        # Play the music or audio in the main story reader
+        # so if a reusable script closes, the audio doesn't get garbage
+        # collected.
+        self.get_main_story_reader().story.audio_player.\
+            play_audio(audio_name=audio_name,
+                       audio_channel=audio_channel,
+                       loop_music=loop_music)
 
     def _halt_auto(self, arguments: str):
         """
