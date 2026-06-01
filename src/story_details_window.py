@@ -56,6 +56,7 @@ class StoryDetailsWindow:
         self.entry_version = builder.get_object("entry_version")
         self.entry_episode = builder.get_object("entry_episode")
         self.txt_description = builder.get_object("txt_description")
+
         
         # Web related
         self.v_allow_web_access = builder.get_variable("v_allow_web_access")
@@ -141,7 +142,6 @@ class StoryDetailsWindow:
         # Show the current details to the user by populating the widgets.
         self._get_details()
         
-
         self.story_details_window.transient(self.master)
         self.story_details_window.grab_set()
 
@@ -217,9 +217,9 @@ class StoryDetailsWindow:
                     widget.set(bool(text_to_show))
 
                 elif widget.winfo_class() == "Text":
-                    widget.configure(state="normal")
+                    # widget.configure(state="normal")
                     widget.insert("1.0", text_to_show)
-                    widget.configure(state="disabled")
+                    # widget.configure(state="disabled")
                 else:
                     widget.insert(0, text_to_show)
                     
