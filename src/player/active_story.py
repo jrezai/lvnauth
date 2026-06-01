@@ -41,7 +41,8 @@ from camera_handler import Camera
 
 class ActiveStory:
     """
-    Holds loaded story data, such as sprites and chapter/scene scripts and names.
+    Holds loaded story data, such as sprites and chapter/scene
+    scripts and names.
     """
     
     def __init__(self,
