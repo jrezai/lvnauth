@@ -33,6 +33,8 @@ from web_handler import WebHandler, WebLicenseType, WebRequestPurpose
 from player_config_handler import PlayerConfigHandler
 from shared_components import Passer
 from response_code import ServerResponseReceipt, ServerResponseCode
+from temp_handler import TempHandler, TempContentType
+
 
 # We need to add the parent directory so
 # the container_handler module will be seen.
@@ -72,7 +74,13 @@ class LaunchWindow:
         - chapter_and_scene_names: a dict of chapter names and scene names.
         Example: {'My First Chapter': ['My First Scene', 'Second scene'],
                   'My second Chapter': ['My First Scene', 'Second scene']}
-        """     
+        """
+        
+        # Clean-up any LVNAuth temp files that might be in the temporary 
+        # directory. Under normal circumstances, there shouldn't be any
+        # unless LVNAuth quit unexpectedly and wasn't able to clean up the
+        # temp files.
+        TempHandler.cleanup_temp_files(TempContentType.ALL)
 
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
@@ -400,6 +408,10 @@ class LaunchWindow:
         the user has clicked the 'X' to close the launch window.
         """
         Passer.close_after_launch_window = True
+        
+        # Clean-up any LVNAuth temp files that might be in the temporary 
+        # directory.
+        TempHandler.cleanup_temp_files(TempContentType.ALL)        
         
         self.mainwindow.destroy()
 

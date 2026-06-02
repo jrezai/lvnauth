@@ -309,6 +309,7 @@ class StoryCompiler:
 
             general_header["StoryInfo"] = ProjectSnapshot.details
             general_header["StoryWindowSize"] = ProjectSnapshot.story_window_size
+            general_header["StoryStartFullScreen"] = ProjectSnapshot.story_start_full_screen
             general_header["StoryEngineVersion"] = ProjectSnapshot.EDITOR_VERSION
             general_header["StoryCompileMode"] = compile_mode
 
@@ -517,13 +518,21 @@ class StoryCompiler:
         if self.compile_part == CompilePart.ALL_SCENES:
             analyze_script = ProjectSnapshot.get_all_chapters_and_scenes()
         else:
+            
+            # Get the chapter's script, along with one-level down for <call>
+            # commands.
             chapter_script =\
-                ProjectSnapshot.get_chapter_script_with_one_level_call(\
+                ProjectSnapshot.get_chapter_or_scene_script_with_one_level_call(\
                     self.startup_chapter_name)
             
-            scene_script = \
-                ProjectSnapshot.get_scene_script(self.startup_chapter_name, self.startup_scene_name)
+            # Get the startup scene's script, along with one-level down 
+            # for <call> commands.            
+            scene_script =\
+                ProjectSnapshot.get_chapter_or_scene_script_with_one_level_call(\
+                    self.startup_chapter_name, self.startup_scene_name)
 
+            # Combine the chapter script and scene script, along with one-level
+            # reusable scripts that either of them call.
             analyze_script = chapter_script + "\n" + scene_script
 
         analyze_lines = analyze_script.splitlines()

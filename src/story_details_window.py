@@ -56,6 +56,7 @@ class StoryDetailsWindow:
         self.entry_version = builder.get_object("entry_version")
         self.entry_episode = builder.get_object("entry_episode")
         self.txt_description = builder.get_object("txt_description")
+
         
         # Web related
         self.v_allow_web_access = builder.get_variable("v_allow_web_access")
@@ -109,6 +110,11 @@ class StoryDetailsWindow:
 
         # Get the story project's current window size
         width, height = ProjectSnapshot.story_window_size
+        
+        # Start the visual novel full screen option
+        self.v_full_screen: tk.BooleanVar
+        self.v_full_screen = builder.get_variable("v_full_screen")
+        self.v_full_screen.set(ProjectSnapshot.story_start_full_screen)
 
         # Show the story's window size in the spinbox widgets.
         self.sb_width.delete(0, "end")
@@ -136,7 +142,6 @@ class StoryDetailsWindow:
         # Show the current details to the user by populating the widgets.
         self._get_details()
         
-
         self.story_details_window.transient(self.master)
         self.story_details_window.grab_set()
 
@@ -212,9 +217,9 @@ class StoryDetailsWindow:
                     widget.set(bool(text_to_show))
 
                 elif widget.winfo_class() == "Text":
-                    widget.configure(state="normal")
+                    # widget.configure(state="normal")
                     widget.insert("1.0", text_to_show)
-                    widget.configure(state="disabled")
+                    # widget.configure(state="disabled")
                 else:
                     widget.insert(0, text_to_show)
                     
@@ -355,6 +360,9 @@ class StoryDetailsWindow:
 
             # The window size appears OK, save it.
             ProjectSnapshot.story_window_size = (width, height)
+            
+            # Start the visual novel full screen?
+            ProjectSnapshot.story_start_full_screen = self.v_full_screen.get()
 
         # Set the full save path for a poster image.
         destination_poster_path = ProjectSnapshot.project_path / SubPaths.POSTER_IMAGE_PATH.value

@@ -24,6 +24,7 @@ from screeninfo import screeninfo
 from player_config_handler import PlayerConfigHandler
 
 
+
 class ManualUpdate:
     manual_queue: List[pygame.Rect]
     manual_queue = []
@@ -135,7 +136,6 @@ class Passer:
     # we set this flag to indicate to the ActiveStory object
     # that the application should close (because the user clicked the 'X')
     close_after_launch_window = False
-    
 
     @staticmethod
     def center_window_active_monitor(window) -> bool:

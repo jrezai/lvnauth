@@ -60,6 +60,7 @@ from variable_editor_window import VariableEditorWindow
 from functools import partial
 from parameter_description import ParameterDescription
 from scroll_history import ScrollHistory
+from temp_handler import TempHandler, TempContentType
 
 
 
@@ -1760,6 +1761,10 @@ class EditorMainApp:
                 if file_path.is_file():
                     file_path.unlink()
 
+        # Clean-up any LVNAuth temp files that might be in the temporary 
+        # directory.
+        TempHandler.cleanup_temp_files(TempContentType.ALL)          
+
         # Close the editor window
         self.mainwindow.destroy()
         
@@ -3116,6 +3121,10 @@ class OpenManager:
             # Get the story window size (width/height)
             ProjectSnapshot.story_window_size = tuple(self.dict_data["StoryWindowSize"])
             
+            # Start the visual novel full screen option
+            ProjectSnapshot.story_start_full_screen =\
+                self.dict_data.get("StoryStartFullScreen", False)
+            
             # Get the variable names and values of the visual novel.
             ProjectSnapshot.variables = self.dict_data.get("Variables")
             if ProjectSnapshot.variables is None:
@@ -3581,6 +3590,7 @@ class SaveManager:
 
         data = {"ProjectInfo": ProjectSnapshot.details,
                 "StoryWindowSize": ProjectSnapshot.story_window_size,
+                "StoryStartFullScreen": ProjectSnapshot.story_start_full_screen,
                 "LVNAuth-EditorVersion": ProjectSnapshot.EDITOR_VERSION,
                 "StartupScriptItemiid": Passer.editor.get_startup_scene_item_iid(),
                 "CharacterImages": character_images,

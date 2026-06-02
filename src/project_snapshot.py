@@ -32,10 +32,13 @@ class ProjectSnapshot:
     EXACT_EDITOR_VERSION = "1.5"
     
     # Used in the Startup window.
-    RELEASE_DATE = "April 26, 2026"
+    RELEASE_DATE = "June 1, 2026"
 
     # Default the story window size to 640x480
     story_window_size = (640, 480)
+    
+    # Flag to indicate the visual novel should start full screen.
+    story_start_full_screen = False
 
     # Path to full save project file (.lvnap extension)
     save_full_path = None
@@ -98,40 +101,65 @@ class ProjectSnapshot:
         return ProjectSnapshot.chapters_and_scenes[chapter_name][0]
     
     @staticmethod
-    def get_chapter_script_with_one_level_call(chapter_name: str) -> str:
+    def get_chapter_or_scene_script_with_one_level_call(
+        chapter_name: str,
+        scene_name: str = None) -> str:
         """
-        Return a chapter's script along with any reusable scripts that
-        the chapter's script references, but only one level of a reusable script.
+        Return a chapter's or scene's script along with any reusable scripts
+        that the chapter or scene script references, but only one level of a
+        reusable script.
         
         If the reusable script(s) call nested reusable scripts, those
         nested reusable scripts won't be included.
         
         Purpose: the caller of this method will look for <load_> commands
-        so that the compiler knows which images/sprites to inlude in the project.
+        so that the compiler knows which images/sprites to inlude in the
+        project.
+        
         In this method, we will include one-level down reusable scripts so that
-        if there are any <load_> commands, the caller of this method can include
-        those resources.
+        if there are any <load_> commands, the caller of this method can
+        include those resources.
         
         Arguments:
         
         - chapter_name: the chapter name to return the script for, along
-        with the reusable scripts that the chapter script calls.
+        with the reusable scripts that the chapter script calls via the
+        <call> command.
+        
+        - scene_name: the scene name to return the script for, along with
+        the reusable scripts that the scene script calls via the <call>
+        command.
+        
+        If a chapter name by itself is provided, with no scene name, then
+        only the chapter's script will be returned.
+        
+        If a scene name is provided, the chapter name must be provided too.
         """
         
-        # Get the chapter's script
-        chapter_script =\
-            ProjectSnapshot.get_chapter_script(chapter_name=chapter_name)
+        # Requesting a scene script?
+        if scene_name:
+            # Get the scene's script
+            
+            script =\
+                ProjectSnapshot.get_scene_script(chapter_name=chapter_name,
+                                                 scene_name=scene_name)            
+        else:
+            # A chapter's script has been requested, not a scene's script.
+            
+            # Get the chapter's script
+            script =\
+                ProjectSnapshot.get_chapter_script(chapter_name=chapter_name)
         
-        if not chapter_script:
+        if not script:
             return ""
         
-        # We need to analyze the chapter's script line by line
+        # We need to analyze the scene's or chapter's script line by line
         # because we're looking for <call> commands.
-        chapter_lines = chapter_script.splitlines()
+        script_lines = script.splitlines()
         
         # Look for <call> commands
         loaded_reusable_scripts = []
-        for line in chapter_lines:
+        for line in script_lines:
             
             line = line.strip()
             if line.startswith("<call:") and line.endswith(">"):
@@ -152,13 +180,13 @@ class ProjectSnapshot:
                 
                 # Include the reusable script as part of the returned
                 # chapter script.
-                chapter_script += "\n" + reusable_script
+                script += "\n" + reusable_script
                 
                 # So we don't include the same reusable script again
                 # if there are more calls to it.
                 loaded_reusable_scripts.append(reusable_script_name.lower())
 
-        return chapter_script
+        return script
 
     @staticmethod
     def get_reusable_script(script_name: str) -> str:
@@ -192,27 +220,6 @@ class ProjectSnapshot:
             return
 
         scene_script = scene_dict.get(scene_name)
-        if not scene_script:
-            return ""
-
-        return scene_script
-    
-    @staticmethod
-    def get_scene_script_with_one_level_call(chapter_name: str,
-                                             scene_name: str) -> str:
-        """
-        Get the scene script but also read <call> commands and analyze the
-        reusable scripts that are used with <call> by looking for <load_>
-        commands.
-        
-        Nested <call> commands are not analyzed - only one level of reusable
-        scripts
-        """
-        
-        scene_script =\
-            ProjectSnapshot.get_scene_script (chapter_name=chapter_name,
-                                              scene_name=scene_name)
-
         if not scene_script:
             return ""
 
@@ -265,14 +272,29 @@ class ProjectSnapshot:
             # Get the chapter's script with one-level down of reusable scripts.
             # This is so if there are reusable scripts that contain <load_>
             chapter_script =\
-                ProjectSnapshot.get_chapter_script_with_one_level_call(chapter_name)
-            
+                ProjectSnapshot.\
+                get_chapter_or_scene_script_with_one_level_call(chapter_name)
+          
+            # Get the chapter's script
+            final += "\n" + chapter_script
+
             # {Key: scene name (str): Value script (str)}
             scene_dict = chapter_details[1]
 
-            final += "\n" + chapter_script
-
+            # Get the scene scripts in the current chapter, including
+            # one-level down to reusable scripts from <call> commands in
+            # the scene script.
             for scene_name, scene_script in scene_dict.items():
+                
+                # Get the scene's script, including scripts one-level down
+                # from any <call> commands.
+                scene_script =\
+                    ProjectSnapshot.\
+                    get_chapter_or_scene_script_with_one_level_call(\
+                        chapter_name, scene_name)                  
+                
+                # Add the scene script and reusable scripts from one-level 
+                # <call> commands, to the final string.
                 final += "\n" + scene_script
 
         return final

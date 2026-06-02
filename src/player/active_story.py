@@ -41,7 +41,8 @@ from camera_handler import Camera
 
 class ActiveStory:
     """
-    Holds loaded story data, such as sprites and chapter/scene scripts and names.
+    Holds loaded story data, such as sprites and chapter/scene
+    scripts and names.
     """
     
     def __init__(self,
@@ -188,6 +189,9 @@ class ActiveStory:
             
         elif content_type == ContentType.DIALOGUE_SPRITE:
             group_to_check = sd.Groups.dialog_group
+            
+        elif content_type == ContentType.BACKGROUND:
+            group_to_check = sd.Groups.background_group
 
         else:
             return

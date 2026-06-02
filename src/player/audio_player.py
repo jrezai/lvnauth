@@ -17,11 +17,15 @@ You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import tempfile
+import os
 import pygame
 import file_reader
 from io import BytesIO
 from enum import Enum, auto
 from shared_components import Passer
+from temp_handler import TempHandler, TempContentType
+from pathlib import Path
 
 
 
@@ -64,6 +68,13 @@ class AudioPlayer:
         self._volume_sound = 1
         self._volume_voice = 1
         self._volume_text = 1
+        
+        # Full path to a music file in a temporary folder.
+        # We use a temporary folder to stream music files because it's
+        # more reliable than streaming from a BytesIO object when used
+        # with GIL and pygame-ce.
+        self.current_temp_music_path:Path
+        self.current_temp_music_path = None
         
     def stop_audio(self, audio_channel: AudioChannel):
         """
@@ -170,17 +181,20 @@ class AudioPlayer:
         else:
             return
 
-        # Get the bytes of the sound
-        sound_bytes =\
+        # Get the bytes of the sound along with the file extension.
+        audio_data =\
             Passer.active_story.data_requester.get_audio(content_type=content_type,
                                                          item_name=audio_name)
 
-        if not sound_bytes:
+        if not audio_data:
             return
+        else:
+            sound_bytes, file_extension = audio_data
 
-        elif audio_channel == AudioChannel.MUSIC:
+        if audio_channel == AudioChannel.MUSIC:
 
             self._play_music(audio_name=audio_name,
+                             file_extension=file_extension, 
                              bytes_data=sound_bytes,
                              loop_music=loop_music)
 
@@ -189,47 +203,75 @@ class AudioPlayer:
                                         audio_name=audio_name,
                                         bytes_data=sound_bytes)
 
-    def _play_music(self,
-                    audio_name: str,
-                    bytes_data: bytes,
-                    loop_music: bool):
+    def _play_music(self, audio_name: str, file_extension: str,
+                    bytes_data: bytes, loop_music: bool):
         """
-        Play a music audio file from bytes data.
+        Play a music file (.wav or .ogg) by copying it to a temp directory
+        and playing it from the temp directory.
+        
+        The reason we don't stream a music file directly from RAM is because
+        the GIL appears to get in the way when streaming a music
+        file, so sometimes the music will stop abruptly if we stream from RAM.
         
         Arguments:
         
-        - audio_name: the resource/item name of the sound to be played.
+        - audio_name: the audio resource name, with no extension.
         
-        - bytes_data: the bytes representation of the wav/ogg data.
+        - file_extension: such as ".ogg". We use the extension to create a
+        temp file. Pygame needs the extension to know the type of audio it is.
+        
+        - bytes_data: the audio data
+        
+        - loop_music: whether to repeat the audio after playback is finished.
+        
+        
         """
-
-        # If the requested music is different than what's playing, stop the music.
+        
+        # If the requested music is different than what's playing, 
+        # stop the music.
         if pygame.mixer.music.get_busy() and self.loaded_music != audio_name:
             pygame.mixer.music.stop()
-
-        # If the music channel is playing something, it's the same as what is being requested,
-        # so don't interrupt it.
-        # The music will need to be stopped first if the music needs to start from the beginning.
+            
+        # If the music channel is playing something, it's the same as what is
+        # being requested, so don't interrupt it.
+        # The music will need to be stopped first if the music needs to start 
+        # from the beginning.
         elif pygame.mixer.music.get_busy():
             return
 
-        # pygame works well with BytesIO
-        # Convert the bytes sound to a BytesIO stream
-        io_bytes_data = BytesIO(bytes_data)
+        # Get the right temporary folder, depending on if we're in a Snap
+        # or Flatpak or neither.
+        temp_path = TempHandler.get_proper_temp_dir()
+        
+        if not temp_path:
+            print(f"Temp directory not found: {temp_path}")
+            return
 
+        # Clean up any previous music temp files, if any.
+        TempHandler.cleanup_temp_files(TempContentType.MUSIC_FILE)
+        self.current_temp_music_path = None
+
+        # Create the named temporary file.
+        temp_music = tempfile.NamedTemporaryFile(
+            delete=False, 
+            #suffix=file_extension,
+            prefix=f"lvnauth_tmp_{TempContentType.MUSIC_FILE.value}_", 
+            dir=temp_path)
+        
+        temp_music.write(bytes_data)
+        temp_music.close()
+    
+        # Record the full path to the music file in the temp directory.
+        self.current_temp_music_path = temp_music.name
+    
         pygame.mixer.music.set_volume(self.volume_music)
-
-        # Play the music data
-        pygame.mixer.music.load(io_bytes_data, namehint=audio_name)
-
-        # Save the filename of the loaded .wav/.ogg
+        pygame.mixer.music.load(self.current_temp_music_path,
+                                namehint=file_extension[1:])
         self.loaded_music = audio_name
-
+    
         if loop_music:
-            # Continuously loop the music.
             pygame.mixer.music.play(loops=-1)
         else:
-            # Play the music with no loop.
             pygame.mixer.music.play()
 
     def _play_fx(self, audio_name: str, bytes_data: bytes):

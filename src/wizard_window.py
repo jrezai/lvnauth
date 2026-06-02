@@ -5952,18 +5952,21 @@ class SharedPages:
             if not user_inputs:
                 return
 
+            # We'll only after this if it's for an <after> command.
             seconds_delay = user_inputs.get("SecondsDelay")
+            
             reusable_script_name = user_inputs.get("ReusableScriptName")
             arguments = user_inputs.get("Arguments")
             
-            # If the number seconds doesn't have decimal places, use an integer
-            # value instead, so instead of 2.0 (seconds) it'll just 
-            # show 2 (seconds)
-            if seconds_delay.is_integer():
-                seconds_delay = int(seconds_delay)
-            
             if self.show_delay_widgets:
                 # <after: 60, reusable script name, optional arguments>
+                
+                # If the number seconds doesn't have decimal places, use an integer
+                # value instead, so instead of 2.0 (seconds) it'll just 
+                # show 2 (seconds)
+                if seconds_delay.is_integer():
+                    seconds_delay = int(seconds_delay)                
+                
                 if arguments:
                     return f"<{self.command_name}: {seconds_delay}, {reusable_script_name}, {arguments}>"
                 else:
