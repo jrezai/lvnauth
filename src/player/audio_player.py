@@ -251,7 +251,7 @@ class AudioPlayer:
         TempHandler.cleanup_temp_files(TempContentType.MUSIC_FILE)
         self.current_temp_music_path = None
 
-        # Create the named temporary file within the secure sandbox directory
+        # Create the named temporary file.
         temp_music = tempfile.NamedTemporaryFile(
             delete=False, 
             #suffix=file_extension,
@@ -273,49 +273,6 @@ class AudioPlayer:
             pygame.mixer.music.play(loops=-1)
         else:
             pygame.mixer.music.play()
-
-    #def _play_music(self,
-                    #audio_name: str,
-                    #bytes_data: bytes,
-                    #loop_music: bool):
-        #"""
-        #Play a music audio file from bytes data.
-        
-        #Arguments:
-        
-        #- audio_name: the resource/item name of the sound to be played.
-        
-        #- bytes_data: the bytes representation of the wav/ogg data.
-        #"""
-
-        ## If the requested music is different than what's playing, stop the music.
-        #if pygame.mixer.music.get_busy() and self.loaded_music != audio_name:
-            #pygame.mixer.music.stop()
-
-        ## If the music channel is playing something, it's the same as what is being requested,
-        ## so don't interrupt it.
-        ## The music will need to be stopped first if the music needs to start from the beginning.
-        #elif pygame.mixer.music.get_busy():
-            #return
-
-        ## pygame works well with BytesIO
-        ## Convert the bytes sound to a BytesIO stream
-        #self.current_music_stream = BytesIO(bytes_data)
-
-        #pygame.mixer.music.set_volume(self.volume_music)
-
-        ## Play the music data
-        #pygame.mixer.music.load(self.current_music_stream, namehint=audio_name)
-
-        ## Save the filename of the loaded .wav/.ogg
-        #self.loaded_music = audio_name
-
-        #if loop_music:
-            ## Continuously loop the music.
-            #pygame.mixer.music.play(loops=-1)
-        #else:
-            ## Play the music with no loop.
-            #pygame.mixer.music.play()
 
     def _play_fx(self, audio_name: str, bytes_data: bytes):
         """
