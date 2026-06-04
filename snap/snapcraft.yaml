@@ -56,7 +56,7 @@ parts:
     plugin: python
     python-packages:
        - Pillow == 11.1.0
-       - pygame-ce == 2.5.3
+       - pygame-ce == 2.5.7
        - pygubu == 0.36.3
        - screeninfo == 0.8.1
        - niquests == 3.13.1
@@ -84,7 +84,7 @@ parts:
 
   player-template-linux:
     plugin: dump
-    source: https://lvnauth.org/download/player-template-1.41.tar.gz
+    source: https://lvnauth.org/download/player-template-1.5.tar.gz
     # Use 'organize' to place them into a folder your Python code expects
     organize:
       '*': src/templates/linux/
@@ -94,7 +94,7 @@ parts:
       
   player-template-windows:
     plugin: dump
-    source: https://lvnauth.org/download/player-template-1.41.zip
+    source: https://lvnauth.org/download/player-template-1.5.zip
     # Use 'organize' to place them into a folder your Python code expects
     organize:
       '*': src/templates/windows/
