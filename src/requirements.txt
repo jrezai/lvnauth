@@ -1,4 +1,13 @@
-Pillow==10.0.0
-pygame-ce==2.3.1
-pygubu==0.31
+certifi==2025.7.14
+charset-normalizer==3.4.1
+h11==0.14.0
+idna==3.10
+jh2==5.0.8
+niquests==3.13.1
+pillow==11.1.0
+pygame-ce==2.5.7
+pygubu==0.36.3
+qh3==1.4.2
 screeninfo==0.8.1
+urllib3-future==2.12.912
+wassima==1.2.2
