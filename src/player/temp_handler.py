@@ -20,12 +20,12 @@ along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import tempfile
 from pathlib import Path
-from enum import Enum, auto
+from enum import Enum
 
 
 class TempContentType(Enum):
     MUSIC_FILE = "M"
-    ALL = auto()
+    ALL = "A"
 
 
 class TempHandler:
