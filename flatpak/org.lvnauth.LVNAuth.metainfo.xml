@@ -68,14 +68,28 @@
   </screenshots>
 
   <releases>
-    <release version="1.41" date="2026-04-09">
-    <url type="details">https://lvnauth.org/blog/lvnauth-1.41-released.html</url>
-      <description>
-        <p>Release description</p>
-          <ul>
-            <li>Fixed a bug where certain file names would not save when exporting a visual novel as a .tar.gz archive.</li>
-            <li>Widened the vertical and horizontal scroll bars for the main script text area, to make it easier to see the scroll bars.</li>
-          </ul>
+    <release version="1.5" date="2026-06-04">
+    <url type="details">https://lvnauth.org/blog/lvnauth-1.5-released.html</url>
+<description>
+        <p>Improved the font Trace Tool in multiple ways:</p>
+        <ul>
+          <li>Added scrollbars.</li>
+          <li>Added a new guide line feature to make tracing fonts easier. The guide line is a horizontal line that shows on the generated preview image. The purpose is to assist with making fine-adjustments to the alignment of traced letters. This helps to ensure all characters sit perfectly on the same baseline.</li>
+          <li>The generated preview image is no longer in a separate tab; it is shown below a vertical separator, making it quick and easy to see the preview image as tracing happens in real-time.</li>
+        </ul>
+        <p>The editor now remembers the scrollbar and cursor positions when switching between scripts. When navigating back to a chapter or scene, you will be returned to exactly where you left off.</p>
+        <p>Note: These positions are saved for the duration of your session and will reset when the project is closed and reopened.</p>
+        <p>Added an option to start visual novels full screen. This option is found in the Story Details window. Full screen can be toggled by pressing F11 or by pressing Alt+Enter. When in full screen, pressing ESC will go to window-mode. Also, the visual novel window is now resizable.</p>
+        <p>Bug Fixes:</p>
+        <ul>
+          <li>Fixed bug with the Wizard window not working with the call&gt; command. Before, when the 'OK' button was clicked for the &lt;call&gt; command, an error occurred.</li>
+          <li>Fixed bug with &lt;load_&gt; commands not being analyzed when they were in a reusable script, being called via the &lt;call&gt; command in a scene script. Prior to this fix, only chapter scripts were able to run reusable scripts containing &lt;load_&gt; commands and have the sprites be actually loaded. Now with this fix, &lt;call&gt; commands can be used in scene scripts to run reusable scripts containing &lt;load_&gt; commands and the &lt;load_&gt; commands will get analyzed properly.</li>
+          <li>Fixed bug with the &lt;call&gt; command causing an error when more than one optional argument was supplied. For example: &lt;call: test, name=Rave, position=4&gt; used to cause an error, due to having 2 optional arguments, but &lt;call: test, name=Rave&gt; worked, because it had 1 optional argument.</li>
+          <li>Fixed bug with the &lt;wait_for_animation&gt; command not working when waiting for "all" (simultaneous) animation types.</li>
+          <li>Fixed bug with the &lt;background_hide&gt; command not working.</li>
+          <li>Fixed bug with the audio cutting off abruptly sometimes while playing music.</li>
+          <li>Fixed bug where the Story Details description field was read-only, which was preventing the description from being edited.</li>
+        </ul>
       </description>
      </release>
    </releases>
