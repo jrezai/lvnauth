@@ -68,7 +68,7 @@
   </screenshots>
 
   <releases>
-    <release version="1.5" date="2026-06-04">
+    <release version="1.5" date="2026-06-06">
     <url type="details">https://lvnauth.org/blog/lvnauth-1.5-released.html</url>
 <description>
         <p>Improved the font Trace Tool in multiple ways:</p>
@@ -80,6 +80,7 @@
         <p>The editor now remembers the scrollbar and cursor positions when switching between scripts. When navigating back to a chapter or scene, you will be returned to exactly where you left off.</p>
         <p>Note: These positions are saved for the duration of your session and will reset when the project is closed and reopened.</p>
         <p>Added an option to start visual novels full screen. This option is found in the Story Details window. Full screen can be toggled by pressing F11 or by pressing Alt+Enter. When in full screen, pressing ESC will go to window-mode. Also, the visual novel window is now resizable.</p>
+        <p>Pressing the spacebar will now advance the story, similar to a mouse click.</p>
         <p>Bug Fixes:</p>
         <ul>
           <li>Fixed bug with the Wizard window not working with the call&gt; command. Before, when the 'OK' button was clicked for the &lt;call&gt; command, an error occurred.</li>
