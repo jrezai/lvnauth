@@ -48,9 +48,8 @@ class TempHandler:
         deleted.
         """
         
-        # Get the right temporary directory, depending on if we're running
-        # inside a Snap or Flatpak or neither.
-        temp_dir = TempHandler.get_proper_temp_dir()
+        # Get the temporary directory
+        temp_dir = TempHandler.get_temp_dir()
         if not temp_dir or not temp_dir.is_dir():
             return
     
@@ -75,25 +74,9 @@ class TempHandler:
                 pass
 
     @staticmethod
-    def get_proper_temp_dir() -> Path:
+    def get_temp_dir() -> Path:
         """
-        Return the temporary directory to use depending on whether
-        LVNAuth is running in a Snap, or Flatpak, or neither.
+        Return the temporary directory.
         """
-        
-        # Try to get the Snap user data directory.
-        snap_user_data = os.environ.get("SNAP_USER_DATA")
-        
-        # Try to get the Flatpak runtime directory
-        flatpak_runtime = None
-        if Path("/.flatpak-info").exists():
-            flatpak_runtime = os.environ.get("XDG_RUNTIME_DIR")
-            
-        # Snap, Flatpak, or neither?
-        custom_temp_dir = snap_user_data or flatpak_runtime
-        
-        if not custom_temp_dir:
-            # System default temp directory
-            custom_temp_dir = tempfile.gettempdir()
-            
-        return Path(custom_temp_dir)
+
+        return Path(tempfile.gettempdir())

@@ -239,9 +239,8 @@ class AudioPlayer:
         elif pygame.mixer.music.get_busy():
             return
 
-        # Get the right temporary folder, depending on if we're in a Snap
-        # or Flatpak or neither.
-        temp_path = TempHandler.get_proper_temp_dir()
+        # Get the temporary directory.
+        temp_path = TempHandler.get_temp_dir()
         
         if not temp_path:
             print(f"Temp directory not found: {temp_path}")
