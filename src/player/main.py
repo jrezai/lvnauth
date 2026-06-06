@@ -412,6 +412,9 @@ class Main:
             if event.mod & pygame.KMOD_ALT:
                 pygame.display.toggle_fullscreen()        
 
+        # Spacebar
+        elif key_pressed == pygame.K_SPACE:
+            Passer.active_story.advance_story_or_go_faster()
 
         # The following key presses only apply to draft-mode.
         if not Passer.active_story.draft_mode:

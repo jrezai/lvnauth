@@ -255,31 +255,21 @@ class ActiveStory:
         # Draw the rectangle on the screen.
         self.draft_rectangle.draw(draft_text)
 
-    def on_event(self, event):
+    def advance_story_or_go_faster(self):
         """
-        Handle events like left button click to unhalt story or to speed up
-        gradual text display.
-        """
-
-        # Record mouse position and mouse clicks (if any) for
-        # sprite mouse interactions (hovers, clicks)
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            MouseActionsAndCoordinates.MOUSE_DOWN = True
-            
-        if event.type == pygame.MOUSEBUTTONUP:
-            MouseActionsAndCoordinates.MOUSE_UP = True
-            
-        if event.type == pygame.MOUSEMOTION:
-            MouseActionsAndCoordinates.MOUSE_POS = pygame.mouse.get_pos()
-            
+        Advance the story (unhalt) or make the text go faster.
         
-        # In non-automated halt-mode? Look for a mouse click to advance the story.
+        A mouse click has either occurred or the spacebar was pressed.
+    
+        The caller of this method should check for a mouse click or spacebar
+        press, before calling this method.
+        """
+        
+        # In non-automated halt-mode?
+        # Look for a mouse click to advance the story.
         if self.reader.halt_main_script \
            and not self.reader.halt_main_script_auto_mode_seconds_reach:
             
-            # Advance the story if a mouse button was clicked.
-            if event.type == pygame.MOUSEBUTTONDOWN:
-
                 #if self.camera.is_animating_zoom_pan \
                    #and self.camera.is_animating_shake:
                     #self.camera.stop_move(jump_to_end=True)
@@ -311,10 +301,29 @@ class ActiveStory:
                 # unhalt story
                 self.reader.unhalt()
 
-                # # Re-draw the dialog rectangle shape so that any previous text
-                # # gets blitted over with the new rectangle.
-                # self.reader.story.dialog_rectangle.clear_text()
-                
+    def on_event(self, event):
+        """
+        Handle events like left button click to unhalt story or to speed up
+        gradual text display.
+        """
+
+        # Record mouse position and mouse clicks (if any) for
+        # sprite mouse interactions (hovers, clicks)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            MouseActionsAndCoordinates.MOUSE_DOWN = True
+            
+        if event.type == pygame.MOUSEBUTTONUP:
+            MouseActionsAndCoordinates.MOUSE_UP = True
+            
+        if event.type == pygame.MOUSEMOTION:
+            MouseActionsAndCoordinates.MOUSE_POS = pygame.mouse.get_pos()
+            
+            
+        # Advance the story if a mouse button was clicked.
+        if event.type == pygame.MOUSEBUTTONDOWN:        
+        
+            # Advance the story (unhalt) or make the text go faster.
+            self.advance_story_or_go_faster()
 
     def on_loop(self):
         """
