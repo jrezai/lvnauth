@@ -54,15 +54,15 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://lvnauth.org/images/screenshots/lvnauth_story_1.png</image>
-      <caption>A visual novel made with LVNAuth</caption>
+      <image>https://lvnauth.org/images/screenshots/lvnauth_vn_1.png</image>
+      <caption>A visual novel made with LVNAuth.</caption>
     </screenshot>
     <screenshot>
-      <image>https://lvnauth.org/images/screenshots/lvnauth_story_2.png</image>
-      <caption>A visual novel made with LVNAuth</caption>
+      <image>https://lvnauth.org/images/screenshots/lvnauth_editor_1.png</image>
+      <caption>Writing a script with LVNAuth's built-in editor.</caption>
     </screenshot>
     <screenshot>
-      <image>https://lvnauth.org/images/screenshots/lvnauth_wizard_1.png</image>
+      <image>https://lvnauth.org/images/screenshots/lvnauth_editor_2.png</image>
       <caption>The wizard window lists all the commands that LVNAuth can use in a visual novel.</caption>
     </screenshot>
   </screenshots>
