@@ -119,7 +119,40 @@ class TintHandler:
                 self.applied_tint_value != self.current_tint_value)
             
         return reapply_tint
+    
+    def set_instant_tint(self,
+                         destination_tint: int,
+                         tint_style: TintStyle = TintStyle.REGULAR,):
+        """
+        Instantly set the tint value of the sprite without animating.
         
+        Purpose: when <_start_tint> is used on a sprite with a speed of 100,
+        it is considered instant and that's when this method is run. We
+        needed this so when a new scene is started, the characters that used
+        to have a tint in the previous scene will have their tints applied
+        instantly without an animation delay, for a smooth transition from
+        scene to scene.
+        
+        Arguments:
+        
+        - destination_tint: the amount of tint to instantly set on the sprite.
+        
+        - tint_style: Regular or Glow (default is Regular)
+        """
+        
+        # Consider the sprite as having reached its destination tint.
+        # We have to set this so other methods know that this sprite is
+        # "dirty" with a tint. In other words, so other methods know
+        # that a tint has been applied to this sprite.
+        self.status = TintStatus.REACHED_DEST_TINT
+                
+        # So we know which type of tint effect to apply, regular or glow.
+        self.tint_style = tint_style        
+                
+        # Set the destination tint value instantly
+        self.reach_tint_value = destination_tint
+        self.current_tint_value = self.reach_tint_value
+
     def start_tint_regular(self, speed: int, destination_tint: int):
         """
         Start animating a regular (darken) tint effect by changing the status.

@@ -336,8 +336,8 @@ class SpriteTextClear(NamedTuple):
     general_alias: str
     
     
-    
-class SpriteTintRegular(NamedTuple):
+@dataclass
+class SpriteTintRegular:
     general_alias: str
     speed: int
     dest_tint: int

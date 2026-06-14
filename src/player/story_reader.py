@@ -52,7 +52,7 @@ from enum import Enum
 from typing import Dict
 from shared_components import Passer
 from animation_speed import AnimationSpeed
-from tint_handler import TintStatus
+from tint_handler import TintStatus, TintStyle
 from camera_handler import SmoothingStyle
 
 # from audio_player import AudioChannel
@@ -3768,26 +3768,52 @@ class StoryReader:
         if not sprite:
             return
         
-        # Convert the convenient speed (1-100) to a value that
-        # we can use in the animation.
-        float_value = \
-            AnimationSpeed.get_sequence_value(
-                initial_value=15.5,
-                increment_by=15.5,
-                max_convenient_row=100,
-                convenient_row_number=tint.speed)
+        # Initialize
+        instant_tint = False
         
-        speed = float_value
-        
-        # Set the speed and destination tint value.
-        if isinstance(tint, cc.SpriteTintRegular):
-            sprite.tint_handler.\
-                start_tint_regular(speed=speed,
-                                   destination_tint=tint.dest_tint)
+        # Treat a speed of 100 as instant.
+        if tint.speed == 100:
+            # No animation will be used for this tint, it will be instant.
+            instant_tint = True
             
+        else:
+            # Convert the convenient speed (1-99) to a value that
+            # we can use in the animation.
+            float_value = \
+                AnimationSpeed.get_sequence_value(
+                    initial_value=15.5,
+                    increment_by=15.5,
+                    max_convenient_row=99,
+                    convenient_row_number=tint.speed)
+        
+            calculated_speed = int(float_value)
+        
+        # Regular tint or bright tint?
+        if isinstance(tint, cc.SpriteTintRegular):
+            tint_style = TintStyle.REGULAR    
         elif isinstance(tint, cc.SpriteTintBright):
-            sprite.tint_handler.start_tint_glow(speed=speed,
-                                                destination_tint=tint.dest_tint)
+            tint_style = TintStyle.GLOW
+
+        # Tint the sprite right-away with no animation?
+        if instant_tint:
+            # Instant tint. This is used to tint a sprite right away
+            # with no gradual animation.
+            sprite.tint_handler.set_instant_tint(tint.dest_tint,
+                                                 tint_style=tint_style)            
+        else:
+            
+            # Tint the sprite by starting an animation.
+            
+            # Set the speed and destination tint value.
+            if tint_style == TintStyle.REGULAR:
+                sprite.tint_handler.\
+                    start_tint_regular(speed=calculated_speed,
+                                       destination_tint=tint.dest_tint)
+                
+            elif isinstance(tint, cc.SpriteTintBright):
+                sprite.tint_handler.\
+                    start_tint_glow(speed=calculated_speed,
+                                    destination_tint=tint.dest_tint)
 
     def _tint_sprite_solo(self,
                           sprite_type: file_reader.ContentType,
