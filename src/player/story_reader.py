@@ -1296,6 +1296,18 @@ class StoryReader:
             """
             self._camera_stop_moving(arguments=arguments)
 
+        elif command_name == "camera_reset":
+            """
+            Instantly reset the camera position to no zoom and no panning.
+            """
+            
+            # Stop the camera zoom/pan effect, if active.
+            self._camera_stop_moving(arguments="current spot")
+            
+            # '1' in the argument means zoom size 1 (original size)
+            # Zoom to the original size instantly.
+            self._camera_start_moving(arguments="0, 0, 1, 0, constant speed")
+
         elif command_name == "variable_set":
             """
             Create a new variable or update an existing variable.
