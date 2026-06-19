@@ -335,8 +335,17 @@ class SpriteObject:
         So we need half of the width of the sprite to make it start after the
         display, at full width, which is why we have this method here).
         """
-        self.half_width = self.original_image.get_width() / 2
-        self.half_height = self.original_image.get_height() / 2        
+        
+        # Use floor division to prevent a float value.
+        # If we use a float, animations might stop 1 pixel short, so we need
+        # to use a floor division.
+        
+        # We use floor division instead of int(), because apparently pygame's
+        # centerx also uses floor division internally. If we use int(), it will
+        # round a decimal up, which could cause a 1 pixel misalignment
+        # during sprite animations (ie: movement animations).
+        self.half_width = self.original_image.get_width() // 2
+        self.half_height = self.original_image.get_height() // 2        
 
     def clear_text_and_redraw(self):
         """
