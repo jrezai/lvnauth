@@ -5702,10 +5702,8 @@ class StoryReader:
 
             # Did we find a fully visible sprite with the same alias?
             # If so, we'll swap that sprite out.
-            if (
-                current_visible_sprite.visible
-                and current_visible_sprite.general_alias == loaded_sprite.general_alias
-            ):
+            if (current_visible_sprite.visible
+                and current_visible_sprite.general_alias == loaded_sprite.general_alias):
 
                 # We found a visible sprite with the same alias.
                 # and it's not the same sprite that we're swapping in,
@@ -5717,10 +5715,8 @@ class StoryReader:
             # Keep a reference to it in case we don't find a fully visible
             # sprite with the same alias, but don't stop checking for
             # visible sprites yet.
-            elif (
-                current_visible_sprite.pending_show
-                and current_visible_sprite.general_alias == loaded_sprite.general_alias
-            ):
+            elif (current_visible_sprite.pending_show
+                  and current_visible_sprite.general_alias == loaded_sprite.general_alias):
 
                 # We found a visible sprite with the same alias,
                 # but don't break out of the loop yet because this sprite
