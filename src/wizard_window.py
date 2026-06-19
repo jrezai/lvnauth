@@ -2118,6 +2118,19 @@ class WizardWindow:
                                      command_name="camera_stop_moving",
                                      purpose_line="Stops an active zoom and/or pan camera effect.",
                                      group_name=GroupName.ZOOM_PAN)
+        
+        page_camera_reset = \
+            CommandOnly(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="Camera",
+                        sub_display_text="camera_reset",
+                        command_name="camera_reset",
+                        purpose_line="Instantly resets the zoom and camera position back to the default.\n\n"
+                        "Note: this command does not stop a camera shaking effect.\n"
+                        "Use <camera_stop_shaking> for that.",
+                        group_name=GroupName.ZOOM_PAN)
 
 
         """
@@ -2992,6 +3005,7 @@ class WizardWindow:
         
         self.pages["camera_start_moving"] = page_camera_move_start
         self.pages["camera_stop_moving"] = page_camera_move_stop
+        self.pages["camera_reset"] = page_camera_reset
         
         """
         Sequence

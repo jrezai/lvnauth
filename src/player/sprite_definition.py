@@ -335,6 +335,7 @@ class SpriteObject:
         So we need half of the width of the sprite to make it start after the
         display, at full width, which is why we have this method here).
         """
+
         self.half_width = self.original_image.get_width() / 2
         self.half_height = self.original_image.get_height() / 2        
 
@@ -2118,6 +2119,12 @@ class SpriteObject:
 
                         # if self.rect.left <= pixel_coordinate:
                         if self.rect.centerx - self.half_width <= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.left = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.x_direction == "right":
@@ -2125,9 +2132,15 @@ class SpriteObject:
 
                         # if self.rect.left >= pixel_coordinate:
                         if self.rect.centerx - self.half_width >= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.left = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
-                            # Check the right side of the sprite for stops?
+                # Check the right side of the sprite for stops?
                 elif side == MovementStops.RIGHT:
 
                     # How we check for a stop depends on the
@@ -2137,6 +2150,12 @@ class SpriteObject:
 
                         # if self.rect.right >= pixel_coordinate:
                         if self.rect.right + self.half_width >= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.right = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.x_direction == "left":
@@ -2144,6 +2163,12 @@ class SpriteObject:
 
                         # if self.rect.right <= pixel_coordinate:
                         if self.rect.centerx + self.half_width <= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.right = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                             # Check the top of the sprite for a stop?
@@ -2157,6 +2182,12 @@ class SpriteObject:
 
                         # if self.rect.top <= pixel_coordinate:
                         if self.rect.centery - self.half_height <= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.top = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                     if self.move_properties.y_direction == "down":
@@ -2164,6 +2195,12 @@ class SpriteObject:
 
                         # if self.rect.top >= pixel_coordinate:
                         if self.rect.centery -self.half_height >= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.top = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                             # Check the bottom of the sprite for a stop?
@@ -2177,6 +2214,12 @@ class SpriteObject:
 
                         # if self.rect.bottom >= pixel_coordinate:
                         if self.rect.centery + self.half_height >= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.bottom = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
                     elif self.move_properties.y_direction == "up":
@@ -2184,6 +2227,12 @@ class SpriteObject:
 
                         # if self.rect.bottom <= pixel_coordinate:
                         if self.rect.bottom +self.half_height <= pixel_coordinate:
+                            
+                            # Snap the sprite so it's exactly where it needs
+                            # to stop. This is done to prevent 1 pixel off 
+                            # issues.
+                            self.rect.bottom = pixel_coordinate
+                            
                             satisfied_stop_keys.append(side)
 
             if satisfied_stop_keys:

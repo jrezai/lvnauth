@@ -52,7 +52,7 @@ from enum import Enum
 from typing import Dict
 from shared_components import Passer
 from animation_speed import AnimationSpeed
-from tint_handler import TintStatus
+from tint_handler import TintStatus, TintStyle
 from camera_handler import SmoothingStyle
 
 # from audio_player import AudioChannel
@@ -1295,6 +1295,18 @@ class StoryReader:
             Stop the camera movement effect, if active.
             """
             self._camera_stop_moving(arguments=arguments)
+
+        elif command_name == "camera_reset":
+            """
+            Instantly reset the camera position to no zoom and no panning.
+            """
+            
+            # Stop the camera zoom/pan effect, if active.
+            self._camera_stop_moving(arguments="current spot")
+            
+            # '1' in the argument means zoom size 1 (original size)
+            # Zoom to the original size instantly.
+            self._camera_start_moving(arguments="0, 0, 1, 0, constant speed")
 
         elif command_name == "variable_set":
             """
@@ -3768,26 +3780,52 @@ class StoryReader:
         if not sprite:
             return
         
-        # Convert the convenient speed (1-100) to a value that
-        # we can use in the animation.
-        float_value = \
-            AnimationSpeed.get_sequence_value(
-                initial_value=15.5,
-                increment_by=15.5,
-                max_convenient_row=100,
-                convenient_row_number=tint.speed)
+        # Initialize
+        instant_tint = False
         
-        speed = float_value
-        
-        # Set the speed and destination tint value.
-        if isinstance(tint, cc.SpriteTintRegular):
-            sprite.tint_handler.\
-                start_tint_regular(speed=speed,
-                                   destination_tint=tint.dest_tint)
+        # Treat a speed of 100 as instant.
+        if tint.speed == 100:
+            # No animation will be used for this tint, it will be instant.
+            instant_tint = True
             
+        else:
+            # Convert the convenient speed (1-99) to a value that
+            # we can use in the animation.
+            float_value = \
+                AnimationSpeed.get_sequence_value(
+                    initial_value=15.5,
+                    increment_by=15.5,
+                    max_convenient_row=99,
+                    convenient_row_number=tint.speed)
+        
+            calculated_speed = int(float_value)
+        
+        # Regular tint or bright tint?
+        if isinstance(tint, cc.SpriteTintRegular):
+            tint_style = TintStyle.REGULAR    
         elif isinstance(tint, cc.SpriteTintBright):
-            sprite.tint_handler.start_tint_glow(speed=speed,
-                                                destination_tint=tint.dest_tint)
+            tint_style = TintStyle.GLOW
+
+        # Tint the sprite right-away with no animation?
+        if instant_tint:
+            # Instant tint. This is used to tint a sprite right away
+            # with no gradual animation.
+            sprite.tint_handler.set_instant_tint(tint.dest_tint,
+                                                 tint_style=tint_style)            
+        else:
+            
+            # Tint the sprite by starting an animation.
+            
+            # Set the speed and destination tint value.
+            if tint_style == TintStyle.REGULAR:
+                sprite.tint_handler.\
+                    start_tint_regular(speed=calculated_speed,
+                                       destination_tint=tint.dest_tint)
+                
+            elif isinstance(tint, cc.SpriteTintBright):
+                sprite.tint_handler.\
+                    start_tint_glow(speed=calculated_speed,
+                                    destination_tint=tint.dest_tint)
 
     def _tint_sprite_solo(self,
                           sprite_type: file_reader.ContentType,
@@ -5664,10 +5702,8 @@ class StoryReader:
 
             # Did we find a fully visible sprite with the same alias?
             # If so, we'll swap that sprite out.
-            if (
-                current_visible_sprite.visible
-                and current_visible_sprite.general_alias == loaded_sprite.general_alias
-            ):
+            if (current_visible_sprite.visible
+                and current_visible_sprite.general_alias == loaded_sprite.general_alias):
 
                 # We found a visible sprite with the same alias.
                 # and it's not the same sprite that we're swapping in,
@@ -5679,10 +5715,8 @@ class StoryReader:
             # Keep a reference to it in case we don't find a fully visible
             # sprite with the same alias, but don't stop checking for
             # visible sprites yet.
-            elif (
-                current_visible_sprite.pending_show
-                and current_visible_sprite.general_alias == loaded_sprite.general_alias
-            ):
+            elif (current_visible_sprite.pending_show
+                  and current_visible_sprite.general_alias == loaded_sprite.general_alias):
 
                 # We found a visible sprite with the same alias,
                 # but don't break out of the loop yet because this sprite

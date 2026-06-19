@@ -126,6 +126,17 @@
                 </layout>
               </object>
             </child>
+            <child>
+              <object class="ttk.Label" id="label1">
+                <property name="text" translatable="yes">100 = instant (no gradual animation)</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="columnspan">2</property>
+                  <property name="row">2</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
           </object>
         </child>
         <child>
@@ -144,7 +155,7 @@
             </containerlayout>
             <child>
               <object class="ttk.Label" id="lbl_tint_amount" named="True">
-                <property name="text" translatable="yes">Tint amount to stop at:</property>
+                <property name="text" translatable="yes">Tint amount:</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="columnspan">2</property>
