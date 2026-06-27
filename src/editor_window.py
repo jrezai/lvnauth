@@ -1432,6 +1432,7 @@ class EditorMainApp:
                 "--file", lvna_file_path,
                 "--show-launch", str(show_launch_window)
             ]
+            
         else:
             
             # Not running from PyInstaller.
@@ -1444,10 +1445,12 @@ class EditorMainApp:
                 player_script_file,
                 "--file",
                 lvna_file_path,
-                "--show-launch",
-                str(show_launch_window)]
+                "--show-launch"]
             
-        
+        # Don't show the launch window? Remove the last paraemter
+        # (--show-launch)
+        if not show_launch_window:
+            cmd.pop(-1)        
 
 
         #python_executable = ContainerHandler.get_python_interpreter()
