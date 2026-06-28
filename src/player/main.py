@@ -505,6 +505,8 @@ if __name__ == "__main__":
 
     # Debug for playing in the player
     if not args.file:
+        
+        # No --file switch was supplied, so assume draft.lvna or release.lvna
 
         if ContainerHandler.is_in_snap_package() \
            or ContainerHandler.is_in_flatpak_package():
@@ -532,7 +534,7 @@ if __name__ == "__main__":
                 if release_lvna_full_path:
                     args.file = release_lvna_full_path
             
-
+        # Show the launch window since no --file switch was supplied.
         args.show_launch = True
         
     # Make sure the file argument is a Path object 
