@@ -499,7 +499,6 @@ if __name__ == "__main__":
                                 help="Specify an .lvna visual novel file for playing.")
     read_arguments.add_argument("--show-launch",
                                 dest="show_launch",
-                                default=False,
                                 action="store_true", 
                                 help="Show a startup window to select a chapter or scene (Requires --file).")
     args = read_arguments.parse_args()
@@ -534,7 +533,7 @@ if __name__ == "__main__":
                     args.file = release_lvna_full_path
             
 
-        args.show_launch = "True"
+        args.show_launch = True
         
     # Make sure the file argument is a Path object 
     # so we can run .is_file() on it.
