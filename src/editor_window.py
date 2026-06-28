@@ -1430,7 +1430,7 @@ class EditorMainApp:
             cmd = [
                 str(player_bin),
                 "--file", lvna_file_path,
-                "--show-launch", str(show_launch_window)
+                "--show-launch"
             ]
             
         else:
