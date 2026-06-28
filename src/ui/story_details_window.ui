@@ -24,7 +24,7 @@
     </customwidgets>
   </project>
   <object class="tk.Toplevel" id="story_details_window">
-    <property name="geometry">1024x670</property>
+    <property name="geometry">1024x770</property>
     <property name="height">200</property>
     <property name="width">200</property>
     <containerlayout manager="grid">
@@ -134,7 +134,7 @@
                         </child>
                         <child>
                           <object class="ttk.Label" id="label7">
-                            <property name="text" translatable="yes">Ideally 500x400 pixels</property>
+                            <property name="text" translatable="yes">Ideally 500x550 pixels</property>
                             <layout manager="grid">
                               <property name="column">1</property>
                               <property name="padx">5</property>

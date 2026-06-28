@@ -27,7 +27,7 @@ It allows a specific scene to be played and also shows information about the vis
     </customwidgets>
   </project>
   <object class="tk.Toplevel" id="launch_window" named="True">
-    <property name="geometry">960x480</property>
+    <property name="geometry">960x600</property>
     <property name="height">200</property>
     <property name="title" translatable="yes">Launch Visual Novel</property>
     <property name="width">200</property>
@@ -132,7 +132,11 @@ It allows a specific scene to be played and also shows information about the vis
                         <layout manager="grid">
                           <property name="column">0</property>
                           <property name="row">2</property>
+                          <property name="sticky">ew</property>
                         </layout>
+                        <containerlayout manager="grid">
+                          <property type="col" id="0" name="weight">1</property>
+                        </containerlayout>
                         <child>
                           <object class="ttk.Button" id="btn_play_selection" named="True">
                             <property name="command" type="command" cbtype="simple">on_play_selection_button_clicked</property>
