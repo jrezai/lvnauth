@@ -410,10 +410,13 @@ class Main:
         # Alt + Enter
         elif key_pressed == pygame.K_RETURN:
             if event.mod & pygame.KMOD_ALT:
-                pygame.display.toggle_fullscreen()        
-
-        # Spacebar
-        elif key_pressed == pygame.K_SPACE:
+                pygame.display.toggle_fullscreen()
+            else:
+                # Enter by itself, no Alt. Make the story go faster.
+                Passer.active_story.advance_story_or_go_faster()
+                
+        # Spacebar or Enter key (on num-ad)
+        elif key_pressed == pygame.K_SPACE or key_pressed == pygame.K_KP_ENTER:
             Passer.active_story.advance_story_or_go_faster()
 
         # The following key presses only apply to draft-mode.
@@ -493,11 +496,12 @@ if __name__ == "__main__":
     read_arguments.add_argument("--file",
                                 dest="file",
                                 type=str,
-                                help="Specify a story file for playing.")
+                                help="Specify an .lvna visual novel file for playing.")
     read_arguments.add_argument("--show-launch",
                                 dest="show_launch",
                                 default=False,
-                                help="Whether to show a list of chapters and scenes.")
+                                action="store_true", 
+                                help="Show a startup window to select a chapter or scene (Requires --file).")
     args = read_arguments.parse_args()
 
     # Debug for playing in the player
@@ -539,11 +543,16 @@ if __name__ == "__main__":
         
     # No .lvna file specified? Or the .lvna file doesn't exist?
     if not args.file or not args.file.is_file():
-        print("No file specified. Use --file to specify a path to a .lvna file.")
+        read_arguments.error("No file specified. Use --file to specify a path to a .lvna file.")
+        sys.exit(0)
+        
+    # --show-launch can only be used if --file is specified too.
+    if args.show_launch and not args.file:
+        read_arguments.error("--show-launch can only be used if --file is specified.")
         sys.exit(0)
 
     # Should we show the launch window?
-    show_launch = args.show_launch in ("true", "True")
+    show_launch = args.show_launch
 
     # print(f"{args.file=},{args.show_menu=}")
 

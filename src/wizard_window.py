@@ -955,7 +955,7 @@ class WizardWindow:
                         parent_display_text="Dialogue",
                         sub_display_text="halt",
                         command_name="halt",
-                        purpose_line="Pause the dialog text until the viewer clicks the mouse or presses a key.",
+                        purpose_line="Pause the dialogue text until the viewer clicks the mouse\nor presses the spacebar key.",
                         when_to_use="When you want to give the viewer a chance to pause and read.",
                         group_name=GroupName.PAUSE)
 
@@ -967,7 +967,7 @@ class WizardWindow:
                            parent_display_text="Dialogue",
                            sub_display_text="halt_auto",
                            command_name="halt_auto",
-                           purpose_line="Pause the dialog text for a specific number of seconds.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of seconds have\nelapsed (specified below).",
+                           purpose_line="Pause the dialogue text for a specific number of seconds.\n\nThis is almost the same as using <halt> except it will\nunpause automatically after a number of seconds have\nelapsed (specified below).",
                            scale_instructions="Choose the number of seconds to halt the dialog.\nSeconds as a decimal can be used, such as 0.5 (half a second).",
                            scale_from_value=1,
                            scale_to_value=300,
@@ -1007,7 +1007,7 @@ class WizardWindow:
                         parent_display_text="Dialogue",
                         sub_display_text="no_clear",
                         command_name="no_clear",
-                        purpose_line="Prevent the dialog text from clearing on the next <halt> or <halt_auto>.",
+                        purpose_line="Prevent the dialogue text from clearing on the next <halt> or <halt_auto>.",
                         group_name=GroupName.PAUSE)
 
         page_dialog_continue = \
@@ -1352,7 +1352,7 @@ class WizardWindow:
                                       parent_display_text="Dialogue",
                                       sub_display_text="dialogue_sprite_set_position_x",
                                       command_name="dialogue_sprite_set_position_x",
-                                      purpose_line="Sets the horizontal position of a specific dialog relative to the top-left\n"
+                                      purpose_line="Sets the horizontal position of a specific dialogue sprite relative to the top-left\n"
                                       "corner of the sprite.\n\n"
                                       "Note: the dialogue sprite must already be visible.",
                                       direction="horizontal",
@@ -1366,7 +1366,7 @@ class WizardWindow:
                                       parent_display_text="Dialogue",
                                       sub_display_text="dialogue_sprite_set_position_y",
                                       command_name="dialogue_sprite_set_position_y",
-                                      purpose_line="Sets the vertical position of a specific dialog relative to the top-left\n"
+                                      purpose_line="Sets the vertical position of a specific dialogue sprite relative to the top-left\n"
                                       "corner of the sprite.\n\n"
                                       "Note: the dialogue sprite must already be visible.",
                                       direction="vertical",
@@ -2212,8 +2212,8 @@ class WizardWindow:
                           parent_display_text="Font",
                           sub_display_text="font_x",
                           command_name="font_x",
-                          purpose_line="Sets the horizontal position of where the dialog text should start,\n"
-                          "relative to the text dialog.\nThe left-most edge of the dialogue rectangle is 0 (zero).",
+                          purpose_line="Sets the horizontal position of where the dialogue text should start,\n"
+                          "relative to the dialogue text.\nThe left-most edge of the dialogue rectangle is 0 (zero).",
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the horizontal position (x):",
@@ -2229,8 +2229,8 @@ class WizardWindow:
                           parent_display_text="Font",
                           sub_display_text="font_y",
                           command_name="font_y",
-                          purpose_line="Sets the vertical position of where the dialog text should start,\n"
-                          "relative to the text dialog. The top of the dialogue rectangle is 0 (zero).",
+                          purpose_line="Sets the vertical position of where the dialogue text should start,\n"
+                          "relative to the dialogue text. The top of the dialogue rectangle is 0 (zero).",
                           from_value=-50,
                           to_value=5000,
                           amount_usage_info="Set the vertical position (y):",
@@ -2306,7 +2306,7 @@ class WizardWindow:
                                parent_display_text="Font",
                                sub_display_text="font_text_fade_letter_speed",
                                command_name="font_text_fade_letter_speed",
-                               purpose_line="Sets the fade speed of gradually-shown dialog text.\n" +
+                               purpose_line="Sets the fade speed of gradually-shown dialogue text.\n" +
                                "(letter-by-letter fade speed)",
                                scale_from_value=1,
                                scale_to_value=AnimationSpeed.MAX_CONVENIENT_SPEED_LETTER_BY_LETTER_FADE_IN,
@@ -2324,7 +2324,7 @@ class WizardWindow:
                                 sub_display_text="font_intro_animation",
                                 command_name="font_intro_animation",
                                 purpose_line="Set the animation type when the character text is being displayed.",
-                                instructions="Dialog text starting animation:",
+                                instructions="Dialogue text starting animation:",
                                 values_to_choose=("sudden", "fade in", "gradual letter", "gradual letter fade in"),
                                 group_name=GroupName.FONT_ANIMATION)
         
@@ -2445,7 +2445,7 @@ class WizardWindow:
                                      parent_display_text="Font",
                                      sub_display_text="sprite_font_fade_letter_speed",
                                      command_name="sprite_font_fade_letter_speed",
-                                     purpose_line="Sets the fade speed of gradually-shown dialog text.\n" +
+                                     purpose_line="Sets the fade speed of gradually-shown dialogue text.\n" +
                                      "(letter-by-letter fade speed)\n\n"
                                      "Note: the sprite must already be visible.",
                                      scale_from_value=1,
@@ -10388,7 +10388,7 @@ class DialogContinue(WizardListing):
         
         frame_contents = ttk.Frame(self.parent_frame)
         
-        instructions = "This command will cause the dialog text to continue on the same line\n" + \
+        instructions = "This command will cause the dialogue text to continue on the same line\n" + \
         "instead of the next line."
         
         when_to_use_title = "When to use this command:"
@@ -10783,7 +10783,7 @@ class TextDialogDefine(WizardListing):
             dialog_height = self.text_define.v_height.get()
         except tk.TclError:
             messagebox.showerror(parent=self.parent_frame.winfo_toplevel(), 
-                                 title="Dialog Dimensions",
+                                 title="Dialogue Rectangle Dimensions",
                                  message="Numbers are expected for the width and height of the dialogue rectangle.")
             return
         
