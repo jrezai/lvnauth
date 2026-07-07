@@ -2912,7 +2912,7 @@ class WizardWindow:
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
         self.pages["halt_and_pause_main_script"] = page_dialog_halt_and_pause
-        self.pages["unpause_main_script"] = page_dialog_unpause
+        self.pages["unhalt_and_unpause_main_script"] = page_dialog_unpause
         self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
