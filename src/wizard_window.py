@@ -993,8 +993,8 @@ class WizardWindow:
                             purpose_label=self.lbl_purpose,
                             treeview_commands=self.treeview_commands,
                             parent_display_text="Dialogue",
-                            sub_display_text="unpause_main_script",
-                            command_name="unpause_main_script",
+                            sub_display_text="unhalt_and_unpause_main_script",
+                            command_name="unhalt_and_unpause_main_script",
                             purpose_line="Unpause the main script that was previously paused with\nthe <halt_and_pause_main_script> command.",
                             when_to_use="If you use sprites to allow your viewer to advance the story, you need\nto unpause the story using this command after your sprite(s) are clicked.",
                             group_name=GroupName.PAUSE)
@@ -2912,7 +2912,7 @@ class WizardWindow:
         self.pages["halt"] = page_dialog_halt
         self.pages["halt_auto"] = page_dialog_halt_auto
         self.pages["halt_and_pause_main_script"] = page_dialog_halt_and_pause
-        self.pages["unpause_main_script"] = page_dialog_unpause
+        self.pages["unhalt_and_unpause_main_script"] = page_dialog_unpause
         self.pages["no_clear"] = page_dialog_no_clear
         self.pages["continue"] = page_dialog_continue
 
