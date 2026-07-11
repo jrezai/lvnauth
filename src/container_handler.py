@@ -82,7 +82,7 @@ class ContainerHandler:
         """
         snap_name = os.environ.get("SNAP_NAME")
         
-        if snap_name is not None and snap_name == "lvnauth":
+        if snap_name:
             return True
         else:
             return False
