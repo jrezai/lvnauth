@@ -486,6 +486,12 @@ class StoryReader:
         # For logging.
         if not scene_script:
             print("Startup scene not found.")
+        else:
+            # Keep track of which chapter/scene the user started with
+            # so if the launch window is opened, we can select it
+            # so the player knows which scene they last played.
+            Passer.last_chapter_name_played = startup_chapter_name
+            Passer.last_scene_name_played = startup_scene_name            
 
         return scene_script
 
@@ -3677,6 +3683,12 @@ class StoryReader:
         # When StoryReader() instantiates, it will look at the startup
         # script and will load it automatically.
         Passer.manual_startup_chapter_scene = {chapter_name: scene_name}
+        
+        # Keep track of which chapter/scene the user started with
+        # so if the launch window is opened, we can select it
+        # so the player knows which scene they last played.
+        Passer.last_chapter_name_played = chapter_name
+        Passer.last_scene_name_played = scene_name          
 
         # Create a new main reader
         self.story.reader = StoryReader(

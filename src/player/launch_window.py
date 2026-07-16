@@ -98,7 +98,7 @@ class LaunchWindow:
 
         # Continuously check the queue for secondary thread messages.
         self.mainwindow: tk.Toplevel
-        self.mainwindow.after(300, self.check_queue)
+        self.check_queue_id = self.mainwindow.after(300, self.check_queue)
         
         self.style = ttk.Style()
         self.style.configure("Warning.TLabel",
@@ -258,7 +258,7 @@ class LaunchWindow:
         pygame's own loop, not here.
         """
         
-        self.mainwindow.after(300, self.check_queue)
+        self.check_queue_id = self.mainwindow.after(300, self.check_queue)
         
         if WebHandler.the_queue.empty():
             return
@@ -413,6 +413,20 @@ class LaunchWindow:
         # directory.
         TempHandler.cleanup_temp_files(TempContentType.ALL)        
         
+        self.safe_close_window()
+        
+    def safe_close_window(self):
+        """
+        Stop any background timers before destroying the launch window.
+        
+        If we don't do this, closing the launch window while there are
+        timer queues (.after) will cause an error like this:
+         invalid command name "139733287607104check_queue"
+         while executing
+        """
+        if self.check_queue_id:
+            self.mainwindow.after_cancel(self.check_queue_id)
+            
         self.mainwindow.destroy()
 
     def on_get_license_key_button_clicked(self):
@@ -541,7 +555,7 @@ class LaunchWindow:
         # play the story's default startup chapter/scene,
         # by just closing the launch window.
         if not selection or selection[0] == "I001":
-            self.mainwindow.destroy()
+            self.safe_close_window()
             return
 
         selected_item_iid = selection[0]
@@ -613,7 +627,7 @@ class LaunchWindow:
             Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
 
         # Close the launch window so the story can start playing.
-        self.mainwindow.destroy()        
+        self.safe_close_window()
 
     def populate_story_info(self):
         """
@@ -649,6 +663,12 @@ class LaunchWindow:
         Example: {'My First Chapter': ['My First Scene', 'Second scene'],
                   'My second Chapter': ['My First Scene', 'Second scene']}
         """
+        
+        # For selecting the last viewed scene.
+        select_iid_when_finished = None
+
+        # type-hint
+        self.treeview_chapter_scenes:ttk.Treeview
 
         # A selection option to play the story's default startup chapter/scene.
         self.treeview_chapter_scenes.insert(parent="",
@@ -671,9 +691,28 @@ class LaunchWindow:
                     continue
 
                 # Add the scene
-                self.treeview_chapter_scenes.insert(parent=chapter_item_iid,
-                                                    index="end",
-                                                    values=(scene_name, ))
+                scene_item_iid = \
+                    self.treeview_chapter_scenes.insert(parent=chapter_item_iid,
+                                                        index="end",
+                                                        values=(scene_name, ))
+                
+                # Is the current chapter/scene the same one that the player
+                # was viewing last?
+                if Passer.last_chapter_name_played and Passer.last_scene_name_played:
+                    if Passer.last_chapter_name_played == chapter_name \
+                       and Passer.last_scene_name_played == scene_name:
+                        
+                        # Keep track of this scene's iid, so we can select it
+                        # later in this method. That way, the player will know
+                        # which scene they left off on.
+                        select_iid_when_finished = scene_item_iid
+                        
+        # Select last viewed scene?
+        if select_iid_when_finished:
+            
+            # Select the last viewed scene.
+            self.treeview_chapter_scenes.see(select_iid_when_finished)
+            self.treeview_chapter_scenes.selection_add(select_iid_when_finished)
 
     def show_poster_image(self):
         """
@@ -698,4 +737,4 @@ class LaunchWindow:
 
     def run(self):
         self.mainwindow.mainloop()
-
+        

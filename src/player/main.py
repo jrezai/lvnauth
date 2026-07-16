@@ -177,7 +177,7 @@ class Main:
 
     def begin(self):
         """
-        Start the pygame loop.
+        Show the launch window and then start the pygame loop.
         """
         
         # Read the .lvna file from the provided argument command switch.
@@ -215,154 +215,172 @@ class Main:
         # Initialize web_handler for handling web connections
         self.initialize_web(data_requester=data_requester)
 
-        # Should we show the launch window?
-        if show_launch:
-            self.show_launch_window(data_requester=data_requester)
-            if Passer.close_after_launch_window:
-                sys.exit(0)
-
-        # screen_size = (640, 480)
-
-        pygame.init()
-
-        clock = pygame.time.Clock()
-
-        pygame.display.set_caption("LVNAuth Player")
-
-        # The app's icon file will be either in the current directory
-        # or in the 'player' directory. It depends whether the visual novel
-        # is being played from the editor, or directly.
-        if ContainerHandler.is_in_snap_package() or ContainerHandler.is_in_flatpak_package():
-            app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path_small()
-        else:
-            # Not in a Snap package.
-
-            app_icon_path =\
-                ContainerHandler.get_absolute_path(r"./player/app_icon_small.png")
-            #if not app_icon_path.exists():
-                #app_icon_path = Path(r"./player/app_icon_small.png")
-
-        pygame.display.set_icon(pygame.image.load(app_icon_path))
-
-        # Create the main surface
-        main_surface = pygame.display.set_mode(screen_size, pg_parameters)
-
-        main_surface.fill((0, 0, 0))
-        
-        # Create the Virtual Canvas
-        # This is the buffer the story will be draw onto. 
-        # It creates a blank surface the same size as the display surface.
-        virtual_surface = main_surface.copy().convert_alpha()
-        
-        
-        # Initialize the camera which will be used for zooming and panning.
-        camera = Camera(screen_size=screen_size)
-        
-        
-        # STARTING STATE: Zoomed in on a specific spot (e.g., a character's face)
-        # camera.zoom = 2.05
-        # camera.x = 512
-        # camera.y = 189    
-
-        story = ActiveStory(screen_size=screen_size,
-                            data_requester=data_requester,
-                            virtual_surface=virtual_surface,
-                            main_surface=main_surface,
-                            camera=camera, 
-                            draft_mode=draft_mode)
-        Passer.active_story = story
-        
-        # Now that the story reader object has been initialized above, use
-        # on_web_request_finished() as the callback method for the server
-        # replies. We couldn't specify the callback method earlier because
-        # the story reader object hadn't been initialized yet.
-        Passer.web_handler.callback_method_finished =\
-            Passer.active_story.reader.on_web_request_finished
-        
-        # Delta is time in seconds since last frame.
-        # Used for FPS setting independent physics.
-        AnimationSpeed.delta = 0
-        
-        # Frames per second
-        FPS = 60
-        
-        # Used for converting milliseconds to seconds 
-        # (for delta time in seconds)
-        MS_PER_SECOND = 1000
-        
-        # AnimationSpeed.test = 0
-
-        while story.story_running:
+        program_running = True
+        while program_running:
             
-            # The number of seconds elapsed in this frame
-            delta_raw = clock.tick(FPS)
-            AnimationSpeed.delta = delta_raw / MS_PER_SECOND            
+            # Initialize/reset. This gets set when the user clicks 'Play',
+            # so forget any previous value of this, in case the visual novel
+            # is being played again in the same instance.
+            Passer.manual_startup_chapter_scene = None
+    
+            # Should we show the launch window?
+            if show_launch:
 
-            main_surface.fill((0, 0, 0))
-            virtual_surface.fill((0, 0, 0))
-        
-            camera.update(dt=AnimationSpeed.delta)
-
-            # Handle pygame events
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    story.story_running = False
-                    
-                    # Without the block below, attempting to
-                    # close pygame using the window manager
-                    # will sometimes freeze pygame.
-                    pygame.display.quit()
+                self.show_launch_window(data_requester=data_requester)   
+                if Passer.close_after_launch_window:
+                    # The player has closed the launch window,
+                    # so we should exit the entire application.
+                    program_running = False
                     sys.exit(0)
-                    return
-    
-                elif event.type == pygame.KEYDOWN:
-                    self.on_key_down(event.key, event)
-    
-                else:
-                    story.on_event(event)
-                    
-            
-                    
-            # Check for <remote> finished requests.
-            self.check_queue()
 
-            # Handle movements
-            story.on_loop()
-
-            # Handle drawing
-            story.on_render()
+    
+            # screen_size = (640, 480)
+    
+            pygame.init()
+    
+            clock = pygame.time.Clock()
+    
+            pygame.display.set_caption("LVNAuth Player")
+    
+            # The app's icon file will be either in the current directory
+            # or in the 'player' directory. It depends whether the visual novel
+            # is being played from the editor, or directly.
+            if ContainerHandler.is_in_snap_package() or ContainerHandler.is_in_flatpak_package():
+                app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path_small()
+            else:
+                # Not in a Snap package.
+    
+                app_icon_path =\
+                    ContainerHandler.get_absolute_path(r"./player/app_icon_small.png")
+                #if not app_icon_path.exists():
+                    #app_icon_path = Path(r"./player/app_icon_small.png")
+    
+            pygame.display.set_icon(pygame.image.load(app_icon_path))
+    
+            # Create the main surface
+            main_surface = pygame.display.set_mode(screen_size, pg_parameters)
+    
+            main_surface.fill((0, 0, 0))
             
-            #if not AnimationSpeed.test:
-                ## camera.start_move(target_zoom=1.5,duration=5)
-                #camera.start_move(target_x=670, target_y=220, target_zoom=3.5,duration=0)
-                ## camera.start_shake(intensity=10, duration=15.0)
+            # Create the Virtual Canvas
+            # This is the buffer the story will be draw onto. 
+            # It creates a blank surface the same size as the display surface.
+            virtual_surface = main_surface.copy().convert_alpha()
+            
+            
+            # Initialize the camera which will be used for zooming and panning.
+            camera = Camera(screen_size=screen_size)
+            
+            
+            # STARTING STATE: Zoomed in on a specific spot (e.g., a character's face)
+            # camera.zoom = 2.05
+            # camera.x = 512
+            # camera.y = 189    
+    
+            story = ActiveStory(screen_size=screen_size,
+                                data_requester=data_requester,
+                                virtual_surface=virtual_surface,
+                                main_surface=main_surface,
+                                camera=camera, 
+                                draft_mode=draft_mode)
+            Passer.active_story = story
+            
+            # Now that the story reader object has been initialized above, use
+            # on_web_request_finished() as the callback method for the server
+            # replies. We couldn't specify the callback method earlier because
+            # the story reader object hadn't been initialized yet.
+            Passer.web_handler.callback_method_finished =\
+                Passer.active_story.reader.on_web_request_finished
+            
+            # Delta is time in seconds since last frame.
+            # Used for FPS setting independent physics.
+            AnimationSpeed.delta = 0
+            
+            # Frames per second
+            FPS = 60
+            
+            # Used for converting milliseconds to seconds 
+            # (for delta time in seconds)
+            MS_PER_SECOND = 1000
+            
+            # AnimationSpeed.test = 0
+    
+            while story.story_running:
                 
-                #AnimationSpeed.test = 99
-                
-
-            # Shake
-            # camera.start_shake(intensity=20, duration=1.0)                
-
-            
-            camera.apply(virtual_surface=virtual_surface,
-                         main_surface=main_surface)
-            
-            story.on_render_dialog_rectangle(main_surface)
-            
-            #############################
-            
-            story.cover_screen_handler.draw()
+                # The number of seconds elapsed in this frame
+                delta_raw = clock.tick(FPS)
+                AnimationSpeed.delta = delta_raw / MS_PER_SECOND            
     
-            # Draft rectangle (to show x/y coordinates of the mouse pointer)
-            if story.draft_mode:
-                story.draw_draft_rectangle()
-            #############################            
+                main_surface.fill((0, 0, 0))
+                virtual_surface.fill((0, 0, 0))
+            
+                camera.update(dt=AnimationSpeed.delta)
+    
+                # Handle pygame events
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        story.story_running = False
+                        
+                        ## Without the block below, attempting to
+                        ## close pygame using the window manager
+                        ## will sometimes freeze pygame.
+                        #pygame.display.quit()
+                        #sys.exit(0)
+                        # return
         
-
-            # Update the screen
-            pygame.display.flip()
+                    elif event.type == pygame.KEYDOWN:
+                        self.on_key_down(event.key, event)
+        
+                    else:
+                        story.on_event(event)
+                        
+                
+                        
+                # Check for <remote> finished requests.
+                self.check_queue()
+    
+                # Handle movements
+                story.on_loop()
+    
+                # Handle drawing
+                story.on_render()
+                
+                #if not AnimationSpeed.test:
+                    ## camera.start_move(target_zoom=1.5,duration=5)
+                    #camera.start_move(target_x=670, target_y=220, target_zoom=3.5,duration=0)
+                    ## camera.start_shake(intensity=10, duration=15.0)
+                    
+                    #AnimationSpeed.test = 99
+                    
+    
+                # Shake
+                # camera.start_shake(intensity=20, duration=1.0)                
+    
+                
+                camera.apply(virtual_surface=virtual_surface,
+                             main_surface=main_surface)
+                
+                story.on_render_dialog_rectangle(main_surface)
+                
+                #############################
+                
+                story.cover_screen_handler.draw()
+        
+                # Draft rectangle (to show x/y coordinates of the mouse pointer)
+                if story.draft_mode:
+                    story.draw_draft_rectangle()
+                #############################            
             
-
+    
+                # Update the screen
+                pygame.display.flip()
+                
+            # The pygame window is about to be closed. If there was no
+            # launch window shown initially, then exit the program.
+            if not show_launch:
+                program_running = False
+                
+            pygame.quit()
             
     def check_queue(self):
         """
