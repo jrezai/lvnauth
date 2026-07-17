@@ -210,6 +210,11 @@ class Main:
         # whether to allow some keyboard shortcuts or not.
         compile_mode = data_requester.general_header.get("StoryCompileMode")
         
+        # Get the visual novel title, so we can show it in the pygame 
+        # caption window.
+        story_title =\
+            data_requester.general_header.get("StoryInfo").get("StoryTitle")
+        
         draft_mode = compile_mode == "Draft"
         
         # Initialize web_handler for handling web connections
@@ -240,7 +245,7 @@ class Main:
     
             clock = pygame.time.Clock()
     
-            pygame.display.set_caption("LVNAuth Player")
+            pygame.display.set_caption(f"{story_title} - LVNAuth Player")
     
             # The app's icon file will be either in the current directory
             # or in the 'player' directory. It depends whether the visual novel
