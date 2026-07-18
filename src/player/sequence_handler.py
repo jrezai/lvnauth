@@ -148,7 +148,7 @@ class SequenceHandler:
         if len(self.frame_image_names) <= 1:
             return                
 
-        # Did we successfully at image names to the list?
+        # Did we successfully add image names to the list?
         if self.frame_image_names:
             
             self.sprite_type = sprite_type
@@ -187,7 +187,7 @@ class SequenceHandler:
         Arguments:
         
         - play_num_of_times: the number of times to play the sequence animation.
-        minus 1 (-1) means repeat. When it's on repeat, the stop() must be
+        minus 1 (-1) means repeat. When it's on repeat, then stop() must be
         used to stop the animation.
         """
         
