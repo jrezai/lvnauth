@@ -136,6 +136,11 @@ class Passer:
     # we set this flag to indicate to the ActiveStory object
     # that the application should close (because the user clicked the 'X')
     close_after_launch_window = False
+    
+    # If the user goes back to the launch menu, we select the scene
+    # that they were last playing.
+    last_chapter_name_played = None
+    last_scene_name_played = None
 
     @staticmethod
     def center_window_active_monitor(window) -> bool:
