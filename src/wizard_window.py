@@ -8341,11 +8341,18 @@ class DefaultPage(WizardListing):
         
 Tips:
    - Blank lines can be used in scripts; they are simply ignored.
-   - Blank lines in a character's dialog text can be shown with <line>.
+   - Blank lines in a character's dialogue text can be shown with <line>.
    
 Comments:
    - You can write comments in your scripts using the # symbol.
    - Comments are ignored by the visual novel.
+   
+Variables:
+   - Use <variable_set> to set a variable's value.
+   - Use ($variable_name_here) to show a variable's value.
+   
+Reusable Scripts:
+   - Use (@argument_name) to read a value sent from a different script.
 """
 
         lbl_prompt = ttk.Label(frame_content, text=text)
