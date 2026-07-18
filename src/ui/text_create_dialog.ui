@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.3">
+<interface version="1.4" author="PygubuDesigner 0.40.1">
+  <project>
+    <settings />
+    <customwidgets />
+  </project>
   <object class="ttk.Frame" id="frame_text_create_dialog" named="True">
     <property name="height">200</property>
     <property name="width">200</property>
@@ -37,7 +41,7 @@
                 <child>
                   <object class="ttk.Labelframe" id="labelframe1">
                     <property name="height">200</property>
-                    <property name="text" translatable="yes">Dialog Rectangle Size</property>
+                    <property name="text" translatable="yes">Dialogue Rectangle Size</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
@@ -160,7 +164,7 @@
                         </child>
                         <child>
                           <object class="ttk.Label" id="label11">
-                            <property name="text" translatable="yes">Dialog Rectangle Position:</property>
+                            <property name="text" translatable="yes">Dialogue Rectangle Position:</property>
                             <layout manager="grid">
                               <property name="column">0</property>
                               <property name="row">0</property>
@@ -190,7 +194,7 @@
                 <child>
                   <object class="ttk.Labelframe" id="labelframe2">
                     <property name="height">200</property>
-                    <property name="text" translatable="yes">Dialog Rectangle Animation:</property>
+                    <property name="text" translatable="yes">Dialogue Rectangle Animation:</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
@@ -275,7 +279,7 @@
                 <child>
                   <object class="ttk.Labelframe" id="labelframe4">
                     <property name="height">200</property>
-                    <property name="text" translatable="yes">Dialog Intro &amp; Outro Animation Speed</property>
+                    <property name="text" translatable="yes">Dialogue Intro &amp; Outro Animation Speed</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
@@ -720,8 +724,8 @@
                 <child>
                   <object class="ttk.Labelframe" id="labelframe8">
                     <property name="height">200</property>
-                    <property name="text" translatable="yes">Run reusable scripts when events occurs
-in the dialog rectangle</property>
+                    <property name="text" translatable="yes">Run reusable scripts when events occur
+in the dialogue rectangle</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
