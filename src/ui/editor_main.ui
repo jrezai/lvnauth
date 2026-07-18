@@ -387,7 +387,7 @@
                                         </child>
                                         <child>
                                           <object class="ttk.Notebook.Tab" id="Reusables">
-                                            <property name="text" translatable="yes">Reusables</property>
+                                            <property name="text" translatable="yes">Reusable Scripts</property>
                                             <child>
                                               <object class="ttk.Frame" id="frame_reusables">
                                                 <property name="height">200</property>
@@ -658,6 +658,63 @@
                                           </object>
                                         </child>
                                         <child>
+                                          <object class="ttk.Notebook.Tab" id="tab_dialog_rectangle" named="True">
+                                            <property name="sticky">nsew</property>
+                                            <property name="text" translatable="yes">Dialogue Sprites</property>
+                                            <child>
+                                              <object class="ttk.Frame" id="frame8">
+                                                <property name="height">200</property>
+                                                <property name="width">200</property>
+                                                <layout manager="grid">
+                                                  <property name="column">0</property>
+                                                  <property name="row">0</property>
+                                                  <property name="sticky">nsew</property>
+                                                </layout>
+                                                <containerlayout manager="grid">
+                                                  <property type="col" id="0" name="weight">1</property>
+                                                  <property type="row" id="0" name="weight">1</property>
+                                                </containerlayout>
+                                                <child>
+                                                  <object class="ttk.Frame" id="frame11">
+                                                    <property name="height">200</property>
+                                                    <property name="width">200</property>
+                                                    <layout manager="grid">
+                                                      <property name="column">0</property>
+                                                      <property name="row">0</property>
+                                                      <property name="sticky">nsew</property>
+                                                    </layout>
+                                                    <containerlayout manager="grid">
+                                                      <property type="col" id="0" name="weight">1</property>
+                                                      <property type="row" id="0" name="weight">1</property>
+                                                    </containerlayout>
+                                                    <child>
+                                                      <object class="ttk.Treeview" id="treeview_dialog_rectangle" named="True">
+                                                        <property name="selectmode">browse</property>
+                                                        <property name="show">tree</property>
+                                                        <layout manager="grid">
+                                                          <property name="column">0</property>
+                                                          <property name="row">0</property>
+                                                          <property name="sticky">nsew</property>
+                                                        </layout>
+                                                      </object>
+                                                    </child>
+                                                    <child>
+                                                      <object class="ttk.Scrollbar" id="sb_vertical_dialog_rectangle" named="True">
+                                                        <property name="orient">vertical</property>
+                                                        <layout manager="grid">
+                                                          <property name="column">1</property>
+                                                          <property name="row">0</property>
+                                                          <property name="sticky">ns</property>
+                                                        </layout>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                </child>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                        <child>
                                           <object class="ttk.Notebook.Tab" id="tab_font_sprites" named="True">
                                             <property name="sticky">nsew</property>
                                             <property name="text" translatable="yes">Font Sprites</property>
@@ -700,63 +757,6 @@
                                                     </child>
                                                     <child>
                                                       <object class="ttk.Scrollbar" id="sb_vertical_font_sprites" named="True">
-                                                        <property name="orient">vertical</property>
-                                                        <layout manager="grid">
-                                                          <property name="column">1</property>
-                                                          <property name="row">0</property>
-                                                          <property name="sticky">ns</property>
-                                                        </layout>
-                                                      </object>
-                                                    </child>
-                                                  </object>
-                                                </child>
-                                              </object>
-                                            </child>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="ttk.Notebook.Tab" id="tab_dialog_rectangle" named="True">
-                                            <property name="sticky">nsew</property>
-                                            <property name="text" translatable="yes">Dialogue Rectangle</property>
-                                            <child>
-                                              <object class="ttk.Frame" id="frame8">
-                                                <property name="height">200</property>
-                                                <property name="width">200</property>
-                                                <layout manager="grid">
-                                                  <property name="column">0</property>
-                                                  <property name="row">0</property>
-                                                  <property name="sticky">nsew</property>
-                                                </layout>
-                                                <containerlayout manager="grid">
-                                                  <property type="col" id="0" name="weight">1</property>
-                                                  <property type="row" id="0" name="weight">1</property>
-                                                </containerlayout>
-                                                <child>
-                                                  <object class="ttk.Frame" id="frame11">
-                                                    <property name="height">200</property>
-                                                    <property name="width">200</property>
-                                                    <layout manager="grid">
-                                                      <property name="column">0</property>
-                                                      <property name="row">0</property>
-                                                      <property name="sticky">nsew</property>
-                                                    </layout>
-                                                    <containerlayout manager="grid">
-                                                      <property type="col" id="0" name="weight">1</property>
-                                                      <property type="row" id="0" name="weight">1</property>
-                                                    </containerlayout>
-                                                    <child>
-                                                      <object class="ttk.Treeview" id="treeview_dialog_rectangle" named="True">
-                                                        <property name="selectmode">browse</property>
-                                                        <property name="show">tree</property>
-                                                        <layout manager="grid">
-                                                          <property name="column">0</property>
-                                                          <property name="row">0</property>
-                                                          <property name="sticky">nsew</property>
-                                                        </layout>
-                                                      </object>
-                                                    </child>
-                                                    <child>
-                                                      <object class="ttk.Scrollbar" id="sb_vertical_dialog_rectangle" named="True">
                                                         <property name="orient">vertical</property>
                                                         <layout manager="grid">
                                                           <property name="column">1</property>
