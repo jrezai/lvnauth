@@ -24,6 +24,7 @@ fade animations.
 
 import copy
 import re
+import math
 import pygame
 import string
 import secrets
@@ -1522,6 +1523,14 @@ class StoryReader:
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
+            
+        elif command_name == "character_start_moving_to":
+            self._sprite_start_or_stop_moving(
+                sprite_type=file_reader.ContentType.CHARACTER,
+                arguments=arguments,
+                start_or_stop=sd.StartOrStop.START,
+                move_to_destination=True
+            )
 
         elif command_name == "object_start_moving":
             self._sprite_start_or_stop_moving(
@@ -1529,12 +1538,28 @@ class StoryReader:
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
+            
+        elif command_name == "object_start_moving_to":
+            self._sprite_start_or_stop_moving(
+                sprite_type=file_reader.ContentType.OBJECT,
+                arguments=arguments,
+                start_or_stop=sd.StartOrStop.START,
+                move_to_destination=True
+            )
 
         elif command_name == "dialogue_sprite_start_moving":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
+            )
+            
+        elif command_name == "dialogue_sprite_start_moving_to":
+            self._sprite_start_or_stop_moving(
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
+                arguments=arguments,
+                start_or_stop=sd.StartOrStop.START,
+                move_to_destination=True
             )
 
         elif command_name == "character_stop_moving":
@@ -3705,6 +3730,7 @@ class StoryReader:
         sprite_type: file_reader.ContentType,
         arguments,
         start_or_stop: sd.StartOrStop,
+        move_to_destination: bool = False
     ):
         """
         Set the flag for the sprite object to indicate that
@@ -3715,6 +3741,9 @@ class StoryReader:
 
         - start_or_stop: whether we should start the animation
         or stop the animation. Based on extract_functions.StartOrStop
+        
+        - move_to_destination: the command is <..start_moving_to>
+        where the target_x and target_y are specified.
 
         :return: None
         """
@@ -3724,8 +3753,18 @@ class StoryReader:
             arguments = arguments.strip()
 
             if start_or_stop == sd.StartOrStop.START:
-                self._sprite_move_start(sprite_type=sprite_type,
-                                        arguments=arguments)
+                
+                if move_to_destination:
+                    # A new type of move, where the ending X and Y coordinates
+                    # are specified. The movement stops are added automatically.
+                    self._sprite_move_to_start(sprite_type=sprite_type,
+                                               arguments=arguments)
+                else:
+                    # A regular move, where the ending X and Y coordinates
+                    # are not sepcified.
+                    # Movement stops must be added manually by the VN author.
+                    self._sprite_move_start(sprite_type=sprite_type,
+                                            arguments=arguments)
 
             elif start_or_stop == sd.StartOrStop.STOP:
                 
@@ -3990,16 +4029,16 @@ class StoryReader:
         """
 
         # Set the directions to lowercase
-        move_start._replace(x_direction=move_start.x_direction.lower())
-        move_start._replace(y_direction=move_start.y_direction.lower())
+        move_start.x_direction = move_start.x_direction.lower()
+        move_start.y_direction = move_start.y_direction.lower()
 
         # Horizontal direction going left? Set the X to a negative int.
         if move_start.x_direction == "left":
-            move_start = move_start._replace(x=-abs(move_start.x))
+            move_start.x = -abs(move_start.x)
 
         # Vertical direction going up? Set the Y to a negative int.
         if move_start.y_direction == "up":
-            move_start = move_start._replace(y=-abs(move_start.y))
+            move_start.y = -abs(move_start.y)
 
         # Get the visible sprite
         sprite = self.story.get_visible_sprite(
@@ -4013,6 +4052,136 @@ class StoryReader:
         sprite.move_properties = move_start
         
         # Set the flag to start a movement animation.
+        sprite.start_moving()
+        
+    def _sprite_move_to_start(self,
+                              sprite_type: file_reader.ContentType,
+                              arguments: str):
+        """
+        Start a movement animation on a particular sprite to specific
+        coordinates. Set the destination coodinates as the stop condition.
+        
+        The stop movement conditions are added automatically.
+        
+        This will calculate the X and Y values automatically to cause the
+        sprite to move in a straight line from its current position to
+        the destination x,y (top-left) coordinates.
+
+        Arguments:
+        
+        - sprite_type: whether it's a character, object, etc.
+        
+        - arguments: str that looks like this:
+        'sprite general alias, x_target, y_target, speed'
+        
+        Return: None
+        """
+
+        move_to_start: cc.MoveToStart
+        move_to_start = self._get_arguments(
+            class_namedtuple=cc.MoveToStart, given_arguments=arguments
+        )
+
+        if not move_to_start:
+            return
+
+        """
+        This command internally moves a sprite left when X is a negative
+        int and it moves a sprite down when Y is a negative int.
+        
+        In the editor, we use "left" and "up" to make it easier to read.
+        So convert the editor-convenient "left" and "up" values to
+        a negative int.
+        """
+        
+        # Don't allow a speed of more than 5000 because it would finish
+        # too quickly, defeating the purpose of an animation.
+        if move_to_start.speed <= 0:
+            move_to_start = 1
+        elif move_to_start.speed > 5000:
+            move_to_start.speed = 5000
+        
+        # Get the active sprite
+        sprite: sprite_definition.SpriteObject
+        sprite = self.story.get_visible_sprite(
+            content_type=sprite_type, general_alias=move_to_start.sprite_name
+        )
+
+        if not sprite:
+            return
+        
+        # A 'move to' eventually translates to a regular 'move'.
+        # This is the regular move. Initialize the sprite name; the rest
+        # will be filled in later in this method.
+        regular_move = cc.MoveStart(move_to_start.sprite_name,
+                                    x=0,
+                                    x_direction=None,
+                                    y=0,
+                                    y_direction=None)        
+        
+        # Get the current position of the sprite (using the left and top edges)
+        current_x = sprite.rect.x
+        current_y = sprite.rect.y
+    
+        # Calculate the difference (destination - current location)
+        dx = move_to_start.target_x - current_x
+        dy = move_to_start.target_y - current_y
+    
+        # Calculate total direct distance using the Pythagorean theorem 
+        # (math.hypot)
+        distance = math.hypot(dx, dy)
+    
+        # If the sprite is already exactly at the target, skip moving
+        if distance == 0:
+            return
+    
+        # Calculate proportional speeds for X and Y
+        # This normalizes the vector (dx/distance) and multiplies by the 
+        # desired speed.
+        # It ensures the sprite moves in a straight diagonal line.
+        speed_x = move_to_start.speed * (abs(dx) / distance)
+        speed_y = move_to_start.speed * (abs(dy) / distance)
+    
+        # Assign the calculated speeds
+        regular_move.x = speed_x
+        regular_move.y = speed_y
+    
+        # Determine directions based on whether the target is greater 
+        # or less than current
+        if dx > 0:
+            regular_move.x_direction = "right"
+        elif dx < 0:
+            regular_move.x_direction = "left"
+        else:
+            regular_move.x_direction = None
+    
+        if dy > 0:
+            regular_move.y_direction = "down"
+        elif dy < 0:
+            regular_move.y_direction = "up"
+        else:
+            regular_move.y_direction = None
+            
+        # Set the 'move to' animation object, so we have the animation
+        # instructions.
+        sprite.move_properties = regular_move        
+    
+        # Add stop conditions automatically, because we know where the sprite
+        # needs to stop.
+        
+        if regular_move.x_direction:
+            # Stop when the left of the sprite reaches target_x
+            sprite.movement_add_stop(
+                sprite_definition.MovementStops.LEFT, move_to_start.target_x)
+    
+        if regular_move.y_direction:
+            # Stop when the top of the sprite reaches target_y
+            sprite.movement_add_stop(
+                sprite_definition.MovementStops.TOP, move_to_start.target_y)
+            
+    
+        # Set a flag to indicate that movement animations should occur
+        # for this sprite.
         sprite.start_moving()
         
     @staticmethod
@@ -6115,6 +6284,7 @@ class StoryReader:
                     return
 
             # Get the visible sprite
+            sprite: sprite_definition.SpriteObject
             sprite = self.story.get_visible_sprite(
                 content_type=sprite_type, general_alias=item_name
             )

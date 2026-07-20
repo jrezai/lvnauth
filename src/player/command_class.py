@@ -455,13 +455,22 @@ class RemoteCallWithArguments(NamedTuple):
 # Sprite classes
 
 
-class MoveStart(NamedTuple):
+@dataclass
+class MoveStart:
     sprite_name: str
-    x: int
+    x: int  # X movement speed
     x_direction: str
-    y: int
+    y: int  # Y movement speed
     y_direction: str
-
+    
+    
+@dataclass
+class MoveToStart:
+    sprite_name: str
+    target_x: int
+    target_y: int
+    speed: float
+    
 
 # Used for multiple commands, such as:
 # character_after_fading_stop
