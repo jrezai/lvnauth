@@ -66,6 +66,7 @@ CAMERA_MOVEMENT_UI = PROJECT_PATH / "ui" / "camera_movement_dialog.ui"
 SEQUENCE_CREATE_UI = PROJECT_PATH / "ui" / "sequence_create_dialog.ui"
 SEQUENCE_FINAL_FRAME_UI = PROJECT_PATH / "ui" / "sequence_final_frame_dialog.ui"
 SEQUENCE_PLAY_OR_STOP_UI = PROJECT_PATH / "ui" / "sequence_play_dialog.ui"
+MOVE_TO_UI = PROJECT_PATH / "ui" / "move_to_dialog.ui"
 
 
 
@@ -798,6 +799,20 @@ class WizardWindow:
                           scale_from_value=0,
                           scale_to_value=1500,                                       
                           group_name=GroupName.MOVE)
+        
+        page_character_start_moving_to =\
+            SpriteMoveTo(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Character",
+                         sub_display_text="character_start_moving_to",
+                         command_name="character_start_moving_to",
+                         purpose_line="Starts a movement animation on a specific character sprite.\n\n"
+                         "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+                         "The animation will stop automatically after the sprite reaches\nits destination.",
+                         default_speed=100, 
+                         group_name=GroupName.MOVE)
 
         page_character_stop_moving = \
             CharacterStopMoving(parent_frame=self.frame_contents_outer,
@@ -1333,6 +1348,20 @@ class WizardWindow:
                               scale_to_value=1500,                                     
                               group_name=GroupName.MOVE)
 
+        page_dialogue_sprite_start_moving_to =\
+            SpriteMoveTo(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Dialogue",
+                         sub_display_text="dialogue_sprite_start_moving_to",
+                         command_name="dialogue_sprite_start_moving_to",
+                         purpose_line="Starts a movement animation on a specific dialogue sprite.\n\n"
+                         "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+                         "The animation will stop automatically after the sprite reaches\nits destination.",
+                         default_speed=100, 
+                         group_name=GroupName.MOVE)
+
         page_dialog_stop_moving = \
             CharacterStopMoving(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
@@ -1756,6 +1785,20 @@ class WizardWindow:
                           scale_to_value=1500,
                           group_name=GroupName.MOVE)
 
+        page_object_start_moving_to =\
+            SpriteMoveTo(parent_frame=self.frame_contents_outer,
+                         header_label=self.lbl_header,
+                         purpose_label=self.lbl_purpose,
+                         treeview_commands=self.treeview_commands,
+                         parent_display_text="Object",
+                         sub_display_text="object_start_moving_to",
+                         command_name="object_start_moving_to",
+                         purpose_line="Starts a movement animation on a specific object sprite.\n\n"
+                         "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+                         "The animation will stop automatically after the sprite reaches\nits destination.",
+                         default_speed=100, 
+                         group_name=GroupName.MOVE)
+
         page_object_stop_moving = \
             CharacterStopMoving(parent_frame=self.frame_contents_outer,
                                  header_label=self.lbl_header,
@@ -1766,6 +1809,7 @@ class WizardWindow:
                                  command_name="object_stop_moving",
                                  purpose_line="Stops a movement animation on a specific object sprite.",
                                  group_name=GroupName.MOVE)
+
 
         page_object_set_position_x =\
             CharacterSetPositionX(parent_frame=self.frame_contents_outer,
@@ -2831,6 +2875,7 @@ class WizardWindow:
         self.pages["character_after_movement_stop"] = page_character_after_movement_stop
         self.pages["character_stop_movement_condition"] = page_character_stop_movement_condition
         self.pages["character_start_moving"] = page_character_start_moving
+        self.pages["character_start_moving_to"] = page_character_start_moving_to
         self.pages["character_stop_moving"] = page_character_stop_moving
         self.pages["character_set_position_x"] = page_character_set_position_x
         self.pages["character_set_position_y"] = page_character_set_position_y
@@ -2893,6 +2938,7 @@ class WizardWindow:
         self.pages["object_after_movement_stop"] = page_object_after_movement_stop
         self.pages["object_stop_movement_condition"] = page_object_stop_movement_condition
         self.pages["object_start_moving"] = page_object_start_moving
+        self.pages["object_start_moving_to"] = page_object_start_moving_to
         self.pages["object_stop_moving"] = page_object_stop_moving
         self.pages["object_set_position_x"] = page_object_set_position_x
         self.pages["object_set_position_y"] = page_object_set_position_y
@@ -2946,6 +2992,7 @@ class WizardWindow:
         self.pages["dialogue_sprite_after_movement_stop"] = page_dialog_after_movement_stop
         self.pages["dialogue_sprite_stop_movement_condition"] = page_dialog_stop_movement_condition
         self.pages["dialogue_sprite_start_moving"] = page_dialog_start_moving
+        self.pages["dialogue_sprite_start_moving_to"] = page_dialogue_sprite_start_moving_to
         self.pages["dialogue_sprite_stop_moving"] = page_dialog_stop_moving
         self.pages["dialogue_sprite_set_position_x"] = page_dialog_set_position_x
         self.pages["dialogue_sprite_set_position_y"] = page_dialog_set_position_y
@@ -8660,7 +8707,34 @@ class SequencePlayFrame:
             state = ["!disabled"]
         
         self.sb_number_of_times.state(state)
-            
+         
+         
+class MoveToFrame:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_resource_path(PROJECT_PATH)
+        builder.add_from_file(MOVE_TO_UI)
+        # Main widget
+        self.mainframe = builder.get_object("frame_move_to", master)
+        self.master = master
+        builder.connect_callbacks(self)
+        
+        self.v_alias_title:tk.StringVar
+        self.v_alias_title = builder.get_variable("v_alias_title")        
+        
+        self.v_alias:tk.StringVar
+        self.v_alias = builder.get_variable("v_alias")
+      
+        self.v_target_x:tk.IntVar
+        self.v_target_x = builder.get_variable("v_target_x")
+
+        self.v_target_y:tk.IntVar
+        self.v_target_y = builder.get_variable("v_target_y")
+        
+        self.v_speed:tk.IntVar
+        self.v_speed = builder.get_variable("v_speed")
+        
+        
 
 class SequencePlayStopWizard(WizardListing):
     def __init__(self, parent_frame, header_label, purpose_label,
@@ -9144,6 +9218,136 @@ class SequenceChangeDelayFrameWizard(SequenceCreateFrameWizard):
         # Since we're using <sequence_change_delay>, 
         # hide the sprite type frame.
         frame_sprite_type.grid_forget()        
+
+
+class MoveToWizard(WizardListing):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                 treeview_commands, parent_display_text,
+                 sub_display_text, command_name, purpose_line, **kwargs):
+        
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+
+        self.frame_content = ttk.Frame(self.parent_frame)
+        self.frame_move_to = MoveToFrame(self.frame_content)
+        
+        # Default speed
+        self.default_speed = self.kwargs.get("default_speed")
+        self.frame_move_to.v_speed.set(self.default_speed)        
+
+        # Alias title (ie: Character Alias:)
+        self.frame_move_to.v_alias_title.set(f"{self.get_purpose_name(title_casing=True)} alias:")
+        
+        self.frame_move_to.mainframe.pack()
+        
+    def _edit_populate(self, command_class_object: cc.MoveToStart):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            case cc.MoveToStart(alias, target_x, target_y, speed):
+                
+                # Alias
+                self.frame_move_to.v_alias.set(alias)
+                
+                # Target X
+                self.frame_move_to.v_target_x.set(target_x)
+                
+                # Target Y
+                self.frame_move_to.v_target_y.set(target_y)
+                
+                # Speed
+                self.frame_move_to.v_speed.set(speed)
+                
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        alias = self.frame_move_to.v_alias.get().strip()
+        
+        if not alias:
+            messagebox.showwarning(parent=self.treeview_commands.winfo_toplevel(),
+                                   title="No alias provided",
+                                   message=f"Enter an alias for the {self.get_purpose_name()}.")
+            return
+    
+
+        # Make sure target_x is an integer.
+        try:
+            target_x = self.frame_move_to.v_target_x.get()
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Number expected",
+                                 message="Target X is expected to be a number.")
+            return
+              
+        # Make sure target_y is an integer.
+        try:
+            target_y = self.frame_move_to.v_target_y.get()
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Number expected",
+                                 message="Target Y is expected to be a number.")
+            return
+              
+        # Make sure speed is an integer.
+        try:
+            speed = self.frame_move_to.v_speed.get()
+            
+        except tk.TclError:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="Number expected",
+                                 message="Speed is expected to be a number.")
+            return
+        else:
+            # The speed has to be between 1 and 3000
+            if speed < 1 or speed > 3000:
+                messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                     title="Speed",
+                                     message="The speed has to be from 1 to 3000.")
+                return                
+              
+        user_input = {"Alias": alias,
+                      "TargetX": target_x,
+                      "TargetY": target_y,
+                      "Speed": speed,}
+    
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+        
+        alias = user_inputs.get("Alias")
+        target_x = user_inputs.get("TargetX")
+        target_y = user_inputs.get("TargetY")
+        speed = user_inputs.get("Speed")
+        
+        # <..start_moving_to>
+        command_line = f"<{self.command_name}: {alias}, {target_x}, {target_y}, {speed}>"
+
+        return command_line
+
 
 
 class CameraMovementFrame:
@@ -11479,6 +11683,21 @@ class CharacterMove(SharedPages.Move):
     For example: <character_move: rave, 50, 100> which means move the
     sprite horizontally by 50 pixels each time and 100 pixels vertically
     each time. The ‘time’ portion depends on <character_move_delay>
+    """
+
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+        
+class SpriteMoveTo(MoveToWizard):
+    """
+    <object_start_moving_to: card_3, target_x, target_y, speed>
+    <character_start_moving_to: card_3, target_x, target_y, speed>
+    <dialogue_sprite_start_moving_to: card_3, target_x, target_y, speed>
     """
 
     def __init__(self, parent_frame, header_label, purpose_label,

@@ -4094,12 +4094,12 @@ class StoryReader:
         a negative int.
         """
         
-        # Don't allow a speed of more than 5000 because it would finish
+        # Don't allow a speed of more than 3000 because it would finish
         # too quickly, defeating the purpose of an animation.
         if move_to_start.speed <= 0:
             move_to_start = 1
-        elif move_to_start.speed > 5000:
-            move_to_start.speed = 5000
+        elif move_to_start.speed > 3000:
+            move_to_start.speed = 3000
         
         # Get the active sprite
         sprite: sprite_definition.SpriteObject

@@ -75,6 +75,7 @@ class CommandHelper:
         "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "character_stop_movement_condition": cc.MovementStopCondition,
         "character_start_moving": cc.MoveStart,
+        "character_start_moving_to": cc.MoveToStart,
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
@@ -109,6 +110,7 @@ class CommandHelper:
         "dialogue_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "dialogue_sprite_stop_movement_condition": cc.MovementStopCondition,
         "dialogue_sprite_start_moving": cc.MoveStart,
+        "dialogue_sprite_start_moving_to": cc.MoveToStart,
         "dialogue_sprite_stop_moving": cc.SpriteShowHide,
         "dialogue_sprite_set_position_x": cc.SpritePosition,
         "dialogue_sprite_set_position_y": cc.SpritePosition,
@@ -140,6 +142,7 @@ class CommandHelper:
         "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "object_stop_movement_condition": cc.MovementStopCondition,
         "object_start_moving": cc.MoveStart,
+        "object_start_moving_to": cc.MoveToStart,
         "object_stop_moving": cc.SpriteShowHide,
         "object_set_position_x": cc.SpritePosition,
         "object_set_position_y": cc.SpritePosition,
@@ -515,7 +518,7 @@ class CommandHelper:
                     elif isinstance(arguments, list) and len(arguments) == 4:
                         # 4-argument version of the class, where the 4th
                         # argument is for the optional 'bright' keyword.
-                        command_cls = cc.SpriteTintBright                   
+                        command_cls = cc.SpriteTintBright
                 
                 case "character_after_fading_stop" | \
                     "character_after_rotating_stop" | \
