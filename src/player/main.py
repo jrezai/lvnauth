@@ -245,7 +245,7 @@ class Main:
     
             clock = pygame.time.Clock()
     
-            pygame.display.set_caption(f"{story_title} - LVNAuth Player")
+            pygame.display.set_caption(f"{story_title}") #- LVNAuth Player")
     
             # The app's icon file will be either in the current directory
             # or in the 'player' directory. It depends whether the visual novel
