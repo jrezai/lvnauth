@@ -6,7 +6,7 @@ jh2==5.0.8
 niquests==3.13.1
 pillow==11.1.0
 pygame-ce==2.5.7
-pygubu==0.36.3
+pygubu==0.40.1
 qh3==1.4.2
 screeninfo==0.8.1
 urllib3-future==2.12.912
