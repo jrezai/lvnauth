@@ -116,6 +116,8 @@ class ParameterDescription:
                      "character_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
                      "character_start_moving": ("Alias", "Horizontal speed (0 to 1500)", "Horizontal direction", "Vertical speed (0 to 1500)", "Vertical direction"),
+                     "character_start_moving_to": ("Alias", "Target X", "Target Y", "Speed (1 to 3000)"),
+                     
                      "character_stop_moving": ("Alias",),
                      "character_set_position_x": ("Alias", "Horizontal position"),
                      "character_set_position_y": ("Alias", "Vertical position"),
@@ -154,6 +156,8 @@ class ParameterDescription:
                      "dialogue_sprite_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
                      "dialogue_sprite_start_moving": ("Alias", "Horizontal speed (0 to 1500)", "Horizontal direction", "Vertical speed (0 to 1500)", "Vertical direction"),
+                     "dialogue_sprite_start_moving_to": ("Alias", "Target X", "Target Y", "Speed (1 to 3000)"),
+                     
                      "dialogue_sprite_stop_moving": ("Alias",),
                      "dialogue_sprite_set_position_x": ("Alias", "Horizontal position"),
                      "dialogue_sprite_set_position_y": ("Alias", "Vertical position"),
@@ -189,6 +193,8 @@ class ParameterDescription:
                      "object_stop_movement_condition_no_side_to_check": ("Alias", "Stop location"),
                      
                      "object_start_moving": ("Alias", "Horizontal speed (0 to 1500)", "Horizontal direction", "Vertical speed (0 to 1500)", "Vertical direction"),
+                     "object_start_moving_to": ("Alias", "Target X", "Target Y", "Speed (1 to 3000)"),
+            
                      "object_stop_moving": ("Alias",),
                      "object_set_position_x": ("Alias", "Horizontal position"),
                      "object_set_position_y": ("Alias", "Vertical position"),
@@ -238,6 +244,13 @@ class ParameterDescription:
                      "camera_start_shaking": ("Intensity (0.01 to 100)", "Duration in seconds (0.01 to 100)"),
                      "camera_start_moving": ("Target X", "Target Y", "Zoom (0 to 20)", "Duration in seconds (0 to 600)", "Smoothing style"),
                      "camera_stop_moving": ("Stop result", ),
+                     
+                     "list_add": ("List name", "*Single value or comma separated values"),
+                     "list_delete": ("List name", ),
+                     "list_take_first": ("List name", "Variable name to put value into"),
+                     "list_take_last": ("List name", "Variable name to put value into"),
+                     "list_take_random": ("List name", "Variable name to put value into"),
+                     "list_get_random": ("List name", "Variable name to put value into"),
                      
                      "sequence_create": ("Sequence name", "Sprite type", "Delay in seconds", "*Sprite names (comma separated)"),
                      "sequence_change_delay": ("Sequence name", "Delay in seconds", "*Sprite names (comma separated)"),

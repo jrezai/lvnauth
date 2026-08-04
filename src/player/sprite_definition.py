@@ -2099,6 +2099,13 @@ class SpriteObject:
         # Not moving the sprite or no instructions on speed? Return.
         if not self.is_moving or not self.move_properties:
             return
+        
+        # Apply breaks to one axis at a time as each one finishes.
+        # Reason: when moving diagonally, it's rare for both axis to reach
+        # the destination at exactly the same time. So when one axis reaches
+        # its target, stop moving that finished axis in the next frame.
+        satisfied_x = False
+        satisfied_y = False
 
         if self.stop_movement_conditions:
 
@@ -2126,7 +2133,11 @@ class SpriteObject:
                             self.rect.left = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
-
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_x = True
+                            
                     elif self.move_properties.x_direction == "right":
                         # The sprite is moving right
 
@@ -2139,6 +2150,10 @@ class SpriteObject:
                             self.rect.left = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_x = True
 
                 # Check the right side of the sprite for stops?
                 elif side == MovementStops.RIGHT:
@@ -2157,6 +2172,10 @@ class SpriteObject:
                             self.rect.right = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_x = True
 
                     elif self.move_properties.x_direction == "left":
                         # The sprite is moving left
@@ -2170,6 +2189,10 @@ class SpriteObject:
                             self.rect.right = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_x = True
 
                             # Check the top of the sprite for a stop?
                 elif side == MovementStops.TOP:
@@ -2189,6 +2212,10 @@ class SpriteObject:
                             self.rect.top = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_y = True
 
                     if self.move_properties.y_direction == "down":
                         # The sprite is moving down
@@ -2202,6 +2229,10 @@ class SpriteObject:
                             self.rect.top = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_y = True                             
 
                             # Check the bottom of the sprite for a stop?
                 elif side == MovementStops.BOTTOM:
@@ -2221,6 +2252,10 @@ class SpriteObject:
                             self.rect.bottom = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_y = True                            
 
                     elif self.move_properties.y_direction == "up":
                         # The sprite is moving up
@@ -2234,8 +2269,31 @@ class SpriteObject:
                             self.rect.bottom = pixel_coordinate
                             
                             satisfied_stop_keys.append(side)
+                            
+                            # This axis has finished moving.
+                            # Apply the breaks to this axis movement.
+                            satisfied_y = True
+                             
 
             if satisfied_stop_keys:
+                
+                # When moving a sprite diagonally, it's rare that both
+                # axis will finish at the same time. So as soon as one axis
+                # reaches its target, stop moving that one axis so that
+                # it doesn't get moved in the next frame when the other axis
+                # needs to still animate.
+                if satisfied_x:
+                    # We should longer try to move this sprite
+                    # in this axis, because it's satisfied.
+                    self.move_properties.x = 0
+                    self.calculated_pos_moving_x = self.rect.x
+                    
+                if satisfied_y:
+                    # We should longer try to move this sprite
+                    # in this axis, because it's satisfied.
+                    self.move_properties.y = 0
+                    self.calculated_pos_moving_y = self.rect.x
+                
                 # Remove movement stop positions that have already been satisfied.
                 for key in satisfied_stop_keys:
                     del self.stop_movement_conditions[key]

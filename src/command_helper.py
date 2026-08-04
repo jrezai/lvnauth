@@ -75,6 +75,7 @@ class CommandHelper:
         "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "character_stop_movement_condition": cc.MovementStopCondition,
         "character_start_moving": cc.MoveStart,
+        "character_start_moving_to": cc.MoveToStart,
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
@@ -109,6 +110,7 @@ class CommandHelper:
         "dialogue_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "dialogue_sprite_stop_movement_condition": cc.MovementStopCondition,
         "dialogue_sprite_start_moving": cc.MoveStart,
+        "dialogue_sprite_start_moving_to": cc.MoveToStart,
         "dialogue_sprite_stop_moving": cc.SpriteShowHide,
         "dialogue_sprite_set_position_x": cc.SpritePosition,
         "dialogue_sprite_set_position_y": cc.SpritePosition,
@@ -140,6 +142,7 @@ class CommandHelper:
         "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
         "object_stop_movement_condition": cc.MovementStopCondition,
         "object_start_moving": cc.MoveStart,
+        "object_start_moving_to": cc.MoveToStart,
         "object_stop_moving": cc.SpriteShowHide,
         "object_set_position_x": cc.SpritePosition,
         "object_set_position_y": cc.SpritePosition,
@@ -183,6 +186,14 @@ class CommandHelper:
         "camera_start_shaking": cc.CameraShake,
         "camera_start_moving": cc.CameraMovement,
         "camera_stop_moving": cc.CameraStopWhere,
+        
+        "list_add": cc.ListCommand,
+        "list_delete": cc.ListDelete,
+        "list_take_first": cc.ListCommand,
+        "list_take_last": cc.ListCommand,
+        "list_take_random": cc.ListCommand,
+        "list_get_random": cc.ListCommand,
+        
         "sequence_create": cc.SequenceCreate,
         "sequence_change_delay": cc.SequenceChangeDelay,
         "sequence_final_frame": cc.SequenceFinalFrame,
@@ -402,6 +413,13 @@ class CommandHelper:
                     else:
                         command_object = command_cls(arguments)
                     
+                case "list_add":
+                    
+                    if isinstance(arguments, list):
+                        # All arguments from index 1 and beyond are of variable
+                        # length.
+                        arguments =\
+                            CommandHelper._get_optional_arguments(arguments, 1)                        
                     
                 # <_stop_movement_condition> can have 2 or 3 arguments.
                 # If we have 2 arguments here, use the 2 argument version of the
@@ -515,7 +533,7 @@ class CommandHelper:
                     elif isinstance(arguments, list) and len(arguments) == 4:
                         # 4-argument version of the class, where the 4th
                         # argument is for the optional 'bright' keyword.
-                        command_cls = cc.SpriteTintBright                   
+                        command_cls = cc.SpriteTintBright
                 
                 case "character_after_fading_stop" | \
                     "character_after_rotating_stop" | \
