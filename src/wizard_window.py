@@ -83,6 +83,7 @@ class Purpose(Enum):
     SCENE_SCRIPT = auto() # such as <scene>
     VARIABLE_SET = auto() # such as <variable_set>
     REMOTE_GET = auto() # such as <remote_get: some_key, some variable>
+    LIST_RELATED = auto() # such as <list_add> or <list_take...>
 
 
 class GroupName(Enum):
@@ -105,6 +106,12 @@ class GroupName(Enum):
     ZOOM_PAN = auto()
     DELAY = auto()
     CREATE = auto()
+    
+    # List
+    LIST_TAKE = auto()
+    LIST_GET = auto()
+    LIST_ADD = auto()
+    LIST_DELETE = auto()
 
     # Font
     SPEED = auto()
@@ -2665,6 +2672,89 @@ class WizardWindow:
                         "The script that uses <exit> will be the script that will be stopped.",
                         group_name=GroupName.STOP)
         
+        """
+        List
+        """
+        
+        page_list_add = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_add",
+                        command_name="list_add",
+                        purpose_line="Adds one or more items to a list.\n"
+                        "If the list does not exist, it will be created.\n\n"
+                        "To supply multiple multiple values, separate them with a comma.\n"
+                        "For example: blue, yellow, green, purple car, red motorcycle\n\n"
+                        "Extra spaces around the commas will be removed automatically.",
+                        variable_label_text="Value or variable name to get value from:", 
+                        group_name=GroupName.LIST_ADD)
+        
+        page_list_delete = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_delete",
+                        command_name="list_delete",
+                        purpose_line="Deletes an existing list.\n\n"
+                        "If the list does not exist, no error will occur.", 
+                        show_variable_widget=False, 
+                        group_name=GroupName.LIST_DELETE)               
+        
+        page_list_take_first = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_take_first",
+                        command_name="list_take_first",
+                        purpose_line="Gets the first item from a list.\n"
+                        "The item is then removed from the list.",
+                        group_name=GroupName.LIST_TAKE)
+        
+        page_list_take_last = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_take_last",
+                        command_name="list_take_last",
+                        purpose_line="Gets the last item from a list.\n"
+                        "The item is then removed from the list.",
+                        group_name=GroupName.LIST_TAKE)        
+        
+        page_list_take_random = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_take_random",
+                        command_name="list_take_random",
+                        purpose_line="Gets a random item from a list.\n"
+                        "The item is then removed from the list.",
+                        group_name=GroupName.LIST_TAKE)
+        
+        page_list_get_random = \
+            ListWizard(parent_frame=self.frame_contents_outer,
+                        header_label=self.lbl_header,
+                        purpose_label=self.lbl_purpose,
+                        treeview_commands=self.treeview_commands,
+                        parent_display_text="List",
+                        sub_display_text="list_get_random",
+                        command_name="list_get_random",
+                        purpose_line="Gets a random item from a list.\n"
+                        "The item is *not* removed from the list, unlike <list_take_random>.",
+                        group_name=GroupName.LIST_GET)
+        
+ 
+        
         
         """
         Sequence
@@ -3055,6 +3145,16 @@ class WizardWindow:
         self.pages["camera_reset"] = page_camera_reset
         
         """
+        List
+        """
+        self.pages["list_add"] = page_list_add
+        self.pages["list_delete"] = page_list_delete
+        self.pages["list_take_first"] = page_list_take_first
+        self.pages["list_take_last"] = page_list_take_last
+        self.pages["list_take_random"] = page_list_take_random
+        self.pages["list_get_random"] = page_list_get_random
+        
+        """
         Sequence
         """
         self.pages["sequence_create"] = page_sequence_create
@@ -3293,6 +3393,9 @@ class WizardListing:
         elif "variable" in command_name or "case" in command_name:
             self.purpose_type = Purpose.VARIABLE_SET
             
+        elif "list" in command_name:
+            self.purpose_type = Purpose.LIST_RELATED
+            
         elif command_name in ("after", "after_cancel", "call"):
             self.purpose_type = Purpose.REUSABLE_SCRIPT       
         
@@ -3484,6 +3587,7 @@ class WizardListing:
                  Purpose.MUSIC: ProjectSnapshot.music,
                  Purpose.VARIABLE_SET: ProjectSnapshot.variables,
                  Purpose.REMOTE_GET: ProjectSnapshot.variables,
+                 Purpose.LIST_RELATED: ProjectSnapshot.variables,
                  Purpose.REUSABLE_SCRIPT: ProjectSnapshot.reusables}
     
             dict_ref = dict_mapping.get(self.purpose_type)
@@ -6363,6 +6467,103 @@ class SharedPages:
                              #sub_display_text, command_name,
                              #purpose_line, **kwargs)
 
+    class ListPage(WizardListing):
+        """
+        Used for the following commands:
+        
+        <list_add: list name, single text or variable name value>
+        <list_delete: list name>
+        <list_take_first: list name, put into variable name>
+        <list_take_last: list name, put into variable name>
+        <list_take_random: list name, put into variable name>
+        <list_get_random: list name, put into variable name>
+        """
+        def __init__(self, parent_frame, header_label, purpose_label,
+                    treeview_commands, parent_display_text, sub_display_text,
+                    command_name, purpose_line, **kwargs):
+
+            super().__init__(parent_frame, header_label, purpose_label,
+                             treeview_commands, parent_display_text,
+                             sub_display_text, command_name, purpose_line,
+                             **kwargs)
+
+            # Used for showing a custom variable combobox label/instructions.
+            self.variable_name_label_text = kwargs.get("variable_label_text")
+            
+            # Whether to show the variable combobox or not.
+            # Default to True
+            self.show_variable_widget = kwargs.get("show_variable_widget", True)
+            
+            self.v_variable_name = tk.StringVar()
+            self.frame_content = self.create_content_frame()
+
+        def create_content_frame(self) -> ttk.Frame:
+            """
+            Create the widgets needed for this command
+            and return a frame that contains the widgets.
+            """
+
+            frame_content = ttk.Frame(self.parent_frame)
+            
+
+            frame_list_name = ttk.Frame(frame_content)
+            lbl_list_name = ttk.Label(frame_list_name, text="List name:")
+            self.entry_list_name = EntryWithLimit(frame_list_name,
+                                             width=25,
+                                             max_length=50)
+            
+
+            # We might have custom text for the variable combobox.
+            # Instead of just 'Variable name:', we might have
+            # 'Value or variable name to get value from:'
+            if self.variable_name_label_text:
+                variable_text = self.variable_name_label_text
+            else:
+                variable_text = "Variable name to put value into:"
+            
+            if self.show_variable_widget:
+                
+                frame_variables = ttk.Frame(frame_content)
+                lbl_variable_name = ttk.Label(frame_variables, text=variable_text)
+                cb_variables = ttk.Combobox(frame_variables,
+                                            width=25,
+                                            textvariable=self.v_variable_name)
+    
+            
+                # Variable names
+                dict_variables = self.get_population_dictionary()
+            
+                variable_names = []
+                if dict_variables:
+                    variable_names = tuple(dict_variables.keys())
+                    
+                cb_variables.configure(values=variable_names)
+    
+                # We have this binding so that when a variable is selected,
+                # we surround it with ($) (ie: ($selection_here))
+                if self.command_name == "list_add":
+                    # This only applies to <list_add> because we're getting
+                    # a variable's value when using <list_add>, but when we
+                    # use the other list commands, such as <list_take_first>,
+                    # we're putting the value into a variable name, so
+                    # we would just need the variable *name* with the other
+                    # <list_> commands.
+                    cb_variables.bind("<<ComboboxSelected>>",
+                                      SharedPages.on_combobox_selection_changed)
+        
+            
+            frame_list_name.grid(row=0, column=0, sticky=tk.W)
+            lbl_list_name.grid(row=0, column=0, sticky=tk.W)
+            self.entry_list_name.grid(row=1, column=0, sticky=tk.W)            
+            
+
+            if self.show_variable_widget:
+                frame_variables.grid(row=1, column=0, pady=15, sticky=tk.W)
+                lbl_variable_name.grid(row=0, column=0, sticky=tk.W)                
+                cb_variables.grid(row=1, column=0, sticky=tk.W)
+                
+            return frame_content
+  
 
     class Case(WizardListing):
         """
@@ -6407,7 +6608,7 @@ class SharedPages:
             # We have this binding so that when a variable is selected,
             # we surround it with ($) (ie: ($selection_here))
             self.cb_variable_names.bind("<<ComboboxSelected>>",
-                                        self.on_combobox_selection_changed)
+                                        SharedPages.on_combobox_selection_changed)
             
             lbl_operator = ttk.Label(frame_content,
                                      text="Comparison operator:")
@@ -6432,7 +6633,7 @@ class SharedPages:
             # we surround it with ($) (ie: ($selection_here))
             self.cb_variable_names_check_against.\
                 bind("<<ComboboxSelected>>",
-                     self.on_combobox_selection_changed)            
+                     SharedPages.on_combobox_selection_changed)            
             
             # Set the instructions for the condition name
             # depending on whether it's a <case> command or <or_case> command.
@@ -6463,17 +6664,18 @@ class SharedPages:
             
             return frame_content
 
-        def on_combobox_selection_changed(self, event):
-            """
-            A variable has been selected, so encapsulate the variable name
-            with ($). For example, if the combobox has 'my_var' as the selection,
-            change it to ($my_var), because a variable has been selected.
-            """
-            text = event.widget.get()
-            if text:
-                text = f"(${text})"
-                event.widget.delete(0, tk.END)
-                event.widget.insert(0, text)
+    @staticmethod
+    def on_combobox_selection_changed(event):
+        """
+        A variable has been selected, so encapsulate the variable name
+        with ($). For example, if the combobox has 'my_var' as the selection,
+        change it to ($my_var), because a variable has been selected.
+        """
+        text = event.widget.get()
+        if text:
+            text = f"(${text})"
+            event.widget.delete(0, tk.END)
+            event.widget.insert(0, text)
 
         def _edit_populate(self, command_class_object: cc.ConditionDefinition):
             """
@@ -7787,6 +7989,114 @@ class CaseCondition(SharedPages.Case):
                          treeview_commands, parent_display_text,
                          sub_display_text, command_name, purpose_line)
         
+        
+        
+class ListWizard(SharedPages.ListPage):
+    def __init__(self, parent_frame, header_label, purpose_label,
+                treeview_commands, parent_display_text, sub_display_text,
+                command_name, purpose_line, **kwargs):
+    
+        super().__init__(parent_frame, header_label, purpose_label,
+                         treeview_commands, parent_display_text,
+                         sub_display_text, command_name, purpose_line, **kwargs)
+        
+    def _edit_populate(self, command_class_object: cc.ListCommand):
+        """
+        Populate the widgets with the arguments for editing.
+        """
+        
+        # No arguments? return.
+        if not command_class_object:
+            return
+
+        match command_class_object:
+            
+            case cc.ListCommand(list_name, variable_name_or_data):
+                
+                # List name
+                self.entry_list_name.delete(0, tk.END)
+                self.entry_list_name.insert(0, list_name)             
+                
+                # Variable name or in the case of <list_add> either
+                # a variable name or text to add.
+                self.v_variable_name.set(variable_name_or_data)
+                    
+            case cc.ListDelete(list_name):
+                
+                # List name
+                self.entry_list_name.delete(0, tk.END)
+                self.entry_list_name.insert(0, list_name)                 
+                
+
+    def check_inputs(self) -> Dict | None:
+        """
+        Check whether the user has inputted sufficient information
+        to use this command.
+
+        Return: a dict with the chosen parameters
+        or None if insufficient information was provided by the user.
+        """
+
+        user_input = {}
+
+        list_name = self.entry_list_name.get().strip()
+        if not list_name:
+            messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                 title="List Name",
+                                 message="Enter a list name.")
+            return
+        
+        # Initialize. We may not use this variable.
+        # For example: <list_delete> doesn't use this variable.
+        variable_name = None
+        
+        if self.show_variable_widget:
+            variable_name = self.v_variable_name.get().strip()
+            
+            if not variable_name:
+                # <list_add> accepts text or a variable to get data *from*
+                if self.command_name == "list_add":
+                    text = "Enter some text to add or a variable to get the text from."
+                    title = "Text or Variable"
+                else:
+                    # The rest of the <list_> commands that accept a variable
+                    # are used to put data *into* a variable.
+                    text = "Enter a variable name to put the value into."
+                    title = "Variable"
+                    
+                messagebox.showerror(parent=self.frame_content.winfo_toplevel(), 
+                                     title=title, 
+                                     message=text)
+                return
+
+        user_input = {"VariableNameOrData": variable_name,
+                      "ListName": list_name,}
+
+        return user_input
+
+    def generate_command(self) -> str | None:
+        """
+        Return the command based on the user's configuration/selection.
+        """
+
+        # For <list_...>
+        user_inputs = self.check_inputs()
+
+        if not user_inputs:
+            return
+
+        variable_name_or_data = user_inputs.get("VariableNameOrData")
+        list_name = user_inputs.get("ListName")
+            
+        if self.command_name == "list_delete":
+            # <list_delete> doesn't use a variable name or value,
+            # just the list name to delete.
+            command_line = f"<{self.command_name}: {list_name}>"
+        else:
+            command_line = f"<{self.command_name}: {list_name}, {variable_name_or_data}>"
+            
+        return command_line
+
 
 class Character_LoadCharacter(SharedPages.LoadSpriteWithAlias):
     """

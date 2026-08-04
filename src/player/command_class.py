@@ -82,6 +82,18 @@ class DialogRectangleDefinition(NamedTuple):
     border_width: int
 
 
+@dataclass
+class ListCommand:
+    list_name: str
+    text: str
+    
+    
+# Used just for <list_delete>, which only has 1 parameter.
+@dataclass
+class ListDelete:
+    list_name: str
+
+
 class VariableSet(NamedTuple):
     variable_name: str
     variable_value: str

@@ -55,6 +55,7 @@ from shared_components import Passer
 from animation_speed import AnimationSpeed
 from tint_handler import TintStatus, TintStyle
 from camera_handler import SmoothingStyle
+from list_handler import ListHandler
 
 # from audio_player import AudioChannel
 from rest_handler import RestHandler
@@ -69,6 +70,14 @@ Changes
 (Jobin Rezai) - July 12, 2025 - Added 'get' and 'get into' support
 for the <remote> command. Also ran a code formatter.
 """
+
+
+class ListTakeMode(Enum):
+    TAKE_FIRST = 0
+    TAKE_LAST = 1
+    TAKE_RANDOM = 2 # Deletes the taken item
+    GET_RANDOM = 3 # Doesn't delete the taken item
+
 
 
 class AfterCounter:
@@ -294,6 +303,10 @@ class StoryReader:
         # For reading variables and replacing them with values.
         # Both the main scripts and reusable scripts can use variables.
         self.variable_handler = VariableHandler()
+        
+        # Used for managing lists.
+        # Both the main scripts and reusable scripts can use lists.
+        self.list_handler = ListHandler()
 
         # This gets set to True once there are no more scripts to read.
         # This is used so we don't attempt to reload the story again.
@@ -1314,6 +1327,19 @@ class StoryReader:
             # '1' in the argument means zoom size 1 (original size)
             # Zoom to the original size instantly.
             self._camera_start_moving(arguments="0, 0, 1, 0, constant speed")
+            
+        elif command_name.startswith("list_"):
+            
+            if command_name == "list_delete":
+                self._list_delete(list_name=arguments)
+                
+            elif command_name == "list_add":
+                self._list_add(arguments=arguments)
+                
+            elif command_name.startswith("list_take_") \
+                 or command_name == "list_get_random":
+                self._list_take(command_name=command_name,
+                                arguments=arguments)
 
         elif command_name == "variable_set":
             """
@@ -2514,6 +2540,117 @@ class StoryReader:
                 variable_name=variable_set.variable_name,
                 variable_value=variable_set.variable_value,
             )
+            
+    def _list_add(self, arguments: str):
+        """
+        Create a new list or append to an existing with one or more items.
+        <list_add: list name, comma separated text>
+        
+        Arguments:
+        
+        - arguments: comma separated string or single text. If it's a comma
+        separated string, each delimited value will get added to the list as
+        separate items.
+        """
+        
+        if not arguments:
+            return
+
+        list_add: cc.ListCommand
+        list_add = self._get_arguments(
+            class_namedtuple=cc.ListCommand, given_arguments=arguments,
+            unlimited_optional_arguments=True)
+
+        if not list_add:
+            raise ValueError(f"Could not create or append to list: {arguments}")
+
+        # Create new list, if it doesn't already exist.
+        main_reader = self.get_main_story_reader()
+
+        # Create a new list, if it doesn't already exist.
+        # If it does exist, ignore the request.
+        main_reader.list_handler.list_add(list_add.list_name,
+                                             list_add.text)
+        
+    def _list_delete(self, list_name: str):
+        """
+        Delete an existing list.
+        <list_delete: list name>
+        
+        If the list doesn't exist, don't raise an exception.
+        """
+        
+        if not list_name:
+            return
+        
+        # Get the main reader because that's where the list handler is.
+        main_reader = self.get_main_story_reader()
+
+        # Delete the requested list.
+        # If it doesn't exist, ignore the request.
+        main_reader.list_handler.list_delete(list_name=list_name)
+        
+    def _list_take(self, command_name: str, arguments:str):
+        """
+        Take a value from an existing list.
+        
+        <list_take_first: list name, put into variable name>
+        <list_take_last: list name, put into variable name>
+        <list_take_random: list name, put into variable name>
+        
+        If the list doesn't exist, raise an exception.
+        """
+        
+        if not arguments:
+            return
+
+        list_take: cc.ListCommand
+        list_take = self._get_arguments(
+            class_namedtuple=cc.ListCommand, given_arguments=arguments)
+        
+        if not list_take:
+            return
+        
+        take_mode_dict = {"list_take_first": ListTakeMode.TAKE_FIRST,
+                          "list_take_last": ListTakeMode.TAKE_LAST,
+                          "list_take_random": ListTakeMode.TAKE_RANDOM,
+                          "list_get_random": ListTakeMode.GET_RANDOM,}
+        
+        take_mode = take_mode_dict.get(command_name)
+        if not take_mode:
+            return
+        
+        variable_name = list_take.text
+        if not variable_name:
+            return
+            
+        # Get the main reader because that's where the list handler is.
+        main_reader = self.get_main_story_reader()
+        
+        read_value = None
+
+        if take_mode == ListTakeMode.TAKE_FIRST:
+            read_value =\
+                main_reader.list_handler.list_take_first(list_name=list_take.list_name)
+        
+        elif take_mode == ListTakeMode.TAKE_LAST:
+            read_value =\
+                main_reader.list_handler.list_take_last(list_name=list_take.list_name)
+            
+        elif take_mode == ListTakeMode.TAKE_RANDOM:
+            read_value =\
+                main_reader.list_handler.list_take_random(list_name=list_take.list_name,
+                                                          remove_after=True)
+            
+        # Same as TAKE_RANDOM, except it doesn't remove the item.
+        elif take_mode == ListTakeMode.GET_RANDOM:
+            read_value =\
+                main_reader.list_handler.list_take_random(list_name=list_take.list_name,
+                                                          remove_after=False)
+            
+        # Insert or update the variable with the value we just retrieved above.
+        main_reader.variable_handler.set_variable(variable_name=variable_name,
+                                                  variable_value=read_value)
 
     def _continue(self, arguments: str):
         """
