@@ -67,6 +67,11 @@ class Condition:
                  value2: str, 
                  operator: str):
         
+        # If the value to check against (value2) is literally the word 'blank'
+        # then set it to an empty string.
+        if value2.lower() == "blank":
+            value2 = ""
+        
         self.value1 = value1
         self.value2 = value2
         self.operator = operator

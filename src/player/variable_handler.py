@@ -170,8 +170,18 @@ class VariableHandler:
                 span: Tuple = match.span("variable_name")
                 # print(match.group("variable_name"), match.span("variable_name"))
                 
-                variable_value = VariableHandler.variables.get(variable_name)
-                if variable_value is None:
+                if variable_name in VariableHandler.variables:
+                    # The variable name exists, try to get its value.
+                    # If there is no value (ie: None), then default to an
+                    # empty string so the variable will be replaced with an
+                    # empty string in the visual novel.
+                    variable_value =\
+                        VariableHandler.variables.get(variable_name)
+                    if variable_value is None:
+                        variable_value = ""
+                else:
+                    # This variable name doesn't exist.
+                    # Go to the next variable, if any.
                     continue
                 
                 results.append((variable_value, span))
