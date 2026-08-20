@@ -1335,11 +1335,15 @@ class StoryReader:
                 
             elif command_name == "list_add":
                 self._list_add(arguments=arguments)
-                
-            elif command_name.startswith("list_take_") \
-                 or command_name == "list_get_random":
-                self._list_take(command_name=command_name,
-                                arguments=arguments)
+
+            elif command_name == "list_add_single":
+                self._list_add(arguments=arguments, comma_separated=False)
+
+            elif (
+                command_name.startswith("list_take_")
+                or command_name == "list_get_random"
+            ):
+                self._list_take(command_name=command_name, arguments=arguments)
 
         elif command_name == "variable_set":
             """
@@ -1459,7 +1463,6 @@ class StoryReader:
             )
 
         elif command_name in ("character_set_position_x", "character_set_position_y"):
-
             self._sprite_set_position(
                 command_name=command_name,
                 arguments=arguments,
@@ -1467,7 +1470,6 @@ class StoryReader:
             )
 
         elif command_name in ("object_set_position_x", "object_set_position_y"):
-
             self._sprite_set_position(
                 command_name=command_name,
                 arguments=arguments,
@@ -1478,7 +1480,6 @@ class StoryReader:
             "dialogue_sprite_set_position_x",
             "dialogue_sprite_set_position_y",
         ):
-
             self._sprite_set_position(
                 command_name=command_name,
                 arguments=arguments,
@@ -1549,13 +1550,13 @@ class StoryReader:
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
-            
+
         elif command_name == "character_start_moving_to":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.CHARACTER,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
-                move_to_destination=True
+                move_to_destination=True,
             )
 
         elif command_name == "object_start_moving":
@@ -1564,13 +1565,13 @@ class StoryReader:
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
-            
+
         elif command_name == "object_start_moving_to":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.OBJECT,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
-                move_to_destination=True
+                move_to_destination=True,
             )
 
         elif command_name == "dialogue_sprite_start_moving":
@@ -1579,13 +1580,13 @@ class StoryReader:
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
             )
-            
+
         elif command_name == "dialogue_sprite_start_moving_to":
             self._sprite_start_or_stop_moving(
                 sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
                 arguments=arguments,
                 start_or_stop=sd.StartOrStop.START,
-                move_to_destination=True
+                move_to_destination=True,
             )
 
         elif command_name == "character_stop_moving":
@@ -1610,12 +1611,11 @@ class StoryReader:
             )
 
         elif command_name == "call":
-
             if "," in arguments:
                 class_type = cc.CallWithArguments
             else:
                 class_type = cc.CallWithNoArguments
-                
+
             """
             unlimited_optional_arguments means if the call method has
             arguments, aside from the reusable script name (which is 
@@ -1635,45 +1635,49 @@ class StoryReader:
             call_class = self._get_arguments(
                 class_namedtuple=class_type,
                 given_arguments=arguments,
-                unlimited_optional_arguments=arguments.count(",") >= 1, 
-                num_of_fixed_groups=1)
-            
+                unlimited_optional_arguments=arguments.count(",") >= 1,
+                num_of_fixed_groups=1,
+            )
+
             if class_type == cc.CallWithArguments:
                 arguments = call_class.arguments
             else:
                 arguments = None
-            
+
             self.spawn_new_background_reader(
                 reusable_script_name=call_class.reusable_script_name,
-                arguments=arguments
+                arguments=arguments,
             )
 
         elif command_name == "character_start_tinting":
-            self._tint_sprite(sprite_type=file_reader.ContentType.CHARACTER,
-                              arguments=arguments)
-                    
+            self._tint_sprite(
+                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
+            )
+
         elif command_name == "character_focus":
             self._tint_sprite_solo(
-                sprite_type=file_reader.ContentType.CHARACTER,
-                arguments=arguments)
+                sprite_type=file_reader.ContentType.CHARACTER, arguments=arguments
+            )
 
         elif command_name == "object_start_tinting":
-            self._tint_sprite(sprite_type=file_reader.ContentType.OBJECT,
-                              arguments=arguments)
-            
+            self._tint_sprite(
+                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
+            )
+
         elif command_name == "object_focus":
             self._tint_sprite_solo(
-                sprite_type=file_reader.ContentType.OBJECT,
-                arguments=arguments)
-            
+                sprite_type=file_reader.ContentType.OBJECT, arguments=arguments
+            )
+
         elif command_name == "dialogue_sprite_start_tinting":
-            self._tint_sprite(sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
-                              arguments=arguments)
-            
+            self._tint_sprite(
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
+            )
+
         elif command_name == "dialogue_sprite_focus":
             self._tint_sprite_solo(
-                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE,
-                arguments=arguments)
+                sprite_type=file_reader.ContentType.DIALOGUE_SPRITE, arguments=arguments
+            )
 
         elif command_name == "scene":
             self.spawn_new_reader(arguments=arguments)
@@ -1924,30 +1928,30 @@ class StoryReader:
         def get_volume_from_convenient_value(self, convenient_value: int):
             """
             Take a value from 0 to 100 and return its float equivalent.
-        
+
             pygame uses 0 to 1.0
             LVNAuth accepts: 0 to 100
             """
-        
+
             # No value or zero means zero volume.
             if not convenient_value:
                 float_value = float(0)
-                
+
             # More than 100 means volume 1.0 for pygame.
             elif convenient_value > 100:
                 float_value = float(1)
             else:
                 # Between 1 and 100
-                
+
                 # Convert the convenient value to a float
                 # value, between 0.1 and 1.0, so pygame can use it.
                 float_value = convenient_value / 100
-        
+
             return float_value
 
-        float_volume =\
-            get_volume_from_convenient_value(self,
-                                             convenient_value=volume.volume)
+        float_volume = get_volume_from_convenient_value(
+            self, convenient_value=volume.volume
+        )
 
         channel_mapping = {
             "volume_text": audio_player.AudioChannel.TEXT,
@@ -2288,11 +2292,10 @@ class StoryReader:
                 main_reader.halt_main_script_seconds_counter
                 >= main_reader.halt_main_script_auto_mode_seconds_reach
             ):
-
                 # Yes, we've reached the amount needed to wait.
 
                 # Now we can reset the counter and unhalt the story.
-                # The unhalt() method below will reset the halt_auto 
+                # The unhalt() method below will reset the halt_auto
                 # counter variables.
                 main_reader.unhalt()
 
@@ -2305,13 +2308,11 @@ class StoryReader:
                 # dialog letters have finished being displayed.
                 # Reason: if we don't have this check, halt_auto's counter might
                 # finish before all the letters have finished being displayed.
-                if main_reader.active_font_handler.font_animation.\
-                   is_start_animating:
+                if main_reader.active_font_handler.font_animation.is_start_animating:
                     return
 
                 # Increment the seconds counter
-                main_reader.\
-                    halt_main_script_seconds_counter += AnimationSpeed.delta
+                main_reader.halt_main_script_seconds_counter += AnimationSpeed.delta
 
     def halt(self, automate_after_seconds_count: int = 0):
         """
@@ -2344,8 +2345,9 @@ class StoryReader:
         main_reader.halt_main_script = True
 
         # Automated halt flag (if > 0)
-        main_reader.halt_main_script_auto_mode_seconds_reach =\
+        main_reader.halt_main_script_auto_mode_seconds_reach = (
             automate_after_seconds_count
+        )
 
         # So <continue> can't be used after using the <halt> command.
         main_reader.active_font_handler.next_letter_x_position_continue = None
@@ -2353,7 +2355,6 @@ class StoryReader:
         main_reader.active_font_handler.adjusted_y = 0
 
         if main_reader.story.dialog_rectangle.visible:
-
             # Start the animation of the dialog text.
             main_reader.story.reader.active_font_handler.font_animation.start_show_animation(
                 letters=main_reader.active_font_handler.letters_to_blit
@@ -2375,21 +2376,18 @@ class StoryReader:
 
         # because if we're in a reusable script, it won't
         # have a FontAnimation object.
-        font_animation = \
-            self.get_main_story_reader().active_font_handler.font_animation
+        font_animation = self.get_main_story_reader().active_font_handler.font_animation
 
         # This will be True if the dialog text is being animated.
         if font_animation.is_start_animating:
-
             # The dialog text is being animated/shown, so speed it up.
-            
+
             # Is it already sped up?
             if font_animation.faster_text_mode:
-                
                 # It's already sped up, so set the opacity to 255
                 # on all the letters.
                 font_animation.make_all_letters_opaque()
-                
+
             else:
                 font_animation.faster_text_mode = True
 
@@ -2421,7 +2419,7 @@ class StoryReader:
 
         # Reset halt_auto variables, if they were used.
         # Note: these two variables need to be here, *after* stop_intro_animation() above,
-        # because stop_intro_animation() will try and run reusable_on_halt, 
+        # because stop_intro_animation() will try and run reusable_on_halt,
         # which we shouldn't if we just came out of halt_auto.
         main_reader.halt_main_script_auto_mode_seconds_reach = 0
         main_reader.halt_main_script_seconds_counter = 0
@@ -2438,89 +2436,88 @@ class StoryReader:
         """
         Start a camera zoom and/or panning effect.
         """
-        
+
         # If there's an existing camera movement occurring, don't allow
         # another one. It may complicate things if we allow it.
         if self.story.camera.is_animating_zoom_pan:
             return
-        
+
         camera: cc.CameraMovement
         camera = self._get_arguments(
             class_namedtuple=cc.CameraMovement, given_arguments=arguments
         )
-        
+
         if not camera:
             return
-        
-        smoothing_lookup =\
-            {"constant speed": SmoothingStyle.LINEAR_CONSTANT_SPEED,
-             "start slow speed up": SmoothingStyle.IN_START_SLOW_SPEED_UP,
-             "start fast slow down": SmoothingStyle.OUT_START_FAST_SLOW_DOWN,
-             "smooth": SmoothingStyle.SMOOTH_EASE_IN_OUT,}
-        
-        smoothing_type =\
-            smoothing_lookup.get(camera.smoothing_style,
-                                 SmoothingStyle.SMOOTH_EASE_IN_OUT)
+
+        smoothing_lookup = {
+            "constant speed": SmoothingStyle.LINEAR_CONSTANT_SPEED,
+            "start slow speed up": SmoothingStyle.IN_START_SLOW_SPEED_UP,
+            "start fast slow down": SmoothingStyle.OUT_START_FAST_SLOW_DOWN,
+            "smooth": SmoothingStyle.SMOOTH_EASE_IN_OUT,
+        }
+
+        smoothing_type = smoothing_lookup.get(
+            camera.smoothing_style, SmoothingStyle.SMOOTH_EASE_IN_OUT
+        )
 
         # Start a camera movement animation (zoom and/or pan).
-        self.story.camera.start_move(target_x=camera.target_x,
-                                     target_y=camera.target_y,
-                                     target_zoom=camera.zoom,
-                                     duration=camera.duration_seconds,
-                                     mode=smoothing_type)
-        
+        self.story.camera.start_move(
+            target_x=camera.target_x,
+            target_y=camera.target_y,
+            target_zoom=camera.zoom,
+            duration=camera.duration_seconds,
+            mode=smoothing_type,
+        )
+
     def _camera_stop_shaking(self):
         """
         Stop the camera shaking effect, if active.
         """
         self.story.camera.stop_shake()
-        
+
     def _camera_stop_moving(self, arguments: str):
         """
         Stop the camera zoom/pan effect, if active.
-        
+
         It will either stop at the current spot, or it will jump to the end,
         depending on the provided argument.
         """
-        
+
         camera_stop: cc.CameraStopWhere
         camera_stop = self._get_arguments(
             class_namedtuple=cc.CameraStopWhere, given_arguments=arguments
         )
-        
-        
+
         if not camera_stop:
             return
-        
+
         # Jump to end?
-        jump_to_end =\
-            camera_stop.arguments == cc.CameraStopChoice.JUMP_TO_END.value
-        
+        jump_to_end = camera_stop.arguments == cc.CameraStopChoice.JUMP_TO_END.value
+
         self.story.camera.stop_move(jump_to_end=jump_to_end)
-        
+
     def _camera_start_shaking(self, arguments: str):
         """
         Start a shake effect.
         """
-        
+
         # If there's an existing camera shake effect occurring, don't allow
         # another one. It may complicate things if we allow it.
         if self.story.camera.is_animating_shake:
             return
-        
+
         camera: cc.CameraShake
         camera = self._get_arguments(
             class_namedtuple=cc.CameraShake, given_arguments=arguments
         )
-        
-        if not camera:
-            return
-        elif not camera.duration_seconds or not camera.intensity:
+
+        if not camera or not camera.duration_seconds or not camera.intensity:
             return
 
         # Start a camera shake animation.
         self.story.camera.start_shake(camera.intensity, camera.duration_seconds)
-        
+
     def _variable_set(self, arguments: str):
         """
         Create a new variable if it doesn't exist
@@ -2529,28 +2526,35 @@ class StoryReader:
 
         variable_set: cc.VariableSet
         variable_set = self._get_arguments(
-            class_namedtuple=cc.VariableSet, given_arguments=arguments
+            class_namedtuple=cc.VariableSet,
+            given_arguments=arguments,
+            # Because dialogue can contain commas.
+            unlimited_optional_arguments=True,
         )
 
         if variable_set:
-
             # Update or create variable.
             # The method will also check for invalid variable name characters.
             VariableHandler.set_variable(
                 variable_name=variable_set.variable_name,
                 variable_value=variable_set.variable_value,
             )
-            
-    def _list_add(self, arguments: str):
+
+    def _list_add(self, arguments: str, comma_separated: bool = True):
         """
         Create a new list or append to an existing with one or more items.
         <list_add: list name, comma separated text>
-        
+
         Arguments:
-        
+
         - arguments: comma separated string or single text. If it's a comma
         separated string, each delimited value will get added to the list as
         separate items.
+
+        - comma_separated: whether the arguments will be delimited with a
+        comma (True) or seen as a single string (False).
+        When the author uses the command <list_add_single>, this argument
+        will be False.
         """
         
         if not arguments:
@@ -2569,8 +2573,9 @@ class StoryReader:
 
         # Create a new list, if it doesn't already exist.
         # If it does exist, ignore the request.
-        main_reader.list_handler.list_add(list_add.list_name,
-                                             list_add.text)
+        main_reader.list_handler.list_add(
+            list_add.list_name, list_add.text, comma_separated=comma_separated
+        )
         
     def _list_delete(self, list_name: str):
         """

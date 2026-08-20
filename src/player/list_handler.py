@@ -28,27 +28,50 @@ class ListHandler:
         # Value: [list of strings]
         self.lists: Dict[str, List[str]]
         self.lists = {}
-        
-    def list_add(self, list_name: str, comma_separated_text: str):
+
+    def list_add(self, list_name: str, text_to_add: str, comma_separated: bool = True):
         """
         Create a new list if it doesn't already exist and add the comma
         separated text to its sub-list.
-        
+
         The list name is case sensitive.
+
+        Arguments:
+
+        - list_name: a new or existing list name
+
+        - text_to_add: a single text or comma separated string of text
+        to add to the list. Whether the commas are read as plain text or
+        delimiters depends on the next argument.
+
+        - comma_sparated: whether to read 'text_to_add' as comma separated
+        text or as a single text (example: takes in commas as part of the
+        text).
         """
 
         # Make sure there is text to add.
-        if not comma_separated_text:
+        if not text_to_add:
             return
-        
-        # Create the list, with no text yet.
-        self.lists[list_name] = list_name
-        
+
         # Create the sub-list of text, trimming spaces.
-        word_list = [item.strip() for item in comma_separated_text.split(",")]
-        
-        self.lists[list_name] = word_list
-        
+        if comma_separated:
+            # Comma separated strings
+            words_list = [item.strip() for item in text_to_add.split(",")]
+        else:
+            # Non-comma separated text
+
+            # Add the text as a single string of text.
+            words_list = [text_to_add.strip()]
+
+        # Does the list have existing items? Append.
+        existing_list = self.lists.get(list_name)
+        if existing_list:
+            # Append to the existing list.
+            existing_list.extend(words_list)
+        else:
+            # First time populating the list.
+            self.lists[list_name] = words_list
+
     def list_delete(self, list_name: str):
         """
         Delete the given dict key.

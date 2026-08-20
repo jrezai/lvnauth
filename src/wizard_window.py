@@ -2691,7 +2691,24 @@ class WizardWindow:
                         "Extra spaces around the commas will be removed automatically.",
                         variable_label_text="Value or variable name to get value from:", 
                         group_name=GroupName.LIST_ADD)
-        
+
+        page_list_add_single = ListWizard(
+            parent_frame=self.frame_contents_outer,
+            header_label=self.lbl_header,
+            purpose_label=self.lbl_purpose,
+            treeview_commands=self.treeview_commands,
+            parent_display_text="List",
+            sub_display_text="list_add_single",
+            command_name="list_add_single",
+            purpose_line="Adds a value to a list.\n"
+            "If the list does not exist, it will be created.\n\n"
+            "The difference between <list_add> and <list_add_single>\n"
+            "is that <list_add_single> will see commas as part of a single text\n\n"
+            "Example: <list_add_single: my list, This is, all, one, value>",
+            variable_label_text="Value or variable name to get value from:",
+            group_name=GroupName.LIST_ADD,
+        )
+
         page_list_delete = \
             ListWizard(parent_frame=self.frame_contents_outer,
                         header_label=self.lbl_header,
@@ -3148,6 +3165,7 @@ class WizardWindow:
         List
         """
         self.pages["list_add"] = page_list_add
+        self.pages["list_add_single"] = page_list_add_single
         self.pages["list_delete"] = page_list_delete
         self.pages["list_take_first"] = page_list_take_first
         self.pages["list_take_last"] = page_list_take_last
@@ -6541,7 +6559,7 @@ class SharedPages:
     
                 # We have this binding so that when a variable is selected,
                 # we surround it with ($) (ie: ($selection_here))
-                if self.command_name == "list_add":
+                if self.command_name in ("list_add", "list_add_single"):
                     # This only applies to <list_add> because we're getting
                     # a variable's value when using <list_add>, but when we
                     # use the other list commands, such as <list_take_first>,
