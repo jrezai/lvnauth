@@ -42,11 +42,12 @@ class StartupWindow:
         # directory. Under normal circumstances, there shouldn't be any
         # unless LVNAuth quit unexpectedly and wasn't able to clean up the
         # temp files.
-        TempHandler.cleanup_temp_files(TempContentType.ALL)        
-        
-        if ContainerHandler.is_in_snap_package():
-            app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path()
-        elif ContainerHandler.is_in_flatpak_package():
+        TempHandler.cleanup_temp_files(TempContentType.ALL)
+
+        if (
+            ContainerHandler.is_in_snap_package()
+            or ContainerHandler.is_in_flatpak_package()
+        ):
             app_icon_path = ContainerHandler.get_lvnauth_editor_icon_path()
         else:
             app_icon_path = ContainerHandler.get_absolute_path("app_icon.png")

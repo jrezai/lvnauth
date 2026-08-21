@@ -17,9 +17,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import command_class as cc
 from re import search, IGNORECASE
-from typing import Dict, List
+import command_class as cc
 
 
 class ContextEditRun:
@@ -29,14 +28,14 @@ class ContextEditRun:
     successfully parsed and we record the data that's needed in this class
     object for when the 'Edit' menu is clicked by the user.
     """
+
     def __init__(self, command_name: str, command_object):
-        
+
         self.command_name = command_name
         self.command_object = command_object
-        
+
 
 class CommandHelper:
-
     context_edit_run = None
     class_lookup = {
         "load_audio": cc.PlayAudio,
@@ -186,14 +185,13 @@ class CommandHelper:
         "camera_start_shaking": cc.CameraShake,
         "camera_start_moving": cc.CameraMovement,
         "camera_stop_moving": cc.CameraStopWhere,
-        
         "list_add": cc.ListCommand,
+        "list_add_single": cc.ListCommand,
         "list_delete": cc.ListDelete,
         "list_take_first": cc.ListCommand,
         "list_take_last": cc.ListCommand,
         "list_take_random": cc.ListCommand,
         "list_get_random": cc.ListCommand,
-        
         "sequence_create": cc.SequenceCreate,
         "sequence_change_delay": cc.SequenceChangeDelay,
         "sequence_final_frame": cc.SequenceFinalFrame,
@@ -201,83 +199,80 @@ class CommandHelper:
         "sequence_stop": cc.SequenceNameOnly,
         "wait_for_sequence": cc.SequenceNameOnly,
     }
-    
+
     @staticmethod
-    def extract_arguments(command_line: str) -> Dict | None:
+    def extract_arguments(command_line: str) -> dict | None:
         """
         Given a line, such as <load_character: rave_normal, second argument, third argument>,
         return {'Command': 'load_character', 'Arguments': ' rave_normal, second argument, third argument'}
-        
+
         Arguments:
         - command_line: the story script line
-        
+
         Return: Dict
         """
-        pattern_with_arguments =\
+        pattern_with_arguments = (
             r"^<(?P<Command>[a-z]+[_]*[\w]+):{1}(?P<Arguments>.*)>$"
-        
-        pattern_no_arguments =\
-            r"^<(?P<Command>[a-z]+[_]*[\w]+)>$"
-    
+        )
+
+        pattern_no_arguments = r"^<(?P<Command>[a-z]+[_]*[\w]+)>$"
+
         # Try searching for a command with arguments.
         # Example: <call: some script>
-        result = search(pattern=pattern_with_arguments,
-                        string=command_line)
-    
+        result = search(pattern=pattern_with_arguments, string=command_line)
+
         # No results? Try searching for a command with no arguments.
         # Example: <halt>
         if not result:
-            result = search(pattern=pattern_no_arguments,
-                            string=command_line)
-    
+            result = search(pattern=pattern_no_arguments, string=command_line)
+
         if result:
             return result.groupdict()
-    
+
     @staticmethod
     def get_arguments(class_namedtuple, given_arguments: str):
         """
         Take the given string arguments (comma separated) and turn them
         into a namedtuple class.
-    
+
         For example: if 'given_arguments' contains '5, 4'
         then this method will return an object in the given class in
         'class_namedtuple'.
-        
+
         That object may be something like: MovementSpeed and its fields,
         X and Y will be set to int (based on the arguments example '5, 4').
-    
+
         For example; MovementSpeed.x = 5 (int)  , MovementSpeed.y = 4 (int)
-    
+
         This method will convert numeric types to int and will keep string
         types as strings.
-        
+
         For example, if the given argument is: 'Bob, 100' (str argument),
-        then 'Bob' will end up becoming a field in the class object as a string, 
+        then 'Bob' will end up becoming a field in the class object as a string,
         and 100 will be another field as an integer.
-        
+
         This method will handle int types and str types automatically by
         making the class object fields match the expected type of variable.
-    
+
         Arguments:
-        
+
         - the class to use when returning an object in this method.
         One example of a class is: MovementSpeed
-          
+
         - given_arguments: string-based argument separated by commas.
         For example: '5, 4' or 'Bob, 100'.
-        
+
         Return: an object based on the class provided in 'class_namedtuple'.
         """
-        
-        # Get a tuple of types that the type-hint has for the given fields 
+
+        # Get a tuple of types that the type-hint has for the given fields
         # of the class.
-        # We'll use this to find out what type of variables each argument 
+        # We'll use this to find out what type of variables each argument
         # field needs to be.
-        expected_argument_types =\
-            tuple(class_namedtuple.__annotations__.values())
-    
+        expected_argument_types = tuple(class_namedtuple.__annotations__.values())
+
         # Create a regex pattern to extract the correct number of arguments.
-        # The expected number of arguments will be dictated by the number of 
+        # The expected number of arguments will be dictated by the number of
         # fields in the given class: len(class._fields).
         field_count = len(class_namedtuple._fields)
         pattern = ""
@@ -286,56 +281,55 @@ class CommandHelper:
         pattern = pattern.removeprefix(",")
         pattern += "$"
         pattern = "^" + pattern
-    
-        results = search(pattern=pattern,
-                         string=given_arguments)
-    
+
+        results = search(pattern=pattern, string=given_arguments)
+
         if not results:
             return
-    
+
         # Get the individual arguments as a tuple.
         # Example: ('5', '4')
         individual_arguments = results.groups()
-    
-        # This list will contain the individual arguments in their 
+
+        # This list will contain the individual arguments in their
         # appropriate type
         # If it's a numeric argument, it will be added to this list as an int.
         # If it's a str argument, it will be added to this list as a str.
         converted_arguments = []
-    
-        # Combine the expected type (ie: class 'int') with each individual 
+
+        # Combine the expected type (ie: class 'int') with each individual
         # argument value (ie: '5')
-        for expected_type, argument_value in \
-            zip(expected_argument_types, individual_arguments):
-            
+        for expected_type, argument_value in zip(
+            expected_argument_types, individual_arguments
+        ):
             argument_value = argument_value.strip()
-    
+
             if expected_type is str:
                 converted_arguments.append(argument_value)
-    
+
             # elif expected_type is int or expected_type is float:
             elif any(expected_type is item for item in [int, float]):
                 try:
                     converted_arguments.append(expected_type(argument_value))
                 except ValueError:
                     return
-    
-        # Convert the list of arguments to a namedtuple for easier access 
+
+        # Convert the list of arguments to a namedtuple for easier access
         # by the caller.
         generate_class = class_namedtuple(*converted_arguments)
-    
+
         return generate_class
-    
+
     @staticmethod
     def get_class_by_command_name(command_name: str) -> object | None:
         """
         Given a command name, such as 'character_show', return
         the appropriate class name for the command, such as SpriteShowHide.
-        
+
         Return: the class for the provided command or None if not found.
         """
         return CommandHelper.class_lookup.get(command_name)
-    
+
     @staticmethod
     def can_edit(script_line: str) -> bool | None:
         """
@@ -343,132 +337,123 @@ class CommandHelper:
         It does this by extracting the arguments and passing it to the
         appropriate class for the command and if the class gets instantiated
         successfully, that means the arguments are likely valid.
-        
+
         During the validation, record the command name and the instantiated
         class for the command so if the user clicks on the Edit menu, we will
         be able to find the wizard's page using the command name and pass in
         the instantiated class to the wizard's page to populate the widgets.
-        
+
         Return: True if the supplied script line can be edited in the Wizard
         and is ready to be edited in the Wizard. Return False if the supplied
         script line cannot be parsed.
         """
         if not script_line:
             return False
-        
+
         extracted = CommandHelper.extract_arguments(script_line)
         if not extracted:
             return False
-        
+
         command_name = extracted.get("Command")
-        
+
         # There may not be any arguments, because some commands
         # don't have arguments.
         arguments = extracted.get("Arguments")
-        
+
         # Get the class for the given command.
         command_cls = CommandHelper.get_class_by_command_name(command_name)
         if not command_cls:
             return
-        
+
         # Remove excess spacing
         if arguments:
             arguments = arguments.strip()
-            
+
             # If there is more than 1 argument, put the arguments in a list
             # because multi-parameter command classes need to be instantiated
             # using a list, not a single string.
             if "," in arguments:
                 arguments = [item.strip() for item in arguments.split(",")]
-        
+
         # Attempt to instantiate the command's class using the supplied
         # arguments. If successful, that means the arguments are likely
         # valid and can be edited in the Wizard.
         command_object = None
         if arguments:
-            
             match command_name:
-                
                 # <load_background> has a special fixed alias, so we need
-                # to deal with this command a bit differently.                
+                # to deal with this command a bit differently.
                 case "load_background":
-                    
-                    # Make sure only 1 argument is supplied, which should be 
+                    # Make sure only 1 argument is supplied, which should be
                     # the background name. If it's a str, then it's 1 argument.
                     if isinstance(arguments, str):
                         fixed_alias = "fixedalias"
                         command_object = command_cls(arguments, fixed_alias)
                     else:
-                        # A custom alias is not allowed when using 
+                        # A custom alias is not allowed when using
                         # <load_background>
                         return
-                    
+
                 case "camera_stop_moving":
-                    
                     arguments = arguments.lower()
-                    
+
                     if arguments not in ("current spot", "jump to end"):
-                        command_object =\
-                            command_cls(cc.CameraStopChoice.UNKNOWN.value)
+                        command_object = command_cls(cc.CameraStopChoice.UNKNOWN.value)
                     else:
                         command_object = command_cls(arguments)
-                    
+
                 case "list_add":
-                    
                     if isinstance(arguments, list):
                         # All arguments from index 1 and beyond are of variable
                         # length.
-                        arguments =\
-                            CommandHelper._get_optional_arguments(arguments, 1)                        
-                    
+                        arguments = CommandHelper._get_optional_arguments(arguments, 1)
+
                 # <_stop_movement_condition> can have 2 or 3 arguments.
                 # If we have 2 arguments here, use the 2 argument version of the
                 # class instead of the 3 argument class.
-                case "character_stop_movement_condition" | \
-                    "dialogue_sprite_stop_movement_condition" | \
-                    "object_stop_movement_condition":
-                    
+                case (
+                    "character_stop_movement_condition"
+                    | "dialogue_sprite_stop_movement_condition"
+                    | "object_stop_movement_condition"
+                ):
                     if isinstance(arguments, list) and len(arguments) == 2:
                         # Use the 2-argument version of the class.
                         command_cls = cc.MovementStopConditionShorter
-                    
+
                 case "play_music":
-                    
                     # <play_music> can have two arguments.
                     # Example: <play_music: some name: loop>
                     # or <play_music: some name> (no loop)
                     if isinstance(arguments, list) and len(arguments) == 2:
                         # Use the 2-argument version of the class.
                         command_cls = cc.PlayAudioLoop
-                    
+
                 # <call> can have 1 argument or more.
                 case "call":
                     if isinstance(arguments, str):
                         # Use the 1-argument version of the class.
                         command_cls = cc.CallWithNoArguments
-                        
+
                     else:
                         # 2-argument version of the class, where the 2nd
                         # argument is for multiple optional arguments.
-                        arguments =\
-                            CommandHelper._get_optional_arguments(arguments, 1)
-                    
+                        arguments = CommandHelper._get_optional_arguments(arguments, 1)
+
                 case "remote_save":
-                    # <remote_save> can have 1 or more arguments 
+                    # <remote_save> can have 1 or more arguments
                     # (with no fixed arguments), which is why we specify zero
                     # for the number of fixed arguments.
-                    
+
                     # If there is more than 1 argument (ie: has a comma),
                     # the arguments will be a list. If it's 1 argument (no comma),
                     # then the argument will be a string.
                     if isinstance(arguments, list):
                         # Use the multi-argument version of the class.
-                        arguments =\
-                                CommandHelper._get_optional_arguments(arguments, 0)
-                    
+                        arguments = CommandHelper._get_optional_arguments(arguments, 0)
+
                     # If it's a single argument (ie: favcolor=Blue), then
                     # it's already fine the way it is, no need to do anything else.
-                    
+
                 case "remote_get":
                     # <remote_get: some key>
                     # <remote_get: some_key, some variable>
@@ -641,8 +626,7 @@ class CommandHelper:
         return True
     
     @staticmethod
-    def _get_optional_arguments(arguments: List,
-                                num_of_fixed_arguments: int) -> List:
+    def _get_optional_arguments(arguments: list, num_of_fixed_arguments: int) -> list:
         """
         Return a list that puts the optional arguments into a single string
         rather than separate elements.
@@ -667,7 +651,7 @@ class CommandHelper:
             return arguments
         
         # Make sure we have a minimum number of elements to slice.
-        elif len(arguments) < num_of_fixed_arguments:
+        if len(arguments) < num_of_fixed_arguments:
             return arguments
         
         # Get the optional arguments (1 or more) as a single list element.
@@ -683,7 +667,7 @@ class CommandHelper:
         return required_arguments + optional_arguments
         
     @staticmethod
-    def get_preferred_sprite_name(sprite_name_argument: str) -> Dict | None:
+    def get_preferred_sprite_name(sprite_name_argument: str) -> dict | None:
         """
         Return the preferred name and the original name of a sprite
         when using 'Load As' in the name section.
