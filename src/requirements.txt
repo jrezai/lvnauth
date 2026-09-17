@@ -4,7 +4,7 @@ h11==0.14.0
 idna==3.10
 jh2==5.0.8
 niquests==3.13.1
-pillow==11.1.0
+pillow==12.3.0
 pygame-ce==2.5.7
 pygubu==0.40.1
 qh3==1.4.2
