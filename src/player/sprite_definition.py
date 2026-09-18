@@ -431,6 +431,9 @@ class SpriteObject:
         self.calculated_pos_moving_x = 0
         self.calculated_pos_moving_y = 0
 
+        # Clear all stop conditions because the movement animation has stopped.
+        self.stop_movement_conditions.clear()
+
     def stop_scaling(self):
         """
         Reset the flag to indicate that scaling animations should not occur for this sprite.
@@ -2292,14 +2295,18 @@ class SpriteObject:
                     # We should longer try to move this sprite
                     # in this axis, because it's satisfied.
                     self.move_properties.y = 0
-                    self.calculated_pos_moving_y = self.rect.x
+                    self.calculated_pos_moving_y = self.rect.y
                 
                 # Remove movement stop positions that have already been satisfied.
                 for key in satisfied_stop_keys:
                     del self.stop_movement_conditions[key]
 
-                # No more stop conditions? Stop the movement of this sprite.
-                if not self.stop_movement_conditions:
+                # No more stop conditions?
+                # Or move_properties.x and move_properties.y are zero?
+                # Stop the movement of this sprite.
+                if not self.stop_movement_conditions or (
+                    not self.move_properties.x and not self.move_properties.y
+                ):
                     self.stop_moving()
 
                     # Should we run a specific reusable script now that the 
