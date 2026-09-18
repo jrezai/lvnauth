@@ -3921,6 +3921,7 @@ class StoryReader:
                     return                
                 
                 # The user wants to stop moving this object.
+                sprite: sd.SpriteObject
                 sprite.stop_moving()
 
                 # When a sprite is manually stopped, stop conditions
@@ -4183,6 +4184,7 @@ class StoryReader:
             move_start.y = -abs(move_start.y)
 
         # Get the visible sprite
+        sprite: sd.SpriteObject
         sprite = self.story.get_visible_sprite(
             content_type=sprite_type, general_alias=move_start.sprite_name
         )
