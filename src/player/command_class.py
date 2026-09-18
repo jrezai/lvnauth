@@ -470,9 +470,9 @@ class RemoteCallWithArguments(NamedTuple):
 @dataclass
 class MoveStart:
     sprite_name: str
-    x: int  # X movement speed
+    x: int  # X movement speed (move by pixel amount)
     x_direction: str
-    y: int  # Y movement speed
+    y: int  # Y movement speed (move by pixel amount)
     y_direction: str
     
     
