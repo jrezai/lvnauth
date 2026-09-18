@@ -6488,30 +6488,48 @@ class SharedPages:
     class ListPage(WizardListing):
         """
         Used for the following commands:
-        
+
         <list_add: list name, single text or variable name value>
+        <list_add_single: list name, single text or variable name value>
         <list_delete: list name>
         <list_take_first: list name, put into variable name>
         <list_take_last: list name, put into variable name>
         <list_take_random: list name, put into variable name>
         <list_get_random: list name, put into variable name>
         """
-        def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line, **kwargs):
 
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line,
-                             **kwargs)
+        def __init__(
+            self,
+            parent_frame,
+            header_label,
+            purpose_label,
+            treeview_commands,
+            parent_display_text,
+            sub_display_text,
+            command_name,
+            purpose_line,
+            **kwargs,
+        ):
+
+            super().__init__(
+                parent_frame,
+                header_label,
+                purpose_label,
+                treeview_commands,
+                parent_display_text,
+                sub_display_text,
+                command_name,
+                purpose_line,
+                **kwargs,
+            )
 
             # Used for showing a custom variable combobox label/instructions.
             self.variable_name_label_text = kwargs.get("variable_label_text")
-            
+
             # Whether to show the variable combobox or not.
             # Default to True
             self.show_variable_widget = kwargs.get("show_variable_widget", True)
-            
+
             self.v_variable_name = tk.StringVar()
             self.frame_content = self.create_content_frame()
 
@@ -6522,14 +6540,12 @@ class SharedPages:
             """
 
             frame_content = ttk.Frame(self.parent_frame)
-            
 
             frame_list_name = ttk.Frame(frame_content)
             lbl_list_name = ttk.Label(frame_list_name, text="List name:")
-            self.entry_list_name = EntryWithLimit(frame_list_name,
-                                             width=25,
-                                             max_length=50)
-            
+            self.entry_list_name = EntryWithLimit(
+                frame_list_name, width=25, max_length=50
+            )
 
             # We might have custom text for the variable combobox.
             # Instead of just 'Variable name:', we might have
@@ -6537,26 +6553,27 @@ class SharedPages:
             if self.variable_name_label_text:
                 variable_text = self.variable_name_label_text
             else:
-                variable_text = "Variable name to put value into:"
-            
+                variable_text = (
+                    "Variable name to put value into:\n"
+                    "The variable will be created if it does not exist."
+                )
+
             if self.show_variable_widget:
-                
                 frame_variables = ttk.Frame(frame_content)
                 lbl_variable_name = ttk.Label(frame_variables, text=variable_text)
-                cb_variables = ttk.Combobox(frame_variables,
-                                            width=25,
-                                            textvariable=self.v_variable_name)
-    
-            
+                cb_variables = ttk.Combobox(
+                    frame_variables, width=25, textvariable=self.v_variable_name
+                )
+
                 # Variable names
                 dict_variables = self.get_population_dictionary()
-            
+
                 variable_names = []
                 if dict_variables:
                     variable_names = tuple(dict_variables.keys())
-                    
+
                 cb_variables.configure(values=variable_names)
-    
+
                 # We have this binding so that when a variable is selected,
                 # we surround it with ($) (ie: ($selection_here))
                 if self.command_name in ("list_add", "list_add_single"):
@@ -6566,22 +6583,21 @@ class SharedPages:
                     # we're putting the value into a variable name, so
                     # we would just need the variable *name* with the other
                     # <list_> commands.
-                    cb_variables.bind("<<ComboboxSelected>>",
-                                      SharedPages.on_combobox_selection_changed)
-        
-            
+                    cb_variables.bind(
+                        "<<ComboboxSelected>>",
+                        SharedPages.on_combobox_selection_changed,
+                    )
+
             frame_list_name.grid(row=0, column=0, sticky=tk.W)
             lbl_list_name.grid(row=0, column=0, sticky=tk.W)
-            self.entry_list_name.grid(row=1, column=0, sticky=tk.W)            
-            
+            self.entry_list_name.grid(row=1, column=0, sticky=tk.W)
 
             if self.show_variable_widget:
                 frame_variables.grid(row=1, column=0, pady=15, sticky=tk.W)
-                lbl_variable_name.grid(row=0, column=0, sticky=tk.W)                
+                lbl_variable_name.grid(row=0, column=0, sticky=tk.W)
                 cb_variables.grid(row=1, column=0, sticky=tk.W)
-                
+
             return frame_content
-  
 
     class Case(WizardListing):
         """
@@ -6589,13 +6605,28 @@ class SharedPages:
         <or_case: case name to check against, variable name, operator, value>
         """
 
-        def __init__(self, parent_frame, header_label, purpose_label,
-                    treeview_commands, parent_display_text, sub_display_text,
-                    command_name, purpose_line):
+        def __init__(
+            self,
+            parent_frame,
+            header_label,
+            purpose_label,
+            treeview_commands,
+            parent_display_text,
+            sub_display_text,
+            command_name,
+            purpose_line,
+        ):
 
-            super().__init__(parent_frame, header_label, purpose_label,
-                             treeview_commands, parent_display_text,
-                             sub_display_text, command_name, purpose_line)
+            super().__init__(
+                parent_frame,
+                header_label,
+                purpose_label,
+                treeview_commands,
+                parent_display_text,
+                sub_display_text,
+                command_name,
+                purpose_line,
+            )
 
             self.frame_content = self.create_content_frame()
 
@@ -6606,68 +6637,74 @@ class SharedPages:
             """
 
             frame_content = ttk.Frame(self.parent_frame)
-        
+
             # Variable names
             dict_variables = self.get_population_dictionary()
-        
+
             # Vertical pad spacing
             pady_spacing = 15
-        
+
             variable_names = []
             if dict_variables:
                 variable_names = tuple(dict_variables.keys())
 
-            lbl_variable_name = ttk.Label(frame_content,
-                                          text=f"Value 1 or variable name:")
-            self.cb_variable_names = ttk.Combobox(frame_content,
-                                                 width=25, 
-                                                 values=variable_names)
-            
+            lbl_variable_name = ttk.Label(
+                frame_content, text=f"Value 1 or variable name:"
+            )
+            self.cb_variable_names = ttk.Combobox(
+                frame_content, width=25, values=variable_names
+            )
+
             # We have this binding so that when a variable is selected,
             # we surround it with ($) (ie: ($selection_here))
-            self.cb_variable_names.bind("<<ComboboxSelected>>",
-                                        SharedPages.on_combobox_selection_changed)
-            
-            lbl_operator = ttk.Label(frame_content,
-                                     text="Comparison operator:")
-            
+            self.cb_variable_names.bind(
+                "<<ComboboxSelected>>", SharedPages.on_combobox_selection_changed
+            )
+
+            lbl_operator = ttk.Label(frame_content, text="Comparison operator:")
+
             # Get a tuple of condition operators (is, is not, etc.)
             operators = ConditionOperator.get_values()
-            self.cb_operators = ttk.Combobox(frame_content,
-                                             width=25, 
-                                             values=operators)
-            
-            lbl_value_compare_with =\
-                ttk.Label(frame_content,
-                          text="Value 2 or variable name:")
-            
+            self.cb_operators = ttk.Combobox(frame_content, width=25, values=operators)
+
+            lbl_value_compare_with = ttk.Label(
+                frame_content, text="Value 2 or variable name:"
+            )
+
             # Variable names (or manually typed value) to check against.
-            self.cb_variable_names_check_against =\
-                ttk.Combobox(frame_content,
-                             width=25, 
-                             values=variable_names)
-            
+            self.cb_variable_names_check_against = ttk.Combobox(
+                frame_content, width=25, values=variable_names
+            )
+
             # We have this binding so that when a variable is selected,
             # we surround it with ($) (ie: ($selection_here))
-            self.cb_variable_names_check_against.\
-                bind("<<ComboboxSelected>>",
-                     SharedPages.on_combobox_selection_changed)            
-            
+            self.cb_variable_names_check_against.bind(
+                "<<ComboboxSelected>>", SharedPages.on_combobox_selection_changed
+            )
+
             # Set the instructions for the condition name
             # depending on whether it's a <case> command or <or_case> command.
             if self.command_name == "case":
-                    
-                condition_name_text = "Condition name:\n" \
+                condition_name_text = (
+                    "Condition name:\n"
                     "(mandatory if you want to use <or_case> later, otherwise it's optional.)"
-                
+                )
+
             elif self.command_name == "or_case":
                 condition_name_text = "Condition name to compare with:"
-            
-            lbl_case_name = ttk.Label(frame_content,
-                                      text=condition_name_text)
-            self.entry_condition_name = ttk.Entry(frame_content,
-                                                  width=25)
-            
+
+            lbl_case_name = ttk.Label(frame_content, text=condition_name_text)
+            self.entry_condition_name = ttk.Entry(frame_content, width=25)
+
+            bottom_separator = ttk.Separator(frame_content, orient=tk.HORIZONTAL)
+
+            lbl_note = ttk.Label(
+                frame_content,
+                text="Note: to check for a blank value, use the operator 'is' or 'is not'\n"
+                "with the value 'blank'\n"
+                "Example: <case: ($myvar), is, blank>",
+            )
+
             lbl_variable_name.grid(row=0, column=0, sticky=tk.W)
             self.cb_variable_names.grid(row=1, column=0, sticky=tk.W)
             
@@ -6679,6 +6716,10 @@ class SharedPages:
             
             lbl_case_name.grid(row=6, column=0, sticky=tk.W, pady=(pady_spacing, 0))
             self.entry_condition_name.grid(row=7, column=0, sticky=tk.W)
+
+            bottom_separator.grid(row=8, column=0, sticky="ew", pady=(pady_spacing, 0))
+
+            lbl_note.grid(row=9, column=0, sticky=tk.W, pady=(pady_spacing, 0))
             
             return frame_content
 
