@@ -19,12 +19,14 @@ along with LVNAuth.  If not, see <https://www.gnu.org/licenses/>.
 
 import pathlib
 import pygubu
+from pygubu import builder
 import editor_window
 import tkinter as tk
 from project_snapshot import ProjectSnapshot
 from new_project_window import ProjectFolderWindow
 from container_handler import ContainerHandler
 from temp_handler import TempHandler, TempContentType
+from tkinter import messagebox
 PROJECT_PATH = pathlib.Path(__file__).parent
 PROJECT_UI = PROJECT_PATH / "ui" / "startup_window.ui"
 
@@ -67,24 +69,76 @@ class StartupWindow:
         self.btn_editor.image = editor_image
         self.btn_editor.configure(image=self.btn_editor.image,
                                   menu=self.menu_editor)
-        
-        
+
         play_image = tk.PhotoImage(data=editor_window.Icons.PLAY_24_F.value)
         self.btn_play_file = builder.get_object("btn_play_file")
         self.btn_play_file.image = play_image
-        self.btn_play_file.configure(command=self.on_play_button_clicked,
-                                  image=self.btn_play_file.image)
-        
+        self.btn_play_file.configure(
+            command=self.on_play_button_clicked, image=self.btn_play_file.image
+        )
+
         self.lbl_version = builder.get_object("lbl_version")
-        self.lbl_version.configure(text=f"Version {ProjectSnapshot.EXACT_EDITOR_VERSION} ({ProjectSnapshot.RELEASE_DATE})")
-        
+        self.lbl_version.configure(
+            text=f"Version {ProjectSnapshot.EXACT_EDITOR_VERSION} ({ProjectSnapshot.RELEASE_DATE})"
+        )
+
         builder.connect_callbacks(self)
 
+        self.populate_recently_opened_projects()
+
+    def populate_recently_opened_projects(self):
+        """
+        Dynamically populate the menus with recently opened projects.
+        """
+
+        # Load the list of recently opened projects from the configuration
+        # file, if available.
+        recent_projects = ProjectSnapshot.config.get_recent_projects()
+
+        # Add each recent project to the menu with a command to open it.
+        for project_path in recent_projects:
+            self.menu_editor.add_command(
+                label=project_path,
+                command=lambda path=project_path: self.on_open_project_menu_clicked(
+                    path
+                ),
+            )
+
+        self.menu_editor.add_command(
+            label="Clear Recent List",
+            command=self.on_clear_recent_projects_menu_clicked,
+        )
+
+        # No recent projects to display, so disable the clear menu and return.
+        if not recent_projects:
+            self.menu_editor.entryconfig("Clear Recent List", state="disabled")
+
+            return
+
+    def on_clear_recent_projects_menu_clicked(self):
+        """
+        Clear the list of recently opened projects.
+        """
+        # Clear the recent projects list in the configuration
+        ProjectSnapshot.config.remove_all_recent_projects()
+
+        # Clear menu indexes 3 and onward, which are the recent project entries.
+        # This will remove the Clear Recent List menu item as well, but we'll
+        # re-add it below.
+        self.menu_editor.delete(3, "end")
+
+        # Re-add the "Clear Recent List" menu item to the end of the menu
+        # but disable it since there are no recent projects to clear.
+        self.menu_editor.add_command(
+            label="Clear Recent List",
+            command=self.on_clear_recent_projects_menu_clicked,
+            state="disabled",
+        )
+
     def on_new_project_menu_clicked(self):
-        
+
         project_folder_window = ProjectFolderWindow(master=self.mainwindow)
         if project_folder_window.new_project_created_successfully:
-
             editor_app = editor_window.EditorMainApp(self.mainwindow)
             editor_window.Toolbar.save_project()
 
@@ -92,22 +146,46 @@ class StartupWindow:
             open_manager.open(lvnap_file_path=ProjectSnapshot.save_full_path)
 
             self.mainwindow.withdraw()
-            
-    def on_open_project_menu_clicked(self):
-        
-        file_types = [("Visual Novel Project", (".lvnap"))]
-        file_full_path = tk.filedialog.askopenfilename(parent=self.mainwindow,
-                                                       filetypes=file_types)
-        if not file_full_path:
+
+    def on_open_project_menu_clicked(self, existing_project_path=None):
+        """
+        Open an existing project. If the existing_project_path is provided,
+        it will open that project directly. Otherwise, it will prompt the user
+        to select a project file.
+        """
+        if not existing_project_path:
+            file_types = [("Visual Novel Project", (".lvnap"))]
+            file_full_path = tk.filedialog.askopenfilename(
+                parent=self.mainwindow, filetypes=file_types
+            )
+            if not file_full_path:
+                return
+        else:
+            file_full_path = existing_project_path
+
+        # Make sure the file_full_path is a pathlib.Path object
+        if isinstance(file_full_path, str):
+            file_full_path = pathlib.Path(file_full_path)
+
+        # Check if the project file exists before trying to open it
+        if not file_full_path.exists():
+            messagebox.showerror(
+                "File Not Found",
+                f"The project file '{file_full_path}' does not exist.",
+                parent=self.mainwindow,
+            )
             return
-        
+
         # Hide the startup window, because we're about to play the visual novel.
         self.mainwindow.withdraw()
 
         editor_app = editor_window.EditorMainApp(self.mainwindow)
         open_manager = editor_window.OpenManager(self.mainwindow)
         open_manager.open(lvnap_file_path=file_full_path)
-        
+
+        # Add the opened project to the recent projects list
+        # in the configuration
+        ProjectSnapshot.config.add_recent_project(file_full_path)
         
         self.mainwindow.withdraw()        
     
