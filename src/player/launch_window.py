@@ -426,45 +426,47 @@ class LaunchWindow:
         """
         if self.check_queue_id:
             self.mainwindow.after_cancel(self.check_queue_id)
-            
+
         self.mainwindow.destroy()
 
     def on_get_license_key_button_clicked(self):
         """
         If a license key is provided, attempt to associate the provided
         transaction ID with the given license key.
-        
+
         If no license key is provided, then it's probably the first time
         the user is buying a license, so let the web server generate a new
         license key based on the given transaction ID and put that license key
         into the license_key entry widget.
         """
-        
+
         # Get the license key, if provided.
         Passer.web_handler.web_key = self.v_license_key.get().strip()
-        
+
         # Get the transaction ID, which is mandatory.
         transaction_id = self.v_transaction_id.get().strip()
-        
+
         if not transaction_id:
             messagebox.showerror(
                 parent=self.mainwindow,
                 title="Transaction ID",
-                message="Please enter your transaction ID.\nIt should be in the email that was sent to you.")
+                message="Please enter your transaction ID.\nIt should be in the email that was sent to you.",
+            )
             return
-        
+
         # The license key and visual novel name will get added later
         # from Passer.web_handler.web_key
         # (if a license key is available)
         # in the web_handler itself, as part of keys that are always included
         # in each request.
         data = {"transaction_id": transaction_id}
-        
-        Passer.web_handler.\
-            send_request(data=data,
-                         purpose=WebRequestPurpose.REDEEM_OR_UPDATE_LICENSE_KEY,
-                         callback_method=self.on_web_request_finished,
-                         increment_usage_count=False)
+
+        Passer.web_handler.send_request(
+            data=data,
+            purpose=WebRequestPurpose.REDEEM_OR_UPDATE_LICENSE_KEY,
+            callback_method=self.on_web_request_finished,
+            increment_usage_count=False,
+        )
 
     def save_license_key(self):
         """
@@ -472,24 +474,24 @@ class LaunchWindow:
         config file. The purpose is to prevent having to enter a license key
         again after the visual novel is closed and re-opened.
         """
-        
+
         # Get the license key.
         license_key = self.v_license_key.get().strip()
-        
+
         Passer.player_config.save_data("LicenseKey", license_key)
-        
+
     def populate_license_key(self):
         """
         Get the license key from the config file, if it's there.
         Show the license key in the entry widget if the license key is found.
         """
-        
+
         license_key = Passer.player_config.get_data("LicenseKey")
         if not license_key:
             return
-        
+
         license_key = license_key.strip()
-        
+
         self.v_license_key.set(license_key)
 
     def on_play_selection_button_clicked(self):
@@ -497,55 +499,56 @@ class LaunchWindow:
         If it's a web-enabled visual novel, verify the license
         and if it's valid, get the selected chapter and scene in the
         treeview widget and run it.
-        
+
         If it's not a web-enabled visual novel, get the selected chapter
         and scene in the treeview widget and run it.
         """
-        
 
         # Disable the button so the user doesn't repeatidly click it.
         self.btn_play_selection.state(["disabled"])
-        
+
         if Passer.web_handler.web_enabled:
-            
             # Get the user-typed license key,
             # if the license key type is private.
             if Passer.web_handler.web_license_type == WebLicenseType.PRIVATE:
                 Passer.web_handler.web_key = self.v_license_key.get().strip()
-                
+
                 # Make sure a license key was actually typed.
                 if not Passer.web_handler.web_key:
                     try:
-                        messagebox.showwarning(master=self.mainwindow,
-                                               title="License Key",
-                                               message="This visual novel requires a license key.\n\nPlease enter a license key.")
+                        messagebox.showwarning(
+                            master=self.mainwindow,
+                            title="License Key",
+                            message="This visual novel requires a license key.\n\nPlease enter a license key.",
+                        )
                         self.btn_play_selection.state(["!disabled"])
                         self.entry_license_key.focus()
                         return
                     except tk.TclError:
                         # Closing the parent window while a message box is open
-                        # will raise a TclError, so we have this error 
+                        # will raise a TclError, so we have this error
                         # handler here.
                         return
-            
+
             # Save the license key to the config file so when the visual novel
             # is restarted, the license key will be pre-populated.
-            self.save_license_key()            
-            
-            Passer.web_handler.\
-                send_request(data=None,
-                             purpose=WebRequestPurpose.VERIFY_LICENSE,
-                             callback_method=self.on_web_request_finished,
-                             increment_usage_count=False)
-            
+            self.save_license_key()
+
+            Passer.web_handler.send_request(
+                data=None,
+                purpose=WebRequestPurpose.VERIFY_LICENSE,
+                callback_method=self.on_web_request_finished,
+                increment_usage_count=False,
+            )
+
         else:
             # It's not a web-enabled visual novel, play the selection now.
             self._play_selection()
-        
+
     def _play_selection(self):
         """
         Get the selected chapter and scene in the treeview widget and run it.
-        
+
         """
 
         selection = self.treeview_chapter_scenes.selection()
@@ -574,15 +577,14 @@ class LaunchWindow:
             # A chapter row is selected.
 
             first_scene_name = None
-            
-            # Get the first scene in the selected chapter.
-            for scene_item_iid in \
-                    self.treeview_chapter_scenes.get_children(selected_item_iid):
 
+            # Get the first scene in the selected chapter.
+            for scene_item_iid in self.treeview_chapter_scenes.get_children(
+                selected_item_iid
+            ):
                 # Get the scene row item details, so we can later get the
                 # scene name
-                scene_item_details =\
-                    self.treeview_chapter_scenes.item(scene_item_iid)
+                scene_item_details = self.treeview_chapter_scenes.item(scene_item_iid)
 
                 first_scene_name = scene_item_details.get("values")[0]
                 break
@@ -593,8 +595,9 @@ class LaunchWindow:
                 messagebox.showerror(
                     parent=self.mainwindow,
                     title="No Scenes",
-                    message="This chapter has no scenes.")
-                
+                    message="This chapter has no scenes.",
+                )
+
                 # Re-enable the Play button
                 self.btn_play_selection.state(["!disabled"])
                 return
@@ -605,26 +608,24 @@ class LaunchWindow:
 
         else:
             # A scene row is selected.
-            
+
             # Get the parent of the selection (which will be the chapter name).
 
             # Record the scene name
             scene_name = row_details.get("values")[0]
 
             # Get the parent iid (this will be the chapter name's item iid)
-            chapter_item_iid =\
-                self.treeview_chapter_scenes.parent(selected_item_iid)
+            chapter_item_iid = self.treeview_chapter_scenes.parent(selected_item_iid)
 
             # Get the chapter row details as a dictionary
-            chapter_row_details =\
-                self.treeview_chapter_scenes.item(chapter_item_iid)
+            chapter_row_details = self.treeview_chapter_scenes.item(chapter_item_iid)
 
             # Get the chapter name
             chapter_name = chapter_row_details.get("text")
 
             # Set the shared variable so ActiveStory will read it later
             # and know to set a custom startup chapter/scene.
-            Passer.manual_startup_chapter_scene = {chapter_name: scene_name}       
+            Passer.manual_startup_chapter_scene = {chapter_name: scene_name}
 
         # Close the launch window so the story can start playing.
         self.safe_close_window()
@@ -641,47 +642,46 @@ class LaunchWindow:
         self.lbl_genre.configure(text=self.story_info.get("Genre"))
         self.lbl_version.configure(text=self.story_info.get("Version"))
         self.lbl_episode.configure(text=self.story_info.get("Episode"))
-        
+
         self.txt_description.insert("end", self.story_info.get("Description", ""))
         self.txt_description.configure(state="disabled")
-        
+
         # Connect the vertical scrollbar to the description text widget.
         self.sb_vertical_description.configure(command=self.txt_description.yview)
         self.txt_description.configure(yscrollcommand=self.sb_vertical_description.set)
 
         # Show the story's poster image.
         self.show_poster_image()
-        
+
         # Show the chapter names and scene names
         self._populate_treeview()
-        
+
     def _populate_treeview(self):
         """
         Populate the treeview with chapter names and scenes
         from the dict: self.chapter_and_scene_names
-        
+
         Example: {'My First Chapter': ['My First Scene', 'Second scene'],
                   'My second Chapter': ['My First Scene', 'Second scene']}
         """
-        
+
         # For selecting the last viewed scene.
         select_iid_when_finished = None
 
         # type-hint
-        self.treeview_chapter_scenes:ttk.Treeview
+        self.treeview_chapter_scenes: ttk.Treeview
 
         # A selection option to play the story's default startup chapter/scene.
-        self.treeview_chapter_scenes.insert(parent="",
-                                            index=0,
-                                            text="(Play from beginning)")
-        
+        self.treeview_chapter_scenes.insert(
+            parent="", index=0, text="(Play from beginning)"
+        )
+
         # Iterate through the chapter names that contain scene lists.
         for chapter_name, scene_list in self.chapter_and_scene_names.items():
-
             # Add the chapter name
-            chapter_item_iid = self.treeview_chapter_scenes.insert(parent="",
-                                                                   index="end",
-                                                                   text=chapter_name)
+            chapter_item_iid = self.treeview_chapter_scenes.insert(
+                parent="", index="end", text=chapter_name
+            )
 
             # Add all the scenes in the current chapter.
             for scene_name in scene_list:
@@ -691,25 +691,24 @@ class LaunchWindow:
                     continue
 
                 # Add the scene
-                scene_item_iid = \
-                    self.treeview_chapter_scenes.insert(parent=chapter_item_iid,
-                                                        index="end",
-                                                        values=(scene_name, ))
-                
+                scene_item_iid = self.treeview_chapter_scenes.insert(
+                    parent=chapter_item_iid, index="end", values=(scene_name,)
+                )
+
                 # Is the current chapter/scene the same one that the player
                 # was viewing last?
                 if Passer.last_chapter_name_played and Passer.last_scene_name_played:
-                    if Passer.last_chapter_name_played == chapter_name \
-                       and Passer.last_scene_name_played == scene_name:
-                        
+                    if (
+                        Passer.last_chapter_name_played == chapter_name
+                        and Passer.last_scene_name_played == scene_name
+                    ):
                         # Keep track of this scene's iid, so we can select it
                         # later in this method. That way, the player will know
                         # which scene they left off on.
                         select_iid_when_finished = scene_item_iid
-                        
+
         # Select last viewed scene?
         if select_iid_when_finished:
-            
             # Select the last viewed scene.
             self.treeview_chapter_scenes.see(select_iid_when_finished)
             self.treeview_chapter_scenes.selection_add(select_iid_when_finished)
@@ -719,11 +718,11 @@ class LaunchWindow:
         Show the poster of the visual novel in a label
         by converting it from a BytesIO object to a PhotoImage.
         """
-        
+
         # No poster image? return.
         if not self.poster_file_object:
             return
-        
+
         # Convert the BytesIO object of the poster image to a PhotoImage
         # that tkinter can use.
         with Image.open(self.poster_file_object) as img:
@@ -737,4 +736,3 @@ class LaunchWindow:
 
     def run(self):
         self.mainwindow.mainloop()
-        

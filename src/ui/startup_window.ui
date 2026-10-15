@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.4" author="PygubuDesigner 0.40.1">
+<interface version="1.5" author="PygubuDesigner 0.41.4">
   <project>
     <settings />
     <customwidgets />
+    <resources />
   </project>
   <object class="tk.Toplevel" id="startup_window" named="True">
     <property name="geometry">470x190</property>
@@ -177,6 +178,9 @@
         <property name="command" type="command" cbtype="simple">on_open_project_menu_clicked</property>
         <property name="label" translatable="yes">Open Project...</property>
       </object>
+    </child>
+    <child>
+      <object class="tk.Menuitem.Separator" id="sep_recent_project" named="True" />
     </child>
   </object>
 </interface>
