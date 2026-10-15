@@ -63,12 +63,10 @@ class StartupWindow:
         editor_image = tk.PhotoImage(data=editor_window.Icons.EDIT_DETAILS_24_F.value)
         
         self.menu_editor = builder.get_object("menu_editor")
-        
 
         self.btn_editor = builder.get_object("btn_editor")
         self.btn_editor.image = editor_image
-        self.btn_editor.configure(image=self.btn_editor.image,
-                                  menu=self.menu_editor)
+        self.btn_editor.configure(image=self.btn_editor.image, menu=self.menu_editor)
 
         play_image = tk.PhotoImage(data=editor_window.Icons.PLAY_24_F.value)
         self.btn_play_file = builder.get_object("btn_play_file")
@@ -91,29 +89,54 @@ class StartupWindow:
         Dynamically populate the menus with recently opened projects.
         """
 
+        # Create a new submenu for the "Recent" menu items
+        menu_sub_recent = tk.Menu(self.menu_editor, tearoff=False)
+
+        """
+        If there is already a Recent menu, remove it before adding a 
+        new one to avoid duplicates. We have this check here because
+        the recent list might have been cleared by the user, and we want to 
+        ensure that the menu is re-populated.
+        """
+
+        # In the for loop, it won't include the last index, so we add +1
+        # to the range to ensure we include the last item too.
+        for index in range(self.menu_editor.index("end") + 1):
+            if (
+                self.menu_editor.type(index) == tk.CASCADE
+                and self.menu_editor.entrycget(index, "label") == "Recent"
+            ):
+                self.menu_editor.delete(index)
+                break
+
+        # self.menu_recent.add_separator()
+        self.menu_editor.add_cascade(menu=menu_sub_recent, label="Recent")
+
         # Load the list of recently opened projects from the configuration
         # file, if available.
         recent_projects = ProjectSnapshot.config.get_recent_projects()
 
+        # If there are no recent projects, disable the "Recent" menu
+        # and return early.
+        if not recent_projects:
+            self.menu_editor.entryconfig("Recent", state="disabled")
+            return
+
         # Add each recent project to the menu with a command to open it.
         for project_path in recent_projects:
-            self.menu_editor.add_command(
+            menu_sub_recent.add_command(
                 label=project_path,
                 command=lambda path=project_path: self.on_open_project_menu_clicked(
                     path
                 ),
             )
 
-        self.menu_editor.add_command(
+        # Add a separator and a "Clear Recent List" option to the menu
+        menu_sub_recent.add_separator()
+        menu_sub_recent.add_command(
             label="Clear Recent List",
             command=self.on_clear_recent_projects_menu_clicked,
         )
-
-        # No recent projects to display, so disable the clear menu and return.
-        if not recent_projects:
-            self.menu_editor.entryconfig("Clear Recent List", state="disabled")
-
-            return
 
     def on_clear_recent_projects_menu_clicked(self):
         """
@@ -122,18 +145,8 @@ class StartupWindow:
         # Clear the recent projects list in the configuration
         ProjectSnapshot.config.remove_all_recent_projects()
 
-        # Clear menu indexes 3 and onward, which are the recent project entries.
-        # This will remove the Clear Recent List menu item as well, but we'll
-        # re-add it below.
-        self.menu_editor.delete(3, "end")
-
-        # Re-add the "Clear Recent List" menu item to the end of the menu
-        # but disable it since there are no recent projects to clear.
-        self.menu_editor.add_command(
-            label="Clear Recent List",
-            command=self.on_clear_recent_projects_menu_clicked,
-            state="disabled",
-        )
+        # Re-populate the recent menu (it will now show "(No Recent Projects)")
+        self.populate_recently_opened_projects()
 
     def on_new_project_menu_clicked(self):
 
