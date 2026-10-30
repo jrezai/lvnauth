@@ -4065,15 +4065,15 @@ class StoryReader:
             return
 
         # The movement animation is calculated from where the sprite started.
-        sprite.move_sprite.move_start_center_x = sprite.rect.centerx
-        sprite.move_sprite.move_start_center_y = sprite.rect.centery
+        sprite.move_properties.move_start_center_x = sprite.rect.centerx
+        sprite.move_properties.move_start_center_y = sprite.rect.centery
 
         # Record where the sprite should stop.
-        sprite.move_sprite.move_target_center_x = move_to_start.target_center_x
-        sprite.move_sprite.move_target_center_y = move_to_start.target_center_y
+        sprite.move_properties.move_target_center_x = move_to_start.target_center_x
+        sprite.move_properties.move_target_center_y = move_to_start.target_center_y
 
         # Set the duration for the movement animation in seconds.
-        sprite.move_sprite.move_duration = move_to_start.move_duration
+        sprite.move_properties.move_duration = move_to_start.move_duration
 
         sprite.start_moving()
 

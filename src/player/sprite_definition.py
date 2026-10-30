@@ -261,8 +261,8 @@ class SpriteObject:
         self.image = image
         self.rect = self.image.get_rect()
 
-        # New style
-        self.move_sprite = MoveSprite()
+        # New move properties with easing
+        self.move_properties = MoveSprite()
 
         # We need a copy of the image before we apply any text to it,
         # so that we don't blit the same text over and over again.
@@ -291,10 +291,6 @@ class SpriteObject:
 
         # Will be based on the MovementStopRunScript class.
         self.movement_stop_run_script = None
-
-        # Will be based on the MoveStart class.
-        self.move_properties: cc.MoveStart
-        self.move_properties = None
 
         # Initialize
         self.is_moving = False
@@ -472,8 +468,8 @@ class SpriteObject:
         # Record where the image (surface) currently is so we can use
         # calculated_center_x and calculated_center_y for float
         # movement calculations.
-        self.move_sprite.calculated_center_x = self.rect.centerx
-        self.move_sprite.calculated_center_y = self.rect.centery
+        self.move_properties.calculated_center_x = self.rect.centerx
+        self.move_properties.calculated_center_y = self.rect.centery
 
     def stop_moving(self):
         """
@@ -486,8 +482,8 @@ class SpriteObject:
 
         # Now that the movement animation has stopped, we no longer need
         # these two variables, so reset them for the next movement animation.
-        self.move_sprite.calculated_center_x = 0
-        self.move_sprite.calculated_center_y = 0
+        self.move_properties.calculated_center_x = 0
+        self.move_properties.calculated_center_y = 0
 
     def stop_scaling(self):
         """
@@ -2113,11 +2109,11 @@ class SpriteObject:
         """
 
         # Make sure the sprite is moving and has move properties set.
-        if not self.is_moving or not self.move_sprite:
+        if not self.is_moving or not self.move_properties:
             return
 
         # Update the elapsed time for the movement animation
-        self.move_sprite.move_elapsed_time += AnimationSpeed.delta
+        self.move_properties.move_elapsed_time += AnimationSpeed.delta
 
         # Calculate the normalized time (t) for the movement animation,
         # clamped between 0 and 1
@@ -2125,9 +2121,11 @@ class SpriteObject:
         # far along the movement animation is.
         t = (
             min(
-                1.0, self.move_sprite.move_elapsed_time / self.move_sprite.move_duration
+                1.0,
+                self.move_properties.move_elapsed_time
+                / self.move_properties.move_duration,
             )
-            if self.move_sprite.move_duration > 0
+            if self.move_properties.move_duration > 0
             else 1.0
         )
         eased_t = Easing.ease_in_out_cubic(t)
@@ -2135,18 +2133,18 @@ class SpriteObject:
         # Calculate the exact current (x, y) center position of the moving
         # by using linear interpolation modified by an easing factor
         self.calculated_center_x = (
-            self.move_sprite.move_start_center_x
+            self.move_properties.move_start_center_x
             + (
-                self.move_sprite.move_target_center_x
-                - self.move_sprite.move_start_center_x
+                self.move_properties.move_target_center_x
+                - self.move_properties.move_start_center_x
             )
             * eased_t
         )
         self.calculated_center_y = (
-            self.move_sprite.move_start_center_y
+            self.move_properties.move_start_center_y
             + (
-                self.move_sprite.move_target_center_y
-                - self.move_sprite.move_start_center_y
+                self.move_properties.move_target_center_y
+                - self.move_properties.move_start_center_y
             )
             * eased_t
         )
@@ -2160,8 +2158,8 @@ class SpriteObject:
             # Yes, the movement animation is complete.
 
             # Snap sprite center exactly to target center coordinates
-            self.rect.centerx = self.move_sprite.move_target_center_x
-            self.rect.centery = self.move_sprite.move_target_center_y
+            self.rect.centerx = self.move_properties.move_target_center_x
+            self.rect.centery = self.move_properties.move_target_center_y
 
             self.stop_moving()
 
