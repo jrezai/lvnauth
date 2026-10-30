@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.4" author="PygubuDesigner 0.40.1">
+<interface version="1.5" author="PygubuDesigner 0.41.4">
   <project>
     <settings />
     <customwidgets />
+    <resources />
   </project>
   <object class="ttk.Frame" id="frame_move_to" named="True">
     <property name="height">200</property>
@@ -26,6 +27,7 @@
           <property name="sticky">nsew</property>
         </layout>
         <containerlayout manager="grid">
+          <property type="col" id="1" name="weight">1</property>
           <property type="row" id="1" name="weight">1</property>
         </containerlayout>
         <child>
@@ -55,6 +57,7 @@
                 <property name="width">24</property>
                 <layout manager="grid">
                   <property name="column">0</property>
+                  <property name="columnspan">2</property>
                   <property name="row">1</property>
                   <property name="sticky">ew</property>
                 </layout>
@@ -74,7 +77,7 @@
             </layout>
             <child>
               <object class="ttk.Label" id="lbl_target_x" named="True">
-                <property name="text" translatable="yes">Target X:</property>
+                <property name="text" translatable="yes">Target center X:</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">0</property>
@@ -84,7 +87,7 @@
             </child>
             <child>
               <object class="ttk.Spinbox" id="spinbox_target_x" named="True">
-                <property name="textvariable">int:v_target_x</property>
+                <property name="textvariable">int:v_target_center_x</property>
                 <property name="width">7</property>
                 <layout manager="grid">
                   <property name="column">0</property>
@@ -101,13 +104,14 @@
             <property name="width">200</property>
             <layout manager="grid">
               <property name="column">1</property>
+              <property name="padx">20</property>
               <property name="pady">15</property>
               <property name="row">1</property>
               <property name="sticky">w</property>
             </layout>
             <child>
               <object class="ttk.Label" id="lbl_target_y" named="True">
-                <property name="text" translatable="yes">Target Y:</property>
+                <property name="text" translatable="yes">Target center Y:</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">0</property>
@@ -117,7 +121,7 @@
             </child>
             <child>
               <object class="ttk.Spinbox" id="spinbox_target_y" named="True">
-                <property name="textvariable">int:v_target_y</property>
+                <property name="textvariable">int:v_target_center_y</property>
                 <property name="width">7</property>
                 <layout manager="grid">
                   <property name="column">0</property>
@@ -129,17 +133,20 @@
           </object>
         </child>
         <child>
-          <object class="ttk.Frame" id="frame6" named="True">
+          <object class="ttk.Frame" id="frame_duration" named="True">
             <property name="height">200</property>
             <property name="width">200</property>
             <layout manager="grid">
               <property name="column">0</property>
-              <property name="row">3</property>
+              <property name="columnspan">2</property>
+              <property name="pady">0 15</property>
+              <property name="row">2</property>
               <property name="sticky">w</property>
             </layout>
             <child>
               <object class="ttk.Label" id="lbl_speed" named="True">
-                <property name="text" translatable="yes">Speed (1 to 3000):</property>
+                <property name="text" translatable="yes">Duration (seconds):
+(decimals allowed)</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">0</property>
@@ -149,13 +156,59 @@
             </child>
             <child>
               <object class="ttk.Spinbox" id="spinbox3" named="True">
-                <property name="from_">1</property>
-                <property name="textvariable">int:v_speed</property>
-                <property name="to">3000</property>
+                <property name="from_">0</property>
+                <property name="increment">1</property>
+                <property name="textvariable">double:v_duration</property>
+                <property name="to">3600</property>
                 <property name="width">7</property>
                 <layout manager="grid">
                   <property name="column">0</property>
                   <property name="row">1</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Frame" id="frame_easing" named="True">
+            <property name="height">200</property>
+            <property name="width">200</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">2</property>
+              <property name="row">3</property>
+              <property name="sticky">ew</property>
+            </layout>
+            <child>
+              <object class="ttk.Label" id="label1" named="True">
+                <property name="text" translatable="yes">Easing:</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">0</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Combobox" id="cb_easing" named="True">
+                <property name="state">readonly</property>
+                <property name="values">"Constant" "Smooth start" "Smooth stop" "Smooth start stop" "Quick start" "Gentle glide" "Dynamic ease"</property>
+                <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_combobox_selection_changed" add="" />
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                  <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Label" id="lbl_easing_description" named="True">
+                <property name="text" translatable="yes">lbl_description</property>
+                <property name="textvariable">string:v_easing_description</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">2</property>
                   <property name="sticky">w</property>
                 </layout>
               </object>

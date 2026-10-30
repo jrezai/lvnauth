@@ -470,19 +470,11 @@ class RemoteCallWithArguments(NamedTuple):
 @dataclass
 class MoveStart:
     sprite_name: str
-    x: int  # X movement speed (move by pixel amount)
-    x_direction: str
-    y: int  # Y movement speed (move by pixel amount)
-    y_direction: str
-    
-    
-@dataclass
-class MoveToStart:
-    sprite_name: str
-    target_x: int
-    target_y: int
-    speed: float
-    
+    target_center_x: int
+    target_center_y: int
+    move_duration: float
+    easing: str
+
 
 # Used for multiple commands, such as:
 # character_after_fading_stop
@@ -506,20 +498,7 @@ class SpriteStopRunScriptWithArguments(NamedTuple):
     reusable_script_name: str
     arguments: str
 
-    
-# Used when the 'side to check' is specified (3 arguments)
-class MovementStopCondition(NamedTuple):
-    sprite_name: str
-    side_to_check: str
-    stop_location: str
-    
-    
-# Used when the 'side to check' is automatic (2 arguments)
-class MovementStopConditionShorter(NamedTuple):
-    sprite_name: str
-    stop_location: str
-    
-    
+
 class SpritePosition(NamedTuple):
     sprite_name: str
     

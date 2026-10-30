@@ -71,6 +71,43 @@ class MovementStops(Enum):
     BOTTOM = auto()
 
 
+class MoveSprite:
+    def __init__(self):
+
+        # The movement animation is calculated from where the sprite started.
+        self.move_start_center_x: int = 0
+        self.move_start_center_y: int = 0
+
+        # How long the animation should take in seconds (decimals supported)
+        self.move_duration: float = 0
+
+        # Used for the easing logic.
+        self.move_elapsed_time: float = 0
+
+        # Where the sprite should stop.
+        self.move_target_center_x: int = 0
+        self.move_target_center_y: int = 0
+
+        """
+        Used for delta movements. A pygame rectangle can only hold
+        integer values, so we need to keep track of the 'real' float movement
+        positions before telling self.rect about the newly moved int positions.
+        In other words, when we increment slightly, int values will be rounded
+        to a whole number, but we need float values to keep the accurate
+        non-rounded positions while the movement animation is occuring.
+        calculated_center_x and calculated_center_y are only used during a 
+        movement animation. They are not used anywhere else. Once a movement 
+        animation stops, these two variables are reset to zero until the next 
+        movement.
+        Note: these two variables don't even get used for <position_x..> 
+        related commands. They're *just* for movement animations.
+        """
+        self.calculated_center_x: float
+        self.calculated_center_x = 0
+        self.calculated_center_y: float
+        self.calculated_center_y = 0
+
+
 class ImagePositionX(Enum):
     START_OF_DISPLAY = auto()
     END_OF_DISPLAY = auto()
@@ -130,6 +167,86 @@ class SpriteMouseStatus(Enum):
     HOVERING_OVER_SPRITE = auto()
 
 
+class Easing:
+    @staticmethod
+    def linear(t: float) -> float:
+        """
+        LINEAR EASING
+        - Math: Constant rate of change (f(t) = t).
+        - Movement: Constant speed throughout the entire animation.
+          There is no acceleration or deceleration; the sprite starts moving
+          at full speed instantly and stops instantly when t reaches 1.0.
+        """
+        return t
+
+    @staticmethod
+    def ease_in_quad(t: float) -> float:
+        """
+        EASE-IN QUADRATIC (Accelerating from zero speed)
+        - Math: Squaring time (f(t) = t^2).
+          For small t (e.g., 0.1), 0.1 * 0.1 = 0.01 (very small change).
+          As t approaches 1.0, progress accelerates rapidly.
+        - Movement: Starts moving very slowly, gradually speeding up
+          and reaching maximum velocity right at the end position.
+        """
+        return t * t
+
+    @staticmethod
+    def ease_out_quad(t: float) -> float:
+        """
+        EASE-OUT QUADRATIC (Decelerating to a stop)
+        - Math: Inverted parabola (f(t) = t * (2 - t)).
+          Starts with high velocity and gradually levels off as t reaches 1.0.
+        - Movement: Starts moving at full speed immediately, then smoothly
+          decelerates to a gentle stop at the target destination.
+        """
+        return t * (2 - t)
+
+    @staticmethod
+    def ease_in_out_quad(t: float) -> float:
+        """
+        EASE-IN-OUT QUADRATIC (Smooth start and smooth finish)
+        - Math: Combines Ease-In Quadratic for the first half (t < 0.5)
+          with Ease-Out Quadratic for the second half (t >= 0.5).
+        - Movement: Smoothly accelerates from a standstill during the first half,
+          reaches peak speed in the middle of the distance, and then smoothly
+          decelerates to a full stop at the end.
+        """
+        return 2 * t * t if t < 0.5 else -1 + (4 - 2 * t) * t
+
+    @staticmethod
+    def ease_in_cubic(t: float) -> float:
+        """
+        EASE-IN CUBIC (Stronger acceleration)
+        - Math: Cubing time (f(t) = t^3).
+          0.2 * 0.2 * 0.2 = 0.008 (much slower start than Quadratic).
+        - Movement: Remains near a standstill at the start longer than Quad,
+          followed by a dramatic sudden surge of acceleration toward the end.
+        """
+        return t * t * t
+
+    @staticmethod
+    def ease_out_cubic(t: float) -> float:
+        """
+        EASE-OUT CUBIC (Stronger deceleration)
+        - Math: f(t) = (t - 1)^3 + 1.
+        - Movement: Launches quickly toward the destination, covering most
+          of the distance early on, then glides gently into the final spot over
+          a longer slowdown phase compared to Quad.
+        """
+        return (t - 1) * (t - 1) * (t - 1) + 1
+
+    @staticmethod
+    def ease_in_out_cubic(t: float) -> float:
+        """
+        EASE-IN-OUT CUBIC (More pronounced smooth start and finish)
+        - Math: Uses cubic power (t^3) split between the first half (t < 0.5)
+          and second half.
+        - Movement: Creates a more noticeable "slow start -> fast mid-point -> slow stop"
+          effect than quadratic easing, giving the sprite a heavier, dynamic feel.
+        """
+        return 4 * t * t * t if t < 0.5 else (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
+
 
 class SpriteObject:
 
@@ -143,26 +260,11 @@ class SpriteObject:
         self.general_alias = general_alias
         self.image = image
         self.rect = self.image.get_rect()
-        
-        """
-        Used for delta movements. A pygame rectangle can only hold
-        integer values, so we need to keep track of the 'real' float movement
-        positions before telling self.rect about the newly moved int positions.
-        In other words, when we increment slightly, int values will be rounded
-        to a whole number, but we need float values to keep the accurate
-        non-rounded positions while the movement animation is occuring.
-        pos_moving_x and pos_moving_y are only used during a movement 
-        animation. They are not used anywhere else. Once a movement animation
-        stops, these two variables are reset to zero until the next movement.
-        Note: these two variables don't even get used for <position_x..> related
-        commands. They're *just* for movement animations.
-        """
-        self.calculated_pos_moving_x:float
-        self.calculated_pos_moving_x = 0
-        self.calculated_pos_moving_y:float
-        self.calculated_pos_moving_y = 0
 
-        # We need a copy of the image before we apply any text to it, 
+        # New style
+        self.move_sprite = MoveSprite()
+
+        # We need a copy of the image before we apply any text to it,
         # so that we don't blit the same text over and over again.
         # We're going to eventually copy this image to self.original_image
         # in the drawing loop. We will use the rect self.original_rect below.
@@ -175,11 +277,6 @@ class SpriteObject:
         # exactly the same as self.original_image_before_text
         self.original_image = image.copy()
         self.original_rect = self.original_image.get_rect()
-        
-        # Initialize a recording of half the size of the sprite's 
-        # width/height, for use when setting centerx and centery during 
-        # a movement animation.        
-        self._refresh_half_size_dimensions()
 
         # Flags that will be checked in the .update() method
         # of this sprite, so we'll know to show or hide the sprite
@@ -203,7 +300,6 @@ class SpriteObject:
         self.move_properties: cc.MoveStart
         self.move_properties = None
 
-
         # Initialize
         self.is_moving = False
         self.is_fading = False
@@ -216,14 +312,12 @@ class SpriteObject:
         self.applied_fade_value = None
         self.applied_scale_value = None
         self.applied_rotate_value = None
-        
+
         self.tint_handler = TintHandler()
 
         # If any object has this flag set, the story script will not
         # continue to be read until the flag below has been set to False (for *all* sprite objects).
         self.wait_for_movement = False
-
-
 
         """
         There are 3 variables for sprite fading.
@@ -249,37 +343,36 @@ class SpriteObject:
         # Will be based on the FadeCurrentValue class
         self.current_fade_value = None
         # For time-accuracy with delta calculations for each frame.
-        self.calculated_fade_value:float = 0
-                 
+        self.calculated_fade_value: float = 0
 
         # Will be based on the FadeStopRunScript class
         self.fade_stop_run_script = None
 
-        self.fade_properties:cc.FadeStart
+        self.fade_properties: cc.FadeStart
         self.fade_properties = None
-        
+
         # So the animation method knows which direction to scale, up or down.
         self.scale_type: ScaleType
         self.scale_type = None
 
-        self.scale_properties:cc.ScaleStart
+        self.scale_properties: cc.ScaleStart
         self.scale_properties = None
 
         # Based on the ScaleCurrentValue class
         # Initialize the sprite to a scale of 1.0, which means regular size.
         # We initialize the sprite to 1.0 here so if scaling is used
         # without '<scale_current_value>', it will default to a regular size.
-        self.scale_current_value = \
-            cc.ScaleCurrentValue(sprite_name=None,
-                                 scale_current_value=1.0)
+        self.scale_current_value = cc.ScaleCurrentValue(
+            sprite_name=None, scale_current_value=1.0
+        )
 
         # Will be based on the ScaleStopRunScript class
         self.scale_stop_run_script = None
 
         # Will be based on the RotateCurrentValue class
-        self.rotate_current_value = None 
-        
-        self.rotate_properties:cc.RotateStart
+        self.rotate_current_value = None
+
+        self.rotate_properties: cc.RotateStart
         self.rotate_properties = None
 
         # Will be based on the RotateStopRunScript class
@@ -288,62 +381,30 @@ class SpriteObject:
         # self.sudden_fade_change = False
         # self.sudden_scale_change = False
         # self.sudden_rotate_change = False
-        
+
         # Used for making sure the mouse event reusable scripts
         # are executed only once for each mouse event change.
         # If we didn't have this, a mouse hover event could have run
         # a reusable script each time the mouse moved on a sprite.
         self.mouse_status: SpriteMouseStatus = SpriteMouseStatus.AWAY_FROM_SPRITE
-        
+
         # Names of reusable scripts to run after specific mouse events.
         self.on_mouse_enter_run_script: cc.SpriteStopRunScriptWithArguments = None
         self.on_mouse_leave_run_script: cc.SpriteStopRunScriptWithArguments = None
         self.on_mouse_click_run_script: cc.SpriteStopRunScriptWithArguments = None
-        
+
         # Deals with showing/hiding sprite text
-        self.active_font_handler =\
-            font_handler.ActiveFontHandler(story=Passer.active_story,
-                                           sprite_object=self)        
+        self.active_font_handler = font_handler.ActiveFontHandler(
+            story=Passer.active_story, sprite_object=self
+        )
 
         self.visible = False
-
-    def _refresh_half_size_dimensions(self):
-        """
-        Keep track of half the size of the original sprite's width/height,
-        for use when setting centerx and centery during a movement animation.
-        
-        Why from the original image? Because if the sprite is being rotated or
-        scaled, the sprite's width/height grows and shrinks.
-        If we use the width/height of the display sprite and add it to
-        the centerx/centery, we will effectively "push" the sprite left and
-        right in sync with the rotation, which we don't want.
-        
-        During a movement animation:
-        We move sprites using the centerx and centery, not the .left or .right
-        of the sprite, so the centerx and centery is half the size of the image,
-        (we move the sprites from the middle to keep the movement smooth
-        during a rotation or scale).
-        
-        So when we move a sprite during a movement animation, we need to take
-        the full width/height into consideration while moving. Otherwise, if
-        we have a sprite that, say, starts at the end of the display (after
-        the width of the display) and we want to move it left gradually, the
-        first movement animation will be at half the size of the sprite (the
-        sprite will instantly show half of itself, half showing, half at the
-        end of the display, because we use centerx and centery to move.
-        
-        So we need half of the width of the sprite to make it start after the
-        display, at full width, which is why we have this method here).
-        """
-
-        self.half_width = self.original_image.get_width() / 2
-        self.half_height = self.original_image.get_height() / 2        
 
     def clear_text_and_redraw(self):
         """
         Copy the image that doesn't have any text on it
         (self.original_image_before_text) to self.original_image.
-        
+
         Then, update self.image and apply any scale/rotation/fade that it needs,
         because once we copy self.original_image to self.image, it won't
         have any alterations (no rotation,scale,fade), so we need to re-apply
@@ -372,8 +433,8 @@ class SpriteObject:
         ## This will cause the sprite's display image to change to the version
         ## that doesn't contain text.
         ## if not replaced_display_image:
-        #self.image = self.get_original_image_with_text()
-        
+        # self.image = self.get_original_image_with_text()
+
         self._apply_still_effects()
 
         ManualUpdate.queue_for_update(self.rect)
@@ -383,13 +444,13 @@ class SpriteObject:
         Set the flag to indicate that fading animations should occur
         for this sprite.
         """
-        
+
         # There has to be a fade_until value for the fade to work.
         # fade_until is used to determine the direction of the fade (fade-in or
         # fade-out).
         if self.fade_properties.fade_until is None:
             return
-                
+
         self.is_fading = True
 
     def stop_fading(self):
@@ -398,38 +459,39 @@ class SpriteObject:
         :return:
         """
         self.is_fading = False
-        
+
         # Now that the fading animation has stopped, we no longer need
-        # the float fade value, so reset it for the next fading animation.        
+        # the float fade value, so reset it for the next fading animation.
         self.calculated_fade_value = 0
 
     def start_moving(self):
         """
         Set the flag to indicate that movement animations should occur
         for this sprite.
-        
+
         Return: None
         """
         self.is_moving = True
-        
+
         # Record where the image (surface) currently is so we can use
-        # pos_moving_x and pos_moving_y for float movement calculations.
-        self.calculated_pos_moving_x = self.rect.x
-        self.calculated_pos_moving_y = self.rect.y
+        # calculated_center_x and calculated_center_y for float
+        # movement calculations.
+        self.move_sprite.calculated_center_x = self.rect.centerx
+        self.move_sprite.calculated_center_y = self.rect.centery
 
     def stop_moving(self):
         """
         Reset the flag to indicate that movement animations should not occur
         for this sprite.
-        
+
         Return: None
         """
         self.is_moving = False
-        
+
         # Now that the movement animation has stopped, we no longer need
         # these two variables, so reset them for the next movement animation.
-        self.calculated_pos_moving_x = 0
-        self.calculated_pos_moving_y = 0
+        self.move_sprite.calculated_center_x = 0
+        self.move_sprite.calculated_center_y = 0
 
         # Clear all stop conditions because the movement animation has stopped.
         self.stop_movement_conditions.clear()
@@ -440,7 +502,7 @@ class SpriteObject:
         :return:
         """
         self.is_scaling = False
-        
+
         # Reset the scale animation direction.
         self.scale_type = None
 
@@ -448,34 +510,38 @@ class SpriteObject:
         """
         Set the flag to indicate that scaling animations should occur
         for this sprite.
-        
+
         Also, determine whether the sprite showed me scale Up or scaled Down.
         We do this by comparing where the scale is now (scale_current_value),
         to where it needs to be (scale_until).
-        
+
         Return: None
         """
-        
+
         # Make sure scale_until is initialized
-        if self.scale_properties is None \
-           or not self.scale_properties.scale_until:
+        if self.scale_properties is None or not self.scale_properties.scale_until:
             return
-        
-        if self.scale_properties.scale_until > self.scale_current_value.scale_current_value:
+
+        if (
+            self.scale_properties.scale_until
+            > self.scale_current_value.scale_current_value
+        ):
             self.scale_type = ScaleType.SCALE_UP
-            
-        elif self.scale_properties.scale_until < self.scale_current_value.scale_current_value:
+
+        elif (
+            self.scale_properties.scale_until
+            < self.scale_current_value.scale_current_value
+        ):
             self.scale_type = ScaleType.SCALE_DOWN
-            
+
         else:
             # The scale_until value is the same as the current scale value.
             # No scaling animation is required, so don't continue.
             self.scale_type = None
             return
-        
-        
+
         self.is_scaling = True
-        
+
     def stop_rotating(self):
         """
         Reset the flag to indicate that rotating animations should not occur for this sprite.
@@ -536,7 +602,6 @@ class SpriteObject:
         """
         self.pending_hide = True
 
-
         # In case a different method was called to show this
         # sprite in the same frame we're on.
 
@@ -554,7 +619,6 @@ class SpriteObject:
         """
         self.pending_show = True
 
-
         # In case a different method was called to hide this
         # sprite in the same frame we're on.
 
@@ -562,9 +626,11 @@ class SpriteObject:
         # we can't have both show and hide pending.
         self.pending_hide = False
 
-    def movement_add_stop(self,
-                          rect_area: MovementStops,
-                          reaches_where: int | ImagePositionX | ImagePositionY):
+    def movement_add_stop(
+        self,
+        rect_area: MovementStops,
+        reaches_where: int | ImagePositionX | ImagePositionY,
+    ):
         """
         Add a condition to stop a movement animation.
 
@@ -584,9 +650,9 @@ class SpriteObject:
 
         # # rect_area is allowed to be None, but only if reaches_where is ImagePositionX or ImagePositionY (no int).
         # if rect_area is None:
-        if isinstance(reaches_where, ImagePositionX) \
-                or isinstance(reaches_where, ImagePositionY):
-
+        if isinstance(reaches_where, ImagePositionX) or isinstance(
+            reaches_where, ImagePositionY
+        ):
             # rect_area is None and reaches_Where is ImagePositionX or ImagePositionY, so
             # get the pixel location of reaches_where and set the rect_area side automatically.
             rect_area, reaches_where = self._position_to_int(reaches_where)
@@ -604,7 +670,6 @@ class SpriteObject:
         :param image_position_x_or_y: instance of ImagePositionX or ImagePositionY
         :return: Tuple (example: MovementStops.LEFT, 0)
         """
-        
 
         if isinstance(image_position_x_or_y, ImagePositionX):
             if image_position_x_or_y == ImagePositionX.BEFORE_START_OF_DISPLAY:
@@ -667,14 +732,12 @@ class SpriteObject:
         # and the new center position so we can combine it into one rect
         # for an update.
         if self.visible:
-
             # Record the rect before we move it.
             rect_before_moving = self.rect.copy()
 
         else:
             # The sprite is not even visible yet, so there is no 'before' rect.
             rect_before_moving = None
-
 
         # Make sure we have int arguments
         try:
@@ -732,8 +795,7 @@ class SpriteObject:
             flip_vertical = True
 
         # Flip this sprite if needed.
-        self.flip(horizontal=flip_horizontal,
-                  vertical=flip_vertical)
+        self.flip(horizontal=flip_horizontal, vertical=flip_vertical)
 
     def flip(self, horizontal: bool, vertical: bool):
         """
@@ -755,23 +817,28 @@ class SpriteObject:
         if all([horizontal, vertical]):
             self.image = pygame.transform.flip(self.image, True, True)
             self.original_image = pygame.transform.flip(self.original_image, True, True)
-            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, True)
+            self.original_image_before_text = pygame.transform.flip(
+                self.original_image_before_text, True, True
+            )
         elif horizontal:
             self.image = pygame.transform.flip(self.image, True, False)
-            self.original_image = pygame.transform.flip(self.original_image, True, False)
-            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, True, False)
+            self.original_image = pygame.transform.flip(
+                self.original_image, True, False
+            )
+            self.original_image_before_text = pygame.transform.flip(
+                self.original_image_before_text, True, False
+            )
         elif vertical:
             self.image = pygame.transform.flip(self.image, False, True)
-            self.original_image = pygame.transform.flip(self.original_image, False, True)
-            self.original_image_before_text = pygame.transform.flip(self.original_image_before_text, False, True)
+            self.original_image = pygame.transform.flip(
+                self.original_image, False, True
+            )
+            self.original_image_before_text = pygame.transform.flip(
+                self.original_image_before_text, False, True
+            )
         else:
             # No flips have occurred, so there is no need to request a screen-update.
             return
-        
-        # Update a recording of half the size of the sprite's 
-        # width/height, for use when setting centerx and centery during 
-        # a movement animation.        
-        self._refresh_half_size_dimensions()        
 
         # Queue the combined rect for a manual screen update.
         # Regular animations (such as <character_start_moving: rave>)
@@ -779,9 +846,9 @@ class SpriteObject:
         # we need to queue it for updating here.
         ManualUpdate.queue_for_update(self.rect)
 
-    def set_position_x(self,
-                       position_type: ImagePositionX = None,
-                       position_absolute_x: int = None):
+    def set_position_x(
+        self, position_type: ImagePositionX = None, position_absolute_x: int = None
+    ):
         """
         Change the .rect to the new location specified in the argument.
 
@@ -796,7 +863,7 @@ class SpriteObject:
 
         :return: None
         """
-      
+
         # Make sure we have a value for at least one argument.
         if position_type is None and position_absolute_x is None:
             return
@@ -806,7 +873,6 @@ class SpriteObject:
         # and the new position so we can combine it into one rect
         # for an update.
         if self.visible:
-
             # Record the rect before we move it.
             rect_before_moving = self.rect.copy()
 
@@ -833,7 +899,6 @@ class SpriteObject:
             # Start at the right of the screen, just after the image, causing it to be beyond the screen
             self.rect.left = Passer.active_story.screen_size[0]
 
-
         # For updating the change on the screen.
         if rect_before_moving:
             # Combine before/after rects to do one update.
@@ -849,9 +914,9 @@ class SpriteObject:
         # we need to queue it for updating here.
         ManualUpdate.queue_for_update(combined_rect)
 
-    def set_position_y(self,
-                       position_type: ImagePositionY = None,
-                       position_absolute_y: int = None):
+    def set_position_y(
+        self, position_type: ImagePositionY = None, position_absolute_y: int = None
+    ):
         """
         Change the .rect to the new location specified in the argument.
 
@@ -876,14 +941,12 @@ class SpriteObject:
         # and the new position so we can combine it into one rect
         # for an update.
         if self.visible:
-
             # Record the rect before we move it.
             rect_before_moving = self.rect.copy()
 
         else:
             # The sprite is not even visible yet, so there is no 'before' rect.
             rect_before_moving = None
-
 
         if position_absolute_y is not None:
             self.rect.top = position_absolute_y
@@ -949,95 +1012,91 @@ class SpriteObject:
         self._animate_rotation()
         self.tint_handler.animate_tint()
         self._animate_fading()
-        
+
         self._apply_still_effects()
-        
-        
+
         self._handle_mouse_events()
-        
+
     def _handle_mouse_events(self):
         """
         Check the following mouse events and if any of the events are
         occurring, check if the current sprite should run a reusable script
         for a specific mouse event.
-        
+
         The events are: on_mouse_enter, on_mouse_leave, on_mouse_click
         """
-        
+
         # Is the mouse pointer inside the current sprite?
         if MouseActionsAndCoordinates.MOUSE_POS:
             if self.rect.collidepoint(MouseActionsAndCoordinates.MOUSE_POS):
                 # The mouse pointer is inside the current sprite.
-                
-                
+
                 # Make the sprite aware that the mouse pointer is on top
                 # of the current sprite, if it doesn't already know.
                 if self.mouse_status != SpriteMouseStatus.HOVERING_OVER_SPRITE:
                     self.mouse_status = SpriteMouseStatus.HOVERING_OVER_SPRITE
-                    
+
                     # Run on_enter reusable script here
                     if self.on_mouse_enter_run_script:
-                        
                         # Try to get the optional arguments (if any) to pass
                         # to the reusable script.
-                        arguments =\
-                            Passer.active_story.reader.\
-                            try_get_arguments_attribute(
-                                self.on_mouse_enter_run_script)                        
-                    
+                        arguments = (
+                            Passer.active_story.reader.try_get_arguments_attribute(
+                                self.on_mouse_enter_run_script
+                            )
+                        )
+
                         # Run the script that is supposed to run, now that the
                         # mouse pointer is over the sprite.
-                        Passer.active_story.reader.\
-                            spawn_new_background_reader(
-                                reusable_script_name=self.on_mouse_enter_run_script.reusable_script_name, 
-                                arguments=arguments)
-                    
+                        Passer.active_story.reader.spawn_new_background_reader(
+                            reusable_script_name=self.on_mouse_enter_run_script.reusable_script_name,
+                            arguments=arguments,
+                        )
+
                 # Was a mouse button clicked? Check if we should
                 # run a specific reusable script.
                 if MouseActionsAndCoordinates.MOUSE_UP:
-                    
                     if self.on_mouse_click_run_script:
-                        
                         # Try to get the optional arguments (if any) to pass
                         # to the reusable script.
-                        arguments =\
-                            Passer.active_story.reader.\
-                            try_get_arguments_attribute(
-                                self.on_mouse_click_run_script)
-                    
-                        # Run the script that is supposed to run now that this 
+                        arguments = (
+                            Passer.active_story.reader.try_get_arguments_attribute(
+                                self.on_mouse_click_run_script
+                            )
+                        )
+
+                        # Run the script that is supposed to run now that this
                         # sprite has been clicked.
-                        Passer.active_story.reader.\
-                            spawn_new_background_reader(
-                                reusable_script_name=self.on_mouse_click_run_script.reusable_script_name,
-                                arguments=arguments)
-                        
-                    
+                        Passer.active_story.reader.spawn_new_background_reader(
+                            reusable_script_name=self.on_mouse_click_run_script.reusable_script_name,
+                            arguments=arguments,
+                        )
+
             else:
                 # The mouse pointer is not on top of the current sprite.
-                
+
                 # Make sure the sprite aware that the mouse pointer is not
                 # on top of the current sprite, if it doesn't already know.
                 if self.mouse_status != SpriteMouseStatus.AWAY_FROM_SPRITE:
                     self.mouse_status = SpriteMouseStatus.AWAY_FROM_SPRITE
-                    
+
                     # Run on_leave reusable script here
                     if self.on_mouse_leave_run_script:
-                        
                         # Try to get the optional arguments (if any) to pass
                         # to the reusable script.
-                        arguments =\
-                            Passer.active_story.reader.\
-                            try_get_arguments_attribute(
-                                self.on_mouse_leave_run_script)
-                    
+                        arguments = (
+                            Passer.active_story.reader.try_get_arguments_attribute(
+                                self.on_mouse_leave_run_script
+                            )
+                        )
+
                         # Run the script that is supposed to run now that the
                         # mouse pointer is no longer over the sprite.
-                        Passer.active_story.reader.\
-                            spawn_new_background_reader(
-                                reusable_script_name=self.on_mouse_leave_run_script.reusable_script_name, 
-                                arguments=arguments)
-        
+                        Passer.active_story.reader.spawn_new_background_reader(
+                            reusable_script_name=self.on_mouse_leave_run_script.reusable_script_name,
+                            arguments=arguments,
+                        )
+
     def _animate_rotation(self):
         """
         Rotate the sprite (if required).
@@ -1054,7 +1113,6 @@ class SpriteObject:
         if not self.is_rotating or not self.rotate_properties:
             return
 
-
         # Are we rotating clockwise (negative value) or counter-clockwise? (positive value)
         # We need to know so we can determine when to stop the rotating (if a stop has been set).
         if self.rotate_properties.rotate_speed > 0:
@@ -1069,29 +1127,31 @@ class SpriteObject:
 
         # Has the sprite reached the destination rotate value?
         if rotate_type == RotateType.COUNTERCLOCKWISE:
-
             # if rotate_until is None, it means rotate continuously.
-            if self.rotate_properties.rotate_until \
-               and self.rotate_current_value.rotate_current_value >= self.rotate_properties.rotate_until:
+            if (
+                self.rotate_properties.rotate_until
+                and self.rotate_current_value.rotate_current_value
+                >= self.rotate_properties.rotate_until
+            ):
                 # Stop the rotation
                 self.stop_rotating()
                 reached_destination_rotate = True
             else:
                 # Rotate counterclockwise
-                new_rotate_value =\
-                    self.rotate_current_value.rotate_current_value \
-                    + self.rotate_properties.rotate_speed \
-                    * AnimationSpeed.delta
+                new_rotate_value = (
+                    self.rotate_current_value.rotate_current_value
+                    + self.rotate_properties.rotate_speed * AnimationSpeed.delta
+                )
 
                 if new_rotate_value >= 360:
                     new_rotate_value = 0
 
-                self.rotate_current_value = self.rotate_current_value._replace \
-                    (rotate_current_value=new_rotate_value)
+                self.rotate_current_value = self.rotate_current_value._replace(
+                    rotate_current_value=new_rotate_value
+                )
 
         # if rotate_until is None, it means rotate continuously.
         elif rotate_type == RotateType.CLOCKWISE:
-
             # Conditions for stopping a rotation that's not rotating forever:
             # 1) If a 'rotate_until' value has been specified
             # 2) and the current rotate value is greater than 0 (if we don't have
@@ -1101,78 +1161,80 @@ class SpriteObject:
             # starts from 360 and goes down when rotating clockwise, so for example
             # if the current rotation value says 300 degrees, we're really at 60 degrees (360 minus 300).
             # 4) then stop the rotation
-            if self.rotate_properties.rotate_until and \
-               self.rotate_current_value.rotate_current_value > 0 and \
-               (360 - self.rotate_current_value.rotate_current_value) >= self.rotate_properties.rotate_until:
-                
+            if (
+                self.rotate_properties.rotate_until
+                and self.rotate_current_value.rotate_current_value > 0
+                and (360 - self.rotate_current_value.rotate_current_value)
+                >= self.rotate_properties.rotate_until
+            ):
                 # Stop the rotation
                 self.stop_rotating()
                 reached_destination_rotate = True
             else:
                 # Rotate clockwise
-                new_rotate_value =\
-                    self.rotate_current_value.rotate_current_value \
-                    + self.rotate_properties.rotate_speed \
-                    * AnimationSpeed.delta
+                new_rotate_value = (
+                    self.rotate_current_value.rotate_current_value
+                    + self.rotate_properties.rotate_speed * AnimationSpeed.delta
+                )
 
                 if new_rotate_value < 0:
                     new_rotate_value = 360
 
-                self.rotate_current_value = self.rotate_current_value._replace \
-                    (rotate_current_value=new_rotate_value)
+                self.rotate_current_value = self.rotate_current_value._replace(
+                    rotate_current_value=new_rotate_value
+                )
 
-        # Have we reached a destination rotation which caused the 
+        # Have we reached a destination rotation which caused the
         # rotating to stop?
         if reached_destination_rotate:
-            # Yes, the rotation has now stopped because we've reached a 
+            # Yes, the rotation has now stopped because we've reached a
             # specific rotation value.
 
-            # Should we run a specific script now that the rotating 
+            # Should we run a specific script now that the rotating
             # animation has stopped for this sprite?
-            if self.rotate_stop_run_script and \
-               self.rotate_stop_run_script.reusable_script_name:
-
+            if (
+                self.rotate_stop_run_script
+                and self.rotate_stop_run_script.reusable_script_name
+            ):
                 # Get the name of the script we need to run now.
-                reusable_script_name =\
-                    self.rotate_stop_run_script.reusable_script_name
-                
-                # Try to get the arguments value, if there is one.
-                arguments =\
-                    Passer.active_story.reader.\
-                    try_get_arguments_attribute(self.rotate_stop_run_script)
+                reusable_script_name = self.rotate_stop_run_script.reusable_script_name
 
-                # Clear the variable that holds information about which 
-                # script we need to run because we're about to load that 
+                # Try to get the arguments value, if there is one.
+                arguments = Passer.active_story.reader.try_get_arguments_attribute(
+                    self.rotate_stop_run_script
+                )
+
+                # Clear the variable that holds information about which
+                # script we need to run because we're about to load that
                 # specified script below.
-                
-                # If we don't clear this variable, it will run the 
-                # specified script again once the sprite stops rotating 
+
+                # If we don't clear this variable, it will run the
+                # specified script again once the sprite stops rotating
                 # next time.
                 self.rotate_stop_run_script = None
 
-                # Run the script that is supposed to run now that this 
+                # Run the script that is supposed to run now that this
                 # sprite has stopped rotating.
-                Passer.active_story.reader.\
-                    spawn_new_background_reader(
-                        reusable_script_name=reusable_script_name,
-                        arguments=arguments)
+                Passer.active_story.reader.spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name, arguments=arguments
+                )
 
             return
 
         ## Skipping the animation in this frame due to a delay?
         ## Don't apply the current value of the animation effect
         ## if it's the *only* active animation.
-        #if skip_rotate:
-            #if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
-                ## Don't apply this animation in this frame,
-                ## because it's the only animation and it's currently
-                ## on a delayed pause.
-                #return
+        # if skip_rotate:
+        # if self._is_only_active_animation(animation_type=SpriteAnimationType.ROTATE):
+        ## Don't apply this animation in this frame,
+        ## because it's the only animation and it's currently
+        ## on a delayed pause.
+        # return
 
     def _animate_scaling(self):
         """
         Scale the sprite (if required).
-        
+
         Return: None
         """
 
@@ -1180,36 +1242,42 @@ class SpriteObject:
         ## If so, scale the sprite and return the new rect.
         # if self.sudden_scale_change:
         # self.sudden_scale_change = False
-        #return self._scale_or_rotate_sprite()
+        # return self._scale_or_rotate_sprite()
 
         # Make sure the object that holds the scale speed, etc, is initialized.
         if not self.scale_properties:
             return
-        
+
         # Not scaling the sprite or no scale speed set
-        # or no scale_until set or no scale type (direction)? Return.        
-        elif not all((self.is_scaling,
-                    self.scale_properties.scale_speed,
-                    self.scale_properties.scale_until,
-                    self.scale_type)):
+        # or no scale_until set or no scale type (direction)? Return.
+        elif not all(
+            (
+                self.is_scaling,
+                self.scale_properties.scale_speed,
+                self.scale_properties.scale_until,
+                self.scale_type,
+            )
+        ):
             return
 
-
         # Are we scaling up or scaling down?
-        # We need to know so we can determine when to stop the scaling.        
+        # We need to know so we can determine when to stop the scaling.
         if self.scale_type == ScaleType.SCALE_UP:
-            
             # Has the sprite reached the destination scale while
             # scaling up?
-            if self.scale_current_value.scale_current_value >= self.scale_properties.scale_until:
+            if (
+                self.scale_current_value.scale_current_value
+                >= self.scale_properties.scale_until
+            ):
                 self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
-            
+
         elif self.scale_type == ScaleType.SCALE_DOWN:
-            
-            # Has the sprite reached the destination scale while 
+            # Has the sprite reached the destination scale while
             # scaling down?
-            if self.scale_current_value.scale_current_value <= self.scale_properties.scale_until:
-                
+            if (
+                self.scale_current_value.scale_current_value
+                <= self.scale_properties.scale_until
+            ):
                 # The sprite has reached the destination scale.
                 self.scale_type = ScaleType.SCALE_REACHED_DESTINATION
 
@@ -1217,103 +1285,104 @@ class SpriteObject:
         reached_destination_scale = False
 
         # Has the sprite reached the destination scale value?
-        if self.scale_type in (ScaleType.SCALE_UP,
-                               ScaleType.SCALE_REACHED_DESTINATION):
-            
+        if self.scale_type in (ScaleType.SCALE_UP, ScaleType.SCALE_REACHED_DESTINATION):
             # We either need to keep scaling-up or we've already reached
             # the final scale-up or scale-down and we need to use this block
-            # to stop the scale effect.                
-            
-            if self.scale_current_value.scale_current_value >= self.scale_properties.scale_until:
+            # to stop the scale effect.
+
+            if (
+                self.scale_current_value.scale_current_value
+                >= self.scale_properties.scale_until
+            ):
                 # Stop the scaling
                 self.stop_scaling()
                 reached_destination_scale = True
             else:
                 # Increment scaling
-                new_scale_value =\
-                    self.scale_current_value.scale_current_value \
-                    + self.scale_properties.scale_speed \
-                    * AnimationSpeed.delta
-                
+                new_scale_value = (
+                    self.scale_current_value.scale_current_value
+                    + self.scale_properties.scale_speed * AnimationSpeed.delta
+                )
+
                 if new_scale_value >= self.scale_properties.scale_until:
                     new_scale_value = self.scale_properties.scale_until
 
-                self.scale_current_value =\
-                    self.scale_current_value._replace(
-                        scale_current_value=new_scale_value)
+                self.scale_current_value = self.scale_current_value._replace(
+                    scale_current_value=new_scale_value
+                )
 
         elif self.scale_type == ScaleType.SCALE_DOWN:
-            
-            if self.scale_current_value.scale_current_value <= self.scale_properties.scale_until:
+            if (
+                self.scale_current_value.scale_current_value
+                <= self.scale_properties.scale_until
+            ):
                 # Stop the scaling
                 self.stop_scaling()
                 reached_destination_scale = True
             else:
-                
                 # A positive value will scale up the sprite.
-                # A negative value(such as -0.00050) will scale down a 
-                # sprite.            
-                scale_down_float = -abs(self.scale_properties.scale_speed)                    
-                
+                # A negative value(such as -0.00050) will scale down a
+                # sprite.
+                scale_down_float = -abs(self.scale_properties.scale_speed)
+
                 # Decrease scaling
-                new_scale_value =\
-                    self.scale_current_value.scale_current_value \
-                    + scale_down_float \
-                    * AnimationSpeed.delta
-                
+                new_scale_value = (
+                    self.scale_current_value.scale_current_value
+                    + scale_down_float * AnimationSpeed.delta
+                )
+
                 if new_scale_value <= 0:
                     new_scale_value = 0
 
-                self.scale_current_value =\
-                    self.scale_current_value._replace(
-                        scale_current_value=new_scale_value)
+                self.scale_current_value = self.scale_current_value._replace(
+                    scale_current_value=new_scale_value
+                )
 
-        # Have we reached a destination scaling which caused the scaling 
+        # Have we reached a destination scaling which caused the scaling
         # to stop?
         if reached_destination_scale:
-            # Yes, the scaling has now stopped because we've reached a 
+            # Yes, the scaling has now stopped because we've reached a
             # specific scaling value.
 
             # Should we run a specific script now that the scaling animation
             # has stopped for this sprite?
-            if self.scale_stop_run_script and \
-                    self.scale_stop_run_script.reusable_script_name:
-
+            if (
+                self.scale_stop_run_script
+                and self.scale_stop_run_script.reusable_script_name
+            ):
                 # Get the name of the script we need to run now.
-                reusable_script_name =\
-                    self.scale_stop_run_script.reusable_script_name
-                
+                reusable_script_name = self.scale_stop_run_script.reusable_script_name
+
                 # Try to get the arguments value, if there is one.
-                arguments =\
-                    Passer.active_story.reader.\
-                    try_get_arguments_attribute(self.scale_stop_run_script)
-                
-                # Clear the variable that holds information about which 
-                # script we need to run because we're about to load that 
+                arguments = Passer.active_story.reader.try_get_arguments_attribute(
+                    self.scale_stop_run_script
+                )
+
+                # Clear the variable that holds information about which
+                # script we need to run because we're about to load that
                 # specified script below.
-                # If we don't clear this variable, it will run the 
-                # specified script again once the sprite stops scaling 
+                # If we don't clear this variable, it will run the
+                # specified script again once the sprite stops scaling
                 # next time.
                 self.scale_stop_run_script = None
 
-                # Run the script that is supposed to run now that this 
+                # Run the script that is supposed to run now that this
                 # sprite has stopped scaling.
-                Passer.active_story.reader.\
-                    spawn_new_background_reader(
-                        reusable_script_name=reusable_script_name,
-                        arguments=arguments)
+                Passer.active_story.reader.spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name, arguments=arguments
+                )
 
             return
 
         ## Skipping the animation in this frame due to a delay?
         ## Don't apply the current value of the animation effect
         ## if it's the *only* active animation.
-        #if skip_scale:
-            #if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
-                ## Don't apply this animation in this frame,
-                ## because it's the only animation and it's currently
-                ## on a delayed pause.
-                #return
+        # if skip_scale:
+        # if self._is_only_active_animation(animation_type=SpriteAnimationType.SCALE):
+        ## Don't apply this animation in this frame,
+        ## because it's the only animation and it's currently
+        ## on a delayed pause.
+        # return
 
         ## rect = self._scale_or_rotate_sprite()
 
@@ -1336,12 +1405,12 @@ class SpriteObject:
             current_rotate = 0
 
         ## Scale and/or rotate the image, which is based on the original image.
-        self.image = pygame.transform.rotozoom(self.get_original_image_with_text(),
-                                               current_rotate,
-                                               current_scale)
+        self.image = pygame.transform.rotozoom(
+            self.get_original_image_with_text(), current_rotate, current_scale
+        )
 
         # Record how much rotate/scale we've applied so we don't keep applying
-        # the rotate/scale unnecessarily during a non-animation sudden rotate 
+        # the rotate/scale unnecessarily during a non-animation sudden rotate
         # or scale change.
         self.applied_rotate_value = current_rotate
         self.applied_scale_value = current_scale
@@ -1353,44 +1422,39 @@ class SpriteObject:
         """
         Apply scale/rotation/fade effects to the sprite if the amount of
         effects applied to the sprite is different than the expected amounts.
-        
+
         This doesn't mean the sprite is necessarily being 'animated'.
         A still-effect could have been applied
         OR an animation could be occurring and the time to apply the effect
         may not have come yet (too soon).
-        
+
         Either way, this method only checks if the applied effect is different
         from what it *should* be, regardless if the sprite is being animated
         or not.
         """
-        
+
         at_least_one_effect_applied = False
-        
 
         # # Is a required scale/rotate effect caught up with what's required?
         if self.is_scale_or_rotate_needed():
-            
             # Apply a scale/rotation effect to the current sprite.
             self._scale_or_rotate_sprite()
-            
+
             # So the rest of the effect methods know that the sprite
             # has been altered in some way.
             at_least_one_effect_applied = True
-            
+
         # Is a required tint effect caught up with what's required?
         if self.tint_handler.is_tint_animation_needed():
-            
             # Apply a tint effect to the current sprite.
-            self._tint_sprite(
-                skip_copy_original_image=at_least_one_effect_applied)
-            
+            self._tint_sprite(skip_copy_original_image=at_least_one_effect_applied)
+
             # So the rest of the effect methods know that the sprite
-            # has been altered in some way.            
+            # has been altered in some way.
             at_least_one_effect_applied = True
-                
-            
+
         # We need to check if we need to apply fade *after* a scale/rotation
-        # and *after* a tint effect because a scale/rotation/tint will 
+        # and *after* a tint effect because a scale/rotation/tint will
         # make the image opaque.
         if self.is_fade_needed():
             """
@@ -1403,15 +1467,15 @@ class SpriteObject:
             in the argument below.
             (skip_copy_original_image == at_least_one_effect_applied)
             """
-            
+
             skip_copy = at_least_one_effect_applied
 
             self._fade_sprite(skip_copy_original_image=skip_copy)
-            
+
             at_least_one_effect_applied = True
-            
+
         # print(f"Applying scale or fade for {self.name} at: {datetime.now()} ")
-            
+
         if not at_least_one_effect_applied:
             """
             No effects needed to be applied in this frame.
@@ -1439,50 +1503,49 @@ class SpriteObject:
             For details, read the comment in the method 'any_effects_applied'            
             """
 
-            # Update the displayed image with the sprite with text. 
+            # Update the displayed image with the sprite with text.
             # If the two sprites are different, use the sprite with text.
-            if not self.any_effects_applied() \
-               and self.image != self.original_image:
-                
+            if not self.any_effects_applied() and self.image != self.original_image:
                 # The displayed image is different from the image with text,
                 # so get the image with text on it (self.original_image)
                 self.image = self.original_image
 
                 print("Copied sprite with text", datetime.now())
-                
-            #print("Animation not needed")
-            
+
+            # print("Animation not needed")
+
     def any_effects_applied(self) -> bool:
         """
         Return whether the sprite has had any type of effect applied to it,
         such as fade, rotate, scale, tint.
-        
+
         Return: True if at least one of the effects has been applied
         to the sprite (fade, rotate, scale, tint)
-        
+
         Return: False if the sprite does not have any effects applied to it.
-        
+
         Purpose: if the sprite does not have any effects applied to it,
         then the caller needs to check if the sprite has any text and get
         a copy of the sprite image with text; otherwise the visible sprite
         won't have text on it.
-        
+
         Effects will automatically take care of a sprite's text by making
         the sprite's text show up during animations.
         But if a sprite has had no animations or is not going through an
         animation now, then we need to deal with showing the sprite's text
         a different way, and this method is used as part of this.
         """
-        if not self.is_dirty_with_fade() \
-           and not self.is_dirty_with_rotate_or_scale() \
-           and not self.tint_handler.is_dirty_with_tint():
-            
+        if (
+            not self.is_dirty_with_fade()
+            and not self.is_dirty_with_rotate_or_scale()
+            and not self.tint_handler.is_dirty_with_tint()
+        ):
             # This sprite currently does not have any effects applied to it.
             return False
         else:
             # This sprite has at least one type of effect applied to it.
             # Fade and/or scale/rotation and/or tint.
-            return True     
+            return True
 
     def is_fade_needed(self) -> bool:
         """
@@ -1491,26 +1554,28 @@ class SpriteObject:
         """
         # Is fade enabled on this sprite?
         if self.current_fade_value is not None:
-            
-            # If there's a current fade value (even zero or 255) and the 
+            # If there's a current fade value (even zero or 255) and the
             # sprite is still fading, then proceed to evaluate if a fade
             # is still needed.
             if self.current_fade_value.current_fade_value >= 0 or self.is_fading:
-                
                 # Proceed to check if a fade is still needed or not.
-                
+
                 # If the current fade value is set to 255 for the sprite
                 # but no fade has been applied to the sprite yet, then
                 # no fade needs to be applied, because the fade value wants
                 # to set the sprite to 255, but it already is.
-                if self.current_fade_value.current_fade_value == 255 \
-                   and self.applied_fade_value is None:
+                if (
+                    self.current_fade_value.current_fade_value == 255
+                    and self.applied_fade_value is None
+                ):
                     return
-                
-    
+
                 # Is the applied fade amount the same
                 # as the expected fade amount?
-                if self.current_fade_value.current_fade_value != self.applied_fade_value:
+                if (
+                    self.current_fade_value.current_fade_value
+                    != self.applied_fade_value
+                ):
                     # The applied fade amount is different than
                     # the expected fade amount.
                     return True
@@ -1519,79 +1584,81 @@ class SpriteObject:
         """
         Return whether the applied scale or rotation value is the same
         as the expected scale or rotation value.
-        
+
         Purpose: to know whether a scale and/or rotation effect is required
         on self.image
         """
-        
+
         # -------
         # Scale check
-        
+
         # Scale check #1
         # Animating a scale?
-        reapply_scale = (self.scale_current_value is not None \
-                         and self.scale_current_value.scale_current_value) \
-            or self.is_scaling
-        
+        reapply_scale = (
+            self.scale_current_value is not None
+            and self.scale_current_value.scale_current_value
+        ) or self.is_scaling
+
         # Scale check #2 - continued challenge
-        # Is the 'applied' scale value different from the destination 
+        # Is the 'applied' scale value different from the destination
         # scale value?
         if reapply_scale:
-            
-            # Scale if the 'applied' scale is different from the 
+            # Scale if the 'applied' scale is different from the
             # destination scale.
-            reapply_scale = (self.applied_scale_value is None \
-                or self.applied_scale_value != self.scale_current_value.scale_current_value)
+            reapply_scale = (
+                self.applied_scale_value is None
+                or self.applied_scale_value
+                != self.scale_current_value.scale_current_value
+            )
 
-            
-        
         # ------
         # Rotation check
-        
+
         # Rotate check #1
         # Animating a rotation?
-        reapply_rotate = (self.rotate_current_value is not None \
-                          and self.rotate_current_value.rotate_current_value > 1) \
-            or self.is_rotating
-        
+        reapply_rotate = (
+            self.rotate_current_value is not None
+            and self.rotate_current_value.rotate_current_value > 1
+        ) or self.is_rotating
+
         # Rotate check #2 - continued challenge
-        # Is the 'applied' rotate value the different from the destination 
+        # Is the 'applied' rotate value the different from the destination
         # rotate value?
         if reapply_rotate:
-            
-            # Rotate if the 'applied' rotation is different from the 
+            # Rotate if the 'applied' rotation is different from the
             # destination rotate.
-            reapply_rotate = self.applied_rotate_value is None \
-                or self.applied_rotate_value != self.rotate_current_value.rotate_current_value
-                
-        
+            reapply_rotate = (
+                self.applied_rotate_value is None
+                or self.applied_rotate_value
+                != self.rotate_current_value.rotate_current_value
+            )
+
         return reapply_scale or reapply_rotate
-        
-        #if self.scale_current_value \
-                #and self.scale_current_value.scale_current_value != self.applied_scale_value:
-            
-            ## Scale already at normal scale and no scale effect applied?
-            ## No need to apply a scale-effect
-            #if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
-                ## No scale animation needed
-                #pass
-            #else:
-                ## The applied scale value is different than
-                ## the expected scale value.
-                #return True
 
+        # if self.scale_current_value \
+        # and self.scale_current_value.scale_current_value != self.applied_scale_value:
 
-        #if self.rotate_current_value \
-                #and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
-            
-            ## Rotation already at 0 degrees and no rotation effect applied?
-            ## No need to apply a rotation-effect
-            #if self.rotate_current_value.rotate_current_value == 0 and self.applied_rotate_value is None:
-                #return False            
-            
-            ## The applied rotation value is different than
-            ## the expected rotation value.
-            #return True
+        ## Scale already at normal scale and no scale effect applied?
+        ## No need to apply a scale-effect
+        # if self.scale_current_value.scale_current_value == 1.0 and self.applied_scale_value is None:
+        ## No scale animation needed
+        # pass
+        # else:
+        ## The applied scale value is different than
+        ## the expected scale value.
+        # return True
+
+        # if self.rotate_current_value \
+        # and self.rotate_current_value.rotate_current_value != self.applied_rotate_value:
+
+        ## Rotation already at 0 degrees and no rotation effect applied?
+        ## No need to apply a rotation-effect
+        # if self.rotate_current_value.rotate_current_value == 0 and self.applied_rotate_value is None:
+        # return False
+
+        ## The applied rotation value is different than
+        ## the expected rotation value.
+        # return True
 
     def _animate_fading(self):
         """
@@ -1605,7 +1672,7 @@ class SpriteObject:
         # if self.sudden_fade_change:
         # self.sudden_fade_change = False
         # self._fade_sprite()
-        #return
+        # return
 
         # Not fading the sprite? Return.
         if not self.is_fading:
@@ -1614,30 +1681,32 @@ class SpriteObject:
         ## If there is no fade_until value, but the fade
         ## value is not fully opaque, then apply the fade,
         ## even though we're not fading to a fade-destination.
-        #if not self.fade_until and self.current_fade_value is not None:
-            #if self.current_fade_value.current_fade_value < 255:
-                #self._fade_sprite()
-                #return
+        # if not self.fade_until and self.current_fade_value is not None:
+        # if self.current_fade_value.current_fade_value < 255:
+        # self._fade_sprite()
+        # return
 
         # At this point, we need a fade speed.
         # If that hasn't been decided (fade_speed), return
         if not self.fade_properties.fade_speed:
             return
-        
+
         # We must also have a fade_until, otherwise we won't know whether
         # to fade in or fade out. Zero is a valid fade_until value, which is
         # why we specifically check for None here.
         elif self.fade_properties.fade_until is None:
             return
-        
+
         # Are we fading-in or fading-out? We need to know so that we can
         # determine when to stop the fade.
         if self.current_fade_value.current_fade_value < self.fade_properties.fade_until:
             fade_type = FadeType.FADE_IN
-            
-        elif self.current_fade_value.current_fade_value > self.fade_properties.fade_until:
+
+        elif (
+            self.current_fade_value.current_fade_value > self.fade_properties.fade_until
+        ):
             fade_type = FadeType.FADE_OUT
-            
+
         else:
             # The fade value has reached its fade_until value.
             fade_type = FadeType.FADE_REACHED_DESTINATION
@@ -1646,14 +1715,14 @@ class SpriteObject:
         reached_destination_fade = False
 
         # Has the sprite reached the destination fade value?
-        if fade_type in (FadeType.FADE_IN,
-                         FadeType.FADE_REACHED_DESTINATION):
-            
+        if fade_type in (FadeType.FADE_IN, FadeType.FADE_REACHED_DESTINATION):
             # We either need to keep fading-in or we've already reached
             # the final fade-in or fade-out and we need to use this block
             # to stop the fade effect.
-            if self.current_fade_value.current_fade_value >= self.fade_properties.fade_until:
-
+            if (
+                self.current_fade_value.current_fade_value
+                >= self.fade_properties.fade_until
+            ):
                 # We've reached the destination fade value, so stop fading.
                 self.stop_fading()
 
@@ -1661,34 +1730,37 @@ class SpriteObject:
             else:
                 # Increment fade
 
-                # Calculate the change in fade value that occurred in the 
+                # Calculate the change in fade value that occurred in the
                 # time delta
-                fade_change_this_frame =\
+                fade_change_this_frame = (
                     self.fade_properties.fade_speed * AnimationSpeed.delta
-                
-                # Add this change from the current fade value to get 
+                )
+
+                # Add this change from the current fade value to get
                 # the new fade value
                 self.calculated_fade_value += fade_change_this_frame
-                
-                # Don't allow the calculated fade value to go beyond 
+
+                # Don't allow the calculated fade value to go beyond
                 # the maximum fade value.
                 max_fade = min(255, self.fade_properties.fade_until)
                 if self.calculated_fade_value > max_fade:
                     self.calculated_fade_value = max_fade
-                
+
                 # Convert the float fade value to an int, because
                 # pygame uses the int value to set the opacity, not a float.
                 new_fade_value = int(self.calculated_fade_value)
 
                 # Set what the new int fade value should be so that it gets
                 # applied to the sprite later on.
-                self.current_fade_value =\
-                    self.current_fade_value._replace(current_fade_value=new_fade_value)
+                self.current_fade_value = self.current_fade_value._replace(
+                    current_fade_value=new_fade_value
+                )
 
-                
         elif fade_type == FadeType.FADE_OUT:
-            if self.current_fade_value.current_fade_value <= self.fade_properties.fade_until:
-
+            if (
+                self.current_fade_value.current_fade_value
+                <= self.fade_properties.fade_until
+            ):
                 # We've reached the destination fade out value.
                 # Set a flag so we can check if a reusable script needs to run
                 reached_destination_fade = True
@@ -1700,38 +1772,39 @@ class SpriteObject:
             else:
                 # Decrease fade
 
-                # Calculate the change in fade value that occurred in the 
+                # Calculate the change in fade value that occurred in the
                 # time delta
-                fade_change_this_frame =\
+                fade_change_this_frame = (
                     self.fade_properties.fade_speed * AnimationSpeed.delta
-                
-                # Subtract this change from the current fade value to get 
+                )
+
+                # Subtract this change from the current fade value to get
                 # the new fade value
                 self.calculated_fade_value -= fade_change_this_frame
-                
-                # Don't allow the calculated fade value to go below the 
+
+                # Don't allow the calculated fade value to go below the
                 # minimum fade value.
                 minimum_fade = max(0, self.fade_properties.fade_until)
                 if self.calculated_fade_value < minimum_fade:
                     self.calculated_fade_value = minimum_fade
-                
+
                 # Convert the float fade value to an int, because
                 # pygame uses the int value to set the opacity, not a float.
                 new_fade_value = int(self.calculated_fade_value)
 
                 # Set what the new int fade value should be so that it gets
                 # applied to the sprite later on.
-                self.current_fade_value = self.current_fade_value._replace(current_fade_value=new_fade_value)
-                
+                self.current_fade_value = self.current_fade_value._replace(
+                    current_fade_value=new_fade_value
+                )
 
         # Have we reached a destination fade which caused the fade to stop?
         if reached_destination_fade:
             # Yes, the fade has now stopped because we've reached a specific fade value.
-            
+
             # Reset the fade_until value
-            self.fade_properties =\
-                self.fade_properties._replace(fade_until = None)
-            
+            self.fade_properties = self.fade_properties._replace(fade_until=None)
+
             # If the fade value is at 255 (full opacity), treat it as having
             # no fade at all.
             if self.current_fade_value.current_fade_value == 255:
@@ -1739,32 +1812,31 @@ class SpriteObject:
 
             # Should we run a specific script now that the fade animation
             # has stopped for this sprite?
-            if self.fade_stop_run_script \
-               and self.fade_stop_run_script.reusable_script_name:
-
+            if (
+                self.fade_stop_run_script
+                and self.fade_stop_run_script.reusable_script_name
+            ):
                 # Get the name of the script we need to run now.
-                reusable_script_name =\
-                    self.fade_stop_run_script.reusable_script_name
+                reusable_script_name = self.fade_stop_run_script.reusable_script_name
 
                 # Try to get the arguments attribute value, if there is one.
-                arguments =\
-                    Passer.active_story.reader.\
-                    try_get_arguments_attribute(self.fade_stop_run_script)                 
+                arguments = Passer.active_story.reader.try_get_arguments_attribute(
+                    self.fade_stop_run_script
+                )
 
-                # Clear the variable that holds information about which 
-                # script we need to run because we're about to load that 
+                # Clear the variable that holds information about which
+                # script we need to run because we're about to load that
                 # specified script below.
-                # If we don't clear this variable, it will run the 
-                # specified script again once the sprite stops fading 
+                # If we don't clear this variable, it will run the
+                # specified script again once the sprite stops fading
                 # next time.
                 self.fade_stop_run_script = None
 
-                # Run the script that is supposed to run, 
+                # Run the script that is supposed to run,
                 # now that this sprite has stopped fading.
-                Passer.active_story.reader.\
-                    spawn_new_background_reader(
-                        reusable_script_name=reusable_script_name,
-                        arguments=arguments)
+                Passer.active_story.reader.spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name, arguments=arguments
+                )
 
             # Apply the fade effect one last time for the destination fade amount
             # that we're in. Without this, the destination fade amount
@@ -1772,7 +1844,7 @@ class SpriteObject:
             # self._fade_sprite()
 
             return
-        
+
     def _tint_sprite(self, skip_copy_original_image: bool = False):
         """
         Tint the sprite to the current tint value.
@@ -1780,20 +1852,20 @@ class SpriteObject:
         If the sprite is being scaled (as an animation)
         or being rotated (as an animation), don't copy the original image,
         because then the scaling and/or rotation changes won't show.
-        
+
         If the sprite is not scale-animating, but has a scale effect applied
         and/or the sprite is not rotate-animating, but has a rotation effect
         applied, then apply the rotate/scale effect in this method after
         getting the original image (with optional sprite text), then in the
         end, apply the fade effect.
-        
+
         Arguments:
-        
+
         - skip_copy_original_image: if the sprite was not animated before this
         method was called, this variable will be False. When False, it means
         we should copy the original sprite with optional text, before applying
         the tint effect.
-        
+
         if True, it means the original image was recently copied by a previous
         animation, and we should *not* copy the original image because it would
         erase the recent prior animation that was done (such as a scale and/or
@@ -1803,7 +1875,7 @@ class SpriteObject:
         # Tint not applied to the sprite? return
         if self.tint_handler.current_tint_value is None:
             return
-        
+
         # Get a tuple with the current RGB dim values.
         tint_values: Tuple
         tint_values = self.tint_handler.get_tint_values()
@@ -1813,51 +1885,45 @@ class SpriteObject:
 
         replaced_image = False
 
-
         # Should we consider copying the original image to self.image?
         # The caller of this method may have already done this, which is
         # why we check here.
         if not skip_copy_original_image:
-
             # Yes, we should consider copying the original image to self.image
-            
+
             # Get the original image (no effects), but with sprite text (if any).
             # Then re-apply a scale or rotate effect if it's currently applied.
-        
+
             """
             The method call below, self._scale_or_rotate_sprite(), will
             deal with getting the original image (no effects), but with
             sprite text (if any), and that same method will also rotate/scale 
             right after it's done getting the original image.
             """
-            
-            
+
             # Is the image touched with a scale or rotate effect?
             # (regardless if there's a gradual animation or not)
             if self.is_dirty_with_rotate_or_scale():
-                
                 # The scale or rotate effect is eligible to this sprite.
                 # So get the original image (with sprite text, if any)
                 # and reapply the scale and/or rotation effect, before
                 # we tint the image a few lines later.
                 self._scale_or_rotate_sprite()
             else:
-                
                 # No scale or rotation necessary, just get the original image
                 # with sprite text (if any), before we apply a tint effect.
                 self.image = self.get_original_image_with_text()
-                
 
             # So the caller knows the displayed image was altered.
             replaced_image = True
-            
+
         # Apply the tint values to the displayed sprite.
         # We use RGB here, instead of RGBA, to keep the alpha channel as-is.
         if self.tint_handler.tint_style == TintStyle.REGULAR:
             self.image.fill(tint_values, special_flags=pygame.BLEND_RGB_MULT)
         else:
             self.image.fill(tint_values, special_flags=pygame.BLEND_RGB_ADD)
-        
+
         # Record the tint value that is now applied to the sprite
         # so that we can check in the next frame if we need to reapply the
         # tint effect again or not.
@@ -1873,14 +1939,14 @@ class SpriteObject:
         the original image, because then the scaling and/or rotating
         and/or tint changes won't show - they'll get replaced with a faded
         sprite with none of those effects, which we don't want.
-        
+
         If the sprite needs a scaling/rotating/tinting effect  applied, then
         apply the rotate/scale/tint effect(s) in this method after
         getting the original image (with optional sprite text), then in the
         end, apply the fade effect.
-        
+
         Arguments:
-        
+
         - skip_copy_original_image: used by a sprite's clear_text_and_redraw()
         method. Sometimes we shouldn't attempt to copy self.original_image
         to self.image, because it has already been done and all we want to do
@@ -1896,18 +1962,16 @@ class SpriteObject:
 
         replaced_image = False
 
-
         # Should we consider copying the original image to self.image?
         # The caller of this method may have already done this, which is
         # why we check here.
         if not skip_copy_original_image:
-
             # Yes, we should consider copying the original image to self.image
-            
+
             # Get the original image (no effects), but with sprite text (if any).
-            # Then re-apply a scale or rotate or tint effect if it's currently 
+            # Then re-apply a scale or rotate or tint effect if it's currently
             # applied.
-        
+
             """
             The method calls below, self._scale_or_rotate_sprite(),
             self._tint_sprite(), will deal with getting the original image
@@ -1915,48 +1979,43 @@ class SpriteObject:
             will also rotate/scale/tint right after they're done getting the
             original image.
             """
-            
+
             # Keep track when an effect is applied, so when the second effect
             # is applied, it doesn't overwrite the image with the previous
             # effect, causing the previous effect to not appear on the sprite.
             scale_rotation_was_dirty = False
             tint_was_dirty = False
-            
+
             # Is the image touched with a scale or rotate effect?
             # (regardless if there's a gradual animation or not)
             if self.is_dirty_with_rotate_or_scale():
-                
                 # The scale or rotate effect is eligible to this sprite.
                 # So get the original image (with sprite text, if any)
                 # and reapply the scale and/or rotation effect, before
                 # we fade the image a few lines later.
                 self._scale_or_rotate_sprite()
-                
+
                 scale_rotation_was_dirty = True
-                
+
             # Should a tint effect be applied to the image?
             if self.tint_handler.is_dirty_with_tint():
-                
                 # Apply a tint effect before doing a fade.
-                
+
                 # If a scale/rotate above just replaced the image,
-                # then we won't need to replace the sprite again before doing 
+                # then we won't need to replace the sprite again before doing
                 # a tint. That's what, scale_rotation_was_dirty, is for.
-                self._tint_sprite(
-                    skip_copy_original_image=scale_rotation_was_dirty)
-                
+                self._tint_sprite(skip_copy_original_image=scale_rotation_was_dirty)
+
                 tint_was_dirty = True
 
-                
             # Check if the image was replaced with a rotated/scaled
             # or tinted version. If not, we should get the original image
-            # so we we don't keep fading an already-faded sprite on top of 
+            # so we we don't keep fading an already-faded sprite on top of
             # itself.
             if not any([scale_rotation_was_dirty, tint_was_dirty]):
-            
                 # The sprite is not dirty with either scale/rotation
                 # nor a tint.
-            
+
                 # No scale/rotation/tint is applied to the sprite, so it's safe
                 # to get the original image with sprite text (if any), before
                 # we apply a fade.
@@ -1965,10 +2024,9 @@ class SpriteObject:
                 # Flag to indicate the sprite was replaced with the original
                 # copy with sprite text (if any).
                 replaced_image = True
-            
-        
+
         # self.image.fill((255, 255, 255, self.current_fade_value.current_fade_value), None, pygame.BLEND_RGBA_MULT)
-        
+
         # Now we're ready to apply a fade to this image.
         # This is the last step. This image should already be rotated or scaled
         # before we get here.
@@ -1977,59 +2035,61 @@ class SpriteObject:
         # Record how much fade we've applied so we don't keep applying
         # the fade unnecessarily during a non-animation sudden fade change.
         self.applied_fade_value = self.current_fade_value.current_fade_value
-            
+
         # print(f"{self.name} fade: {self.applied_fade_value}")
-        
+
         return replaced_image
-    
+
     def is_dirty_with_rotate_or_scale(self) -> bool:
         """
         Return whether the sprite has a non-default scale or non-default rotate
         value. In other words, if the sprite has been touched or should be
         touched with a rotate or scale effect.
-        
+
         It doesn't check whether a scale or rotate is actively applied to the
         sprite - it just checks whether the effect is applicable to the sprite,
         regardless if it currently actually has a rotate/scale effect applied
         to it or not.
-        
+
         Purpose: before applying a fade effect, this method gets used
         to determine whether the image needs to be scaled/rotated first, before
         a fade effect is used.
         """
-        
+
         # Has a scale value that is not 1 (original size)? Consider it
         # dirty with a scale.
         # Or has a rotate value that is greater than 0? Consider it
         # dirty with a rotate.
-        if (self.scale_current_value and self.scale_current_value != 1) \
-           or (self.rotate_current_value and self.rotate_current_value > 0):
-                return True
-            
+        if (self.scale_current_value and self.scale_current_value != 1) or (
+            self.rotate_current_value and self.rotate_current_value > 0
+        ):
+            return True
+
         else:
             return False
-        
+
     def is_dirty_with_fade(self) -> bool:
         """
         Return whether the sprite has a non-default fade (non-opaque) value.
         In other words, if the sprite has been touched or should be
         touched with a fade effect.
-        
+
         It doesn't check whether a fade effect is actively applied to the
         sprite - it just checks whether the effect is applicable to the sprite,
         regardless if it currently actually has a fade applied to it or not.
-        
+
         Purpose: this method is called by the any_effects_applied() method,
         to check if a fade effect is applied to the sprite.
         to determine whether the image needs to be scaled/rotated first, before
         a fade effect is used.
         """
-        
+
         # Has a fade value that is not 255 (fully opaque)? Consider it
         # dirty with a fade.
-        if self.current_fade_value is not None \
-           and self.current_fade_value.current_fade_value < 255:
-            
+        if (
+            self.current_fade_value is not None
+            and self.current_fade_value.current_fade_value < 255
+        ):
             return True
         else:
             return False
@@ -2039,7 +2099,7 @@ class SpriteObject:
         Return a copy of the original image (that has no rotation,
         no scale, no fade) but might have text on it. This copy
         will eventually be copied to self.image
-        
+
         Also, reset the variables that keep track of the amount of
         rotation, scale, and fade, because eventually once the original image
         has been copied to self.image, then self.image won't have those
@@ -2047,7 +2107,7 @@ class SpriteObject:
         """
 
         self.reset_applied_effects()
-        
+
         return self.original_image.copy()
 
     def get_original_image_without_text(self) -> pygame.Surface:
@@ -2055,19 +2115,18 @@ class SpriteObject:
         Return a copy of the original image (that has no rotation,
         no scale, no fade) and has no text on it. This copy
         will eventually be copied to self.original_image
-        
+
         Also, reset the variables that keep track of the amount of
         rotation, scale, and fade, because once the original image has
         been copied to self.image, self.image won't have those effects
         applied anymore.
-        
+
         Eventually 'original_image' will want to be copied to self.image,
         so that's why we need to reset the effect flags so that we can
         re-apply them to self.image
         """
 
         self.reset_applied_effects()
-        
 
         return self.original_image_before_text.copy()
 
@@ -2075,7 +2134,7 @@ class SpriteObject:
         """
         Reset the variables that keep track of the amount of
         rotation, scale, tint, and fade.
-        
+
         Purpose: once the original image of a sprite has been copied to
         self.image, the self.image won't have effects applied anymore.
         """
@@ -2086,289 +2145,91 @@ class SpriteObject:
 
     def _animate_movement(self):
         """
-        Move the sprite (if required) based on the sprite's movement speed.
+        Animate the sprite's movement from its starting position to its target
+        position, based on the elapsed time and easing function.
 
-        Return: None
+        This method updates the sprite's position and checks if the
+        movement is complete.
         """
-        
-        # Update: December 28, 2025 (Jobin Rezai)
-        # Now using the sprite's half_width and half_height when determining
-        # stop locations because movement animations are now done using centerx
-        # and centery, so we need to read the sprite's current location as
-        # 'the side to check' plus or minus half_width, depending on the side
-        # that's being checked and the direction of the movement stop.
-        # The same kind of logic applies to the height, via half_height.
 
-        # Not moving the sprite or no instructions on speed? Return.
-        if not self.is_moving or not self.move_properties:
+        # Make sure the sprite is moving and has move properties set.
+        if not self.is_moving or not self.move_sprite:
             return
-        
-        # Apply breaks to one axis at a time as each one finishes.
-        # Reason: when moving diagonally, it's rare for both axis to reach
-        # the destination at exactly the same time. So when one axis reaches
-        # its target, stop moving that finished axis in the next frame.
-        satisfied_x = False
-        satisfied_y = False
 
-        if self.stop_movement_conditions:
+        # Update the elapsed time for the movement animation
+        self.move_sprite.move_elapsed_time += AnimationSpeed.delta
 
-            satisfied_stop_keys = []
+        # Calculate the normalized time (t) for the movement animation,
+        # clamped between 0 and 1
+        # 't' here is for time. It's a normalized value that represents how
+        # far along the movement animation is.
+        t = (
+            min(
+                1.0, self.move_sprite.move_elapsed_time / self.move_sprite.move_duration
+            )
+            if self.move_sprite.move_duration > 0
+            else 1.0
+        )
+        eased_t = Easing.ease_in_out_cubic(t)
 
-            # Have we reached the movement stop position for this sprite?
-            for side, pixel_coordinate in self.stop_movement_conditions.items():
-                # side is the side of the sprite we need to check for stops.
-                # pixel_coordinate is the stop coordinate.
+        # Calculate the exact current (x, y) center position of the moving
+        # by using linear interpolation modified by an easing factor
+        self.calculated_center_x = (
+            self.move_sprite.move_start_center_x
+            + (
+                self.move_sprite.move_target_center_x
+                - self.move_sprite.move_start_center_x
+            )
+            * eased_t
+        )
+        self.calculated_center_y = (
+            self.move_sprite.move_start_center_y
+            + (
+                self.move_sprite.move_target_center_y
+                - self.move_sprite.move_start_center_y
+            )
+            * eased_t
+        )
 
-                # Check the left side of the sprite?
-                if side == MovementStops.LEFT:
+        # Directly set the rect center (bypasses half_width/half_height math)
+        self.rect.centerx = int(round(self.calculated_center_x))
+        self.rect.centery = int(round(self.calculated_center_y))
 
-                    # How we check for a stop depends on the
-                    # direction the sprite is moving.
-                    if self.move_properties.x_direction == "left":
-                        # The sprite is moving left
+        # Check if the movement is complete (1.0 is the end of the movement)
+        if t >= 1.0:
+            # Yes, the movement animation is complete.
 
-                        # if self.rect.left <= pixel_coordinate:
-                        if self.rect.centerx - self.half_width <= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.left = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_x = True
-                            
-                    elif self.move_properties.x_direction == "right":
-                        # The sprite is moving right
+            # Snap sprite center exactly to target center coordinates
+            self.rect.centerx = self.move_sprite.move_target_center_x
+            self.rect.centery = self.move_sprite.move_target_center_y
 
-                        # if self.rect.left >= pixel_coordinate:
-                        if self.rect.centerx - self.half_width >= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.left = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_x = True
+            self.stop_moving()
 
-                # Check the right side of the sprite for stops?
-                elif side == MovementStops.RIGHT:
+            # Run post-movement script callback if registered
+            if self.movement_stop_run_script:
+                # Get the name of the script we need to run now.
+                reusable_script_name = (
+                    self.movement_stop_run_script.reusable_script_name
+                )
 
-                    # How we check for a stop depends on the
-                    # direction the sprite is moving.
-                    if self.move_properties.x_direction == "right":
-                        # The sprite is moving right
+                # Try to get the arguments value, if there is one.
+                arguments = Passer.active_story.reader.try_get_arguments_attribute(
+                    self.movement_stop_run_script
+                )
 
-                        # if self.rect.right >= pixel_coordinate:
-                        if self.rect.right + self.half_width >= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.right = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_x = True
+                # Clear the variable that holds information about which
+                # script we need to run because we're about to load that
+                # specified script below.
+                # If we don't clear this variable, it will run the
+                # specified script again once the sprite stops moving
+                # next time.
+                self.movement_stop_run_script = None
 
-                    elif self.move_properties.x_direction == "left":
-                        # The sprite is moving left
-
-                        # if self.rect.right <= pixel_coordinate:
-                        if self.rect.centerx + self.half_width <= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.right = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_x = True
-
-                            # Check the top of the sprite for a stop?
-                elif side == MovementStops.TOP:
-
-                    # How we check for a stop depends on the
-                    # direction the sprite is moving.
-
-                    if self.move_properties.y_direction == "up":
-                        # The sprite is moving up
-
-                        # if self.rect.top <= pixel_coordinate:
-                        if self.rect.centery - self.half_height <= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.top = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_y = True
-
-                    if self.move_properties.y_direction == "down":
-                        # The sprite is moving down
-
-                        # if self.rect.top >= pixel_coordinate:
-                        if self.rect.centery -self.half_height >= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.top = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_y = True                             
-
-                            # Check the bottom of the sprite for a stop?
-                elif side == MovementStops.BOTTOM:
-
-                    # How we check for a stop depends on the
-                    # direction the sprite is moving.
-
-                    if self.move_properties.y_direction == "down":
-                        # The sprite is moving down
-
-                        # if self.rect.bottom >= pixel_coordinate:
-                        if self.rect.centery + self.half_height >= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.bottom = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_y = True                            
-
-                    elif self.move_properties.y_direction == "up":
-                        # The sprite is moving up
-
-                        # if self.rect.bottom <= pixel_coordinate:
-                        if self.rect.bottom +self.half_height <= pixel_coordinate:
-                            
-                            # Snap the sprite so it's exactly where it needs
-                            # to stop. This is done to prevent 1 pixel off 
-                            # issues.
-                            self.rect.bottom = pixel_coordinate
-                            
-                            satisfied_stop_keys.append(side)
-                            
-                            # This axis has finished moving.
-                            # Apply the breaks to this axis movement.
-                            satisfied_y = True
-                             
-
-            if satisfied_stop_keys:
-                
-                # When moving a sprite diagonally, it's rare that both
-                # axis will finish at the same time. So as soon as one axis
-                # reaches its target, stop moving that one axis so that
-                # it doesn't get moved in the next frame when the other axis
-                # needs to still animate.
-                if satisfied_x:
-                    # We should longer try to move this sprite
-                    # in this axis, because it's satisfied.
-                    self.move_properties.x = 0
-                    self.calculated_pos_moving_x = self.rect.x
-                    
-                if satisfied_y:
-                    # We should longer try to move this sprite
-                    # in this axis, because it's satisfied.
-                    self.move_properties.y = 0
-                    self.calculated_pos_moving_y = self.rect.y
-                
-                # Remove movement stop positions that have already been satisfied.
-                for key in satisfied_stop_keys:
-                    del self.stop_movement_conditions[key]
-
-                # No more stop conditions?
-                # Or move_properties.x and move_properties.y are zero?
-                # Stop the movement of this sprite.
-                if not self.stop_movement_conditions or (
-                    not self.move_properties.x and not self.move_properties.y
-                ):
-                    self.stop_moving()
-
-                    # Should we run a specific reusable script now that the 
-                    # movement has stopped?
-                    # (this is if 'character_after_movement_stop' has been 
-                    # used on this sprite).
-                    if self.movement_stop_run_script:
-
-                        # Get the name of the script we need to run now.
-                        reusable_script_name =\
-                            self.movement_stop_run_script.reusable_script_name
-                        
-                        # Try to get optional arguments, if there are any.
-                        arguments =\
-                            Passer.active_story.reader.\
-                            try_get_arguments_attribute(
-                                self.movement_stop_run_script)
-
-                        # At this point, we know the reusable script name we 
-                        # need to run, now that this sprite has stopped moving.
-                        # So clear the variable that holds information about 
-                        # which script we need to run because we're about to 
-                        # load that specified script below.
-                        # If we don't clear this variable, it will run the 
-                        # specified script again once the sprite stops moving 
-                        # next time.
-                        self.movement_stop_run_script = None
-
-                        # Run the script that is supposed to run, now that this 
-                        # sprite has stopped moving.
-                        Passer.active_story.reader.spawn_new_background_reader \
-                            (reusable_script_name=reusable_script_name,
-                             arguments=arguments)
-
-                    return
-
-        """
-        Get the half width and half height of the *original* image
-        for setting the center of the image after the move takes place.
-        
-        Why the original image? Because if the sprite is being rotated or
-        scaled, the sprite's width/height grows and shrinks.
-        If we use get the width/height of the display sprite and add it to
-        the centerx/centery, we are effectively "pushing" the sprite left and
-        right in sync with the rotation.
-        """
-        if self.move_properties.x:
-            # Move the X position
-            self.calculated_pos_moving_x +=\
-                self.move_properties.x * AnimationSpeed.delta
-            
-            # self.rect.centerx = int(self.calculated_pos_moving_x)
-            self.rect.centerx =\
-                int(self.calculated_pos_moving_x + self.half_width)
-
-        if self.move_properties.y:
-            # Move the Y position
-            self.calculated_pos_moving_y +=\
-                self.move_properties.y * AnimationSpeed.delta
-            
-            self.rect.centery =\
-                int(self.calculated_pos_moving_y + self.half_height)
+                # Run the script that is supposed to run now that this
+                # sprite has stopped moving.
+                Passer.active_story.reader.spawn_new_background_reader(
+                    reusable_script_name=reusable_script_name, arguments=arguments
+                )
 
 
 class SpriteGroup:
