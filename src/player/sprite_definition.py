@@ -289,10 +289,6 @@ class SpriteObject:
         self.flipped_horizontally = False
         self.flipped_vertically = False
 
-        # Key: MovementStops enum (ie: TOP)
-        # Value: int value (pixel position)
-        self.stop_movement_conditions = {}
-
         # Will be based on the MovementStopRunScript class.
         self.movement_stop_run_script = None
 
@@ -493,9 +489,6 @@ class SpriteObject:
         self.move_sprite.calculated_center_x = 0
         self.move_sprite.calculated_center_y = 0
 
-        # Clear all stop conditions because the movement animation has stopped.
-        self.stop_movement_conditions.clear()
-
     def stop_scaling(self):
         """
         Reset the flag to indicate that scaling animations should not occur for this sprite.
@@ -625,39 +618,6 @@ class SpriteObject:
         # For example: situations where <..hide> and <..show> one after another,
         # we can't have both show and hide pending.
         self.pending_hide = False
-
-    def movement_add_stop(
-        self,
-        rect_area: MovementStops,
-        reaches_where: int | ImagePositionX | ImagePositionY,
-    ):
-        """
-        Add a condition to stop a movement animation.
-
-        There can be multiple stop conditions added by calling this method multiple times.
-
-        :param rect_area: the part of the rect that we're concerned about when considering to stop an animation.
-                          For example: MovementStops.TOP means when the 'top' of the rectangle reaches....
-
-        :param reaches_where: the destination that the rect_area has to reach to satisfy this stop condition.
-                              For example: 300 (for 300 pixels) or you can specify ImagePositionX or ImagePositionY,
-                              such as ImagePositionY.TOP_OF_DISPLAY
-
-                              If ImagePositionX or ImagePositionY is specified, they will automatically
-                              be converted to a pixel coordinate in this method.
-        :return: None
-        """
-
-        # # rect_area is allowed to be None, but only if reaches_where is ImagePositionX or ImagePositionY (no int).
-        # if rect_area is None:
-        if isinstance(reaches_where, ImagePositionX) or isinstance(
-            reaches_where, ImagePositionY
-        ):
-            # rect_area is None and reaches_Where is ImagePositionX or ImagePositionY, so
-            # get the pixel location of reaches_where and set the rect_area side automatically.
-            rect_area, reaches_where = self._position_to_int(reaches_where)
-
-        self.stop_movement_conditions[rect_area] = reaches_where
 
     def _position_to_int(self, image_position_x_or_y) -> Tuple[MovementStops, int]:
         """

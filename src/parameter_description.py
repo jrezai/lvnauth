@@ -66,14 +66,7 @@ class ParameterDescription:
         
         self.show_text_widget.configure(background=frame_bg_color,
                                         foreground=label_fg_color)
-        
-        # Used for commands that end with '_stop_movement_condition',
-        # such as <character_stop_movement_condition>
-        # One variance of that command has 2 arguments instead of 3, which
-        # doesn't have a side-to-check argument. We use this to find
-        # the parameter description for that shorter version of the command.
-        self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL = "_no_side_to_check"
-        
+
         # The parameter descriptions are stored here.
         self.data = {
             "load_audio": ("Audio name",),
@@ -143,15 +136,6 @@ class ParameterDescription:
                 "Alias",
                 "Reusable script name",
                 "*(optional) Arguments to pass to the reusable script",
-            ),
-            "character_stop_movement_condition": (
-                "Alias",
-                "Side of sprite to check",
-                "Stop location",
-            ),
-            "character_stop_movement_condition_no_side_to_check": (
-                "Alias",
-                "Stop location",
             ),
             "character_start_moving": (
                 "Alias",
@@ -267,15 +251,6 @@ class ParameterDescription:
                 "Reusable script name",
                 "*(optional) Arguments to pass to the reusable script",
             ),
-            "dialogue_sprite_stop_movement_condition": (
-                "Alias",
-                "Side of sprite to check",
-                "Stop location",
-            ),
-            "dialogue_sprite_stop_movement_condition_no_side_to_check": (
-                "Alias",
-                "Stop location",
-            ),
             "dialogue_sprite_start_moving": (
                 "Alias",
                 "Target center X",
@@ -365,15 +340,6 @@ class ParameterDescription:
                 "Alias",
                 "Reusable script name",
                 "*(optional) Arguments to pass to the reusable script",
-            ),
-            "object_stop_movement_condition": (
-                "Alias",
-                "Side of sprite to check",
-                "Stop location",
-            ),
-            "object_stop_movement_condition_no_side_to_check": (
-                "Alias",
-                "Stop location",
             ),
             "object_start_moving": (
                 "Alias",
@@ -560,16 +526,7 @@ class ParameterDescription:
         descriptions = self.data.get(command_name)
         if not descriptions:
             return
-        
-        # If the requested command name ends with a special string, that means
-        # it was for a command that can have multiple arguments (for example
-        # <character_stop_movement_condition>. Change it back to the normal
-        # command name so we can display it to the user.)
-        if command_name.endswith("_stop_movement_condition" + \
-                                self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL):
-            command_name = command_name.\
-                removesuffix(self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL)
-        
+
         # Generate a single string from a tuple of parameter descriptions.
         # Remove the asterisk if it exists in the description. An asterisk
         # is used for showing that an unlimited number of parameters can be
@@ -757,32 +714,7 @@ class ParameterDescription:
         else:
             self.hide_description_frame()
             return
-        
-        # The 'stop movement condition' command, such as: 
-        # <character_stop_movement_condition> can have 3 arguments or 2.
-        # Check for the 2-argument version.
-        # The 3 argument version is the default.
-        if command_name.endswith("_stop_movement_condition"):
-            
-            # Get the whole line so we can count the number of commas.
-            entire_line_text = \
-                self.read_text_widget.get("insert linestart",
-                                          index2="insert lineend")
-            
-            # 1 comma means it's the non-default 2 argument version
-            # of the command.
-            if entire_line_text.count(",") == 1:
-             
-                # This is the non-default 2-argument version of the command.
-                # Add a special string so we can find the 2-argument description
-                # in the lookup dictionary.
-                command_name += self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL
-                
-        # Don't allow a special command name that's meant to be used internally 
-        # in-code, such as: <character_stop_movement_condition_no_side_to_check>
-        elif command_name.endswith(self.STOP_MOVEMENT_CONDITION_ENDING_SPECIAL):
-            return
-        
+
         comma_count = line_text.count(",")
         
         description = \
