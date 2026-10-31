@@ -3839,8 +3839,8 @@ class StoryReader:
                 sprite: sd.SpriteObject
                 sprite.stop_moving()
 
-                # When a sprite is manually stopped, stop conditions
-                # don't apply, so clear the stop condition here (if any).
+                # When a sprite is manually stopped, no stop reusable script
+                # should be run, so we set the property to None.
                 sprite.movement_stop_run_script = None
 
     def _tint_sprite(self, sprite_type: file_reader.ContentType, arguments: str):
@@ -4049,10 +4049,20 @@ class StoryReader:
 
         move_to_start: cc.MoveStart
         move_to_start = self._get_arguments(
-            class_namedtuple=cc.MoveStart, given_arguments=arguments
+            class_namedtuple=cc.MoveStart,
+            given_arguments=arguments,
+            allow_none_int_or_float=True,
         )
 
         if not move_to_start:
+            return
+
+        # At least one movement direction has to be specified.
+        # X or Y or both.
+        if (
+            move_to_start.target_center_x is None
+            and move_to_start.target_center_y is None
+        ):
             return
 
         # Get the active sprite
@@ -4069,11 +4079,28 @@ class StoryReader:
         sprite.move_properties.move_start_center_y = sprite.rect.centery
 
         # Record where the sprite should stop.
-        sprite.move_properties.move_target_center_x = move_to_start.target_center_x
-        sprite.move_properties.move_target_center_y = move_to_start.target_center_y
+
+        # Not moving X? Set target X to where it is now.
+        if move_to_start.target_center_x is None:
+            # Not moving X
+            sprite.move_properties.move_target_center_x = sprite.rect.centerx
+        else:
+            # Set the destination of center X
+            sprite.move_properties.move_target_center_x = move_to_start.target_center_x
+
+        # Not moving Y? Set target Y to where it is now.
+        if move_to_start.target_center_y is None:
+            # Not moving Y
+            sprite.move_properties.move_target_center_y = sprite.rect.centery
+        else:
+            # Set the destination of center Y
+            sprite.move_properties.move_target_center_y = move_to_start.target_center_y
 
         # Set the duration for the movement animation in seconds.
         sprite.move_properties.move_duration = move_to_start.move_duration
+
+        easing_method = sd.Easing.get_easing_method_from_text(move_to_start.easing)
+        sprite.move_properties.move_easing_method = easing_method
 
         sprite.start_moving()
 
@@ -4109,6 +4136,7 @@ class StoryReader:
         given_arguments: str,
         unlimited_optional_arguments: bool = False,
         num_of_fixed_groups: int = 1,
+        allow_none_int_or_float: bool = False,
     ):
         """
         Take the given string arguments (comma separated) and turn them
@@ -4147,6 +4175,10 @@ class StoryReader:
 
         Example of variable number of arguments:
         <remote_save: favpet=cat, favcolour=blue, ......>
+
+        allow_none_int_or_float: is used to allow an underscore '_' as a
+        None value. This is used for a sprite movement command, to allow
+        not specifying either X or Y in a movement animation.
 
         Return: an object based on the class provided in 'class_namedtuple'.
 
@@ -4263,10 +4295,15 @@ class StoryReader:
 
             # elif expected_type is int or expected_type is float:
             elif any(expected_type is item for item in [int, float]):
-                try:
-                    converted_arguments.append(expected_type(argument_value))
-                except ValueError:
-                    return
+                # Evaluate an underscore string as a None numeric value.
+                # Used for not specifying an X or Y for a movement animation.
+                if allow_none_int_or_float and argument_value.lower() == "_":
+                    converted_arguments.append(None)
+                else:
+                    try:
+                        converted_arguments.append(expected_type(argument_value))
+                    except ValueError:
+                        return
 
         # Convert the list of arguments to a namedtuple for easier access
         # by the caller.

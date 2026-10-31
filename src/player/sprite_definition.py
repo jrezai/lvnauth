@@ -21,7 +21,7 @@ import pygame
 import font_handler
 import command_class as cc
 from shared_components import Passer, ManualUpdate, MouseActionsAndCoordinates
-from typing import Tuple
+from typing import Tuple, Callable
 from enum import Enum, auto
 from datetime import datetime
 from animation_speed import AnimationSpeed
@@ -87,6 +87,11 @@ class MoveSprite:
         # Where the sprite should stop.
         self.move_target_center_x: int = 0
         self.move_target_center_y: int = 0
+
+        # The easing method to use during the movement animation.
+        # It will be one of the methods in the Easing class.
+        # Default to linear.
+        self.move_easing_method = Easing.linear
 
         """
         Used for delta movements. A pygame rectangle can only hold
@@ -167,7 +172,46 @@ class SpriteMouseStatus(Enum):
     HOVERING_OVER_SPRITE = auto()
 
 
-class Easing:
+class Easing(Enum):
+    LINEAR = auto()
+    EASE_IN_QUAD = auto()
+    EASE_OUT_QUAD = auto()
+    EASE_IN_OUT_QUAD = auto()
+    EASE_IN_CUBIC = auto()
+    EASE_OUT_CUBIC = auto()
+    EASE_IN_OUT_CUBIC = auto()
+
+    @staticmethod
+    def get_easing_method_from_text(easing_text: str) -> Callable | None:
+        """
+        Return the easing method that the animation method should use
+        based on the given easing text.
+
+        Arguments:
+
+        - easing_text: the easing style name. The value can be: 'constant',
+        'smooth start', 'smooth stop', 'smooth start stop', 'pause then surge',
+        'quick then soft', 'dynamic ease'
+        """
+
+        if not easing_text:
+            return
+
+        easing_text = easing_text.lower()
+
+        easing_mapping = {
+            "constant": Easing.linear,
+            "smooth start": Easing.ease_in_quad,
+            "smooth stop": Easing.ease_out_quad,
+            "smooth start stop": Easing.ease_in_out_quad,
+            "pause then surge": Easing.ease_in_cubic,
+            "quick then soft": Easing.ease_out_cubic,
+            "dynamic ease": Easing.ease_in_out_cubic,
+        }
+
+        # Default to linear if the given easing was not found.
+        return easing_mapping.get(easing_text, Easing.linear)
+
     @staticmethod
     def linear(t: float) -> float:
         """
@@ -2128,7 +2172,10 @@ class SpriteObject:
             if self.move_properties.move_duration > 0
             else 1.0
         )
-        eased_t = Easing.ease_in_out_cubic(t)
+
+        # Apply the easing method that's been set for this sprite's
+        # movement animation.
+        eased_t = self.move_properties.move_easing_method(t)
 
         # Calculate the exact current (x, y) center position of the moving
         # by using linear interpolation modified by an easing factor

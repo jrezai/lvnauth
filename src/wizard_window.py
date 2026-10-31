@@ -787,7 +787,7 @@ class WizardWindow:
             sub_display_text="character_start_moving",
             command_name="character_start_moving",
             purpose_line="Starts a movement animation on a specific character sprite.\n\n"
-            "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+            "Moves the sprite until its center reaches target X and/or target Y.\n\n"
             "The animation will stop automatically after the sprite reaches\nits destination.",
             default_duration=5,
             group_name=GroupName.MOVE,
@@ -1338,7 +1338,7 @@ class WizardWindow:
             sub_display_text="dialogue_sprite_start_moving",
             command_name="dialogue_sprite_start_moving",
             purpose_line="Starts a movement animation on a specific dialogue sprite.\n\n"
-            "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+            "Moves the sprite until its center reaches target X and/or target Y.\n\n"
             "The animation will stop automatically after the sprite reaches\nits destination.",
             default_duration=5,
             group_name=GroupName.MOVE,
@@ -1771,7 +1771,7 @@ class WizardWindow:
             sub_display_text="object_start_moving",
             command_name="object_start_moving",
             purpose_line="Starts a movement animation on a specific object sprite.\n\n"
-            "Moves the sprite to Target X and Target Y, in a straight line.\n\n"
+            "Moves the sprite until its center reaches target X and/or target Y.\n\n"
             "The animation will stop automatically after the sprite reaches\nits destination.",
             default_duration=5,
             group_name=GroupName.MOVE,
@@ -9373,11 +9373,37 @@ class MoveToFrame:
         self.v_alias: tk.StringVar
         self.v_alias = builder.get_variable("v_alias")
 
+        self.spinbox_target_x: ttk.Spinbox
+        self.spinbox_target_x = builder.get_object("spinbox_target_x")
+
+        self.lbl_target_x: ttk.Label
+        self.lbl_target_x = builder.get_object("lbl_target_x")
+        self.spinbox_target_y: ttk.Spinbox
+        self.spinbox_target_y = builder.get_object("spinbox_target_y")
+
+        self.lbl_target_y: ttk.Label
+        self.lbl_target_y = builder.get_object("lbl_target_y")
         self.v_target_center_x: tk.IntVar
         self.v_target_center_x = builder.get_variable("v_target_center_x")
 
         self.v_target_center_y: tk.IntVar
         self.v_target_center_y = builder.get_variable("v_target_center_y")
+
+        self.v_move_horizontally: tk.BooleanVar
+        self.v_move_horizontally = builder.get_variable("v_move_horizontally")
+        self.v_move_horizontally.trace_add(
+            "write", self.on_move_horizontally_check_button_changed
+        )
+
+        self.v_move_vertically: tk.BooleanVar
+        self.v_move_vertically = builder.get_variable("v_move_vertically")
+        self.v_move_vertically.trace_add(
+            "write", self.on_move_vertically_check_button_changed
+        )
+
+        # Default to checked
+        self.v_move_horizontally.set(True)
+        self.v_move_vertically.set(True)
 
         self.v_duration: tk.DoubleVar
         self.v_duration = builder.get_variable("v_duration")
@@ -9391,6 +9417,30 @@ class MoveToFrame:
         # Default the easing selection to 'Constant'
         self.cb_easing.current(0)
         self.on_combobox_selection_changed()
+
+    def on_move_horizontally_check_button_changed(self, *args):
+        """
+        If not moving horizontally, disable the 'target center x' spinbox and
+        label. Otherwise, enable them.
+        """
+        self.spinbox_target_x.state(
+            ["!disabled"] if self.v_move_horizontally.get() else ["disabled"]
+        )
+        self.lbl_target_x.state(
+            ["!disabled"] if self.v_move_horizontally.get() else ["disabled"]
+        )
+
+    def on_move_vertically_check_button_changed(self, *args):
+        """
+        If not moving vertically, disable the 'target center y' spinbox and
+        label. Otherwise, enable them.
+        """
+        self.spinbox_target_y.state(
+            ["!disabled"] if self.v_move_vertically.get() else ["disabled"]
+        )
+        self.lbl_target_y.state(
+            ["!disabled"] if self.v_move_vertically.get() else ["disabled"]
+        )
 
     def on_combobox_selection_changed(self, event=None):
         """
@@ -9412,10 +9462,10 @@ class MoveToFrame:
         Smooth Start Stop:
         Starts slowly, speeds up in the middle, and glides to a stop.
 
-        Quick Start:
+        Pause then Surge:
         Starts with a prolonged pause, then surges quickly to the destination.
 
-        Gentle Glide:
+        Quick then soft:
         Launches quickly toward the destination and glides softly into place.
 
         Dynamic Ease:
@@ -9447,7 +9497,7 @@ class MoveToFrame:
         Arguments:
 
         - easing: the name of the easing type.
-        For example: 'Quick Start' or 'Smooth Stop'
+        For example: 'Pause then Surge' or 'Smooth Stop'
         """
 
         easing = easing.strip().lower()
@@ -10086,9 +10136,31 @@ class MoveToWizard(WizardListing):
                 self.frame_move_to.v_alias.set(alias)
 
                 # Center Target X
+                try:
+                    # Make sure center_target_x is an integer.
+                    center_target_x = int(center_target_x)
+                    self.frame_move_to.v_move_horizontally.set(True)
+
+                except ValueError:
+                    # A value of "_" means don't move the sprite horizontally.
+                    if center_target_x == "_":
+                        self.frame_move_to.v_move_horizontally.set(False)
+                        center_target_x = 0
+
                 self.frame_move_to.v_target_center_x.set(center_target_x)
 
                 # Center Target Y
+                try:
+                    # Make sure center_target_y is an integer.
+                    center_target_y = int(center_target_y)
+                    self.frame_move_to.v_move_vertically.set(True)
+
+                except ValueError:
+                    # A value of "_" means don't move the sprite vertically.
+                    if center_target_y == "_":
+                        self.frame_move_to.v_move_vertically.set(False)
+                        center_target_y = 0
+
                 self.frame_move_to.v_target_center_y.set(center_target_y)
 
                 # Duration (seconds)
@@ -10117,29 +10189,52 @@ class MoveToWizard(WizardListing):
             )
             return
 
-        # Make sure center_target_x is an integer.
-        try:
-            target_center_x = self.frame_move_to.v_target_center_x.get()
-
-        except tk.TclError:
+        # Make sure either X and/or Y destination positions are specified.
+        # Both can't be disabled.
+        if not any(
+            (
+                self.frame_move_to.v_move_horizontally.get(),
+                self.frame_move_to.v_move_vertically.get(),
+            )
+        ):
             messagebox.showerror(
                 parent=self.frame_content.winfo_toplevel(),
-                title="Number expected",
-                message="Target X is expected to be a number.",
+                title="Missing direction",
+                message="The sprite must move either horizontally (X) or vertically (Y).",
             )
             return
 
-        # Make sure center_target_y is an integer.
-        try:
-            center_target_y = self.frame_move_to.v_target_center_y.get()
+        # If target X is disabled, use an underscore as the placeholder
+        if not self.frame_move_to.v_move_horizontally.get():
+            target_center_x = "_"
+        else:
+            # Make sure center_target_x is an integer.
+            try:
+                target_center_x = self.frame_move_to.v_target_center_x.get()
 
-        except tk.TclError:
-            messagebox.showerror(
-                parent=self.frame_content.winfo_toplevel(),
-                title="Number expected",
-                message="Target Y is expected to be a number.",
-            )
-            return
+            except tk.TclError:
+                messagebox.showerror(
+                    parent=self.frame_content.winfo_toplevel(),
+                    title="Number expected",
+                    message="Target X is expected to be a number.",
+                )
+                return
+
+        # If target Y is disabled, use an underscore as the placeholder
+        if not self.frame_move_to.v_move_vertically.get():
+            target_center_y = "_"
+        else:
+            # Make sure center_target_y is an integer.
+            try:
+                target_center_y = self.frame_move_to.v_target_center_y.get()
+
+            except tk.TclError:
+                messagebox.showerror(
+                    parent=self.frame_content.winfo_toplevel(),
+                    title="Number expected",
+                    message="Target Y is expected to be a number.",
+                )
+                return
 
         # Make sure duration is a float.
         try:
@@ -10181,7 +10276,7 @@ class MoveToWizard(WizardListing):
         user_input = {
             "Alias": alias,
             "CenterTargetX": target_center_x,
-            "CenterTargetY": center_target_y,
+            "CenterTargetY": target_center_y,
             "Duration": duration,
             "Easing": easing,
         }

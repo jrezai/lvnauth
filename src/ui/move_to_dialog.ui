@@ -96,6 +96,16 @@
                 </layout>
               </object>
             </child>
+            <child>
+              <object class="ttk.Checkbutton" id="cb_move_horizontally" named="True">
+                <property name="text" translatable="yes">Move horizontally</property>
+                <property name="variable">boolean:v_move_horizontally</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">2</property>
+                </layout>
+              </object>
+            </child>
           </object>
         </child>
         <child>
@@ -127,6 +137,16 @@
                   <property name="column">0</property>
                   <property name="row">1</property>
                   <property name="sticky">w</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Checkbutton" id="cb_move_vertically" named="True">
+                <property name="text" translatable="yes">Move vertically</property>
+                <property name="variable">boolean:v_move_vertically</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="row">2</property>
                 </layout>
               </object>
             </child>
@@ -193,7 +213,7 @@
             <child>
               <object class="ttk.Combobox" id="cb_easing" named="True">
                 <property name="state">readonly</property>
-                <property name="values">"Constant" "Smooth start" "Smooth stop" "Smooth start stop" "Quick start" "Gentle glide" "Dynamic ease"</property>
+                <property name="values">"constant" "smooth start" "smooth stop" "smooth start stop" "pause then surge" "quick then soft" "dynamic ease"</property>
                 <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_combobox_selection_changed" add="" />
                 <layout manager="grid">
                   <property name="column">0</property>
