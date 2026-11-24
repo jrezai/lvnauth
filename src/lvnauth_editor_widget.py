@@ -92,6 +92,8 @@ class LVNAuthEditorWidget(tk.Text):
         dialogue_text_bg = config.get(selected_preset_section,
                                     "editor.dialog.text.backcolor")
 
+        # We use a virtual event to refresh the gutter background color
+        # because the gutter is not part of this widget here (the text widget).
         self.winfo_toplevel().event_generate("<<RefreshGutterBackgroundColor>>")
 
         # Checkbox value, so read it as a boolean.

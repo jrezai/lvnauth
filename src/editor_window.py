@@ -4659,9 +4659,19 @@ class Gutter:
             "<<RefreshGutterBackgroundColor>>", self.set_background_color
         )
 
+        # Read the config file and apply the gutter background color.
         self.set_background_color()
 
     def set_background_color(self, event=None):
+        """
+        Read the config file to get the gutter background color and
+        apply the color.
+
+        Purpose: if the gutter's background color is changed from a color
+        preset, then this method needs to run to refresh the gutter's
+        background to the newly set color. Also, this method is run when
+        the application is first opened.
+        """
 
         config = ProjectSnapshot.config.config
         config.read(ProjectSnapshot.config.config_file_path)
