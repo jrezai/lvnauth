@@ -5,7 +5,7 @@ description: |
      LVNAuth lets you create and play visual novels.
      It includes a built-in editor for creating chapters, scenes,
      and for managing sprite images and simple animations.
-version: '1.7'
+version: '1.8'
 base: core24
 grade: stable
 confinement: strict
@@ -57,7 +57,7 @@ parts:
     python-packages:
        - Pillow == 12.3.0
        - pygame-ce == 2.5.7
-       - pygubu == 0.40.1
+       - pygubu == 0.43
        - screeninfo == 0.8.1
        - niquests == 3.13.1
     source: .
