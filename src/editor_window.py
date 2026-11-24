@@ -114,9 +114,12 @@ class Icons(Enum):
     
     UP_ARROW_16_F = r"iVBORw0KGgoAAAANSUhEUgAAABIAAAAQCAYAAAAbBi9cAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAM5JREFUOI2l0zFKA0EYhuFnVlQsY6GgnViJIPZCbpHSI1gJVt7ANpVVWivPYKV3EMELiIKFkchv48AKk3F3/eHtPp5qJkWE2qWUxhhFxG11V4NSSg0eMMJBRHwuHUfE0nCK+Omsuq0gG3huQS/YHAJdtpDcVS8Iu3gvQHPs94FmBSR30wnCMb4qUOCkC3T3BxK4z0+nCGHSAclNihDW8NgDesJ6CbrogeTOf0HYwusA6A3bbeh6AJKb5v96hMU/oAUOVzDFDj4qraJRvgZ737MaolF6s5lmAAAAAElFTkSuQmCC"
     DOWN_ARROW_F = r"iVBORw0KGgoAAAANSUhEUgAAABIAAAAQCAYAAAAbBi9cAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAANZJREFUOI2l1D8uRFEUB+DvJEIUChNhAyo0epU9TGkJOqKyA6VKpZXMArQ61iCR2ACi8y9Hc00e896deeMkt7jn/n5feQMj7KvPChYq79ewjQ/knOcTOzITLv4BnWemH2gdL3Mgz1gbQwU7mQM6Gvcb0CLueyAPWJqACjbsAQ1/dZuXgt3MgNwipkG7+JoC7U30/i4KdllBrlo7HdAGXluQN2zODBXstAU668xXoGU8NpAnDHpDBTtoQIe1bJRC60RE4A4DbGXme1e29jXIzIyIY6zWEPgGHcqdzO2aLloAAAAASUVORK5CYII="
-    
-    
+
+    EDIT_ROW_16_F = r"iVBORw0KGgoAAAANSUhEUgAAABEAAAARCAYAAAA7bUf6AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAOFJREFUOI290jFKQ0EQANA3QWuxEQ9gLQR78QSCNxARFItvQNBreABPk1YkoqfQgJ7AjEU28o35Zk3hwBQ7u/NgZ1dmWjVxiucoiz9HROxjA9uRmSKijz7WOnpGmXnfAhrc4iAzh3CFCd7x1pF3rSuc4QNNq2aM68oZ/ABmSOKwAjhfBFQjGJQrN2V9hK1qpAVctmqvOK5CCpC4mauPcbIUKU8+wWDB3jek618oQ9zLzNEvZ9D9uWTm07LmWfRqD/4LMlkB65nODNOZPOIiItYrgR1slr6v2MVDkbMiX8w9+yesUE2Gu8fRMAAAAABJRU5ErkJggg=="
+
+
 class Passer:
+    gutter = None
     toolbar = None
     statusbar = None
     editor = None
@@ -125,37 +128,38 @@ class Passer:
 
 
 class EditorMainApp:
-    
     def __init__(self, master=None):
-        
         """
         Initialize and show the main editor window.
-        
+
         Arguments:
-        
+
         - master: the parent window (which is always the startup window)
 
         """
-        
+
         self.builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
         builder.add_from_file(PROJECT_UI)
         # Main widget
         self.mainwindow = builder.get_object("main_window", master)
-        
+
         # The master will be the startup toplevel window
         self.master = master
-        
+
         builder.connect_callbacks(self)
-        
+
         self.mainwindow.protocol("WM_DELETE_WINDOW", self.on_window_close)
-        
+
         # Used for reading thread responses when creating an archive
         # (.tar.gz or .zip)
         self.archive_handler = archive_handler.ArchiveHandler(self.mainwindow)
         # Used for event_generate() from a secondary thread.
-        self.mainwindow.bind("<<CheckQueue>>",
-                             self.archive_handler.check_queue)
+        self.mainwindow.bind("<<CheckQueue>>", self.archive_handler.check_queue)
+
+        # Edit button that moves with the insert cursor
+        self.btn_edit: ttk.Button
+        self.btn_edit = builder.get_object("btn_edit")
 
         # Maximize the editor window
         try:
@@ -176,28 +180,31 @@ class EditorMainApp:
         self.delete_files_upon_exit = []
 
         # New chapter and new scene menus
-        self.menubutton_chapters_scenes = builder.get_object("menubutton_chapters_scenes")
+        self.menubutton_chapters_scenes = builder.get_object(
+            "menubutton_chapters_scenes"
+        )
         self.mnu_chapters_scenes = builder.get_object("mnu_chapters_scenes")
 
         self.menubutton_chapters_scenes.configure(menu=self.mnu_chapters_scenes)
         self.mnu_chapters_scenes = builder.get_object("mnu_chapters_scenes")
 
         # Play image
-        play_image = PhotoImage(data=Icons.PLAY_24_F.value)        
+        play_image = PhotoImage(data=Icons.PLAY_24_F.value)
 
         self.menubutton_play = builder.get_object("menubutton_play")
         self.mnu_play = builder.get_object("mnu_play")
-        
+
         self.menubutton_play.image = play_image
-        self.menubutton_play.configure(menu=self.mnu_play,
-                                       image=self.menubutton_play.image)
+        self.menubutton_play.configure(
+            menu=self.mnu_play, image=self.menubutton_play.image
+        )
 
         # Setup bindings for Play Current Script and Play from Beginning menus
         self.mnu_play.entryconfigure(index=0, command=self.on_play_current_scene)
         self.mnu_play.entryconfigure(index=1, command=self.on_play_startup_scene)
         # index 2 is a separator
         self.mnu_play.entryconfigure(index=3, command=self.on_play_from_beginning)
-        
+
         # Wizard button and image
         self.btn_wizard = builder.get_object("btn_wizard")
         wizard_image = PhotoImage(data=Icons.WAND_24_F.value)
@@ -208,8 +215,12 @@ class EditorMainApp:
         self.lbl_status = builder.get_object("lbl_status")
 
         # Setup bindings for New chapter and New scene menus
-        self.mnu_chapters_scenes.entryconfigure(index=0, command=self.on_new_chapter_clicked)
-        self.mnu_chapters_scenes.entryconfigure(index=1, command=self.on_new_scene_clicked)
+        self.mnu_chapters_scenes.entryconfigure(
+            index=0, command=self.on_new_chapter_clicked
+        )
+        self.mnu_chapters_scenes.entryconfigure(
+            index=1, command=self.on_new_scene_clicked
+        )
 
         self.folder_image = PhotoImage(data=Icons.FOLDER_24_F.value)
         self.blue_dot_image = PhotoImage(data=Icons.BLUE_DOT_CUSTOM_OWN.value)
@@ -217,8 +228,8 @@ class EditorMainApp:
         self.mnu_rename = builder.get_object("mnu_rename")
 
         # Get references to all the treeview widgets
-        self.treeview_reusables = builder.get_object("treeview_reusables")     
-        
+        self.treeview_reusables = builder.get_object("treeview_reusables")
+
         self.treeview_characters = builder.get_object("treeview_characters")
         self.treeview_backgrounds = builder.get_object("treeview_backgrounds")
         self.treeview_objects = builder.get_object("treeview_objects")
@@ -228,141 +239,160 @@ class EditorMainApp:
         self.treeview_sounds = builder.get_object("treeview_sounds")
         self.treeview_music = builder.get_object("treeview_music")
 
-        for treeview_widget in (self.treeview_reusables,
-                                self.treeview_characters,
-                                self.treeview_backgrounds,
-                                self.treeview_objects,
-                                self.treeview_font_sprites,
-                                self.treeview_dialog_rectangle,
-                                self.treeview_sounds,
-                                self.treeview_music):
+        for treeview_widget in (
+            self.treeview_reusables,
+            self.treeview_characters,
+            self.treeview_backgrounds,
+            self.treeview_objects,
+            self.treeview_font_sprites,
+            self.treeview_dialog_rectangle,
+            self.treeview_sounds,
+            self.treeview_music,
+        ):
             treeview_widget.tag_configure("folder_row", image=self.folder_image)
             treeview_widget.tag_configure("normal_row", image=self.blue_dot_image)
 
         self.treeview_scripts: ttk.Treeview
         self.treeview_scripts = builder.get_object("treeview_scripts")
         self.treeview_scripts.configure(style="LVNAuth.Treeview")
-        self.treeview_scripts.tag_configure("startup_script", background="lightgreen", foreground="darkblue")
+        self.treeview_scripts.tag_configure(
+            "startup_script", background="lightgreen", foreground="darkblue"
+        )
 
         self.treeview_reusables.configure(style="LVNAuth.Treeview")
+
+        # Gutter frame, so we can change the background color later
+        self.frame_gutter: ttk.Frame
+        self.frame_gutter = builder.get_object("frame_gutter")
 
         # The main text widget
         self.text_script: LVNAuthEditorWidget
         self.text_script = builder.get_object("text_script")
         self.text_script.bind("<<Modified>>", self._on_script_modified)
         self.text_script.bind("<KP_Enter>", self._on_num_pad_enter_key_pressed)
-        self.text_script.configure(font=("tkDefaultText", 18, "normal"),
-                                   wrap=tk.NONE)
-        
+        self.text_script.configure(font=("tkDefaultText", 18, "normal"), wrap=tk.NONE)
+
         self.text_parameters = builder.get_object("text_parameters")
         self.frame_parameters = builder.get_object("frame_parameters")
 
-        self.param_desc =\
-            ParameterDescription(read_text_widget=self.text_script,
-                                 show_text_widget=self.text_parameters, 
-                                 show_text_frame=self.frame_parameters)
-        
+        self.param_desc = ParameterDescription(
+            read_text_widget=self.text_script,
+            show_text_widget=self.text_parameters,
+            show_text_frame=self.frame_parameters,
+        )
+
         # Start off with not showing the parameter description frame.
         self.param_desc.hide_description_frame()
-        
-        # When a mouse button is released or when a key is released on the 
-        # keyboard, then find where the cursor is and show the parameter's 
+
+        # When a mouse button is released or when a key is released on the
+        # keyboard, then find where the cursor is and show the parameter's
         # description based on where the cursor is.
         # We're adding this binding so that the editor's text color
         # will change depending if it's a command or dialogue text.
         # Without add="+", the colors won't change in the text widget.
-        self.text_script.bind("<ButtonRelease>",
-                              self.param_desc.start_timer,
-                              add="+")
-        self.text_script.bind("<KeyRelease>",
-                              self.param_desc.start_timer,
-                              add="+")
-        
+        self.text_script.bind("<ButtonRelease-1>", self.param_desc.start_timer, add="+")
+        self.text_script.bind("<KeyRelease>", self.param_desc.start_timer, add="+")
+
         # When an existing command is edited via the context menu through
         # the Wizard window, we need to run this virtual event to cause the
         # parameter description to update, after the user clicks OK in the
         # Wizard window. This vritual event is used only when editing
         # a command.
-        self.text_script.bind("<<UpdateParameterDescription>>",
-                              self.param_desc.start_timer)
-        
+        self.text_script.bind(
+            "<<UpdateParameterDescription>>", self.param_desc.start_timer
+        )
+
         # Scrollbar width style
         self.style = ttk.Style()
         self.style.configure("Wide.Vertical.TScrollbar", arrowsize=18)
-        self.style.configure("Wide.Horizontal.TScrollbar", arrowsize=18)        
+        self.style.configure("Wide.Horizontal.TScrollbar", arrowsize=18)
 
         # Connect scrollbars to text widget.
         sb_horizontal_text = builder.get_object("sb_horizontal_text")
-        sb_horizontal_text.configure(command=self.text_script.xview,
-                                     style="Wide.Horizontal.TScrollbar")
-        
-        self.text_script.configure(xscrollcommand=sb_horizontal_text.set)
-        
-        sb_vertical_text = builder.get_object("sb_vertical_text")
-        sb_vertical_text.configure(command=self.text_script.yview,
-                                   style="Wide.Vertical.TScrollbar")
-        
-        self.text_script.configure(yscrollcommand=sb_vertical_text.set)        
+        sb_horizontal_text.configure(
+            command=self.text_script.xview, style="Wide.Horizontal.TScrollbar"
+        )
 
+        self.text_script.configure(xscrollcommand=sb_horizontal_text.set)
+
+        self.sb_vertical_text = builder.get_object("sb_vertical_text")
+        self.sb_vertical_text.configure(
+            command=self.text_script.yview, style="Wide.Vertical.TScrollbar"
+        )
+
+        Passer.gutter = Gutter(self)
         Passer.toolbar = Toolbar(self)
         Passer.statusbar = StatusBar(self.lbl_status)
         Passer.editor = self
-        Passer.chapter_scenes = ChapterSceneManager(self.treeview_scripts,
-                                                    self.treeview_reusables,
-                                                    self.blue_dot_image,
-                                                    self.text_script)
+        Passer.chapter_scenes = ChapterSceneManager(
+            self.treeview_scripts,
+            self.treeview_reusables,
+            self.blue_dot_image,
+            self.text_script,
+        )
         Passer.file_manager = FileManager()
 
-        self.treeview_reusables.bind("<<TreeviewSelect>>", Passer.chapter_scenes.on_reusables_treeview_item_selected)
+        self.text_script.configure(yscrollcommand=self.on_vertical_scroll)
 
-        self.treeview_font_sprites.bind("<Double-1>", self.on_font_sprite_treeview_double_clicked)
+        self.treeview_reusables.bind(
+            "<<TreeviewSelect>>",
+            Passer.chapter_scenes.on_reusables_treeview_item_selected,
+        )
+
+        self.treeview_font_sprites.bind(
+            "<Double-1>", self.on_font_sprite_treeview_double_clicked
+        )
 
         # Add Audio button
         add_audio_image = PhotoImage(data=Icons.AUDIO_16_F.value)
         self.btn_add_audio = builder.get_object("btn_add_audio")
         self.btn_add_audio.image = add_audio_image
         self.btn_add_audio.configure(image=self.btn_add_audio.image)
-        
+
         # Add Image button
         add_image = PhotoImage(data=Icons.IMAGE_16_F.value)
         self.btn_add_image = builder.get_object("btn_add_image")
         self.btn_add_image.image = add_image
-        self.btn_add_image.configure(image=self.btn_add_image.image)        
+        self.btn_add_image.configure(image=self.btn_add_image.image)
 
         # Remove Image button
         remove_image = PhotoImage(data=Icons.REMOVE_16_F.value)
         self.btn_remove_image = builder.get_object("btn_remove_image")
         self.btn_remove_image.image = remove_image
         self.btn_remove_image.configure(image=self.btn_remove_image.image)
-        
+
         # Remove Audio button
         self.btn_remove_audio = builder.get_object("btn_remove_audio")
         self.btn_remove_audio.image = remove_image
         self.btn_remove_audio.configure(image=self.btn_remove_audio.image)
-        
+
         # Remove Main Script button
         self.btn_remove_main_script = builder.get_object("btn_remove_main_script")
         self.btn_remove_main_script.image = remove_image
         self.btn_remove_main_script.configure(image=self.btn_remove_main_script.image)
-        
+
         # Remove Reusable Script button
         self.btn_remove_script = builder.get_object("btn_remove_script")
         self.btn_remove_script.image = remove_image
-        self.btn_remove_script.configure(image=self.btn_remove_script.image)        
+        self.btn_remove_script.configure(image=self.btn_remove_script.image)
 
         # Set as Startup button
         startup_image = PhotoImage(data=Icons.STARTUP_SCRIPT_16_F.value)
         self.btn_set_as_startup = builder.get_object("btn_set_as_startup")
         self.btn_set_as_startup.image = startup_image
-        self.btn_set_as_startup.configure(image=self.btn_set_as_startup.image)  
-        
+        self.btn_set_as_startup.configure(image=self.btn_set_as_startup.image)
+
         # New folder buttons
         self.btn_new_folder = builder.get_object("btn_new_folder")
         self.btn_new_folder_audio = builder.get_object("btn_new_folder_audio")
         self.btn_new_folder_reusable = builder.get_object("btn_new_folder_reusable")
 
         new_folder_image = PhotoImage(data=Icons.NEW_FOLDER_16_F.value)
-        for btn_widget in (self.btn_new_folder, self.btn_new_folder_audio, self.btn_new_folder_reusable):
+        for btn_widget in (
+            self.btn_new_folder,
+            self.btn_new_folder_audio,
+            self.btn_new_folder_reusable,
+        ):
             btn_widget.image = new_folder_image
             btn_widget.configure(image=new_folder_image)
 
@@ -372,8 +402,10 @@ class EditorMainApp:
         # Binding for the 'Save Script' button
         self.btn_save_script = builder.get_object("btn_save_script")
         self.btn_save_script.image = save_image
-        self.btn_save_script.configure(command=Passer.chapter_scenes.on_save_script_button_clicked,
-                                       image=self.btn_save_script.image)
+        self.btn_save_script.configure(
+            command=Passer.chapter_scenes.on_save_script_button_clicked,
+            image=self.btn_save_script.image,
+        )
 
         # Colors image
         colors_image = PhotoImage(data=Icons.COLORS_24_F.value)
@@ -381,18 +413,23 @@ class EditorMainApp:
         # Binding for the 'Colors' button
         self.btn_colors = builder.get_object("btn_colors")
         self.btn_colors.image = colors_image
-        self.btn_colors.configure(command=self.on_colors_button_clicked,
-                                  image=self.btn_colors.image)
+        self.btn_colors.configure(
+            command=self.on_colors_button_clicked, image=self.btn_colors.image
+        )
 
         # Cancel image
         cancel_image = PhotoImage(data=Icons.CANCEL_SCRIPT_24_F.value)
-    
+
         self.btn_cancel_script = builder.get_object("btn_cancel_script")
         self.btn_cancel_script.image = cancel_image
-        self.btn_cancel_script.configure(command=Passer.chapter_scenes.on_cancel_changes_button_clicked,
-                                         image=self.btn_cancel_script.image)
+        self.btn_cancel_script.configure(
+            command=Passer.chapter_scenes.on_cancel_changes_button_clicked,
+            image=self.btn_cancel_script.image,
+        )
 
-        self.mainwindow.bind("<<SavedProjectSuccessfully>>", Passer.statusbar.show_saved_successfully)
+        self.mainwindow.bind(
+            "<<SavedProjectSuccessfully>>", Passer.statusbar.show_saved_successfully
+        )
 
         # Can be called from virtually anywhere in the project
         # to show the user in the statusbar that the project needs to be saved.
@@ -402,44 +439,57 @@ class EditorMainApp:
         # Without doing this, setting the position of the sash won't work as expected.
         self.mainwindow.update_idletasks()
         self.set_initial_sash_position()
-        
+
         self._connect_scrollbars()
-        
+
         # Used for knowing which section was right-clicked.
         self.context_menu_type: SectionChosen
         self.context_menu_type = None
 
         # Connect bindings for the right-click 'Rename...' menus.
         self.connect_rename_context_menus()
-        
+
         # Connect bindings for the right-click 'Edit line' menu.
         self.connect_edit_line_context_menu()
-        
+
+    def on_vertical_scroll(self, *args):
+        """
+        Update the vertical scroll on the text widget
+        and start the timer on the edit button so it refrshes its position.
+        """
+
+        # Update the vertical scroll bar position
+        self.sb_vertical_text.set(*args)
+
+        # Start a timer to update the edit button position in the gutter.
+        if Passer.gutter:
+            Passer.gutter.start_update()
+
     @staticmethod
     def always_on_top(master, window):
-            """
-            Set the given window to be always on top.
-            
-            Arguments:
-            
-            - master: the parent
-            
-            - window: the window that needs to be always on top
-            """
-            window.transient(master)
-        
-            window.update_idletasks()
-        
-            # Don't allow interactions with other windows in the app.
-            window.grab_set()
-        
-            # Wait for this top-level window to close before giving access back
-            # to the root's main loop.
-        
-            # In other words, with this line, other code won't run until
-            # this window is closed.
-            window.wait_window(window)    
-        
+        """
+        Set the given window to be always on top.
+
+        Arguments:
+
+        - master: the parent
+
+        - window: the window that needs to be always on top
+        """
+        window.transient(master)
+
+        window.update_idletasks()
+
+        # Don't allow interactions with other windows in the app.
+        window.grab_set()
+
+        # Wait for this top-level window to close before giving access back
+        # to the root's main loop.
+
+        # In other words, with this line, other code won't run until
+        # this window is closed.
+        window.wait_window(window)
+
     def on_edit_line_menu_right_clicked(self, event):
         """
         Determine whether the current line that the blinking cursor is on
@@ -447,61 +497,75 @@ class EditorMainApp:
         can, show the Edit menu as enabled; otherwise show the menu as
         disabled.
         """
-        
+
         # Get the current line of script based on where the caret is.
-        script_line = self.text_script.get("insert linestart",
-                                           "insert lineend")
-        
+        script_line = self.text_script.get("insert linestart", "insert lineend")
+
         script_line = script_line.strip()
-        
+
         # Can the current line be edited? Try to parse the arguments.
         can_edit = ch.CommandHelper.can_edit(script_line=script_line)
         if can_edit:
             state = "normal"
         else:
             state = "disabled"
-        
-        self.mnu_editor.entryconfig (0, state=state)
-        
+
+        self.mnu_editor.entryconfig(0, state=state)
+
         # Show the 'Edit line' context menu.
         self.mnu_command_edit_line.tk_popup(event.x_root, event.y_root)
-        
-    def on_edit_line_menu_clicked(self):
-        
+
+    def edit_current_line(self):
+        """
+        Open the Wizard window on the page based on
+        CommandHelper.context_edit_run
+
+        When a line is right-clicked or when the Edit button is clicked
+        in the gutter, the command and arguments for the command (if any) are
+        recorded in CommandHelper.context_edit_run. That's how we know which
+        page to show in the Wizard window.
+        """
         wizard = WizardWindow(self.mainwindow)
-        
+
         wizard.show_edit_page(command_object=ch.CommandHelper.context_edit_run)
-        
+
         # Set the wizard window to be always on top and wait
         # for the wizard window to close before releasing control back.
         self.always_on_top(self.mainwindow, wizard.mainwindow)
-        
+
         # The wizard window was cancelled? Return.
         if not wizard.generated_command:
             return
-        
-        self.insert_edit_command(wizard.generated_command)        
- 
+
+        self.insert_edit_command(wizard.generated_command)
+
+    def on_edit_line_menu_clicked(self):
+        """
+        Edit the current line that the cursor is on, by opening the
+        Wizard window.
+        """
+        self.edit_current_line()
+
     def connect_edit_line_context_menu(self):
         """
-        Connect the bindings for the right-click 'Edit line' menu. 
+        Connect the bindings for the right-click 'Edit line' menu.
         """
-        
+
         # The parent menu (we need this to make the Command menu the sub
         # of this menu)
         self.mnu_editor = self.builder.get_object("mnu_editor")
-        
+
         # Edit line menu
-        self.mnu_command_edit_line =\
-            self.builder.get_object("mnu_command_edit_line", self.mnu_editor)
-        
+        self.mnu_command_edit_line = self.builder.get_object(
+            "mnu_command_edit_line", self.mnu_editor
+        )
+
         # Bind the command here because it doesn't appear to work from pygubu.
         self.mnu_command_edit_line.entryconfigure(
-            index=0,
-            command=self.on_edit_line_menu_clicked)          
-        
+            index=0, command=self.on_edit_line_menu_clicked
+        )
+
         self.text_script.bind("<Button-3>", self.on_edit_line_menu_right_clicked)
-      
 
     def connect_rename_context_menus(self):
         """
@@ -510,21 +574,20 @@ class EditorMainApp:
 
         # Binding for the 'Rename...' menu itself.
         self.mnu_command_rename = self.builder.get_object("mnu_command_rename")
-        self.mnu_command_rename.entryconfigure(index=0,
-                                               command=self.on_rename_menu_clicked)
-        
+        self.mnu_command_rename.entryconfigure(
+            index=0, command=self.on_rename_menu_clicked
+        )
+
         # Create partial methods with an argument
         move_up_method = partial(self.on_move_item_menu_clicked, move_up=True)
         move_down_method = partial(self.on_move_item_menu_clicked, move_up=False)
-        
+
         # Binding for the 'Move Up...' menu itself.
         self.mnu_command_move_up = self.builder.get_object("mnu_command_move_up")
-        self.mnu_command_move_up.entryconfigure(index=2,
-                                               command=move_up_method)
+        self.mnu_command_move_up.entryconfigure(index=2, command=move_up_method)
         # Binding for the 'Move Down...' menu itself.
         self.mnu_command_move_up = self.builder.get_object("mnu_command_move_down")
-        self.mnu_command_move_up.entryconfigure(index=3,
-                                               command=move_down_method)
+        self.mnu_command_move_up.entryconfigure(index=3, command=move_down_method)
 
         # Below is to be set before the pop-up menu is displayed,
         # so as soon as the context menu is shown, it knows which
@@ -532,42 +595,46 @@ class EditorMainApp:
         self.context_menu_type = None
 
         # Chapters and Scenes context menu
-        context_chapters_scenes = \
-            partial(self.show_rename_popup_menu, SectionChosen.CHAPTERS_AND_SCENES)
-        
-        context_reusables = \
-            partial(self.show_rename_popup_menu, SectionChosen.REUSABLES)
-        
-        context_images = \
-            partial(self.show_rename_popup_menu, SectionChosen.IMAGES)
-        
-        context_audio = \
-            partial(self.show_rename_popup_menu, SectionChosen.AUDIO)
-        
+        context_chapters_scenes = partial(
+            self.show_rename_popup_menu, SectionChosen.CHAPTERS_AND_SCENES
+        )
+
+        context_reusables = partial(
+            self.show_rename_popup_menu, SectionChosen.REUSABLES
+        )
+
+        context_images = partial(self.show_rename_popup_menu, SectionChosen.IMAGES)
+
+        context_audio = partial(self.show_rename_popup_menu, SectionChosen.AUDIO)
+
         # Treeview widgets (will be zipped with context menus)
-        treeview_widgets = (self.treeview_scripts,
-                            self.treeview_reusables,
-                            self.treeview_characters,
-                            self.treeview_backgrounds,
-                            self.treeview_objects,
-                            self.treeview_font_sprites,
-                            self.treeview_dialog_rectangle,
-                            self.treeview_sounds,
-                            self.treeview_music)
-        
+        treeview_widgets = (
+            self.treeview_scripts,
+            self.treeview_reusables,
+            self.treeview_characters,
+            self.treeview_backgrounds,
+            self.treeview_objects,
+            self.treeview_font_sprites,
+            self.treeview_dialog_rectangle,
+            self.treeview_sounds,
+            self.treeview_music,
+        )
+
         # Context menus (will be zipped with treeview widgets above)
-        context_menus = (context_chapters_scenes,
-                         context_reusables,
-                         context_images,
-                         context_images,
-                         context_images,
-                         context_images,
-                         context_images,
-                         context_audio,
-                         context_audio)
-        
+        context_menus = (
+            context_chapters_scenes,
+            context_reusables,
+            context_images,
+            context_images,
+            context_images,
+            context_images,
+            context_images,
+            context_audio,
+            context_audio,
+        )
+
         # Bind right-click to a context menu.
-        for treeview_widget, context_menu in zip(treeview_widgets, context_menus):            
+        for treeview_widget, context_menu in zip(treeview_widgets, context_menus):
             treeview_widget.bind("<Button-3>", context_menu)
 
     def on_move_item_menu_clicked(self, move_up: bool):
@@ -576,8 +643,7 @@ class EditorMainApp:
         Which treeview depends on self.context_menu_type
         """
         move_handler = FileManager()
-        move_handler.move_item(section=self.context_menu_type,
-                               move_up=move_up)        
+        move_handler.move_item(section=self.context_menu_type, move_up=move_up)
 
     def show_rename_popup_menu(self, section_type: SectionChosen, event):
         """
@@ -589,61 +655,71 @@ class EditorMainApp:
         self.context_menu_type = section_type
 
         # Enable/disable the 'Rename...' context menu,
-        # depending on whether the treeview item is ready to be renamed 
+        # depending on whether the treeview item is ready to be renamed
         # at this time or not.
-        self.mnu_rename.entryconfigure(index=0,
-                                       state=[self.check_rename_menu_state(section_type=section_type)])
-        
+        self.mnu_rename.entryconfigure(
+            index=0, state=[self.check_rename_menu_state(section_type=section_type)]
+        )
+
         # Enable/disable the 'Move up' context menu
         # depending on whether there is a selection and whether
         # the item is already at the top index or not.
-        self.mnu_rename.entryconfigure(index=2,
-                                       state=[self.check_move_up_down_state(context_menu_type=section_type,
-                                                                            move_up=True)])
-        
+        self.mnu_rename.entryconfigure(
+            index=2,
+            state=[
+                self.check_move_up_down_state(
+                    context_menu_type=section_type, move_up=True
+                )
+            ],
+        )
+
         # Enable/disable the 'Move down' context menu
         # depending on whether there is a selection and whether
         # the item is already at the end or not.
-        self.mnu_rename.entryconfigure(index=3,
-                                       state=[self.check_move_up_down_state(context_menu_type=section_type,
-                                                                            move_up=False)])
+        self.mnu_rename.entryconfigure(
+            index=3,
+            state=[
+                self.check_move_up_down_state(
+                    context_menu_type=section_type, move_up=False
+                )
+            ],
+        )
 
         # Show the 'Rename...' context menu.
         self.mnu_rename.tk_popup(event.x_root, event.y_root)
 
-    def check_move_up_down_state(self,
-                                 context_menu_type: SectionChosen,
-                                 move_up: bool) -> str:
+    def check_move_up_down_state(
+        self, context_menu_type: SectionChosen, move_up: bool
+    ) -> str:
         """
         Check whether the 'Move Up' and "Move Down" context menus should be enabled
         or disabled, depending on the treeview widget.
-        
+
         For example: if there is no selection in the treeview, don't
         allow the move up menu. Or if the item is already at index 0,
         don't enable the Move Up menu.
         """
 
-        treeview_widget = \
-            FileManager.get_active_treeview(section=context_menu_type)
-        
+        treeview_widget = FileManager.get_active_treeview(section=context_menu_type)
+
         selection = treeview_widget.selection()
         if not selection:
             return "disabled"
         else:
             item_iid = selection[0]
             current_index = treeview_widget.index(item=item_iid)
-            
+
             if move_up:
                 # Already at index 0? Disable the Move Up menu
                 if current_index == 0:
                     return "disabled"
             else:
                 # Move down
-                
+
                 # Get the total number of items for the parent.
                 parent_iid = treeview_widget.parent(item=item_iid)
                 total_items = len(treeview_widget.get_children(item=parent_iid))
-                
+
                 # Already at the end? Disable the 'Move Down' menu
                 if current_index == total_items - 1:
                     # Already at the end, disable the 'Move Down' menu
@@ -656,7 +732,7 @@ class EditorMainApp:
         """
         Check whether the 'Rename...' context menu should be enabled
         or disabled, depending on the section_type.
-        
+
         For example: if the editor's text widget is dirty (has unsaved text),
         then don't allow the chapter or scene to be renamed.
         """
@@ -670,16 +746,16 @@ class EditorMainApp:
             if Passer.editor.is_dirty() or not self.treeview_scripts.selection():
                 # Not ready to be renamed.
                 return "disabled"
-            
+
         elif section_type == SectionChosen.REUSABLES:
             if Passer.editor.is_dirty() or not self.treeview_reusables.selection():
                 # Not ready to be renamed.
                 return "disabled"
-            
+
         else:
             treeview_widget: ttk.Treeview
             treeview_widget = FileManager.get_active_treeview(section=section_type)
-            
+
             if not treeview_widget.selection():
                 # Not ready to be renamed
                 return "disabled"
@@ -691,7 +767,7 @@ class EditorMainApp:
         """
         Run the appropriate rename method, depending on
         which widget was right-clicked.
-        
+
         The rename type will be in the variable: self.context_menu_type
         """
         if self.context_menu_type == SectionChosen.CHAPTERS_AND_SCENES:
@@ -704,9 +780,10 @@ class EditorMainApp:
                 else:
                     is_scene = False
 
-                Passer.chapter_scenes.create_or_rename_chapter_scene(edit_item_iid=item_iid,
-                                                                     is_scene=is_scene)
-                
+                Passer.chapter_scenes.create_or_rename_chapter_scene(
+                    edit_item_iid=item_iid, is_scene=is_scene
+                )
+
         else:
             rename_handler = FileManager()
             rename_handler.rename_resource(section=self.context_menu_type)
@@ -714,11 +791,11 @@ class EditorMainApp:
     def get_selected_item_iid(self, treeview_widget: ttk.Treeview) -> str:
         """
         Get a single selected item iid from the given treeview widget.
-        
+
         Arguments:
-        
+
         - treeview_widget: the treeview widget to check for a selection.
-        
+
         Purpose: for the context 'Rename...' menu; used for getting
         the selected item's text.
         """
@@ -727,16 +804,17 @@ class EditorMainApp:
         if selected_items:
             # Return the first selected item.
             return selected_items[0]
-        
+
     def on_colors_button_clicked(self):
         """
         Show the color settings window.
-        
+
         The 'Colors' button has been clicked.
         """
-        edit_colors_window = EditColorsWindow(self.mainwindow,
-                                              self.text_script.refresh_colors)
-    
+        edit_colors_window = EditColorsWindow(
+            self.mainwindow, self.text_script.refresh_colors
+        )
+
     def _on_num_pad_enter_key_pressed(self, event):
         """
         Insert a new line in the text widget, because the num pad
@@ -750,68 +828,78 @@ class EditorMainApp:
         Connect the vertical scrollbars.
         """
         # Chapters and Scenes scrollbar
-        self.sb_vertical_chapters_scenes =\
-            self.builder.get_object("sb_vertical_chapters_scenes")
-        
+        self.sb_vertical_chapters_scenes = self.builder.get_object(
+            "sb_vertical_chapters_scenes"
+        )
+
         self.sb_vertical_chapters_scenes.configure(command=self.treeview_scripts.yview)
-        self.treeview_scripts.configure(yscrollcommand=self.sb_vertical_chapters_scenes.set)        
-        
-        
+        self.treeview_scripts.configure(
+            yscrollcommand=self.sb_vertical_chapters_scenes.set
+        )
+
         # Reusables scrollbar
-        self.sb_vertical_reusables =\
-            self.builder.get_object("sb_vertical_reusables")
-        
+        self.sb_vertical_reusables = self.builder.get_object("sb_vertical_reusables")
+
         self.sb_vertical_reusables.configure(command=self.treeview_reusables.yview)
-        self.treeview_reusables.configure(yscrollcommand=self.sb_vertical_reusables.set)        
-        
-    
+        self.treeview_reusables.configure(yscrollcommand=self.sb_vertical_reusables.set)
+
         # Characters
-        self.sb_vertical_characters =\
-            self.builder.get_object("sb_vertical_characters")
-        
+        self.sb_vertical_characters = self.builder.get_object("sb_vertical_characters")
+
         self.sb_vertical_characters.configure(command=self.treeview_characters.yview)
-        self.treeview_characters.configure(yscrollcommand=self.sb_vertical_characters.set)
-        
+        self.treeview_characters.configure(
+            yscrollcommand=self.sb_vertical_characters.set
+        )
+
         # Backgrounds
-        self.sb_vertical_backgrounds =\
-            self.builder.get_object("sb_vertical_backgrounds")
-        
+        self.sb_vertical_backgrounds = self.builder.get_object(
+            "sb_vertical_backgrounds"
+        )
+
         self.sb_vertical_backgrounds.configure(command=self.treeview_backgrounds.yview)
-        self.treeview_backgrounds.configure(yscrollcommand=self.sb_vertical_backgrounds.set)
-                
+        self.treeview_backgrounds.configure(
+            yscrollcommand=self.sb_vertical_backgrounds.set
+        )
+
         # Objects
-        self.sb_vertical_objects =\
-            self.builder.get_object("sb_vertical_objects")
-        
+        self.sb_vertical_objects = self.builder.get_object("sb_vertical_objects")
+
         self.sb_vertical_objects.configure(command=self.treeview_objects.yview)
         self.treeview_objects.configure(yscrollcommand=self.sb_vertical_objects.set)
-        
+
         # Font sprites
-        self.sb_vertical_font_sprites =\
-            self.builder.get_object("sb_vertical_font_sprites")
-        
-        self.sb_vertical_font_sprites.configure(command=self.treeview_font_sprites.yview)
-        self.treeview_font_sprites.configure(yscrollcommand=self.sb_vertical_font_sprites.set)
-                
+        self.sb_vertical_font_sprites = self.builder.get_object(
+            "sb_vertical_font_sprites"
+        )
+
+        self.sb_vertical_font_sprites.configure(
+            command=self.treeview_font_sprites.yview
+        )
+        self.treeview_font_sprites.configure(
+            yscrollcommand=self.sb_vertical_font_sprites.set
+        )
+
         # Dialog rectangle
-        self.sb_vertical_dialog_rectangle =\
-            self.builder.get_object("sb_vertical_dialog_rectangle")
-        
-        self.sb_vertical_dialog_rectangle.configure(command=self.treeview_dialog_rectangle.yview)
-        self.treeview_dialog_rectangle.configure(yscrollcommand=self.sb_vertical_dialog_rectangle.set)
-        
+        self.sb_vertical_dialog_rectangle = self.builder.get_object(
+            "sb_vertical_dialog_rectangle"
+        )
+
+        self.sb_vertical_dialog_rectangle.configure(
+            command=self.treeview_dialog_rectangle.yview
+        )
+        self.treeview_dialog_rectangle.configure(
+            yscrollcommand=self.sb_vertical_dialog_rectangle.set
+        )
+
         # Sounds
-        self.sb_vertical_sounds =\
-            self.builder.get_object("sb_vertical_sounds")
-        
+        self.sb_vertical_sounds = self.builder.get_object("sb_vertical_sounds")
+
         self.sb_vertical_sounds.configure(command=self.treeview_sounds.yview)
         self.treeview_sounds.configure(yscrollcommand=self.sb_vertical_sounds.set)
-                
-        
+
         # Music
-        self.sb_vertical_music =\
-            self.builder.get_object("sb_vertical_music")
-        
+        self.sb_vertical_music = self.builder.get_object("sb_vertical_music")
+
         self.sb_vertical_music.configure(command=self.treeview_music.yview)
         self.treeview_music.configure(yscrollcommand=self.sb_vertical_music.set)
 
@@ -820,88 +908,87 @@ class EditorMainApp:
         Remove the selected chapter or scene script.
         """
         self.treeview_scripts: ttk.Treeview
-        
+
         selected_item_iid = self.treeview_scripts.selection()
         if not selected_item_iid:
             return
-        
+
         # Convert it from a single-item tuple to a string
         selected_item_iid = selected_item_iid[0]
-        
+
         # Get the item details, specifically the text.
         selected_item_details = self.treeview_scripts.item(selected_item_iid)
-        text = selected_item_details.get("text")        
-        
+        text = selected_item_details.get("text")
+
         # Find out whether a chapter is being removed or a scene.
         chapter_iid = self.treeview_scripts.parent(selected_item_iid)
-        
-        chapter_text = None        
+
+        chapter_text = None
         scene_text = None
 
         if chapter_iid:
             # A scene is being deleted
             scene_text = text
-            
+
             # Get the chapter name
             item_details = self.treeview_scripts.item(item=chapter_iid)
             chapter_text = item_details.get("text")
-            
+
             delete_chapter = False
         else:
             # A chapter is being deleted
             chapter_iid = selected_item_iid
             chapter_text = text
-            
+
             delete_chapter = True
-            
 
         """
         Confirm deletion with the user.
         """
-    
+
         if not delete_chapter:
-            msg = "Confirm scene deletion:\n\n"\
-            f"'{text}'\n\n"
-            
+            msg = f"Confirm scene deletion:\n\n'{text}'\n\n"
+
         elif delete_chapter:
-            msg = f"Confirm chapter deletion:\n\n'{text}'\n\n"\
-                "This will also delete all the scenes in this chapter."            
+            msg = (
+                f"Confirm chapter deletion:\n\n'{text}'\n\n"
+                "This will also delete all the scenes in this chapter."
+            )
 
-
-        result = messagebox.askokcancel(parent=self.mainwindow, 
-                                        title="Confirm",
-                                        message=msg)
+        result = messagebox.askokcancel(
+            parent=self.mainwindow, title="Confirm", message=msg
+        )
         if not result:
             return
-        
-        
+
         # ProjectSnapshot.chapters_and_scenes
         # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
-        
+
         if delete_chapter:
             del ProjectSnapshot.chapters_and_scenes[chapter_text]
-            
+
             # Delete the scroll history for the chapter that was just deleted.
-            Passer.chapter_scenes.scroll_history.\
-                delete_chapter_scroll_history(chapter_name=chapter_text)      
-        
+            Passer.chapter_scenes.scroll_history.delete_chapter_scroll_history(
+                chapter_name=chapter_text
+            )
+
         else:
             # Deleting a scene in a chapter
-            
+
             # Get the value of the chapter
             chapter_value = ProjectSnapshot.chapters_and_scenes[chapter_text]
-            
+
             # Get just the scenes dictionary
             scenes_dict = chapter_value[1]
-            
+
             # Delete the specific scene from the scenes dictionary
             del scenes_dict[scene_text]
-            
+
             # Delete the scroll history for the scene that was just deleted.
-            Passer.chapter_scenes.scroll_history.\
-                delete_scene_scroll_history(chapter_name=chapter_text,
-                                            scene_name=scene_text)
-            
+            Passer.chapter_scenes.scroll_history.delete_scene_scroll_history(
+                chapter_name=chapter_text, scene_name=scene_text
+            )
+
             """
             ProjectSnapshot.chapters_and_scenes will get updated
             automatically with the changes of the deleted scene.
@@ -911,57 +998,51 @@ class EditorMainApp:
 
         # If it's a folder, the sub-items will be removed from the treeview too.
         self.treeview_scripts.delete(selected_item_iid)
-        
+
         # Get the active script name
         if isinstance(Passer.chapter_scenes.active_script, tuple):
-            
             active_chapter_name = Passer.chapter_scenes.active_script[0]
             active_scene_name = Passer.chapter_scenes.active_script[1]
-            
+
             reset_widgets = False
-            
+
             if all(Passer.chapter_scenes.active_script):
                 # A scene is the active script.
                 if not delete_chapter:
                     if scene_text == active_scene_name:
-                    
                         # The script that was deleted is the same as the one that's
                         # currently being edited, so clear the text widget.
                         reset_widgets = True
-                        
+
             else:
                 # A chapter is the active script, not a scene.
                 if delete_chapter:
                     if chapter_text == active_chapter_name:
                         reset_widgets = True
-                        
-                        
+
             if reset_widgets:
-                
                 # There is no active script selected any more.
                 Passer.chapter_scenes.active_script = None
-                
+
                 # Clear the text widget and disable the 'Save' and 'Cancel' buttons
-                # to start fresh.        
-                Passer.chapter_scenes.reset_script_widgets()                
-                
-        
+                # to start fresh.
+                Passer.chapter_scenes.reset_script_widgets()
+
         # So the user knows a save is needed.
-        self.mainwindow.event_generate("<<SaveNeeded>>")              
-            
+        self.mainwindow.event_generate("<<SaveNeeded>>")
+
     def _remove_reusable_script_item(self):
         """
         Remove the selected reusable script.
-        
+
         If a folder is selected (tag: "folder_row", then remove
         all reusable scripts within that folder.)
         """
-        
 
         selected_item_iid = self.treeview_reusables.selection()
         if not selected_item_iid:
             return
-        
+
         # Find out whether a folder is being removed or a normal row.
         # folders will have the tag: "folder_row", while regular rows
         # will have the tag, "normal_row".
@@ -972,120 +1053,116 @@ class EditorMainApp:
         """
         Confirm deletion with the user.
         """
-    
+
         if "normal_row" in tags:
             msg = f"Confirm deletion of:\n\n'{text}'"
             folder_deleted = False
-            
+
         elif "folder_row" in tags:
-            msg = "Confirm deletion of folder:\n\n"\
-            f"'{text}'\n\n"\
-            "This will also delete everything inside the folder."
-            
+            msg = (
+                "Confirm deletion of folder:\n\n"
+                f"'{text}'\n\n"
+                "This will also delete everything inside the folder."
+            )
+
             folder_deleted = True
 
-        result = messagebox.askokcancel(parent=self.mainwindow, 
-                                        title="Confirm",
-                                        message=msg)
+        result = messagebox.askokcancel(
+            parent=self.mainwindow, title="Confirm", message=msg
+        )
         if not result:
             return
-        
-        
+
         # Start with the iid that's currently selected.
         iids_to_remove = [selected_item_iid[0]]
-        
+
         def get_children_iids(item):
             """
             Add the given child item iid to the remove-list
             and also add the children of the given item to the remove-list
             (if any)
-            
+
             Arguments:
-            
+
             - item: a child item iid
             """
-            
+
             # Add the given child item iid to the remove-list.
             iids_to_remove.append(item)
-            
+
             # Does the given item iid have any children? If so,
             # add them to the remove-list too.
             item_children = self.treeview_reusables.get_children(item)
             if item_children:
                 for sub_item in item_children:
                     get_children_iids(sub_item)
-        
+
         # Append a list of iids to remove
         for item in self.treeview_reusables.get_children(selected_item_iid):
             get_children_iids(item=item)
-            
-        # Go through the list of iids to remove and get their reusable 
+
+        # Go through the list of iids to remove and get their reusable
         for remove_iid in iids_to_remove:
-            
             # Example:
             # {'text': 'go right animation', 'image': '', 'values': '', 'open': 0, 'tags': ['normal_row']}
             item_details = self.treeview_reusables.item(remove_iid)
             item_text = item_details.get("text")
             tag = item_details.get("tags")
-            
+
             # Folders are not stored in dictionaries, they're only stored and displayed
             # in treeview widgets, so if we're iterating over a folder, skip it,
             # because there is no folder to delete in the reusables dictionary.
             if "folder_row" in tag:
-                continue                
-            
+                continue
+
             # Delete the reusable script from the reusables dictionary.
             if item_text in ProjectSnapshot.reusables:
                 del ProjectSnapshot.reusables[item_text]
-                
+
                 # Remove the scroll history for the reusable script, if any.
-                Passer.chapter_scenes.scroll_history.\
-                    delete_reusable_scroll_history(
-                        reusable_script_name=item_text)
+                Passer.chapter_scenes.scroll_history.delete_reusable_scroll_history(
+                    reusable_script_name=item_text
+                )
 
         # Delete the selected item from the reusables dictionary.
         # If it's a folder, the sub-items will be removed from the treeview too.
         self.treeview_reusables.delete(selected_item_iid)
-        
+
         # If the last selected reusable item iid no longer exists,
         # clear the record of the last selected item reusable script
         # (which would have been used for changing its item row icon
         # from edit-mode to a blue dot).
         if self.treeview_reusables.last_selected_item_iid:
-            if self.treeview_reusables.last_selected_item_iid in \
-               iids_to_remove:
-                
+            if self.treeview_reusables.last_selected_item_iid in iids_to_remove:
                 # The reusable item row no longer exists, so
                 # remove the reference to it.
                 self.treeview_reusables.last_selected_item_iid = None
-    
-    
+
         # Get the reusable script name
         active_script_name = Passer.chapter_scenes.active_script
-        
+
         # Clear the script in the text widget if the single-removed script
-        # was the same as the one that's being actively edited.        
+        # was the same as the one that's being actively edited.
         if not folder_deleted and text == active_script_name:
-            
             # The script that was deleted is the same as the one that's
             # currently being edited, so clear the text widget.
-            
+
             # There is no active script selected any more.
             Passer.chapter_scenes.active_script = None
-            
+
             # Clear the text widget and disable the 'Save' and 'Cancel' buttons
-            # to start fresh.        
+            # to start fresh.
             Passer.chapter_scenes.reset_script_widgets()
-        
+
         # So the user knows a save is needed.
-        self.mainwindow.event_generate("<<SaveNeeded>>")       
-                
+        self.mainwindow.event_generate("<<SaveNeeded>>")
+
     def on_remove_script_button_clicked(self):
         self._remove_chapter_or_scene_item()
-                
+
     def on_remove_reusable_script_button_clicked(self):
         self._remove_reusable_script_item()
-        
+
     def hide_pencil_icon(self, hide_icon_in_reusables_treeview: bool):
         """
         Remove the pencil icon from either the main scripts treeview widget
@@ -1117,12 +1194,9 @@ class EditorMainApp:
 
         if not selected_item:
             return
-        
 
-        treeview_widget.item(item=selected_item,
-                             image="")
-        
-        
+        treeview_widget.item(item=selected_item, image="")
+
         #
         # # If we're not hiding the pencil icon in the reusables treeview widget,
         # # then that means the user has selected a reusables script, so set the active script to None.
@@ -1152,7 +1226,7 @@ class EditorMainApp:
         Return: None
         """
 
-        # Make sure the selected item in the treeview widget has a parent, 
+        # Make sure the selected item in the treeview widget has a parent,
         # because only scenes have parents.
         selected_item = self.treeview_scripts.focus()
 
@@ -1168,14 +1242,15 @@ class EditorMainApp:
 
         item_parent = self.treeview_scripts.parent(item_iid)
         if not item_parent:
-            messagebox.showwarning(parent=self.mainwindow, 
-                                   title="Not a Scene",
-                                   message="Only scenes can be set as a startup script.")
+            messagebox.showwarning(
+                parent=self.mainwindow,
+                title="Not a Scene",
+                message="Only scenes can be set as a startup script.",
+            )
             return
 
         # Make sure none of the items have a 'startup_script' tag.
         for root_item in self.treeview_scripts.get_children():
-
             # Get the children of the current root item
             item_children = self.treeview_scripts.get_children(root_item)
 
@@ -1185,7 +1260,7 @@ class EditorMainApp:
                     item_tags.remove("startup_script")
                     self.treeview_scripts.item(item=c_item, tags=item_tags)
 
-        # Now set the selected item to contain a tag that shows 
+        # Now set the selected item to contain a tag that shows
         # it's the startup script.
         item_tags = list(self.treeview_scripts.item(item_iid).get("tags"))
         item_tags.append("startup_script")
@@ -1195,7 +1270,7 @@ class EditorMainApp:
         """
         Return the (chapter name, scene name) that is set as a default
         or None if none is set.
-        
+
         Return: Tuple (chapter name, scene name) both as strings.
         """
 
@@ -1204,8 +1279,7 @@ class EditorMainApp:
             return
 
         # Get the scene name (from the item iid)
-        scene_name = \
-            self.treeview_scripts.item(startup_scene_item_iid).get("text")
+        scene_name = self.treeview_scripts.item(startup_scene_item_iid).get("text")
 
         # Get the parent name (chapter name)
         parent_iid = self.treeview_scripts.parent(startup_scene_item_iid)
@@ -1222,7 +1296,7 @@ class EditorMainApp:
 
         We use this when saving a project file (.lvnap) and also when
         playing the script from the beginning.
-        
+
         Return: item iid str
         """
 
@@ -1230,7 +1304,6 @@ class EditorMainApp:
 
         # Iterate through the root items first (the chapters)
         for root_item in self.treeview_scripts.get_children():
-
             # The startup script will be a descendant of a chapter item.
             # Iterate through the parent's items.
             for c_item in self.treeview_scripts.get_children(root_item):
@@ -1255,16 +1328,17 @@ class EditorMainApp:
             file_name = ProjectSnapshot.font_sprites.get(item_text)
             if not file_name:
                 return
-            
-            font_properties = ProjectSnapshot.font_sprite_properties.get\
-                (item_text)
+
+            font_properties = ProjectSnapshot.font_sprite_properties.get(item_text)
             if not font_properties:
                 return
 
-            font_window = FontSpriteWindow(master=self.mainwindow,
-                                           font_sprite_name=item_text,
-                                           font_file_name=file_name,
-                                           font_sprite_details=font_properties)
+            font_window = FontSpriteWindow(
+                master=self.mainwindow,
+                font_sprite_name=item_text,
+                font_file_name=file_name,
+                font_sprite_details=font_properties,
+            )
 
     def on_play_startup_scene(self):
         """
@@ -1272,7 +1346,7 @@ class EditorMainApp:
 
         Only scene scripts can be played directly.
         Chapter scripts and reusable scripts cannot be played directly.
-        
+
         We only include binary files (images, audio) that have a <load-..>
         script for them in either a chapter script or scene script.
         For example <load_character: rave_happy, Rave>
@@ -1283,34 +1357,37 @@ class EditorMainApp:
 
         startup_info = self.get_startup_chapter_and_scene()
         if not startup_info:
-            messagebox.showwarning(parent=self.mainwindow,
-                                   title="No Startup Scene",
-                                   message="There is currently no scene marked as a Startup script.\n\nSelect a scene and then click the 'Set as Startup' builder")
+            messagebox.showwarning(
+                parent=self.mainwindow,
+                title="No Startup Scene",
+                message="There is currently no scene marked as a Startup script.\n\nSelect a scene and then click the 'Set as Startup' builder",
+            )
             return
 
         startup_chapter_name, startup_scene_name = startup_info
 
-
-        # Make sure there is an active scene selected.        
+        # Make sure there is an active scene selected.
         if startup_chapter_name and startup_scene_name:
-
             # For playing/testing the story
             draft_path = ContainerHandler.get_draft_path()
-            compile_path = Path(draft_path)              
+            compile_path = Path(draft_path)
 
-            compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
-                                     startup_scene_name=startup_scene_name,
-                                     startup_chapter_name=startup_chapter_name,
-                                     save_file_path=compile_path,
-                                     story_reusables_dict=ProjectSnapshot.reusables,
-                                     treeview_scripts=self.treeview_scripts)
+            compiler = StoryCompiler(
+                compile_part=CompilePart.CURRENT_SCENE,
+                startup_scene_name=startup_scene_name,
+                startup_chapter_name=startup_chapter_name,
+                save_file_path=compile_path,
+                story_reusables_dict=ProjectSnapshot.reusables,
+                treeview_scripts=self.treeview_scripts,
+            )
             success = compiler.compile(compile_mode=CompileMode.DRAFT)
             if not success:
                 return
 
             # Play the .lvna file
-            EditorMainApp.play_lvna_file(lvna_file_path=compile_path,
-                                         error_window_master=self.mainwindow)        
+            EditorMainApp.play_lvna_file(
+                lvna_file_path=compile_path, error_window_master=self.mainwindow
+            )
 
     def on_play_current_scene(self):
         """
@@ -1318,7 +1395,7 @@ class EditorMainApp:
 
         Only scene scripts can be played directly.
         Chapter scripts and reusable scripts cannot be played directly.
-        
+
         We only include binary files (images, audio) that have a <load-..>
         script for them in either a chapter script or scene script.
         For example <load_character: rave_happy, Rave>
@@ -1330,80 +1407,88 @@ class EditorMainApp:
         message = None
 
         if not active_script:
-            messagebox.showwarning(parent=self.mainwindow,
-                                   title="No Script",
-                                   message="Select a scene script to play.")
+            messagebox.showwarning(
+                parent=self.mainwindow,
+                title="No Script",
+                message="Select a scene script to play.",
+            )
             return
 
         # We can't play a reusable script
         elif isinstance(active_script, str):
             message = "Reusable scripts cannot be played directly. They need to be called from main scripts."
-            messagebox.showwarning(parent=self.mainwindow,
-                                   title="Reusable Script",
-                                   message=message)
+            messagebox.showwarning(
+                parent=self.mainwindow, title="Reusable Script", message=message
+            )
             return
 
         active_chapter_name, active_scene_name = active_script
 
         if not active_scene_name:
-            message = "Only scene scripts can be played directly.\nSelect a scene script."
-            messagebox.showwarning(parent=self.mainwindow,
-                                   title="Scene Script",
-                                   message=message)
+            message = (
+                "Only scene scripts can be played directly.\nSelect a scene script."
+            )
+            messagebox.showwarning(
+                parent=self.mainwindow, title="Scene Script", message=message
+            )
             return
 
         # Make sure there is an active scene selected.
-        
-        if active_chapter_name and active_scene_name:
 
+        if active_chapter_name and active_scene_name:
             ## Include only the active chapter script and scene script
-            #active_script = {active_chapter_name: ProjectSnapshot.chapters_and_scenes[active_chapter_name]}
+            # active_script = {active_chapter_name: ProjectSnapshot.chapters_and_scenes[active_chapter_name]}
 
             # For playing/testing the story
             draft_path = ContainerHandler.get_draft_path()
-            compile_path = Path(draft_path)              
+            compile_path = Path(draft_path)
 
-            compiler = StoryCompiler(compile_part=CompilePart.CURRENT_SCENE,
-                                     startup_scene_name=active_scene_name,
-                                     startup_chapter_name=active_chapter_name,
-                                     save_file_path=compile_path,
-                                     story_reusables_dict=ProjectSnapshot.reusables,
-                                     treeview_scripts=self.treeview_scripts)
+            compiler = StoryCompiler(
+                compile_part=CompilePart.CURRENT_SCENE,
+                startup_scene_name=active_scene_name,
+                startup_chapter_name=active_chapter_name,
+                save_file_path=compile_path,
+                story_reusables_dict=ProjectSnapshot.reusables,
+                treeview_scripts=self.treeview_scripts,
+            )
             success = compiler.compile(compile_mode=CompileMode.DRAFT)
             if not success:
                 return
 
             # Play the .lvna file
-            EditorMainApp.play_lvna_file(lvna_file_path=compile_path,
-                                         error_window_master=self.mainwindow)
+            EditorMainApp.play_lvna_file(
+                lvna_file_path=compile_path, error_window_master=self.mainwindow
+            )
 
     @staticmethod
-    def play_lvna_file(lvna_file_path: Path,
-                       error_window_master: tk.Toplevel = None, 
-                       show_launch_window: bool = False,
-                       regular_play_mode: bool = False):
+    def play_lvna_file(
+        lvna_file_path: Path,
+        error_window_master: tk.Toplevel = None,
+        show_launch_window: bool = False,
+        regular_play_mode: bool = False,
+    ):
         """
         Run a compiled .lvna file in a player window.
-        
+
         After the player window closes, delete the draft .lvna file.
-        
+
         Purpose: after a draft .lvna file (draft.lvna) has been compiled
         (ie: play current scene or play from beginning),
         then this method is called to play the visual novel.
-        
+
         This method is also used for playing finished/non-draft .lvna files.
-        
+
         Arguments:
-        
+
         - lvna_file_path: a Path object to the .lvna file to play.
-        
+
         - error_window_master: the parent window of the error message window,
         which will either be the editor window or the startup window.
-        
+
         - show_launch_window: whether to show a list of chapters and scenes
         in the player, allowing the viewer to choose what to play.
         This is True for 'play all' and False for 'play current scene'.
-        
+
         - regular_play_mode: True if the visual novel is being played from
         the startup window (not in the editor). We need to know so that
         we can re-show the startup window if an error occurs.
@@ -1414,54 +1499,48 @@ class EditorMainApp:
         player_script_file = ContainerHandler.get_lvnauth_player_python_file()
 
         # Running from PyInstaller?
-        if hasattr(sys, '_MEIPASS'):
-            
+        if hasattr(sys, "_MEIPASS"):
             # Yes, running from PyInstaller.
-            
+
             # Check if we are on Linux or Windows.
             # Windows returns 'win32', Linux returns 'linux'
-            extension = ".exe" if sys.platform == "win32" else ""            
-            
+            extension = ".exe" if sys.platform == "win32" else ""
+
             # Both executable files sit in the same folder.
             # sys.executable is 'startup' or 'startup.exe'
             # 'player' or 'player.exe' is in the same parent directory.
             player_bin = Path(sys.executable).parent / f"player{extension}"
-            
-            cmd = [
-                str(player_bin),
-                "--file", lvna_file_path,
-                "--show-launch"
-            ]
-            
+
+            cmd = [str(player_bin), "--file", lvna_file_path, "--show-launch"]
+
         else:
-            
             # Not running from PyInstaller.
 
             # Get the path to the Python interpreter that's being used now.
             # This is the recommended way when using subprocess.run()
             python_executable = sys.executable
-                
-            cmd = [python_executable, 
+
+            cmd = [
+                python_executable,
                 player_script_file,
                 "--file",
                 lvna_file_path,
-                "--show-launch"]
-            
+                "--show-launch",
+            ]
+
         # Don't show the launch window? Remove the last paraemter
         # (--show-launch)
         if not show_launch_window:
-            cmd.pop(-1)        
+            cmd.pop(-1)
 
-
-        #python_executable = ContainerHandler.get_python_interpreter()
+        # python_executable = ContainerHandler.get_python_interpreter()
 
         # print("player_script_file: ", player_script_file)
 
         # subprocess.Popen(["python3", str(player_script_file), "--file", str(compile_path)],
-                         # text=True)
+        # text=True)
 
-        
-        #result = subprocess.run([python_executable, 
+        # result = subprocess.run([python_executable,
         #                        player_script_file,
         #                        "--file",
         #                        lvna_file_path,
@@ -1470,51 +1549,46 @@ class EditorMainApp:
         #                        text=True,
         #                        capture_output=True)
 
-        result = subprocess.run(cmd,
-                                text=True,
-                                capture_output=True)
-        
+        result = subprocess.run(cmd, text=True, capture_output=True)
+
         # A return code of 0 means a success
         # 1 means an error occurred.
         if result.returncode != 0:
             # An error occurred while playing the visual novel.
-            
+
             # Show the Python exception to the user in a new window
             # that has a text widget.
             error_window = PlayErrorWindow(error_window_master)
             error_window.show_text(result.stderr)
-            
+
             # An error occurred while attempting to play the visual novel,
             # so re-show the startup window.
             if regular_play_mode:
                 error_window_master.deiconify()
-            
+
             # Make the error window on top of the other LVNAuth windows.
             # and wait for the error window to close.
             error_window.mainwindow.transient(error_window_master)
             error_window.mainwindow.update_idletasks()
             error_window.mainwindow.grab_set()
-            error_window.mainwindow.wait_window(error_window.mainwindow)            
-            
-            
-
+            error_window.mainwindow.wait_window(error_window.mainwindow)
 
         ## Delete the compiled .lvna file
         ## because the player window has closed.
-        #lvna_file_path.unlink(missing_ok=True)    
+        # lvna_file_path.unlink(missing_ok=True)
 
     def on_play_from_beginning(self):
         """
         Compile the entire visual novel by including files that are
         requested to be loaded in the chapter scripts and/or the scene scripts.
-        
+
         We only include binary files (images, audio) that have a <load-..>
         script for them in either a chapter script or scene script.
         For example <load_character: rave_happy, Rave>
-        
+
         Include all chapter scripts and scene scripts
         in the compiled .lvna file.
-        
+
         Then play the startup scene script.
 
         Note: only scene scripts can be played directly.
@@ -1523,52 +1597,54 @@ class EditorMainApp:
 
         # For playing/testing the story
         draft_path = ContainerHandler.get_draft_path()
-        compile_path = Path(draft_path)     
+        compile_path = Path(draft_path)
 
-        compile_result = self.compile(lvna_full_path=compile_path,
-                                      draft_mode=True)
-        
+        compile_result = self.compile(lvna_full_path=compile_path, draft_mode=True)
+
         if not compile_result:
             return
 
         # Play the .lvna file
-        EditorMainApp.play_lvna_file(lvna_file_path=compile_path,
-                                     error_window_master=self.mainwindow, 
-                                     show_launch_window=True)
-        
+        EditorMainApp.play_lvna_file(
+            lvna_file_path=compile_path,
+            error_window_master=self.mainwindow,
+            show_launch_window=True,
+        )
+
     def save_final_lvna(self):
-        
-        file_types = [("Visual Novel", ".lvna"),]
-        
+
+        file_types = [
+            ("Visual Novel", ".lvna"),
+        ]
+
         # Is there .tar.gz support on this machine?
         if archive_handler.ArchiveHandler.has_gz_tar_support():
             file_types.append(("Visual Novel + Player (Linux)", ".tar.gz"))
-        
+
         # Is there .zip support on this machine?
         if archive_handler.ArchiveHandler.has_zip_support():
             file_types.append(("Visual Novel + Player (Windows)", ".zip"))
-        
-        save_full_path = filedialog.asksaveasfilename(parent=self.mainwindow,
-                                                      filetypes=file_types,
-                                                      title="Compile to File")
+
+        save_full_path = filedialog.asksaveasfilename(
+            parent=self.mainwindow, filetypes=file_types, title="Compile to File"
+        )
 
         if not save_full_path:
             return
         else:
-            
             # Get the extensino, including the dot.
             extension = Path(save_full_path).suffix.lower()
-            
+
             # The OS we're currently running in, so we can find out
             # how the file dialog behaves. In Linux, no file extension means
             # a tar.gz file was likely specified. In Windows, no file extension
             # is common. The extension is not added automatically, so
             # the user has to type it.
             running_os = ContainerHandler.get_os()
-            
+
             if not extension or extension not in (".gz", ".lvna", ".zip"):
-                # No extension in Linux means the extension '.tar.gz' 
-                # is not added automatically by the tkinter file dialog, 
+                # No extension in Linux means the extension '.tar.gz'
+                # is not added automatically by the tkinter file dialog,
                 # so we add it here.
                 if running_os == OS.LINUX:
                     extension = ".gz"
@@ -1577,62 +1653,55 @@ class EditorMainApp:
                     # Running Windows; there has to be an extension manually
                     # specified by the user. The extension does not
                     # automatically get added to the file name by the dialog.
-                    messagebox.showerror(title="Specify the file type",
-                                         message="Specify a supported file extension at the end of the file name.")
+                    messagebox.showerror(
+                        title="Specify the file type",
+                        message="Specify a supported file extension at the end of the file name.",
+                    )
                     return
-            
+
             # Convert to a Path object.
             save_full_path = Path(save_full_path)
-        
+
         if extension in (".gz", ".zip"):
-            
             # .tar.gz is for Linux, whereas .zip is for Windows.
             # This will determine which OS-specific binaries are copied.
             compile_for_os = OS.LINUX if extension == ".gz" else OS.WINDOWS
-            
+
             # Populate the release path with the pyinstaller binary data.
-            ContainerHandler.\
-                prepare_release_path(operating_system=compile_for_os)            
-            
+            ContainerHandler.prepare_release_path(operating_system=compile_for_os)
+
             # Example: /home/../release/release.lvna
             full_release_path = ContainerHandler.get_release_path()
-            
+
             # Get the release path without the file name.
             # Example: /release
             # We need this to know which path to archive later.
             release_path_only = full_release_path.parent
-            
+
             # Example: release.lvna
-            lvna_file_name_only =\
-                full_release_path.stem + full_release_path.suffix
+            lvna_file_name_only = full_release_path.stem + full_release_path.suffix
 
             # Get the path for making a visual novel archive (tar.gz).
             # This path will include the file name (release.lvna)
-            lvna_save_path =\
-                release_path_only / "_internal" / lvna_file_name_only
-                     
-            
+            lvna_save_path = release_path_only / "_internal" / lvna_file_name_only
+
         elif extension == ".lvna":
             lvna_save_path = save_full_path
-        
+
         # Compile the .lvna file
-        compile_result = self.compile(lvna_full_path=lvna_save_path,
-                                      draft_mode=False)  
-        
+        compile_result = self.compile(lvna_full_path=lvna_save_path, draft_mode=False)
+
         if compile_result:
             if extension in (".gz", ".zip"):
-                
                 # Set the operating system name so the extract + run
                 # instructions can be shown to the user.
-                os_name = "Linux" if compile_for_os == OS.LINUX \
-                    else "Windows"                
-                
+                os_name = "Linux" if compile_for_os == OS.LINUX else "Windows"
+
                 # The extension will get added by .make_archive() automatically
                 # so we shouldn't specify the extension of the archive.
                 if extension == ".gz":
-                    file_no_extension =\
-                        save_full_path.stem.removesuffix(".tar")
-                    
+                    file_no_extension = save_full_path.stem.removesuffix(".tar")
+
                     # shutils will need this to know what kind of archive
                     # to create.
                     archive_format = "gztar"
@@ -1640,69 +1709,78 @@ class EditorMainApp:
                 else:
                     # zip file
                     file_no_extension = save_full_path.stem
-                    
+
                     # shutils will need this to know what kind of archive
-                    # to create.                    
+                    # to create.
                     archive_format = "zip"
 
-                # Get the path to the archive we want to create, 
+                # Get the path to the archive we want to create,
                 # but with no extension.
                 path_only = save_full_path.parent
                 path_with_file_no_extension = path_only / file_no_extension
-                
+
                 # Create an archive in a separate process so that
                 # the user can cancel it if requested.
                 self.archive_handler.start_create_archive(
                     save_full_path_no_extension=path_with_file_no_extension,
                     archive_format=archive_format,
                     archive_directory=release_path_only,
-                    os_name=os_name)
-                    
+                    os_name=os_name,
+                )
+
             elif extension == ".lvna":
-                messagebox.showinfo(parent=self.mainwindow, 
-                                    title="Finished",
-                                    message="Your visual novel has been compiled successfully.")
+                messagebox.showinfo(
+                    parent=self.mainwindow,
+                    title="Finished",
+                    message="Your visual novel has been compiled successfully.",
+                )
         else:
-            messagebox.showerror(parent=self.mainwindow, 
-                                 title="Error",
-                                 message="An error occurred when attempting to compile your visual novel.")            
+            messagebox.showerror(
+                parent=self.mainwindow,
+                title="Error",
+                message="An error occurred when attempting to compile your visual novel.",
+            )
 
     def compile(self, lvna_full_path: [str, Path], draft_mode: bool):
         """
         Compile a 'play from beginning' .lvna file.
-        
+
         This method can be used for compiling a draft or a release version.
-        
+
         Arguments:
-        
+
         - lvna_full_path: the path to the .lvna file to be saved.
-        
+
         - draft_mode: True if it's being played from within the editor
         or False if the user wants to save a final .lvna file, ready to be
         shared with others.
         """
-        
+
         startup_info = self.get_startup_chapter_and_scene()
         if not startup_info:
-            messagebox.showerror(parent=self.mainwindow, 
-                                 title="No Startup Scene",
-                                 message="Please choose a scene that should start first.")
+            messagebox.showerror(
+                parent=self.mainwindow,
+                title="No Startup Scene",
+                message="Please choose a scene that should start first.",
+            )
             return
 
         startup_chapter_name = startup_info[0]
         startup_scene_name = startup_info[1]
-        
+
         if draft_mode:
             mode = CompileMode.DRAFT
         else:
             mode = CompileMode.FINAL
 
-        compiler = StoryCompiler(compile_part=CompilePart.ALL_SCENES,
-                                 startup_scene_name=startup_scene_name,
-                                 startup_chapter_name=startup_chapter_name,
-                                 save_file_path=lvna_full_path,
-                                 story_reusables_dict=ProjectSnapshot.reusables,
-                                 treeview_scripts=self.treeview_scripts)
+        compiler = StoryCompiler(
+            compile_part=CompilePart.ALL_SCENES,
+            startup_scene_name=startup_scene_name,
+            startup_chapter_name=startup_chapter_name,
+            save_file_path=lvna_full_path,
+            story_reusables_dict=ProjectSnapshot.reusables,
+            treeview_scripts=self.treeview_scripts,
+        )
         success = compiler.compile(compile_mode=mode)
         return success
 
@@ -1714,7 +1792,7 @@ class EditorMainApp:
         Arguments:
         - widget_id: (str) This tells us which widget name was clicked,
         so we know the section.
-        
+
         return: None
         """
 
@@ -1725,7 +1803,9 @@ class EditorMainApp:
         elif widget_id == "btn_new_folder_reusable":
             section_chosen = SectionChosen.REUSABLES
 
-        Passer.file_manager.on_create_new_folder_button_clicked(section_chosen=section_chosen)
+        Passer.file_manager.on_create_new_folder_button_clicked(
+            section_chosen=section_chosen
+        )
 
     def add_to_delete_file_upon_close(self, full_path_to_file: Path):
         """
@@ -1737,7 +1817,7 @@ class EditorMainApp:
                  images that were added to the project's images folder.
 
         This method is called when adding new images to the project, before the project has been saved.
-        
+
         Arguments:
         - full_path_to_file: Path object to a full image path
         """
@@ -1764,13 +1844,13 @@ class EditorMainApp:
                 if file_path.is_file():
                     file_path.unlink()
 
-        # Clean-up any LVNAuth temp files that might be in the temporary 
+        # Clean-up any LVNAuth temp files that might be in the temporary
         # directory.
-        TempHandler.cleanup_temp_files(TempContentType.ALL)          
+        TempHandler.cleanup_temp_files(TempContentType.ALL)
 
         # Close the editor window
         self.mainwindow.destroy()
-        
+
         # Close the startup window
         self.master.destroy()
 
@@ -1848,42 +1928,43 @@ class EditorMainApp:
         Open the wizard toplevel window.
         """
         if not Passer.chapter_scenes.active_script:
-            messagebox.showwarning(parent=self.mainwindow, 
-                                   title="Select a script",
-                                   message="Open a chapter/scene or reusable script before using commands.")
+            messagebox.showwarning(
+                parent=self.mainwindow,
+                title="Select a script",
+                message="Open a chapter/scene or reusable script before using commands.",
+            )
             return
-        
+
         wizard = WizardWindow(self.mainwindow)
-        
+
         # Set the wizard window to be always on top and wait
         # for the wizard window to close before releasing control back.
         self.always_on_top(self.mainwindow, wizard.mainwindow)
-        
+
         # The wizard window was cancelled? Return.
         if not wizard.generated_command:
             return
-        
+
         self.insert_command(wizard.generated_command)
 
     def insert_command(self, command: str):
         """
         Insert the text in the command variable.
-        
+
         If the cursor in the textbox is on a new line, insert the
         command right there.
-        
+
         If the cursor in the textbox is on an existing line, insert
         the command on a new line.
         """
 
         # Get the text on the current line the cursor is on.
-        current_line_text =\
-            self.text_script.get("insert linestart", "insert lineend")
+        current_line_text = self.text_script.get("insert linestart", "insert lineend")
 
         # If there is any text, add the command on a new line.
         if current_line_text:
             possible_new_line = "\n"
-            
+
             # We need to move the insert cursor to the next line
             # so the colorization gets done on the newly added line.
             line_number = self.text_script.get_current_line_number()
@@ -1894,19 +1975,22 @@ class EditorMainApp:
 
         # Insert the command into the text widget.
         self.text_script.insert("insert lineend", possible_new_line + command)
-        
+
         # Move the insert cursor to the new line?
         if possible_new_line:
             # So that colorization can occur on the newly added line.
             self.text_script.mark_set("insert", f"{line_number}.0")
-            
+
         # Colorize the modified line.
         self.text_script.reevaluate_current_line()
-        
+
+        # Update parameter description for the newly inserted command
+        self.text_script.event_generate("<<UpdateParameterDescription>>")
+
     def insert_edit_command(self, command: str):
         """
         Edit the command text on the current line.
-        
+
         Delete the current line and insert the edited command on the same line.
         """
 
@@ -1915,24 +1999,24 @@ class EditorMainApp:
 
         # Insert the command into the text widget.
         self.text_script.insert("insert lineend", command)
-        
+
         # Colorize the modified line.
         self.text_script.reevaluate_current_line()
-        
+
         # This virtual event only gets used when editing an existing command.
         # It causes the parameter description to refresh to reflect the
         # newly edited command, because it could have been replaced with
         # a completely new command by the user when they edited the command.
         self.text_script.event_generate("<<UpdateParameterDescription>>")
-        
-        # Place the insert cursor on the last part of the current line 
+
+        # Place the insert cursor on the last part of the current line
         # minus one. This is just so that the cursor doesn't end up at the end
-        # of the current line; it'll be before the last '>' command character, 
+        # of the current line; it'll be before the last '>' command character,
         # on the last argument of the current command.
         self.text_script.mark_set("insert", f"insert lineend - 1c")
 
     def on_debug_button_clicked(self):
-        
+
         current = self.text_script.get("insert linestart", "insert lineend")
         if current:
             add_new_line = "\n"
@@ -1955,36 +2039,35 @@ class ChapterSceneManager:
 
     Chapter scripts are normal scripts that are read only once for the first-played scene
     in that chapter.
-    
+
     Arguments:
-    
+
     - treeview_widget: main chapters and scenes treeview widget
-    
+
     - treeview_reusables: reusable scripts treeview widget
-    
+
     - blue_dot_image: image of a regular blue dot. We need this
     to restore the blue dot in the reusables treeview,
     after a reusable script is no longer being edited.
-    
+
     - text_widget: the primary text widget. We need this reference to save
     and restore the scroll positions.
     """
-    def __init__(self,
-                 treeview_widget,
-                 treeview_reusables, 
-                 blue_dot_image,
-                 text_widget: tk.Text):
+
+    def __init__(
+        self, treeview_widget, treeview_reusables, blue_dot_image, text_widget: tk.Text
+    ):
 
         # Main scripts treeview widget
         self.treeview_widget: ttk.Treeview = treeview_widget
 
         # Reusables treeview widget
         self.treeview_reusables: ttk.Treeview = treeview_reusables
-              
+
         # Used for restoring a reusable script treeview row's blue dot icon.
         # when selection is moved away from a reusable script.
-        self.treeview_reusables.last_selected_item_iid = None             
-        
+        self.treeview_reusables.last_selected_item_iid = None
+
         # If a reusable script is no longer being edited,
         # the item needs re-show a blue image, so we use this image to restore
         # the blue dot image.
@@ -2004,7 +2087,7 @@ class ChapterSceneManager:
         self.active_script = None
 
         self.treeview_widget.bind("<<TreeviewSelect>>", self.on_treeview_item_selected)
-        
+
         # Disable the 'Save script' and 'Cancel' buttons on startup.
         self.reset_script_widgets()
 
@@ -2012,25 +2095,24 @@ class ChapterSceneManager:
         """
         Clear the text widget and disable the 'Save' and 'Cancel' buttons
         to start fresh.
-        
+
         Purpose: used when starting the application and also when a script
         is deleted from the treeview widget.
         """
-        
-        # Initialize/reset the 'Save Script' and 'Cancel Changes' buttons 
+
+        # Initialize/reset the 'Save Script' and 'Cancel Changes' buttons
         # so they're disabled
         self.btn_save_script.state(["disabled"])
         self.btn_cancel_script.state(["disabled"])
-        
+
         # Clear the active chapter/scene title label.
         self.lbl_title.configure(text="")
-        
+
         # Delete any text that's in the text widget.
         Passer.editor.text_script.delete("1.0", "end")
-        
+
         # Set flag to indiciate the text widget has not been modified.
         Passer.editor.text_script.edit_modified(False)
-        
 
     def show_reusable_script(self, reusable_script_name: str):
         """
@@ -2054,18 +2136,17 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
-        
-        # A reusable script has been clicked on, so hide the
-        # parameter description frame, because the caret has moved.
-        Passer.editor.param_desc.hide_description_frame()
-        
+
+        # Update the parameter description based on where the restored cursor is
+        Passer.editor.param_desc.start_timer()
+
     def on_reusables_treeview_item_selected(self, event=None):
         """
         A script or scene has been selected (or unselected).
         Get the item iid from the treeview.
-        
+
         Arguments:
-        
+
         - event: provided by a virtual event or None if being called manaually
         without a virtual event.
         """
@@ -2079,7 +2160,7 @@ class ChapterSceneManager:
         # No selection? return
         if not selected_item:
             return
-        
+
         # Same selection as the one that's currently selected?
         # if Event is None, it means this method was called manually
         # so we should refresh it regardless if it's the same selection or not.
@@ -2101,20 +2182,18 @@ class ChapterSceneManager:
         # Make sure the main text widget is enabled because
         # we have a script selected now.
         Passer.editor.text_script.configure(state="normal")
-        
+
         # Save the scroll and cursor positions, before moving away
         # from the current script.
-        self.save_scroll_cursor_positions(active_script_name=self.active_script)        
+        self.save_scroll_cursor_positions(active_script_name=self.active_script)
 
         # Show the script in the text widget.
         self.show_reusable_script(reusable_script_name=selected_item_text)
-        
+
         edit_icon = PhotoImage(data=Icons.EDIT_24_F.value)
 
         # The selected reusable script should have a pencil icon
-        self.treeview_reusables.item(item=selected_item, 
-                                     image=edit_icon)
-        
+        self.treeview_reusables.item(item=selected_item, image=edit_icon)
 
         # The image field will have a reference to the image so that it doesn't
         # get garbage collected.
@@ -2122,50 +2201,52 @@ class ChapterSceneManager:
         # Any previously selected item will have its image
         # garbage collected as soon as we set this image variable below.
         self.treeview_reusables.image = edit_icon
-        
+
         # Hide the pencil icon in the main scripts treeview widget (if any).
         Passer.editor.hide_pencil_icon(hide_icon_in_reusables_treeview=False)
 
-        # This is used for knowing which script to play 
+        # This is used for knowing which script to play
         # when playing the active script.
         # Format: (current chapter, current scene)
         # or
         # just the reusable script name, if it's a reusable script.
         self.active_script = selected_item_text
-        
+
         # Restore the scroll and cursor positions of the newly populated
         # script, in the text widget.
-        self.restore_scroll_cursor_positions(
-            active_script_name=self.active_script)
-        
+        self.restore_scroll_cursor_positions(active_script_name=self.active_script)
+
         # Change the last-selected item's icon from a pencil/edit icon
-        # to a blue dot, if the item being selected isn't the same as 
+        # to a blue dot, if the item being selected isn't the same as
         # the last selected item (we could be forcably selecting the
         # same item to refresh the label after a name change).
-        if self.treeview_reusables.last_selected_item_iid and \
-           self.treeview_reusables.last_selected_item_iid != selected_item:
-            
+        if (
+            self.treeview_reusables.last_selected_item_iid
+            and self.treeview_reusables.last_selected_item_iid != selected_item
+        ):
             # The selected item is different than the last selection,
             # so it's OK to change the item's icon to a blue dot.
-            self.treeview_reusables.item(item=self.treeview_reusables.last_selected_item_iid,
-                                         image=self.blue_dot_image)
-            
+            self.treeview_reusables.item(
+                item=self.treeview_reusables.last_selected_item_iid,
+                image=self.blue_dot_image,
+            )
+
         # Record the current selected item iid, so we can change the row's
         # icon to a blue dot once the user clicks away from it.
         self.treeview_reusables.last_selected_item_iid = selected_item
 
-    def restore_scroll_cursor_positions(self, active_script_name: str|tuple|None):
+    def restore_scroll_cursor_positions(self, active_script_name: str | tuple | None):
         """
         Restore the historical scroll and cursor positions of the given
         script name, if available. This method should run *after* the
         destination script has been populated in the main text widget.
-        
+
         Arguments:
-        
+
         - active_script_name: the name of the chapter or scene or reusable
         script to get the scroll and cursor positions for. This is the
         script that the user is moving *to*.
-        
+
         If it's a chapter and/or scene, this variable will be a tuple.
         The first index will be the chapter and the second index will be
         the scene (if any). If it's a reusable script, this variable will
@@ -2173,60 +2254,56 @@ class ChapterSceneManager:
         """
         # A reusable script is a string.
         if isinstance(active_script_name, str):
-            
             # Restore the reusable script scroll and cursor positions.
-            self.scroll_history.\
-                restore_scroll_data_reusable(
-                    reusable_script_name=active_script_name)
+            self.scroll_history.restore_scroll_data_reusable(
+                reusable_script_name=active_script_name
+            )
 
         # A chapter and scene is a tuple
         # Index 0 is the chapter, Index 1 is the scene
         elif isinstance(active_script_name, tuple):
-            
             # Restore the chapter or scene scroll and cursor positions.
             self.scroll_history.restore_scroll_data_chapter_scene(
-                    dest_chapter_name=active_script_name[0],
-                    dest_scene_name=active_script_name[1])   
+                dest_chapter_name=active_script_name[0],
+                dest_scene_name=active_script_name[1],
+            )
 
-    def save_scroll_cursor_positions(self, active_script_name: str|tuple|None):
+    def save_scroll_cursor_positions(self, active_script_name: str | tuple | None):
         """
         Save the scroll and cursor positions, before they change
         to the newly selected item.
-        
+
         This method should be run *before* the active script is changed
         to the destination script.
-        
+
         Arguments:
-        
+
         - active_script_name: the name of the chapter or scene or reusable
         script to save the scroll and cursor positions for. This is the
         script that the user is moving *away* from.
-        
+
         If it's a chapter and/or scene, this variable will be a tuple.
         The first index will be the chapter and the second index will be
         the scene (if any). If it's a reusable script, this variable will
         be a string.
         """
-        
+
         if active_script_name:
-            
             # A reusable script is a string.
             if isinstance(active_script_name, str):
-                
                 # Save Reusable script scroll and cursor positions.
-                self.scroll_history.\
-                    save_scroll_data_reusable(
-                        reusable_script_name=active_script_name)
-                
+                self.scroll_history.save_scroll_data_reusable(
+                    reusable_script_name=active_script_name
+                )
+
             # A chapter and scene is a tuple
             # Index 0 is the chapter, Index 1 is the scene
             elif isinstance(active_script_name, tuple):
-                
                 # Save the chapter or scene scroll and cursor positions.
-                self.scroll_history.\
-                    save_scroll_data_chapter_scene(
-                        source_chapter_name=active_script_name[0],
-                        source_scene_name=active_script_name[1])         
+                self.scroll_history.save_scroll_data_chapter_scene(
+                    source_chapter_name=active_script_name[0],
+                    source_scene_name=active_script_name[1],
+                )
 
     def enable_cancel_changes_button(self):
         """
@@ -2293,12 +2370,16 @@ class ChapterSceneManager:
                 current_script = ProjectSnapshot.get_chapter_script(current_chapter)
                 subject = current_chapter
             else:
-                current_script = ProjectSnapshot.get_scene_script(current_chapter, current_scene)
+                current_script = ProjectSnapshot.get_scene_script(
+                    current_chapter, current_scene
+                )
                 subject = current_scene
 
-        msgbox_result = messagebox.askyesno(parent=self.lbl_title.winfo_toplevel(), 
-                                            title="Cancel Changes?",
-                                            message=f"Cancel changes and load the last save for '{subject}'?")
+        msgbox_result = messagebox.askyesno(
+            parent=self.lbl_title.winfo_toplevel(),
+            title="Cancel Changes?",
+            message=f"Cancel changes and load the last save for '{subject}'?",
+        )
 
         if not msgbox_result:
             return
@@ -2345,8 +2426,9 @@ class ChapterSceneManager:
 
             reusable_script_name = self.active_script
 
-            ProjectSnapshot.update_reusable_script(script_name=reusable_script_name,
-                                                   new_content=content)
+            ProjectSnapshot.update_reusable_script(
+                script_name=reusable_script_name, new_content=content
+            )
 
         else:
             # The active script is a main script.
@@ -2355,12 +2437,15 @@ class ChapterSceneManager:
             current_scene = self.active_script[1]
 
             if not current_scene:
-                ProjectSnapshot.update_chapter_script(chapter_name=current_chapter,
-                                                      new_content=content)
+                ProjectSnapshot.update_chapter_script(
+                    chapter_name=current_chapter, new_content=content
+                )
             else:
-                ProjectSnapshot.update_scene_script(chapter_name=current_chapter,
-                                                    scene_name=current_scene,
-                                                    new_content=content)
+                ProjectSnapshot.update_scene_script(
+                    chapter_name=current_chapter,
+                    scene_name=current_scene,
+                    new_content=content,
+                )
 
         # Reset 'changed' flag.
         Passer.editor.text_script.edit_modified(False)
@@ -2375,9 +2460,9 @@ class ChapterSceneManager:
         """
         A chapter or scene has been selected (or unselected).
         Get the item iid from the treeview.
-        
+
         Arguments:
-        
+
         - event: from tk
         """
 
@@ -2406,14 +2491,14 @@ class ChapterSceneManager:
         else:
             # The selection is a scene
             parent_text = self.treeview_widget.item(parent_iid).get("text")
-            self.show_scene_script(chapter_name=parent_text,
-                                   scene_name=selected_item_text)
+            self.show_scene_script(
+                chapter_name=parent_text, scene_name=selected_item_text
+            )
 
         edit_icon = PhotoImage(data=Icons.EDIT_24_F.value)
 
         # Show the selected item in the treeview as selected.
-        self.treeview_widget.item(item=selected_item,
-                                  image=edit_icon)
+        self.treeview_widget.item(item=selected_item, image=edit_icon)
 
         # The image field will have a reference to the image so that it doesn't
         # get garbage collected.
@@ -2424,7 +2509,7 @@ class ChapterSceneManager:
 
         # Hide the pencil icon in the reusable scripts treeview widget (if any).
         Passer.editor.hide_pencil_icon(hide_icon_in_reusables_treeview=True)
-        
+
         # Reset the last-selected reusables row, because
         # a reusables item is no longer selected.
         self.treeview_reusables.last_selected_item_iid = None
@@ -2440,10 +2525,12 @@ class ChapterSceneManager:
                                                               when there's a duplicate)
         """
 
-        input_window = InputStringWindow(master=self.treeview_reusables.winfo_toplevel(),
-                                         title="New Reusable Script",
-                                         msg="Type a new script name below:",
-                                         prefill_entry_text=prefill_script_name)
+        input_window = InputStringWindow(
+            master=self.treeview_reusables.winfo_toplevel(),
+            title="New Reusable Script",
+            msg="Type a new script name below:",
+            prefill_entry_text=prefill_script_name,
+        )
 
         if not input_window.user_input:
             return
@@ -2453,9 +2540,11 @@ class ChapterSceneManager:
         # Commas should not be allowed in reusable script names
         # because arguments are separated with commas in the <call> command.
         if "," in user_input_lcase:
-            messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(),
-                                   title="Commas not allowed",
-                                   message="Reusable script names cannot contain commas.")
+            messagebox.showwarning(
+                parent=self.treeview_widget.winfo_toplevel(),
+                title="Commas not allowed",
+                message="Reusable script names cannot contain commas.",
+            )
             self.create_new_reusable_script(prefill_script_name=input_window.user_input)
             return
 
@@ -2463,10 +2552,14 @@ class ChapterSceneManager:
             reusable_script_name = reusable_script_name.lower()
 
             if user_input_lcase == reusable_script_name:
-                messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(), 
-                                       title="Already Exists",
-                                       message=f"The reusable script name, {input_window.user_input}, already exists.")
-                self.create_new_reusable_script(prefill_script_name=input_window.user_input)
+                messagebox.showwarning(
+                    parent=self.treeview_widget.winfo_toplevel(),
+                    title="Already Exists",
+                    message=f"The reusable script name, {input_window.user_input}, already exists.",
+                )
+                self.create_new_reusable_script(
+                    prefill_script_name=input_window.user_input
+                )
                 return
 
         # Get the selected item so we know which folder to put the image under.
@@ -2479,41 +2572,46 @@ class ChapterSceneManager:
         if "folder_row" not in tag:
             selected_item = self.treeview_reusables.parent(selected_item)
 
-        item_iid = self.treeview_reusables.insert(index="end",
-                                                  parent=selected_item,
-                                                  tags=("normal_row",),
-                                                  text=input_window.user_input)
+        item_iid = self.treeview_reusables.insert(
+            index="end",
+            parent=selected_item,
+            tags=("normal_row",),
+            text=input_window.user_input,
+        )
 
         # Add to reusables dictionary, with empty content.
-        ProjectSnapshot.update_reusable_script(script_name=input_window.user_input,
-                                               new_content="")
+        ProjectSnapshot.update_reusable_script(
+            script_name=input_window.user_input, new_content=""
+        )
 
-    def create_or_rename_chapter_scene(self,
-                                       edit_item_iid: str = None,
-                                       edit_item_original_text: str = None,
-                                       prefill_input_name=None,
-                                       is_scene=False):
+    def create_or_rename_chapter_scene(
+        self,
+        edit_item_iid: str = None,
+        edit_item_original_text: str = None,
+        prefill_input_name=None,
+        is_scene=False,
+    ):
         """
         Create a new chapter if the name doesn't already exist
         (case-insensitive search)
 
         Where it needs to check for duplicates is: the dictionary that
         contains chapter names.
-        
+
         or
-        
+
         if edit_item_iid is provided, rename an existing chapter name.
-        
+
         Arguments:
-        
+
         - edit_item_iid: if we're renaming an existing treeview item iid,
         this will contain the item iid. Otherwise, if it's a new chapter
         then this will be None
-        
+
         - edit_item_original_text: the text as it appears in the treeview
         widget, before the rename has taken place. We need this to update
         the dictionary key.
-        
+
         - prefill_input_name: used for asking the user again in a loop
         when the user's input is invalid.
 
@@ -2525,10 +2623,9 @@ class ChapterSceneManager:
         else:
             subject = "chapter"
 
-        # Renaming an existing item? 
+        # Renaming an existing item?
         # Get the text of the selected item.
         if edit_item_iid:
-
             # The title to show in the input window.
             display_title = f"Rename {subject.title()}"
 
@@ -2549,10 +2646,12 @@ class ChapterSceneManager:
         else:
             display_title = f"New {subject.title()}"
 
-        input_window = InputStringWindow(master=self.treeview_widget.winfo_toplevel(),
-                                         title=display_title,
-                                         msg=f"Type a new {subject} name below:",
-                                         prefill_entry_text=prefill_input_name)
+        input_window = InputStringWindow(
+            master=self.treeview_widget.winfo_toplevel(),
+            title=display_title,
+            msg=f"Type a new {subject} name below:",
+            prefill_entry_text=prefill_input_name,
+        )
 
         # Nothing entered? return
         if not input_window.user_input:
@@ -2570,42 +2669,44 @@ class ChapterSceneManager:
                 return
 
             original_text_lcase = edit_item_original_text.lower()
-            
+
         # Get the user's inputted value in lowercase
         user_input_lcase = input_window.user_input.lower()
 
-        # When renaming a chapter or scene, look for a duplicate name only 
+        # When renaming a chapter or scene, look for a duplicate name only
         # if the new name isn't the same as the old name - because
         # the user might want to change the casing of the chapter/scene name.
-        if (edit_item_original_text and original_text_lcase != user_input_lcase) \
-                or not edit_item_iid:
-            
+        if (
+            edit_item_original_text and original_text_lcase != user_input_lcase
+        ) or not edit_item_iid:
             check_for_duplicate = True
         else:
             # Only the casing of the name has changed, so
             # don't check for duplicates.
             check_for_duplicate = False
-        
 
         if not is_scene:
             # Adding or renaming a chapter
 
             if check_for_duplicate:
-                
                 # The user is either attempting to create a new chapter
                 # or rename an existing chapter to a different name (not
-                # just different casing).                
-    
+                # just different casing).
+
                 # Make sure the chapter name doesn't already exist (case-insensitive search)
                 for chapter_name in ProjectSnapshot.chapters_and_scenes:
                     if user_input_lcase == chapter_name.lower():
-                        messagebox.showwarning(parent=self.lbl_title.winfo_toplevel(),
-                                               title="Chapter Name Already Exists",
-                                               message="That chapter name already exists.\nPlease type a different name.")
-                        self.create_or_rename_chapter_scene(edit_item_iid=edit_item_iid,
-                                                            edit_item_original_text=edit_item_original_text,
-                                                            prefill_input_name=input_window.user_input,
-                                                            is_scene=is_scene)
+                        messagebox.showwarning(
+                            parent=self.lbl_title.winfo_toplevel(),
+                            title="Chapter Name Already Exists",
+                            message="That chapter name already exists.\nPlease type a different name.",
+                        )
+                        self.create_or_rename_chapter_scene(
+                            edit_item_iid=edit_item_iid,
+                            edit_item_original_text=edit_item_original_text,
+                            prefill_input_name=input_window.user_input,
+                            is_scene=is_scene,
+                        )
                         return
 
         else:
@@ -2613,9 +2714,11 @@ class ChapterSceneManager:
 
             selected_item = self.treeview_widget.focus()
             if not selected_item:
-                messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(),
-                                       title="Select a Chapter",
-                                       message="Select a chapter to create a scene in.")
+                messagebox.showwarning(
+                    parent=self.treeview_widget.winfo_toplevel(),
+                    title="Select a Chapter",
+                    message="Select a chapter to create a scene in.",
+                )
                 return
 
             # We need the parent name, because that will contain the chapter
@@ -2636,36 +2739,38 @@ class ChapterSceneManager:
             scenes_dict = ProjectSnapshot.chapters_and_scenes.get(chapter_name)[1]
 
             if check_for_duplicate:
-                
                 # The user is either attempting to create a new scene
                 # or rename an existing scene to a different name (not
-                # just different casing).                       
-                
+                # just different casing).
+
                 # Make sure the scene name doesn't already exist in the chapter
                 # (case-insensitive search)
                 for scene in scenes_dict:
                     if user_input_lcase == scene.lower():
-                        messagebox.showwarning(parent=self.treeview_widget.winfo_toplevel(),
-                                               title="Scene Name Already Exists",
-                                               message="That scene name already exists.\nPlease type a different name.")
-                        self.create_or_rename_chapter_scene(edit_item_iid=edit_item_iid,
-                                                            edit_item_original_text=edit_item_original_text,
-                                                            prefill_input_name=input_window.user_input,
-                                                            is_scene=is_scene)
+                        messagebox.showwarning(
+                            parent=self.treeview_widget.winfo_toplevel(),
+                            title="Scene Name Already Exists",
+                            message="That scene name already exists.\nPlease type a different name.",
+                        )
+                        self.create_or_rename_chapter_scene(
+                            edit_item_iid=edit_item_iid,
+                            edit_item_original_text=edit_item_original_text,
+                            prefill_input_name=input_window.user_input,
+                            is_scene=is_scene,
+                        )
                         return
 
         # Not renaming an existing chapter or scene?
         if not edit_item_iid:
-            
             # Adding a new chapter or scene
 
             if not is_scene:
                 # Add chapter name
 
                 # Add the chapter to the treeview widget.
-                self.treeview_widget.insert(parent="",
-                                            index="end",
-                                            text=input_window.user_input)
+                self.treeview_widget.insert(
+                    parent="", index="end", text=input_window.user_input
+                )
 
                 # Add to dictionary
                 # Key (str): chapter name, Value: [ chapter script,  another dict {Key: scene name (str): Value script (str)} ]
@@ -2679,86 +2784,80 @@ class ChapterSceneManager:
                 scenes_dict[input_window.user_input] = ""
 
                 # Add the scene to the treeview widget.
-                self.treeview_widget.insert(parent=chapter_item,
-                                            index="end",
-                                            text=input_window.user_input)
+                self.treeview_widget.insert(
+                    parent=chapter_item, index="end", text=input_window.user_input
+                )
 
         else:
             # Renaming an existing chapter or scene
 
             # Update an existing chapter or scene name.
-            self.treeview_widget.item(edit_item_iid,
-                                      text=input_window.user_input)
+            self.treeview_widget.item(edit_item_iid, text=input_window.user_input)
 
             if not is_scene:
                 # Update chapter dictionary
-                ProjectSnapshot.chapters_and_scenes[input_window.user_input] = ProjectSnapshot.chapters_and_scenes[
-                    edit_item_original_text]
+                ProjectSnapshot.chapters_and_scenes[input_window.user_input] = (
+                    ProjectSnapshot.chapters_and_scenes[edit_item_original_text]
+                )
                 del ProjectSnapshot.chapters_and_scenes[edit_item_original_text]
 
                 rename_scene = False
                 rename_chapter = True
 
-
-
             else:
-                
                 # Update scene dictionary
-                scenes_dict[input_window.user_input] = scenes_dict[edit_item_original_text]
+                scenes_dict[input_window.user_input] = scenes_dict[
+                    edit_item_original_text
+                ]
                 del scenes_dict[edit_item_original_text]
-                
+
                 rename_scene = True
                 rename_chapter = False
 
             # Invoke the selection event of the currently selected treeview item
             # so the title gets ttk label gets updated with the new name.
             self.on_treeview_item_selected(None)
-            
+
             if rename_chapter:
                 # Rename the old chapter name's scroll history, if there.
                 old_chapter_name = edit_item_original_text
                 new_chapter_name = input_window.user_input
-                self.scroll_history.\
-                    rename_chapter_name_scroll_data(
-                        old_chapter_name=old_chapter_name,
-                        new_chapter_new=new_chapter_name)
-                
+                self.scroll_history.rename_chapter_name_scroll_data(
+                    old_chapter_name=old_chapter_name, new_chapter_new=new_chapter_name
+                )
+
                 # Now that the chapter has been renamed, the text widget
                 # has been reloaded, so restore the scroll position.
-                self.scroll_history.\
-                    restore_scroll_data_chapter_scene(
-                        dest_chapter_name=new_chapter_name,
-                        dest_scene_name=None)
-                
+                self.scroll_history.restore_scroll_data_chapter_scene(
+                    dest_chapter_name=new_chapter_name, dest_scene_name=None
+                )
+
             elif rename_scene:
-                
                 ## Delete the old scene name's scroll history, if there.
-                #chapter_name = self.active_script[0]
-                #old_scene_name = edit_item_original_text
-                #self.scroll_history.\
-                    #delete_scene_scroll_history(chapter_name=chapter_name,
-                                                #scene_name=old_scene_name)            
+                # chapter_name = self.active_script[0]
+                # old_scene_name = edit_item_original_text
+                # self.scroll_history.\
+                # delete_scene_scroll_history(chapter_name=chapter_name,
+                # scene_name=old_scene_name)
 
                 # Rename the old scene name's scroll history, if there.
                 chapter_name = self.active_script[0]
                 old_scene_name = edit_item_original_text
                 new_scene_name = input_window.user_input
-                self.scroll_history.\
-                    rename_scene_name_scroll_data(chapter_name=chapter_name,
-                                                  old_scene_name=old_scene_name,
-                                                  new_scene_name=new_scene_name)
-                
+                self.scroll_history.rename_scene_name_scroll_data(
+                    chapter_name=chapter_name,
+                    old_scene_name=old_scene_name,
+                    new_scene_name=new_scene_name,
+                )
+
                 # Now that the scene has been renamed, the text widget
                 # has been reloaded, so restore the scroll position.
-                self.scroll_history.\
-                    restore_scroll_data_chapter_scene(
-                        dest_chapter_name=chapter_name,
-                        dest_scene_name=new_scene_name)
-
+                self.scroll_history.restore_scroll_data_chapter_scene(
+                    dest_chapter_name=chapter_name, dest_scene_name=new_scene_name
+                )
 
         # Update the status bar to show that the project needs to be saved.
         self.treeview_widget.event_generate("<<SaveNeeded>>")
-        
 
     def show_chapter_script(self, chapter_name: str):
         """
@@ -2777,7 +2876,7 @@ class ChapterSceneManager:
         chapter_script = ProjectSnapshot.get_chapter_script(chapter_name)
 
         self.lbl_title.configure(text=f"{chapter_name} [Chapter]")
-        
+
         # Save the current scroll position and cursor position *before*
         # moving away from the current script.
         self.save_scroll_cursor_positions(active_script_name=self.active_script)
@@ -2790,16 +2889,14 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", chapter_script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
-        
+
         # Restore the scroll position and cursor position of the newly
         # populated script.
-        self.restore_scroll_cursor_positions(
-            active_script_name=self.active_script)        
-        
-        # A chapter script has been clicked on, so hide the
-        # parameter description frame, because the caret has moved.        
-        Passer.editor.param_desc.hide_description_frame()
-        
+        self.restore_scroll_cursor_positions(active_script_name=self.active_script)
+
+        # Update the parameter description based on where the restored cursor is
+        Passer.editor.param_desc.start_timer()
+
     def show_scene_script(self, chapter_name: str, scene_name: str):
         """
         Show the scene that has the given name (case-sensitive)
@@ -2822,11 +2919,13 @@ class ChapterSceneManager:
         else:
             scene_heading = "Scene"
 
-        self.lbl_title.configure(text=f"{chapter_name} -> {scene_name} [{scene_heading}]")
-        
+        self.lbl_title.configure(
+            text=f"{chapter_name} -> {scene_name} [{scene_heading}]"
+        )
+
         # Save the current scroll position and cursor position *before*
         # moving away from the current script.
-        self.save_scroll_cursor_positions(active_script_name=self.active_script)        
+        self.save_scroll_cursor_positions(active_script_name=self.active_script)
 
         # Set the type of script that is currently active so we know.
         self.active_script = (chapter_name, scene_name)
@@ -2835,16 +2934,14 @@ class ChapterSceneManager:
         Passer.editor.text_script.insert("1.0", scene_script)
         Passer.editor.text_script.reevaluate_entire_contents()
         Passer.editor.text_script.edit_modified(False)
-        
+
         # Restore the scroll position and cursor position of the newly
         # populated script.
-        self.restore_scroll_cursor_positions(
-            active_script_name=self.active_script)
-        
-        # A scene script has been clicked on, so hide the
-        # parameter description frame, because the caret has moved.        
-        Passer.editor.param_desc.hide_description_frame()
-        
+        self.restore_scroll_cursor_positions(active_script_name=self.active_script)
+
+        # Update the parameter description based on where the restored cursor is
+        Passer.editor.param_desc.start_timer()
+
 
 class StatusBar:
     def __init__(self, lbl_status):
@@ -2861,7 +2958,6 @@ class StatusBar:
 
     def show_text(self, text: str):
         self.lbl_status.configure(text=text)
-        
 
 
 class Toolbar:
@@ -2875,92 +2971,98 @@ class Toolbar:
 
         self.btn_story_details = editor_object.builder.get_object("btn_story_details")
         self.btn_story_details.image = edit_details_image
-        self.btn_story_details.configure(command=self.on_story_details_button_clicked,
-                                         image=self.btn_story_details.image)
-        
+        self.btn_story_details.configure(
+            command=self.on_story_details_button_clicked,
+            image=self.btn_story_details.image,
+        )
+
         # Variables image
         variables_image = PhotoImage(data=Icons.VARIABLES_24_F.value)
-        
+
         self.btn_variables = editor_object.builder.get_object("btn_variables")
         self.btn_variables.image = variables_image
-        self.btn_variables.configure(command=self.on_variables_button_clicked,
-                                      image=self.btn_variables.image)
-        
-        
+        self.btn_variables.configure(
+            command=self.on_variables_button_clicked, image=self.btn_variables.image
+        )
+
         # Trace Tool image
         trace_tool_image = PhotoImage(data=Icons.TRACE_TOOL_24_F.value)
 
         self.btn_trace_tool = editor_object.builder.get_object("btn_trace_tool")
         self.btn_trace_tool.image = trace_tool_image
-        self.btn_trace_tool.configure(command=self.on_trace_tool_button_clicked,
-                                      image=self.btn_trace_tool.image)
-        
-        
+        self.btn_trace_tool.configure(
+            command=self.on_trace_tool_button_clicked, image=self.btn_trace_tool.image
+        )
+
         # Compile image
         compile_image = PhotoImage(data=Icons.COMPILE_24_F.value)
 
         self.btn_compile = editor_object.builder.get_object("btn_compile")
         self.btn_compile.image = compile_image
-        self.btn_compile.configure(command=self.on_compile_button_clicked,
-                                   image=self.btn_compile.image)        
-        
-        
+        self.btn_compile.configure(
+            command=self.on_compile_button_clicked, image=self.btn_compile.image
+        )
+
         # Help image
         help_image = PhotoImage(data=Icons.HELP_24_F.value)
 
         self.btn_help = editor_object.builder.get_object("btn_help")
         self.btn_help.image = help_image
-        self.btn_help.configure(command=self.on_help_button_clicked,
-                                image=self.btn_help.image)           
-        
-        
+        self.btn_help.configure(
+            command=self.on_help_button_clicked, image=self.btn_help.image
+        )
+
         # About image
         about_image = PhotoImage(data=Icons.ABOUT_24_F.value)
 
         self.btn_about = editor_object.builder.get_object("btn_about")
         self.btn_about.image = about_image
-        self.btn_about.configure(command=self.on_about_button_clicked,
-                                 image=self.btn_about.image)           
+        self.btn_about.configure(
+            command=self.on_about_button_clicked, image=self.btn_about.image
+        )
 
         # Save image
         save_image = PhotoImage(data=Icons.SAVE_24_F.value)
 
         self.btn_save = editor_object.builder.get_object("btn_save")
         self.btn_save.image = save_image
-        self.btn_save.configure(command=self.on_save_button_clicked,
-                                image=self.btn_save.image)
+        self.btn_save.configure(
+            command=self.on_save_button_clicked, image=self.btn_save.image
+        )
 
         # Open image
         open_image = PhotoImage(data=Icons.OPEN_24_F.value)
-        
+
         self.btn_open = editor_object.builder.get_object("btn_open")
         self.btn_open.image = open_image
-        self.btn_open.configure(command=self.on_open_button_clicked,
-                                image=self.btn_open.image)
+        self.btn_open.configure(
+            command=self.on_open_button_clicked, image=self.btn_open.image
+        )
 
         self.story_details_window = None
 
     def on_trace_tool_button_clicked(self):
         trace_tool_window = TraceToolApp(self.editor_object.mainwindow)
-        
+
     def on_variables_button_clicked(self):
         variables_editor_window = VariableEditorWindow(self.editor_object.mainwindow)
-        
+
     def on_help_button_clicked(self):
         """
         Open the tutorials website.
         """
         webbrowser.open_new(r"https://lvnauth.org/pages/tutorials.html")
-        
+
     def on_about_button_clicked(self):
         about_window = AboutWindow(self.editor_object.mainwindow)
 
     def on_story_details_button_clicked(self):
-        self.story_details_window = StoryDetailsWindow(self.editor_object.mainwindow,
-                                                       existing_details=ProjectSnapshot.details)
+        self.story_details_window = StoryDetailsWindow(
+            self.editor_object.mainwindow, existing_details=ProjectSnapshot.details
+        )
         if self.story_details_window.details:
             ProjectSnapshot.details = self.story_details_window.details
-            
+
     def on_compile_button_clicked(self):
         self.editor_object.save_final_lvna()
 
@@ -2998,20 +3100,22 @@ class OpenManager:
         # This will contain the converted data from a JSON to dict
         self.dict_data = None
 
-        self.keys_must_exist = ["DialogImages",
-                                "CharacterImages",
-                                "BackgroundImages",
-                                "ObjectImages",
-                                "LVNAuth-EditorVersion",
-                                "ProjectInfo",
-                                "ChaptersAndScenes"]
+        self.keys_must_exist = [
+            "DialogImages",
+            "CharacterImages",
+            "BackgroundImages",
+            "ObjectImages",
+            "LVNAuth-EditorVersion",
+            "ProjectInfo",
+            "ChaptersAndScenes",
+        ]
 
-    def open(self, lvnap_file_path: str=None):
+    def open(self, lvnap_file_path: str = None):
         """
         Open a lvnap project.
-        
+
         Arguments:
-        
+
         - lvnap_file_path: a full path to a lvnap project file to open.
         This is optional. If not supplied, an open file dialog will be shown.
         """
@@ -3020,8 +3124,9 @@ class OpenManager:
         if lvnap_file_path:
             file_path = lvnap_file_path
         else:
-            file_path = filedialog.askopenfilename(parent=self.parent,
-                                                   filetypes=[("LVNAuth Project", ".lvnap")])
+            file_path = filedialog.askopenfilename(
+                parent=self.parent, filetypes=[("LVNAuth Project", ".lvnap")]
+            )
 
         if not file_path:
             return
@@ -3035,21 +3140,25 @@ class OpenManager:
         # Otherwise, consider it an invalid file.
         project_editor_version = self.dict_data.get("LVNAuth-EditorVersion")
         if not project_editor_version:
-            messagebox.showerror(parent=Passer.editor.treeview_scripts.winfo_toplevel(), 
-                                 title="Error",
-                                 message="Invalid Project File")
+            messagebox.showerror(
+                parent=Passer.editor.treeview_scripts.winfo_toplevel(),
+                title="Error",
+                message="Invalid Project File",
+            )
             return
 
         # Make sure the current editor application is the same version
         # or newer than the editor version that the project was saved in.
         project_editor_version = int(project_editor_version)
         if ProjectSnapshot.EDITOR_VERSION < project_editor_version:
-            messagebox.showerror(parent=Passer.toolbar.frame_toolbar.winfo_toplevel(), 
-                                 title="Out of Date",
-                                 message="The project that you are trying to open was made in a newer "
-                                         "version of LVNAuth that is not compatible with the version "
-                                         "that you are using.\n\nA newer version of LVNAuth is required "
-                                         "to open this project file.")
+            messagebox.showerror(
+                parent=Passer.toolbar.frame_toolbar.winfo_toplevel(),
+                title="Out of Date",
+                message="The project that you are trying to open was made in a newer "
+                "version of LVNAuth that is not compatible with the version "
+                "that you are using.\n\nA newer version of LVNAuth is required "
+                "to open this project file.",
+            )
             return
 
         self._clear_project()
@@ -3066,28 +3175,28 @@ class OpenManager:
         """
 
         ## Clear all the dictionaries.
-        #ProjectSnapshot.character_images.clear()
-        #ProjectSnapshot.background_images.clear()
-        #ProjectSnapshot.object_images.clear()
-        #ProjectSnapshot.font_sprites.clear()
-        #ProjectSnapshot.font_sprite_properties.clear()
-        #ProjectSnapshot.dialog_images.clear()
+        # ProjectSnapshot.character_images.clear()
+        # ProjectSnapshot.background_images.clear()
+        # ProjectSnapshot.object_images.clear()
+        # ProjectSnapshot.font_sprites.clear()
+        # ProjectSnapshot.font_sprite_properties.clear()
+        # ProjectSnapshot.dialog_images.clear()
 
-        #ProjectSnapshot.chapters_and_scenes.clear()
-        #ProjectSnapshot.reusables.clear()
+        # ProjectSnapshot.chapters_and_scenes.clear()
+        # ProjectSnapshot.reusables.clear()
 
-        #ProjectSnapshot.sounds.clear()
-        #ProjectSnapshot.music.clear()
+        # ProjectSnapshot.sounds.clear()
+        # ProjectSnapshot.music.clear()
 
         ## Clear story details dictionary
-        #ProjectSnapshot.details.clear()
+        # ProjectSnapshot.details.clear()
 
         ## Clear file save variables
-        #ProjectSnapshot.project_path = None
-        #ProjectSnapshot.save_full_path = None
+        # ProjectSnapshot.project_path = None
+        # ProjectSnapshot.save_full_path = None
 
-        #Passer.statusbar.clear_text()
-        
+        # Passer.statusbar.clear_text()
+
         if Passer.editor:
             startup_window = Passer.editor.master
             Passer.editor.mainwindow.destroy()
@@ -3109,10 +3218,12 @@ class OpenManager:
         # Make sure all the expected dictionary keys exist
         for key in self.keys_must_exist:
             if key not in self.dict_data:
-                messagebox.showerror(parent=Passer.toolbar.frame_toolbar.winfo_toplevel(),
-                                     title="Project File Error",
-                                     message="The project file is missing one or more required keys.")  
-                
+                messagebox.showerror(
+                    parent=Passer.toolbar.frame_toolbar.winfo_toplevel(),
+                    title="Project File Error",
+                    message="The project file is missing one or more required keys.",
+                )
+
                 break
         else:
             # All the required dict keys exist, so populate the
@@ -3120,14 +3231,15 @@ class OpenManager:
             # ProjectSnapshot.dialog_images = self.dict_data["DialogImages"].copy()
 
             ProjectSnapshot.details = self.dict_data["ProjectInfo"].copy()
-            
+
             # Get the story window size (width/height)
             ProjectSnapshot.story_window_size = tuple(self.dict_data["StoryWindowSize"])
-            
+
             # Start the visual novel full screen option
-            ProjectSnapshot.story_start_full_screen =\
-                self.dict_data.get("StoryStartFullScreen", False)
-            
+            ProjectSnapshot.story_start_full_screen = self.dict_data.get(
+                "StoryStartFullScreen", False
+            )
+
             # Get the variable names and values of the visual novel.
             ProjectSnapshot.variables = self.dict_data.get("Variables")
             if ProjectSnapshot.variables is None:
@@ -3146,7 +3258,7 @@ class OpenManager:
             Passer.statusbar.show_text(file_path)
 
             self._populate_treeview_widgets()
-            
+
             self._populate_font_sprite_properties()
 
             self._populate_chapters_scenes_treeview()
@@ -3155,27 +3267,25 @@ class OpenManager:
         """
         Populate the font sprite properties dictionary from
         the newly loaded dict data.
-        
+
         This will populate the font properties only if the font sprite
         with the same item name has already been populated in the font sprite
         dictionary. So the font sprite dict needs to be populated before
         running this method.
         """
-        
+
         # Get the font properties from the newly loaded dict data.
         font_sprite_properties = self.dict_data.get("FontSpriteProperties")
 
         # Populate a sprite property only if the sprite font exists
         # in the sprite font dictionary (which it should unless the
         # project file was manually tampered with).
-        for sprite_font_name, property_details \
-                in font_sprite_properties.items():
-
+        for sprite_font_name, property_details in font_sprite_properties.items():
             # Is the font name (the name as it appears in the treeview widget)
             # already loaded?
             if sprite_font_name in ProjectSnapshot.font_sprites:
                 # The font sprite exists, so it's OK to load its properties.
-                
+
                 # Convert the rect positions of the letters to a tuple, because
                 # JSON doesn't have tuples, and we need to store the rects
                 # as tuples because we will use the rects as dict keys when
@@ -3188,25 +3298,27 @@ class OpenManager:
                 for letter, details in letters.items():
                     rect_crop = details.get("rect_crop")
                     kerning_rules = details.get("kerning_rules")
-                    letter_properties = LetterProperties(rect_crop=rect_crop,
-                                                        kerning_rules=kerning_rules)
+                    letter_properties = LetterProperties(
+                        rect_crop=rect_crop, kerning_rules=kerning_rules
+                    )
                     # New dictionary that will contain the LetterProperties
                     load_letters[letter] = letter_properties
-                
+
                 # letters = {key: tuple(value.get("rect_crop")) for key, value in letters.items()}
 
-                properties = \
-                    FontSprite(
-                        width=property_details.get("Width", 0),
-                        height=property_details.get("Height", 0),
-                        padding_letters=property_details.get("PaddingLetters", 0),
-                        padding_lines=property_details.get("PaddingLines", 0),
-                        detect_letter_edges=property_details.get("DetectLetterEdges", False),
-                        letters=load_letters)
+                properties = FontSprite(
+                    width=property_details.get("Width", 0),
+                    height=property_details.get("Height", 0),
+                    padding_letters=property_details.get("PaddingLetters", 0),
+                    padding_lines=property_details.get("PaddingLines", 0),
+                    detect_letter_edges=property_details.get(
+                        "DetectLetterEdges", False
+                    ),
+                    letters=load_letters,
+                )
 
                 # Record the property of the font sprite
-                ProjectSnapshot.font_sprite_properties[sprite_font_name] \
-                    = properties
+                ProjectSnapshot.font_sprite_properties[sprite_font_name] = properties
 
     def _populate_chapters_scenes_treeview(self):
         """
@@ -3223,7 +3335,6 @@ class OpenManager:
         all_root_items = Passer.editor.treeview_scripts.get_children()
         if all_root_items:
             Passer.editor.treeview_scripts.delete(*all_root_items)
-            
 
         chapters_scenes = self.dict_data.get("ChaptersAndScenes")
 
@@ -3237,7 +3348,6 @@ class OpenManager:
 
         # Loop through the chapter display orders
         for display_order in chapter_display_orders:
-
             chapter_dict = chapters_scenes.get(str(display_order))
             # The dictionary will look something like this:
             # {
@@ -3251,15 +3361,12 @@ class OpenManager:
             #         }
             #     ]
             # }
-            
-          
 
             for chapter_name, value in chapter_dict.items():
-
                 # Add the chapter name to the treeview
-                chapter_iid = Passer.editor.treeview_scripts.insert(parent="",
-                                                                    index=display_order,
-                                                                    text=chapter_name)
+                chapter_iid = Passer.editor.treeview_scripts.insert(
+                    parent="", index=display_order, text=chapter_name
+                )
 
                 # Value will contain something like this:
                 # ["chapter script here",
@@ -3273,7 +3380,7 @@ class OpenManager:
 
                 chapter_script = value[0]
                 scenes_dict = value[1]
-                
+
                 # Get the display orders as an int, so we can sort them.
                 scenes_display_order = [int(item) for item in scenes_dict.keys()]
                 scenes_display_order.sort()
@@ -3283,7 +3390,6 @@ class OpenManager:
                 scenes = {}
 
                 for scene_display_order in scenes_display_order:
-
                     scene_info = scenes_dict.get(str(scene_display_order))
                     # The value will look something like this:
                     # [
@@ -3293,23 +3399,26 @@ class OpenManager:
 
                     scene_name = scene_info[0]
                     scene_script = scene_info[1]
-                    
-                    
 
                     # Prepare the scene dictionary to be added to the 'main' scenes dictionary.
                     scenes[scene_name] = scene_script
 
                     # Add the scene to the treeview, as a sub-item.
-                    Passer.editor.treeview_scripts.insert(parent=chapter_iid,
-                                                          index=scene_display_order,
-                                                          text=scene_name)
+                    Passer.editor.treeview_scripts.insert(
+                        parent=chapter_iid, index=scene_display_order, text=scene_name
+                    )
 
-                ProjectSnapshot.chapters_and_scenes[chapter_name] = [chapter_script, scenes.copy()]
+                ProjectSnapshot.chapters_and_scenes[chapter_name] = [
+                    chapter_script,
+                    scenes.copy(),
+                ]
 
         # Is there a startup script? Set the tag for it in the treeview widget so it
         # shows as a different colour.
         if startup_script_item_iid:
-            Passer.editor.treeview_scripts.item(startup_script_item_iid, tags=("startup_script",))
+            Passer.editor.treeview_scripts.item(
+                startup_script_item_iid, tags=("startup_script",)
+            )
 
     def _populate_treeview_widgets(self):
         """
@@ -3320,26 +3429,53 @@ class OpenManager:
         # Value: treeview widget
 
         # Key in the dictionary, treeview widget, data dictionary
-        treeview_mapping = [("ReusableScripts", Passer.editor.treeview_reusables, ProjectSnapshot.reusables),
-                            ("CharacterImages", Passer.editor.treeview_characters, ProjectSnapshot.character_images),
-                            ("BackgroundImages", Passer.editor.treeview_backgrounds, ProjectSnapshot.background_images),
-                            ("ObjectImages", Passer.editor.treeview_objects, ProjectSnapshot.object_images),
-                            ("FontSprites", Passer.editor.treeview_font_sprites, ProjectSnapshot.font_sprites),
-                            ("DialogImages", Passer.editor.treeview_dialog_rectangle, ProjectSnapshot.dialog_images),
-                            ("Sounds", Passer.editor.treeview_sounds, ProjectSnapshot.sounds),
-                            ("Music", Passer.editor.treeview_music, ProjectSnapshot.music)]
-
+        treeview_mapping = [
+            (
+                "ReusableScripts",
+                Passer.editor.treeview_reusables,
+                ProjectSnapshot.reusables,
+            ),
+            (
+                "CharacterImages",
+                Passer.editor.treeview_characters,
+                ProjectSnapshot.character_images,
+            ),
+            (
+                "BackgroundImages",
+                Passer.editor.treeview_backgrounds,
+                ProjectSnapshot.background_images,
+            ),
+            (
+                "ObjectImages",
+                Passer.editor.treeview_objects,
+                ProjectSnapshot.object_images,
+            ),
+            (
+                "FontSprites",
+                Passer.editor.treeview_font_sprites,
+                ProjectSnapshot.font_sprites,
+            ),
+            (
+                "DialogImages",
+                Passer.editor.treeview_dialog_rectangle,
+                ProjectSnapshot.dialog_images,
+            ),
+            ("Sounds", Passer.editor.treeview_sounds, ProjectSnapshot.sounds),
+            ("Music", Passer.editor.treeview_music, ProjectSnapshot.music),
+        ]
 
         # Iterate through all the treeview widgets and populate them
         # from their corresponding dictionaries.
         for mapping in treeview_mapping:
             dict_key, treeview_widget, project_dict = mapping
-            
+
             if dict_key not in self.dict_data:
-                messagebox.showerror(parent=Passer.editor.mainwindow, 
-                                     title="Key Not Found",
-                                     message=f"The project file is missing the key: '{dict_key}'\n\nThe project file "
-                                             f"might be corrupted.")
+                messagebox.showerror(
+                    parent=Passer.editor.mainwindow,
+                    title="Key Not Found",
+                    message=f"The project file is missing the key: '{dict_key}'\n\nThe project file "
+                    f"might be corrupted.",
+                )
                 continue
 
             # Get the dictionary that we loaded from JSON.
@@ -3363,7 +3499,6 @@ class OpenManager:
             # Iterate through the display order keys so we can populate
             # the current treeview widget in the correct order.
             for key in display_order_keys:
-
                 # Get the value for this item (example: image item or folder)
                 value = dict_buffer[str(key)]
 
@@ -3385,11 +3520,13 @@ class OpenManager:
                     # Folders are only used in treeview widgets, for the user to see.
                     tag = ("folder_row",)
 
-                treeview_widget.insert(parent=parent_iid,
-                                       index="end",
-                                       iid=item_iid,
-                                       text=item_text,
-                                       tags=tag)
+                treeview_widget.insert(
+                    parent=parent_iid,
+                    index="end",
+                    iid=item_iid,
+                    text=item_text,
+                    tags=tag,
+                )
 
 
 class SaveManager:
@@ -3443,18 +3580,22 @@ class SaveManager:
         # Initialize. This will act as the display order.
         self.counter = -1
 
-        self.get_children_custom(dict_ref=data_dict,
-                                 builder=builder,
-                                 treeview_widget=treeview_widget,
-                                 in_item_iid="")
+        self.get_children_custom(
+            dict_ref=data_dict,
+            builder=builder,
+            treeview_widget=treeview_widget,
+            in_item_iid="",
+        )
 
         return builder
 
-    def get_children_custom(self,
-                            dict_ref: Dict,
-                            builder: Dict,
-                            treeview_widget: ttk.Treeview,
-                            in_item_iid: str):
+    def get_children_custom(
+        self,
+        dict_ref: Dict,
+        builder: Dict,
+        treeview_widget: ttk.Treeview,
+        in_item_iid: str,
+    ):
         """
         Iterate over the treeview items that are within the argument 'in_item_iid'.
         If that variable is a blank string, that means the root items will be iterated over.
@@ -3469,7 +3610,6 @@ class SaveManager:
 
         # Iterate over items in the specified treeview widget
         for item_iid in treeview_widget.get_children(in_item_iid):
-
             # We don't use enumerate in this for-loop because we'll
             # need to keep incrementing this variable even outside of this method,
             # since this method will call itself below.
@@ -3487,25 +3627,32 @@ class SaveManager:
                 file_name_or_script = dict_ref.get(item_text)
 
             # Append the current item to the dictionary, which will be turned into JSON later on.
-            builder[self.counter] = [item_text, file_name_or_script, item_iid, in_item_iid]
+            builder[self.counter] = [
+                item_text,
+                file_name_or_script,
+                item_iid,
+                in_item_iid,
+            ]
 
             # Run this method again for the current item,
             # because if the current item has any children, we'll need to iterate over those too.
-            self.get_children_custom(dict_ref=dict_ref,
-                                     builder=builder,
-                                     treeview_widget=treeview_widget,
-                                     in_item_iid=item_iid)
+            self.get_children_custom(
+                dict_ref=dict_ref,
+                builder=builder,
+                treeview_widget=treeview_widget,
+                in_item_iid=item_iid,
+            )
 
     def _get_chapters_and_scenes(self) -> Dict:
         """
         Get the chapter names, chapter scripts, scene names and scene
         scripts and put them into a dictionary that will eventually get
         converted to JSON.
-        
+
         Return: dict
         """
 
-        # We'll use the chapters/scenes treeview to get the chapter/scene 
+        # We'll use the chapters/scenes treeview to get the chapter/scene
         # names, because that is the correct order of the chapters and scenes.
 
         builder = {}
@@ -3513,11 +3660,12 @@ class SaveManager:
         Passer.editor.treeview_scripts: ttk.Treeview
 
         # Loop through the chapters
-        for chapter_counter, chapter_item_iid \
-            in enumerate(Passer.editor.treeview_scripts.get_children()):
-
-            chapter_name = Passer.editor.treeview_scripts\
-                .item(chapter_item_iid).get("text")
+        for chapter_counter, chapter_item_iid in enumerate(
+            Passer.editor.treeview_scripts.get_children()
+        ):
+            chapter_name = Passer.editor.treeview_scripts.item(chapter_item_iid).get(
+                "text"
+            )
 
             value = ProjectSnapshot.chapters_and_scenes.get(chapter_name)
             # value should now have this format:
@@ -3530,13 +3678,12 @@ class SaveManager:
 
             # Loop through the scenes in the current chapter
             for scene_counter, scene_item_iid in enumerate(
-                    Passer.editor.treeview_scripts.\
-                    get_children(chapter_item_iid)):
+                Passer.editor.treeview_scripts.get_children(chapter_item_iid)
+            ):
                 # for scene_counter, scene_name_and_script in enumerate(scenes_dict.items()):
 
                 # Get the scene treeview item's details, so we can get the text.
-                scene_details =\
-                    Passer.editor.treeview_scripts.item(scene_item_iid)
+                scene_details = Passer.editor.treeview_scripts.item(scene_item_iid)
 
                 # The text contains the scene name
                 scene_name = scene_details.get("text")
@@ -3550,10 +3697,9 @@ class SaveManager:
                 # scene_counter is used for the display order
                 scenes[scene_counter] = [scene_name, scene_script]
 
-            # Put all the scenes of the current chapter into the 
+            # Put all the scenes of the current chapter into the
             # 'final' dictionary
-            builder[chapter_counter] =\
-                {chapter_name: [chapter_script, scenes.copy()]}
+            builder[chapter_counter] = {chapter_name: [chapter_script, scenes.copy()]}
 
         return builder
 
@@ -3562,52 +3708,69 @@ class SaveManager:
         Prepare the JSON file to be saved by first populating a dictionary
         with all the values and file paths of the story project.
         :return: None
-        """     
+        """
 
         chapters_and_scenes = self._get_chapters_and_scenes()
 
-        reusable_scripts = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_reusables,
-                                                  data_dict=ProjectSnapshot.reusables)
+        reusable_scripts = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_reusables,
+            data_dict=ProjectSnapshot.reusables,
+        )
 
-        character_images = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_characters,
-                                                  data_dict=ProjectSnapshot.character_images)
+        character_images = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_characters,
+            data_dict=ProjectSnapshot.character_images,
+        )
 
-        background_images = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_backgrounds,
-                                                   data_dict=ProjectSnapshot.background_images)
+        background_images = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_backgrounds,
+            data_dict=ProjectSnapshot.background_images,
+        )
 
-        object_images = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_objects,
-                                               data_dict=ProjectSnapshot.object_images)
+        object_images = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_objects,
+            data_dict=ProjectSnapshot.object_images,
+        )
 
-        font_sprites = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_font_sprites,
-                                              data_dict=ProjectSnapshot.font_sprites)
+        font_sprites = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_font_sprites,
+            data_dict=ProjectSnapshot.font_sprites,
+        )
 
-        dialog_images = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_dialog_rectangle,
-                                               data_dict=ProjectSnapshot.dialog_images)
+        dialog_images = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_dialog_rectangle,
+            data_dict=ProjectSnapshot.dialog_images,
+        )
 
-        sounds = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_sounds,
-                                        data_dict=ProjectSnapshot.sounds)
+        sounds = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_sounds,
+            data_dict=ProjectSnapshot.sounds,
+        )
 
-        music = self._treeview_to_dict(treeview_widget=Passer.editor.treeview_music,
-                                       data_dict=ProjectSnapshot.music)
+        music = self._treeview_to_dict(
+            treeview_widget=Passer.editor.treeview_music,
+            data_dict=ProjectSnapshot.music,
+        )
 
+        data = {
+            "ProjectInfo": ProjectSnapshot.details,
+            "StoryWindowSize": ProjectSnapshot.story_window_size,
+            "StoryStartFullScreen": ProjectSnapshot.story_start_full_screen,
+            "LVNAuth-EditorVersion": ProjectSnapshot.EDITOR_VERSION,
+            "StartupScriptItemiid": Passer.editor.get_startup_scene_item_iid(),
+            "CharacterImages": character_images,
+            "BackgroundImages": background_images,
+            "ObjectImages": object_images,
+            "FontSprites": font_sprites,
+            "FontSpriteProperties": FontSprite.get_all_font_properties(),
+            "DialogImages": dialog_images,
+            "Variables": ProjectSnapshot.variables,
+            "Sounds": sounds,
+            "Music": music,
+            "ChaptersAndScenes": chapters_and_scenes,
+            "ReusableScripts": reusable_scripts,
+        }
 
-        data = {"ProjectInfo": ProjectSnapshot.details,
-                "StoryWindowSize": ProjectSnapshot.story_window_size,
-                "StoryStartFullScreen": ProjectSnapshot.story_start_full_screen,
-                "LVNAuth-EditorVersion": ProjectSnapshot.EDITOR_VERSION,
-                "StartupScriptItemiid": Passer.editor.get_startup_scene_item_iid(),
-                "CharacterImages": character_images,
-                "BackgroundImages": background_images,
-                "ObjectImages": object_images,
-                "FontSprites": font_sprites,
-                "FontSpriteProperties": FontSprite.get_all_font_properties(),
-                "DialogImages": dialog_images,
-                "Variables": ProjectSnapshot.variables,
-                "Sounds": sounds,
-                "Music": music,
-                "ChaptersAndScenes": chapters_and_scenes,
-                "ReusableScripts": reusable_scripts}
-        
         # This will be used to save the file to a project file (.lvnap)
         self.json_data = json.dumps(data, indent=4, sort_keys=True)
 
@@ -3649,77 +3812,72 @@ class FileManager:
 
     def __init__(self):
         pass
-    
-    def move_item(self,
-                  section: SectionChosen, 
-                  move_up: bool):
+
+    def move_item(self, section: SectionChosen, move_up: bool):
         """
         Move the selected item up or down by one.
         """
-        
+
         # Get the treeview widget of where the item is,
         # based on the given section.
         treeview_widget = self.get_active_treeview(section=section)
-    
+
         # No selection? return
         selection = treeview_widget.selection()
         if not selection:
             return
-    
+
         # Get the selected item iid.
         item_iid = selection[0]
-    
+
         # Get the parent of the selected item,
         # because we need to tell the .move method which parent to move in.
         # In this method, the parent will always be the same.
         item_parent_iid = treeview_widget.parent(item_iid)
-    
+
         current_index = treeview_widget.index(item=item_iid)
         if move_up:
             new_index = current_index - 1
         else:
             new_index = current_index + 1
-    
-        treeview_widget.move(item=item_iid,
-                             parent=item_parent_iid,
-                             index=new_index)
-        
+
+        treeview_widget.move(item=item_iid, parent=item_parent_iid, index=new_index)
+
         treeview_widget.see(item=item_iid)
-    
-    def rename_resource(self,
-                        section: SectionChosen,
-                        selected_item_iid: str = None,
-                        prefill_text=None):
+
+    def rename_resource(
+        self, section: SectionChosen, selected_item_iid: str = None, prefill_text=None
+    ):
         """
         Rename a treeview item and its dictionary key.
-        
+
         Used for all resources, such as characters, objects, audio,
         and even reusable scripts, etc.
-        
+
         All except for chapters and scenes.
         Chapter names and scene names are not dealt with here because
         that treeview does not have folders.
-        
+
         Arguments:
-        
+
         - section: so we know which treeview and dictionary to rename data in.
-        
+
         - selected_item_iid: the treeview item to be updated.
-        
+
         - prefill_text: so we can re-show the input window with text
         that was entered previously, on a failed rename attempt.
         """
-        
+
         # Type-hints
         dict_ref: Dict
         treeview_widget: ttk.Treeview
-        
+
         # Get widget references
         dict_ref = self.get_active_dictionary(section=section)
         treeview_widget = self.get_active_treeview(section=section)
-        
+
         selected_text = None
-        
+
         # Get the selected name that wants to get renamed.
         if prefill_text:
             selected_text = prefill_text
@@ -3731,23 +3889,23 @@ class FileManager:
             else:
                 # Get the text of the selected item.
                 selected_item_iid = selected_item_iid[0]
-                
+
         # Get the original text of the treeview item,
         # because the text is the dictionary's key.
         item_details = treeview_widget.item(item=selected_item_iid)
         original_text = item_details.get("text")
-        
+
         # selected_text is what will be shown to the user
         # when the Rename dialog opens.
         if not selected_text:
             selected_text = original_text
-        
+
         # Is the item a folder? If so, the folder won't
         # be in the dictionary, so don't attempt to update folder names
         # in the dictionary.
         tags = item_details.get("tags")
-        is_folder = "folder_row" in tags        
-            
+        is_folder = "folder_row" in tags
+
         # Get the rename window title, based on the section that's
         # being renamed.
         if is_folder:
@@ -3759,160 +3917,165 @@ class FileManager:
         elif section == SectionChosen.AUDIO:
             subject = "Audio"
         else:
-            subject = ""        
-                
-        user_input = InputStringWindow(master=Passer.editor.mainwindow,
-                                       max_character_length=40,
-                                       title=f"Rename {subject}",
-                                       msg="Enter a new name below:",
-                                       prefill_entry_text=selected_text)
-        
+            subject = ""
+
+        user_input = InputStringWindow(
+            master=Passer.editor.mainwindow,
+            max_character_length=40,
+            title=f"Rename {subject}",
+            msg="Enter a new name below:",
+            prefill_entry_text=selected_text,
+        )
+
         # No input provided? return
         if not user_input.user_input:
             return
-        
+
         user_input.user_input = user_input.user_input.strip()
         if not user_input.user_input:
             return
-        
+
         # Is the new text exactly the same as the current text?
         # Return.
         if user_input.user_input == original_text:
             return
-        
+
         # Is the new text the same as the current text, just with
         # different casing? That's ok, allow it.
         if user_input.user_input.lower() != original_text.lower():
-            
             # Make sure there is no folder or item with the same name
             # in the entire treeview widget.
-            is_in_treeview =\
-                self.is_text_anywhere_in_treeview(parent_item_iid="",
-                                                  treeview_widget=treeview_widget,
-                                                  text_to_check=user_input.user_input)
-            
+            is_in_treeview = self.is_text_anywhere_in_treeview(
+                parent_item_iid="",
+                treeview_widget=treeview_widget,
+                text_to_check=user_input.user_input,
+            )
+
             # Text already exists in the treeview item as a folder or item?
             # Tell the user.
             if is_in_treeview:
-                messagebox.showwarning(parent=Passer.editor.mainwindow, 
-                                       title="Already Exists",
-                                       message="That name already exists as a folder or item.")
-                self.rename_resource(section=section,
-                                     selected_item_iid=selected_item_iid, 
-                                     prefill_text=user_input.user_input)
+                messagebox.showwarning(
+                    parent=Passer.editor.mainwindow,
+                    title="Already Exists",
+                    message="That name already exists as a folder or item.",
+                )
+                self.rename_resource(
+                    section=section,
+                    selected_item_iid=selected_item_iid,
+                    prefill_text=user_input.user_input,
+                )
                 return
-                
+
             # Any invalid characters?
             invalid_char = FileManager.validate_name(user_input.user_input)
             if invalid_char:
-                messagebox.showwarning(parent=Passer.editor.mainwindow, 
-                                       title="Invalid Letter",
-                                       message=f"'{invalid_char}' cannot be used in the name.")
-                self.rename_resource(section=section,
-                                     selected_item_iid=selected_item_iid, 
-                                     prefill_text=user_input.user_input)            
+                messagebox.showwarning(
+                    parent=Passer.editor.mainwindow,
+                    title="Invalid Letter",
+                    message=f"'{invalid_char}' cannot be used in the name.",
+                )
+                self.rename_resource(
+                    section=section,
+                    selected_item_iid=selected_item_iid,
+                    prefill_text=user_input.user_input,
+                )
                 return
-        
-        
+
         # Update the treeview widget with the new text.
-        treeview_widget.item(item=selected_item_iid,
-                             text=user_input.user_input)
-        
+        treeview_widget.item(item=selected_item_iid, text=user_input.user_input)
+
         # Update the dictionary with the new key.
         if not is_folder:
             dict_ref[user_input.user_input] = dict_ref[original_text]
             del dict_ref[original_text]
-        
+
         # So the user knows to save the project.
         treeview_widget.event_generate("<<SaveNeeded>>")
-        
+
         # Force-select the reusable treeview item so that the
         # new name shows up at the top.
         Passer.chapter_scenes.on_reusables_treeview_item_selected()
-        
+
         if section == SectionChosen.REUSABLES:
-            
             # Rename the old reusable script's scroll history.
             old_reusable_name = original_text
             new_reusable_name = user_input.user_input
-            Passer.chapter_scenes.scroll_history.\
-                rename_reusable_name_scroll_data(
-                    old_reusable_name=old_reusable_name,
-                    new_reusable_name=new_reusable_name)
-            
+            Passer.chapter_scenes.scroll_history.rename_reusable_name_scroll_data(
+                old_reusable_name=old_reusable_name, new_reusable_name=new_reusable_name
+            )
+
             # The renamed reusable script has been reloaded in the text
             # widget, so restore its scroll and cursor positions.
-            Passer.chapter_scenes.scroll_history.\
-                restore_scroll_data_reusable(
-                    reusable_script_name=new_reusable_name)
-                
+            Passer.chapter_scenes.scroll_history.restore_scroll_data_reusable(
+                reusable_script_name=new_reusable_name
+            )
+
     @staticmethod
     def validate_name(name: str) -> bool:
         """
         Check whether the given name is valid for a treeview item,
         such as a chapter name, scene name, object name, etc.
-        
+
         Treeview item names should not contain both a $ symbol
         because that might be mistaken as a variable.
-        
+
         return: "$" if a "$" is found in the name or None if no "$" is found.
         """
         if "$" in name:
             return "$"
         else:
             return
-            
-    def is_text_anywhere_in_treeview(self,
-                                     parent_item_iid: str, 
-                                     treeview_widget: ttk.Treeview,
-                                     text_to_check: str) -> bool:
+
+    def is_text_anywhere_in_treeview(
+        self, parent_item_iid: str, treeview_widget: ttk.Treeview, text_to_check: str
+    ) -> bool:
         """
         Return whether the given text exists in the treeview widget.
         The search is case-insensitive.
         It does an in-depth check which includes multiple sub-levels.
-        
+
         Arguments:
-        
+
         - parent_item_iid: the item to check the sub items of.
         If it's a blank string "", then the root items are checked.
-        
+
         - treeview_widget: the treeview widget we are checking.
         Only the 'text' column of the treeview widget is checked.
-        
+
         - text_to_check: the case-insensitive string to check to see
         if it exists in the treeview widget or not (specifically
         in the text column).
-        
+
         return: True if the text exists or None if the text doesn't exist.
         Folders and sub-folders are checked the exact same way as
         non-folders.
         """
-        
+
         # We're going to compare lowercase texts.
         text_to_check = text_to_check.lower()
-        
+
         # Enumerate through the item's sub items.
         for item_iid in treeview_widget.get_children(item=parent_item_iid):
-            
             # Get the text of the treeview item
             item_details = treeview_widget.item(item=item_iid)
             item_text = item_details.get("text")
-            
+
             # Does the text exist on this row?
             if text_to_check == item_text.lower():
                 # The text already exists in the treeview widget.
                 return True
-            
+
             # Check the current item's subitems, if there are any.
-            text_is_in_sub = \
-                self.is_text_anywhere_in_treeview(parent_item_iid=item_iid,
-                                                  treeview_widget=treeview_widget,
-                                                  text_to_check=text_to_check)
-            
+            text_is_in_sub = self.is_text_anywhere_in_treeview(
+                parent_item_iid=item_iid,
+                treeview_widget=treeview_widget,
+                text_to_check=text_to_check,
+            )
+
             # Does the text widget exist in one of the sub-items?
             if text_is_in_sub:
                 return True
-            
+
     @staticmethod
     def get_active_treeview(section: SectionChosen) -> ttk.Treeview:
         """
@@ -3921,13 +4084,21 @@ class FileManager:
         """
 
         if section == SectionChosen.CHAPTERS_AND_SCENES:
-            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_editor")
+            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_editor"
+            )
         elif section == SectionChosen.IMAGES:
-            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_images")
+            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_images"
+            )
         elif section == SectionChosen.AUDIO:
-            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_audio")
+            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_audio"
+            )
         elif section == SectionChosen.REUSABLES:
-            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object("notebook_editor")
+            notebook_to_check: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_editor"
+            )
 
         selected_tab_index = notebook_to_check.index("current")
 
@@ -3936,7 +4107,7 @@ class FileManager:
                 return Passer.editor.treeview_scripts
             elif selected_tab_index == 1:
                 return Passer.editor.treeview_reusables
-            
+
         elif section == SectionChosen.IMAGES:
             if selected_tab_index == 0:
                 return Passer.editor.treeview_characters
@@ -3974,15 +4145,19 @@ class FileManager:
         return_dict = None
 
         if section == SectionChosen.REUSABLES:
-            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_editor")
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_editor"
+            )
         elif section == SectionChosen.IMAGES:
-            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_images")
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_images"
+            )
         elif section == SectionChosen.AUDIO:
-            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_audio")
-        
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_audio"
+            )
 
         selected_tab_index = notebook_widget.index("current")
-
 
         if section == SectionChosen.REUSABLES:
             if selected_tab_index == 1:
@@ -4021,29 +4196,42 @@ class FileManager:
         """
 
         if section == SectionChosen.IMAGES:
-            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_images")
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_images"
+            )
         elif section == SectionChosen.AUDIO:
-            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object("notebook_audio")
+            notebook_widget: ttk.Notebook = Passer.editor.builder.get_object(
+                "notebook_audio"
+            )
 
         selected_tab_index = notebook_widget.index("current")
 
         save_path = None
 
         if section == SectionChosen.IMAGES:
-
             if selected_tab_index == 0:
-                save_path = ProjectSnapshot.project_path / SubPaths.CHARACTER_IMAGE_FOLDER.value
+                save_path = (
+                    ProjectSnapshot.project_path / SubPaths.CHARACTER_IMAGE_FOLDER.value
+                )
             elif selected_tab_index == 1:
-                save_path = ProjectSnapshot.project_path / SubPaths.BACKGROUND_IMAGE_FOLDER.value
+                save_path = (
+                    ProjectSnapshot.project_path
+                    / SubPaths.BACKGROUND_IMAGE_FOLDER.value
+                )
             elif selected_tab_index == 2:
-                save_path = ProjectSnapshot.project_path / SubPaths.OBJECT_IMAGE_FOLDER.value
+                save_path = (
+                    ProjectSnapshot.project_path / SubPaths.OBJECT_IMAGE_FOLDER.value
+                )
             elif selected_tab_index == 3:
-                save_path = ProjectSnapshot.project_path / SubPaths.FONT_SPRITE_FOLDER.value
+                save_path = (
+                    ProjectSnapshot.project_path / SubPaths.FONT_SPRITE_FOLDER.value
+                )
             elif selected_tab_index == 4:
-                save_path = ProjectSnapshot.project_path / SubPaths.DIALOG_IMAGE_FOLDER.value
+                save_path = (
+                    ProjectSnapshot.project_path / SubPaths.DIALOG_IMAGE_FOLDER.value
+                )
 
         elif section == SectionChosen.AUDIO:
-
             if selected_tab_index == 0:
                 save_path = ProjectSnapshot.project_path / SubPaths.SOUND_FOLDER.value
             elif selected_tab_index == 1:
@@ -4080,25 +4268,30 @@ class FileManager:
 
         # Make sure the save path exists. If not, tell the user.
         if not save_path.exists():
-            messagebox.showerror(parent=treeview_widget.winfo_toplevel(), 
-                                 title="Project Folder Not Found",
-                                 message="Project path does not exist.\n\n"
-                                         f"{save_path}")
+            messagebox.showerror(
+                parent=treeview_widget.winfo_toplevel(),
+                title="Project Folder Not Found",
+                message=f"Project path does not exist.\n\n{save_path}",
+            )
             return
 
         if section_chosen == SectionChosen.IMAGES:
-            file_types = [("All Supported Images", ".png .jpg .gif"),
-                          ("PNG images", ".png"),
-                          ("JPG images", ".jpg"),
-                          ("GIF images", ".gif")]
+            file_types = [
+                ("All Supported Images", ".png .jpg .gif"),
+                ("PNG images", ".png"),
+                ("JPG images", ".jpg"),
+                ("GIF images", ".gif"),
+            ]
         elif section_chosen == SectionChosen.AUDIO:
-            file_types = [("All Supported Audio Types", ".wav .ogg"),
-                          ("WAV Audio", ".wav"),
-                          ("OGG Audio", ".ogg")]
+            file_types = [
+                ("All Supported Audio Types", ".wav .ogg"),
+                ("WAV Audio", ".wav"),
+                ("OGG Audio", ".ogg"),
+            ]
 
-        selected_files =\
-            filedialog.askopenfilenames(parent=treeview_widget.winfo_toplevel(),
-                                        filetypes=file_types)
+        selected_files = filedialog.askopenfilenames(
+            parent=treeview_widget.winfo_toplevel(), filetypes=file_types
+        )
 
         # Go through the selected files
         for full_path in selected_files:
@@ -4109,15 +4302,16 @@ class FileManager:
             file_save_path = save_path / file_name_only
 
             if file_no_extension in dict_ref:
-                messagebox.showwarning(parent=treeview_widget.winfo_toplevel(), 
-                                       title="Already Exists",
-                                       message=f"{file_no_extension} already exists in the project.\nThis file will "
-                                               f"be skipped.")
+                messagebox.showwarning(
+                    parent=treeview_widget.winfo_toplevel(),
+                    title="Already Exists",
+                    message=f"{file_no_extension} already exists in the project.\nThis file will "
+                    f"be skipped.",
+                )
                 continue
 
             # Copy the file to the project's folder
             try:
-
                 full_path_lcase = full_path.lower()
                 save_path_lcase = str(file_save_path).lower()
 
@@ -4129,28 +4323,34 @@ class FileManager:
                     # If the project doesn't get saved upon the application closing,
                     # delete the file from the project's images or audio folder.
                     copied_path = Path(file_save_path)
-                    Passer.editor.add_to_delete_file_upon_close(full_path_to_file=copied_path)
+                    Passer.editor.add_to_delete_file_upon_close(
+                        full_path_to_file=copied_path
+                    )
 
             except OSError as e:
-                print(f"Could not copy '{file_name_only}' to the project's folder.\n\n"
-                      f"Details: {e}")
+                print(
+                    f"Could not copy '{file_name_only}' to the project's folder.\n\n"
+                    f"Details: {e}"
+                )
 
-            item_iid = treeview_widget.insert(index="end",
-                                              parent=selected_item,
-                                              tags=("normal_row",),
-                                              text=file_no_extension)
+            item_iid = treeview_widget.insert(
+                index="end",
+                parent=selected_item,
+                tags=("normal_row",),
+                text=file_no_extension,
+            )
 
             # Add to the dictionary that will be used to save the project file.
             dict_ref[file_no_extension] = file_name_only
-            
+
             if treeview_widget == Passer.editor.treeview_font_sprites:
-
                 font_properties = FontSprite()
-                ProjectSnapshot.font_sprite_properties[file_no_extension] = font_properties
+                ProjectSnapshot.font_sprite_properties[file_no_extension] = (
+                    font_properties
+                )
 
-                        
             # So the user knows the project changes are not saved yet.
-            Passer.editor.mainwindow.event_generate("<<SaveNeeded>>")   
+            Passer.editor.mainwindow.event_generate("<<SaveNeeded>>")
 
     def remove_selected_file(self, section: SectionChosen):
         """
@@ -4172,8 +4372,7 @@ class FileManager:
         image_folder = self.get_item_save_path(section=section)
 
         # Delete font properties?
-        delete_font_properties = (treeview_widget is \
-                                  Passer.editor.treeview_font_sprites)
+        delete_font_properties = treeview_widget is Passer.editor.treeview_font_sprites
 
         keys_to_remove = []
 
@@ -4227,9 +4426,11 @@ class FileManager:
         path_deletions_display = "\n".join(full_paths)
 
         # Ask the user if it's OK to delete the selected item.
-        delete_confirm = DeleteConfirmationWindow(master=Passer.editor.mainwindow,
-                                                  prompt_text=delete_prompt_text,
-                                                  items_to_delete=path_deletions_display)
+        delete_confirm = DeleteConfirmationWindow(
+            master=Passer.editor.mainwindow,
+            prompt_text=delete_prompt_text,
+            items_to_delete=path_deletions_display,
+        )
 
         if not delete_confirm.user_answer:
             return
@@ -4237,7 +4438,7 @@ class FileManager:
         # Remove the item from the dictionary
         for key in keys_to_remove:
             del dict_ref[key]
-            
+
             # Delete the font property? (if we're deleting font sprite(s))
             if delete_font_properties:
                 if key in ProjectSnapshot.font_sprite_properties:
@@ -4277,8 +4478,9 @@ class FileManager:
 
             tags = item_details.get("tags")
             if "folder_row" in tags:
-
-                sub_children = self._get_all_children(item=item, treeview_widget=treeview_widget)
+                sub_children = self._get_all_children(
+                    item=item, treeview_widget=treeview_widget
+                )
                 if sub_children:
                     overall_children.extend(sub_children)
 
@@ -4287,9 +4489,12 @@ class FileManager:
 
         return overall_children
 
-    def on_create_new_folder_button_clicked(self, section_chosen: SectionChosen,
-                                            create_under_item_iid=None,
-                                            prefill_folder_name=None):
+    def on_create_new_folder_button_clicked(
+        self,
+        section_chosen: SectionChosen,
+        create_under_item_iid=None,
+        prefill_folder_name=None,
+    ):
         """
         Ask the user for a new folder name, then create an item in the active treeview.
 
@@ -4304,7 +4509,6 @@ class FileManager:
 
         # Get the selected item iid in the treeview, if any
         if create_under_item_iid is not None:
-
             # This is a re-attempt, so use the value from the prior attempt.
             selected_item = create_under_item_iid
         else:
@@ -4322,12 +4526,13 @@ class FileManager:
         # But only ask the user if it's not a re-attempt.
         # If create_under_item_iid is None, then it's a *new* attempt.
         if selected_item and create_under_item_iid is None:
-
             # So we can show the user the name of the selected item.
             selected_item_text = treeview_widget.item(selected_item).get("text")
 
-            where_new_folder = WhereNewFolderWindow(master=treeview_widget.winfo_toplevel(),
-                                                    in_sub_folder_name=selected_item_text)
+            where_new_folder = WhereNewFolderWindow(
+                master=treeview_widget.winfo_toplevel(),
+                in_sub_folder_name=selected_item_text,
+            )
 
             if not where_new_folder.user_input:
                 # The user clicked Cancel
@@ -4341,10 +4546,12 @@ class FileManager:
             # then selected_item already contains the iid of the selected item.
 
         # Ask the user the name of the new folder.
-        input_window = InputStringWindow(master=treeview_widget.winfo_toplevel(),
-                                         title="New Folder",
-                                         msg="Type a new folder name below.",
-                                         prefill_entry_text=prefill_folder_name)
+        input_window = InputStringWindow(
+            master=treeview_widget.winfo_toplevel(),
+            title="New Folder",
+            msg="Type a new folder name below.",
+            prefill_entry_text=prefill_folder_name,
+        )
 
         if not input_window.user_input:
             # The user cancelled or has entered a blank string.
@@ -4352,23 +4559,30 @@ class FileManager:
 
         # Does the folder name exist in the same hierarchy level that it's about
         # to be created in?
-        folder_exists = FileManager._folder_exists(treeview_widget, selected_item, input_window.user_input)
+        folder_exists = FileManager._folder_exists(
+            treeview_widget, selected_item, input_window.user_input
+        )
 
         if folder_exists:
-            messagebox.showwarning(parent=Passer.editor.treeview_scripts.winfo_toplevel(), 
-                                   title="Already Exists",
-                                   message="That name already exists as a file or folder.")
+            messagebox.showwarning(
+                parent=Passer.editor.treeview_scripts.winfo_toplevel(),
+                title="Already Exists",
+                message="That name already exists as a file or folder.",
+            )
             self.on_create_new_folder_button_clicked(
-                                         section_chosen=section_chosen,
-                                         create_under_item_iid=selected_item,
-                                         prefill_folder_name=input_window.user_input)
+                section_chosen=section_chosen,
+                create_under_item_iid=selected_item,
+                prefill_folder_name=input_window.user_input,
+            )
             return
 
-        item_iid = treeview_widget.insert(parent=selected_item,
-                                          index="end",
-                                          tags=("folder_row",),
-                                          text=input_window.user_input)
-        
+        item_iid = treeview_widget.insert(
+            parent=selected_item,
+            index="end",
+            tags=("folder_row",),
+            text=input_window.user_input,
+        )
+
         # Select the newly created item so it's easier for
         # the user to see it.
         treeview_widget.selection_set(item_iid)
@@ -4405,19 +4619,171 @@ class FileManager:
             return False
 
 
+class Gutter:
+    """
+    Used for the Edit button that shows up in the gutter
+    on the left side of the text widget.
+    """
 
+    def __init__(self, editor_object: EditorMainApp):
 
-mystring = "<character_name-Bob Smith>>"
+        # We need access to the editor_object because that's where
+        # the text widget is, including the command-edit related methods.
+        self.editor_object = editor_object
 
-result = re.findall(r"^<(\w+)-(.*)>$", mystring)
+        # We update the position and state of the Edit button using
+        # an after timer.
+        self.update_timer = None
 
+        # The Edit button itself.
+        self.btn_edit: ttk.Button
+        self.btn_edit = self.editor_object.btn_edit
+        self.btn_edit.configure(command=self.on_edit_click)
 
-#class StoryReader:
-    #def __init__(self):
-        #pass
+        self.btn_edit.image = PhotoImage(data=Icons.EDIT_ROW_16_F.value)
+        self.btn_edit.configure(text="", image=self.btn_edit.image)
 
-    #def read_next_line(self):
-        #line = Story.story_lines.pop(0)
+        # Bind events for cursor movements, typing, and scrolling
+        self.editor_object.text_script: LVNAuthEditorWidget
+        self.editor_object.text_script.bind("<KeyRelease>", self.start_update, add="+")
+        self.editor_object.text_script.bind(
+            "<ButtonRelease-1>", self.start_update, add="+"
+        )
+        self.editor_object.text_script.bind("<Configure>", self.start_update, add="+")
+
+        self.style_gutter = ttk.Style()
+
+        # Create a virtual event binding so we can refresh the gutter
+        # background color from elsewhere.
+        self.editor_object.text_script.winfo_toplevel().bind(
+            "<<RefreshGutterBackgroundColor>>", self.set_background_color
+        )
+
+        # Read the config file and apply the gutter background color.
+        self.set_background_color()
+
+    def set_background_color(self, event=None):
+        """
+        Read the config file to get the gutter background color and
+        apply the color.
+
+        Purpose: if the gutter's background color is changed from a color
+        preset, then this method needs to run to refresh the gutter's
+        background to the newly set color. Also, this method is run when
+        the application is first opened.
+        """
+
+        config = ProjectSnapshot.config.config
+        config.read(ProjectSnapshot.config.config_file_path)
+
+        # Get the selected preset, so we can read its color values.
+        selected_preset_section = (
+            ProjectSnapshot.config.get_selected_color_preset_section()
+        )
+
+        # If the gutter bg option doesn't exist, default it to the editor's
+        # background color.
+        if config.has_option(selected_preset_section, "editor.gutter.background"):
+            gutter_background = config.get(
+                selected_preset_section, "editor.gutter.background"
+            )
+        else:
+            gutter_background = config.get(selected_preset_section, "editor.background")
+
+        self.style_gutter.configure("Gutter.TFrame", background=gutter_background)
+        self.editor_object.frame_gutter.configure(style="Gutter.TFrame")
+
+    def start_update(self, event=None):
+        """
+        Update the Edit button based on the current line in the text widget
+        every 50 milliseconds.
+
+        We have a delay so that the refresh doesn't happen unnecessarily
+        too quickly; for example when resizing the main window.
+        """
+        if self.update_timer:
+            self.editor_object.mainwindow.after_cancel(self.update_timer)
+
+        self.update_timer = self.editor_object.mainwindow.after(
+            50, self.update_gutter_edit_button
+        )
+
+    def update_gutter_edit_button(self, event=None):
+        """
+        Position the Edit button in the gutter and determine if the edit
+        button should be enabled or not, based on the current line.
+
+        This method is run from an After timer.
+        """
+
+        # Reset the After timer so it's ready for the next tick.
+        self.update_timer = None
+
+        # Get line number of current cursor insertion point
+        # so that we can eventually get the bbox of the first character.
+        cursor_index = self.editor_object.text_script.index(tk.INSERT)
+        line_number = cursor_index.split(".")[0]
+
+        # Get bounding box (x, y, width, height) of the first character
+        # on the given line number.
+        bbox: tuple | None
+        bbox = self.editor_object.text_script.bbox(f"{line_number}.0")
+
+        # Do we have the dimensions of the first character?
+        # If the current line is scrolled out of view, it won't have a value.
+        if bbox:
+            # Yes, we have dimensions of the first character/letter.
+
+            # If we want to make the Edit button smaller, we can specify
+            # a value here. Use an even number for best results.
+            # Example value: 8
+            shrink_by = 0
+
+            # Get the Y position of the letter, relative to the top of the
+            # Text widget. We'll use this to position the Y of the edit button.
+            y_pos = bbox[1] + (shrink_by // 2)
+
+            # Get the height of the current row so that the edit button can
+            # be the same height as the current line.
+            row_height = bbox[3] - shrink_by
+
+            # Get the current line of script based on where the caret is.
+            script_line = self.editor_object.text_script.get(
+                "insert linestart", "insert lineend"
+            )
+
+            script_line = script_line.strip()
+
+            # Can the current line be edited? Try to parse the arguments.
+            can_edit = ch.CommandHelper.can_edit(script_line=script_line)
+            if can_edit:
+                # Update edit button position
+                self.btn_edit.place(x=0, y=y_pos, height=row_height)
+
+                return
+
+        # Hide the Edit button; it's either scrolled out of view
+        # or the command cannot be edited.
+        self.btn_edit.place_forget()
+
+    def on_vertical_scroll(self, *args):
+        """
+        Keep the Edit button aligned when scrolling through the
+        text widget.
+        """
+
+        self.start_update()
+
+    def on_edit_click(self):
+        """
+        Open the Wizard window on the current line in the text widget.
+
+        This occurs when the Edit button is clicked in the gutter.
+        """
+
+        self.editor_object.edit_current_line()
+
+        self.editor_object.text_script.focus()
 
 
 if __name__ == "__main__":

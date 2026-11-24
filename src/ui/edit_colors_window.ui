@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.4" author="PygubuDesigner 0.40.1">
+<interface version="1.5" author="PygubuDesigner 0.41.4">
   <project>
     <settings />
     <customwidgets />
+    <resources />
   </project>
   <object class="tk.Toplevel" id="colors_window" named="True">
     <property name="height">200</property>
@@ -460,6 +461,43 @@
                 <child>
                   <object class="ttk.Label" id="label20">
                     <property name="text" translatable="yes">Current row background color</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="padx">10</property>
+                      <property name="row">0</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="ttk.Frame" id="frame16">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="grid">
+                  <property name="column">0</property>
+                  <property name="padx">10</property>
+                  <property name="pady">5</property>
+                  <property name="row">10</property>
+                  <property name="sticky">ew</property>
+                </layout>
+                <child>
+                  <object class="ttk.Label" id="lbl_gutter_bg" named="True">
+                    <property name="background">#000000</property>
+                    <property name="cursor">hand2</property>
+                    <property name="text" translatable="yes">
+</property>
+                    <property name="width">5</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="row">0</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Label" id="label3">
+                    <property name="text" translatable="yes">Gutter background</property>
                     <layout manager="grid">
                       <property name="column">3</property>
                       <property name="padx">10</property>

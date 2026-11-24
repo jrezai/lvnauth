@@ -72,9 +72,7 @@ class CommandHelper:
         "character_start_scaling": cc.ScaleStart,
         "character_stop_scaling": cc.SpriteShowHide,
         "character_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
-        "character_stop_movement_condition": cc.MovementStopCondition,
         "character_start_moving": cc.MoveStart,
-        "character_start_moving_to": cc.MoveToStart,
         "character_stop_moving": cc.SpriteShowHide,
         "character_set_position_x": cc.SpritePosition,
         "character_set_position_y": cc.SpritePosition,
@@ -107,9 +105,7 @@ class CommandHelper:
         "dialogue_sprite_start_scaling": cc.ScaleStart,
         "dialogue_sprite_stop_scaling": cc.SpriteShowHide,
         "dialogue_sprite_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
-        "dialogue_sprite_stop_movement_condition": cc.MovementStopCondition,
         "dialogue_sprite_start_moving": cc.MoveStart,
-        "dialogue_sprite_start_moving_to": cc.MoveToStart,
         "dialogue_sprite_stop_moving": cc.SpriteShowHide,
         "dialogue_sprite_set_position_x": cc.SpritePosition,
         "dialogue_sprite_set_position_y": cc.SpritePosition,
@@ -139,9 +135,7 @@ class CommandHelper:
         "object_start_scaling": cc.ScaleStart,
         "object_stop_scaling": cc.SpriteShowHide,
         "object_after_movement_stop": cc.SpriteStopRunScriptWithArguments,
-        "object_stop_movement_condition": cc.MovementStopCondition,
         "object_start_moving": cc.MoveStart,
-        "object_start_moving_to": cc.MoveToStart,
         "object_stop_moving": cc.SpriteShowHide,
         "object_set_position_x": cc.SpritePosition,
         "object_set_position_y": cc.SpritePosition,
@@ -407,18 +401,6 @@ class CommandHelper:
                         # All arguments from index 1 and beyond are of variable
                         # length.
                         arguments = CommandHelper._get_optional_arguments(arguments, 1)
-
-                # <_stop_movement_condition> can have 2 or 3 arguments.
-                # If we have 2 arguments here, use the 2 argument version of the
-                # class instead of the 3 argument class.
-                case (
-                    "character_stop_movement_condition"
-                    | "dialogue_sprite_stop_movement_condition"
-                    | "object_stop_movement_condition"
-                ):
-                    if isinstance(arguments, list) and len(arguments) == 2:
-                        # Use the 2-argument version of the class.
-                        command_cls = cc.MovementStopConditionShorter
 
                 case "play_music":
                     # <play_music> can have two arguments.

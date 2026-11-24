@@ -53,6 +53,7 @@ class ConfigHandler:
             "editor.dialog.text.backcolor": "#444953",
             "editor.dialog.text.backcolor.disable": True,
             "editor.highlight.row.background": "#13476b",
+            "editor.gutter.background": "#243242",
             "selected.color.preset": "DEFAULT",
         }
 

@@ -83,7 +83,10 @@ class EditColorsWindow:
         
         lbl_current_row_bg = builder.get_object("lbl_current_row_bg")
         lbl_current_row_bg.label_name = "lbl_current_row_bg"
-        
+
+        lbl_gutter_bg = builder.get_object("lbl_gutter_bg")
+        lbl_gutter_bg.label_name = "lbl_gutter_bg"
+
         self.v_no_background_dialogue_text: tk.BooleanVar
         self.v_no_background_dialogue_text = builder.get_variable("v_no_background_dialog_text")
         
@@ -97,18 +100,20 @@ class EditColorsWindow:
         self.btn_ok = builder.get_object("btn_ok")
         self.btn_cancel = builder.get_object("btn_cancel")
         self.mainwindow.bind("<Escape>", self.on_cancel_button_clicked)
-        
-        self.color_labels =\
-            {"editor.background": lbl_editor_background,
-             "editor.foreground": lbl_non_dialog_forecolor,
-             "editor.select.background": lbl_highlighted_text_bg_color,
-             "editor.insert.background": lbl_blinking_cursor,
-             "editor.commands": lbl_command_forecolor,
-             "editor.after.colon": lbl_arguments_forecolor,
-             "editor.comments": lbl_comments_forecolor,
-             "editor.dialog.text.forecolor": lbl_character_text_forecolor,
-             "editor.dialog.text.backcolor": lbl_character_text_bg,
-             "editor.highlight.row.background": lbl_current_row_bg}
+
+        self.color_labels = {
+            "editor.background": lbl_editor_background,
+            "editor.foreground": lbl_non_dialog_forecolor,
+            "editor.select.background": lbl_highlighted_text_bg_color,
+            "editor.insert.background": lbl_blinking_cursor,
+            "editor.commands": lbl_command_forecolor,
+            "editor.after.colon": lbl_arguments_forecolor,
+            "editor.comments": lbl_comments_forecolor,
+            "editor.dialog.text.forecolor": lbl_character_text_forecolor,
+            "editor.dialog.text.backcolor": lbl_character_text_bg,
+            "editor.highlight.row.background": lbl_current_row_bg,
+            "editor.gutter.background": lbl_gutter_bg,
+        }
         
         self.checkbox_options = {"editor.dialog.text.backcolor.disable": 
                                  self.v_no_background_dialogue_text}        
