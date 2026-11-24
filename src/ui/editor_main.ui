@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<interface version="1.4" author="PygubuDesigner 0.40.1">
+<interface version="1.5" author="PygubuDesigner 0.41.4">
   <project>
     <settings>
       <setting id="name">Main Window</setting>
@@ -22,6 +22,7 @@
     <customwidgets>
       <customwidget path="../custom_pygubu_widgets.py" />
     </customwidgets>
+    <resources />
   </project>
   <object class="tk.Toplevel" id="main_window">
     <property name="geometry">1200x768</property>
@@ -1149,7 +1150,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="ttk.Frame" id="frame1">
+                          <object class="ttk.Frame" id="frame_editor_main" named="True">
                             <property name="height">200</property>
                             <property name="width">200</property>
                             <layout manager="grid">
@@ -1158,40 +1159,81 @@
                               <property name="sticky">nsew</property>
                             </layout>
                             <containerlayout manager="grid">
-                              <property type="col" id="0" name="weight">1</property>
+                              <property type="col" id="1" name="weight">1</property>
                               <property type="row" id="0" name="weight">1</property>
                             </containerlayout>
                             <child>
-                              <object class="ttk.Scrollbar" id="sb_horizontal_text" named="True">
-                                <property name="orient">horizontal</property>
-                                <layout manager="grid">
-                                  <property name="column">0</property>
-                                  <property name="row">1</property>
-                                  <property name="sticky">new</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="ttk.Scrollbar" id="sb_vertical_text" named="True">
-                                <property name="orient">vertical</property>
-                                <layout manager="grid">
-                                  <property name="column">1</property>
-                                  <property name="row">0</property>
-                                  <property name="sticky">ns</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="lvnauthwidgets.editorwidget" id="text_script" named="True">
-                                <property name="exportselection">false</property>
-                                <property name="relief">flat</property>
-                                <property name="setgrid">false</property>
-                                <property name="state">disabled</property>
+                              <object class="ttk.Frame" id="frame_gutter" named="True">
+                                <property name="height">200</property>
+                                <property name="width">25</property>
                                 <layout manager="grid">
                                   <property name="column">0</property>
                                   <property name="row">0</property>
                                   <property name="sticky">nsew</property>
                                 </layout>
+                                <child>
+                                  <object class="ttk.Button" id="btn_edit" named="True">
+                                    <property name="text" translatable="yes">Edit</property>
+                                    <layout manager="place">
+                                      <property name="anchor">nw</property>
+                                      <property name="relwidth">0.0</property>
+                                      <property name="relx">0.0</property>
+                                      <property name="width">25</property>
+                                      <property name="x">0</property>
+                                      <property name="y">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Frame" id="frame_editor_inner" named="True">
+                                <property name="height">200</property>
+                                <property name="width">200</property>
+                                <layout manager="grid">
+                                  <property name="column">1</property>
+                                  <property name="row">0</property>
+                                  <property name="sticky">nsew</property>
+                                </layout>
+                                <containerlayout manager="grid">
+                                  <property type="col" id="0" name="weight">1</property>
+                                  <property type="row" id="0" name="weight">1</property>
+                                </containerlayout>
+                                <child>
+                                  <object class="lvnauthwidgets.editorwidget" id="text_script" named="True">
+                                    <property name="borderwidth">0</property>
+                                    <property name="exportselection">false</property>
+                                    <property name="highlightthickness">0</property>
+                                    <property name="relief">flat</property>
+                                    <property name="setgrid">false</property>
+                                    <property name="state">disabled</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">nsew</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Scrollbar" id="sb_horizontal_text" named="True">
+                                    <property name="orient">horizontal</property>
+                                    <layout manager="grid">
+                                      <property name="column">0</property>
+                                      <property name="row">1</property>
+                                      <property name="sticky">new</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="ttk.Scrollbar" id="sb_vertical_text" named="True">
+                                    <property name="orient">vertical</property>
+                                    <layout manager="grid">
+                                      <property name="column">1</property>
+                                      <property name="row">0</property>
+                                      <property name="sticky">ns</property>
+                                    </layout>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                           </object>

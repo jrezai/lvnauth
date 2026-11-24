@@ -91,7 +91,9 @@ class LVNAuthEditorWidget(tk.Text):
         
         dialogue_text_bg = config.get(selected_preset_section,
                                     "editor.dialog.text.backcolor")
-        
+
+        self.winfo_toplevel().event_generate("<<RefreshGutterBackgroundColor>>")
+
         # Checkbox value, so read it as a boolean.
         dialogue_text_bg_disable =\
             config.getboolean(selected_preset_section,
@@ -101,10 +103,11 @@ class LVNAuthEditorWidget(tk.Text):
         if dialogue_text_bg_disable:
             # Yes, disable the dialog text background color.
             dialogue_text_bg = ""
-        
-        highlight_row_bg = config.get(selected_preset_section,
-                                      "editor.highlight.row.background")          
-                
+
+        highlight_row_bg = config.get(
+            selected_preset_section, "editor.highlight.row.background"
+        )
+
         self.configure(background=editor_background)
         self.configure(foreground=editor_foreground)
         self.configure(selectbackground=select_background)

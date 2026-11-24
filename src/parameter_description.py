@@ -666,11 +666,10 @@ class ParameterDescription:
 
         # To get the current tag configuration, run it without
         # passing in any extra parameters.
-        #info = self.show_text_widget.tag_config("bld")
-        #print(info)
-        
-    
-    def start_timer(self, event):
+        # info = self.show_text_widget.tag_config("bld")
+        # print(info)
+
+    def start_timer(self, event=None):
         """
         Attempt to show the parameter's description after a few milliseconds.
         We put a short delay to prevent a lookup for every keystroke or mouse
@@ -744,7 +743,7 @@ if __name__ == "__main__":
     # When a mouse button is released or when a key is released on the keyboard,
     # then find where the cursor is and show the parameter's description based
     # on where the cursor is.
-    text_widget.bind("<ButtonRelease>", parameter_desc.start_timer)
-    text_widget.bind("<KeyRelease>", parameter_desc.start_timer)
+    text_widget.bind("<ButtonRelease>", parameter_desc.start_timer, add="+")
+    text_widget.bind("<KeyRelease>", parameter_desc.start_timer, add="+")
     
     root.mainloop()
